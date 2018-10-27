@@ -73,10 +73,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
                 startActivityForResult(Intent.createChooser(intent, "Select .ddu"), DDU_CODE)
             }
-            R.id.nav_slideshow -> { }
-            R.id.nav_manage -> { }
-            R.id.nav_share -> { }
-            R.id.nav_send -> { }
+            R.id.nav_go -> {
+                dodecaView.thread.redraw = !dodecaView.thread.redraw
+            }
+            R.id.nav_trace -> {
+                dodecaView.trace = !dodecaView.trace
+            }
+//            R.id.nav_manage -> { }
+//            R.id.nav_send -> { }
         }
 
         drawer_layout.closeDrawer(GravityCompat.START)
@@ -90,10 +94,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 try {
                     dodecaView.ddu = DDU.read(
                         FileInputStream(contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor))
-                    dodecaView.circles = dodecaView.ddu.circles.toMutableList()
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    toast("bad .ddu: ${uri.toString()}")
+                    toast("bad .ddu: $uri")
                 }
             }
         }
