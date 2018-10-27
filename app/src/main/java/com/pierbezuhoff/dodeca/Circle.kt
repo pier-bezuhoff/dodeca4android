@@ -4,27 +4,23 @@ import android.util.JsonReader
 import android.util.JsonWriter
 import org.apache.commons.math3.complex.Complex
 import org.json.JSONException
-import java.io.File
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
+import java.io.*
 
 data class Circle(val center: Complex, val radius: Double, val borderColor: Int, val fill: Boolean, val rule: String?) {
     val x: Double get() = center.real
     val y: Double get() = center.imaginary
     val r2: Double get() = radius * radius
 
-    constructor(center: Complex, radius: Double, borderColor: Int? = null, fill: Boolean? = null, rule: String? = null
-    ) : this(center, radius, borderColor ?: defaultBorderColor, fill ?: defaultFill, rule ?: defaultRule)
+    constructor(center: Complex, radius: Double, borderColor: Int? = null, fill: Boolean? = null, rule: String? = null)
+            : this(center, radius, borderColor ?: defaultBorderColor, fill ?: defaultFill, rule ?: defaultRule)
 
     /* Inverts complex [point] with respect to [this]
-     * [this].center => Complex.INF */
+     * [point] == [this].center => Complex.INF */
     fun invert(point: Complex): Complex =
         if (point == center) Complex.INF
         else center + r2 / (point - center).conjugate()
 
-    /* Inverts [circle] with respect to [this]
-    * [circle].center <- [this] => Line
-    * else => Circle */
+    /* Inverts [circle] with respect to [this] */
     fun invert(circle: Circle): Circle {
         var (c, r) = circle // not val to change r if c <- this
         if (center == c)
@@ -43,8 +39,8 @@ data class Circle(val center: Complex, val radius: Double, val borderColor: Int,
     }
 
     companion object {
-        val defaultBorderColor: Int = 1
-        val defaultFill = false
+        const val defaultBorderColor: Int = 1
+        const val defaultFill = false
         val defaultRule: String? = null
     }
 }
@@ -58,8 +54,6 @@ fun json2circles(filename: String): List<Circle> {
         reader.beginObject()
         var center: Complex? = null
         var radius: Double? = null
-        var point: Complex? = null
-        var normal: Complex? = null
         while (reader.hasNext()) {
             val name = reader.nextName()
             when (name) {
@@ -98,27 +92,32 @@ internal enum class Mode { // for scanning .ddu, before <mode parameter>
     fun next(): Mode = Mode.values().elementAtOrElse( ordinal + 1, { Mode.CIRCLE_AUX })
 }
 
-internal data class CircleParams(var radius: Double? = null, var x: Double? = null, var y: Double? = null,
-                                 var borderColor: Int? = null, var fill: Boolean? = null, var rule: String? = null) {
+internal data class CircleParams(
+    var radius: Double? = null, var x: Double? = null, var y: Double? = null,
+    var borderColor: Int? = null, var fill: Boolean? = null, var rule: String? = null) {
+    /* CircleParams MUST have [radius], [x] and [y] */
     fun toCircle(): Circle {
         return Circle(Complex(x!!, y!!), radius!!, borderColor, fill, rule)
     }
 }
 
-data class DDU(val backgroundColor: Int, val circles: List<Circle>) {
+class DDU(val backgroundColor: Int = defaultBackgroundColor, val circles: List<Circle>) {
     companion object {
-        fun readFile(filename: String): DDU {
-            var backgroundColor = 0 // default
+        const val defaultBackgroundColor: Int = 16777215
+
+        fun read(stream: FileInputStream): DDU {
+            var backgroundColor = defaultBackgroundColor
             val circles: MutableList<Circle> = mutableListOf()
             var nGlobals = 0
             var mode: Mode = Mode.NO
             var params = CircleParams()
-            File(filename).forEachLine {
+            stream.reader().forEachLine {
                 when {
                     it.startsWith("global") -> mode = Mode.GLOBAL
-                    mode == Mode.GLOBAL -> {
+                    mode == Mode.GLOBAL && it.isNotBlank() -> {
                         if (nGlobals == 0)
                             backgroundColor = it.toInt()
+                        // ignoring other (2) globals
                         nGlobals ++
                         mode = Mode.NO
                     }
@@ -129,11 +128,11 @@ data class DDU(val backgroundColor: Int, val circles: List<Circle>) {
                         params = CircleParams() // clear params
                         mode = Mode.RADIUS
                     }
-                    mode >= Mode.RADIUS -> {
+                    mode >= Mode.RADIUS && it.isNotBlank() -> {
                         when (mode) {
-                            Mode.RADIUS -> params.radius = it.toDouble()
-                            Mode.X -> params.x = it.toDouble()
-                            Mode.Y -> params.y = it.toDouble()
+                            Mode.RADIUS -> params.radius = it.replace(',', '.').toDouble()
+                            Mode.X -> params.x = it.replace(',', '.').toDouble()
+                            Mode.Y -> params.y = it.replace(',', '.').toDouble()
                             Mode.BORDER_COLOR -> params.borderColor = it.toInt()
                             Mode.FILL -> params.fill = it.toBoolean()
                             Mode.RULE -> params.rule = it
@@ -143,6 +142,10 @@ data class DDU(val backgroundColor: Int, val circles: List<Circle>) {
                 }
             }
             return DDU(backgroundColor, circles)
+        }
+
+        fun readFile(filename: String): DDU {
+            return read(File(filename).inputStream())
         }
     }
 }

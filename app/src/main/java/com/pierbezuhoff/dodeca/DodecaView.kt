@@ -1,44 +1,66 @@
 package com.pierbezuhoff.dodeca
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Paint
+import android.graphics.*
 import android.util.AttributeSet
+import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import org.apache.commons.math3.complex.Complex
+import org.jetbrains.anko.getStackTraceString
 
 class DodecaView(context: Context, attributes: AttributeSet) : SurfaceView(context, attributes), SurfaceHolder.Callback {
-    val circles: Set<Circle>
+
+    var ddu: DDU
+    var circles: MutableList<Circle>
+    var paint: Paint
+    private lateinit var thread: DodecaThread
+    val centerX: Float get() = x + width / 2
+    val centerY: Float get() = y + height / 2
+
+    var dx: Float = 0f
+    var dy: Float = 0f
+    var ddx: Float = 0f
+    var ddy: Float = 0f
+    var scale: Float = 1f
+    var dscale: Float = 1f
+
     init {
-        val circle = Circle(Complex(300.0, 400.0), 200.0)
-        val circle0 = Circle(Complex(0.0, 0.0), 100.0)
-        val circle1 = Circle(Complex(450.0, 850.0), 300.0)
-        circles = setOf(
-            circle,
-            circle0,
-            circle1,
-            circle.invert(circle0),
-            circle.invert(circle1)
-        )
-    }
-    var paint: Paint = Paint(Paint.HINTING_ON or Paint.ANTI_ALIAS_FLAG)
-    init {
+        this.ddu = run {
+            val circle = Circle(Complex(300.0, 400.0), 200.0)
+            val circle0 = Circle(Complex(0.0, 0.0), 100.0)
+            val circle1 = Circle(Complex(450.0, 850.0), 300.0)
+            val circles = listOf(
+                circle,
+                circle0,
+                circle1,
+                circle.invert(circle0),
+                circle.invert(circle1)
+            )
+            DDU(circles = circles)
+        }
+        this.circles = this.ddu.circles.toMutableList()
+        this.paint = Paint(Paint.HINTING_ON)
         paint.setARGB(255, 0, 255, 255)
         paint.style = Paint.Style.STROKE
-    }
-    private val thread: DodecaThread
-    init {
         holder.addCallback(this)
-        thread = DodecaThread(holder, this)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+//        update()
     }
 
     override fun surfaceCreated(p0: SurfaceHolder?) {
+        setWillNotDraw(false)
+        thread = DodecaThread(this)
         thread.running = true
         thread.start()
+        update()
     }
 
     override fun surfaceChanged(p0: SurfaceHolder?, p1: Int, p2: Int, p3: Int) {
+         update()
     }
 
     override fun surfaceDestroyed(p0: SurfaceHolder?) {
@@ -54,24 +76,58 @@ class DodecaView(context: Context, attributes: AttributeSet) : SurfaceView(conte
         }
     }
 
-
-    /**
-     * Function to update the positions of player and game objects
-     */
-    fun update() {
-
+    /* don't redraw, just translate bitmap
+     * change dx, dy, scale */
+    fun updateScroll() {
+        thread.translate = true
+        dx += ddx
+        dy += ddy
+        scale *= dscale
     }
 
-    /**
-     * Everything that has to be drawn on Canvas
-     */
-    override fun draw(canvas: Canvas) {
-        super.draw(canvas)
+    fun update() {
+        thread.redraw = true
+    }
+
+    fun drawCircles(canvas: Canvas) {
+        for (circle in circles)
+            drawCircle(canvas, circle)
     }
 
     fun drawCircle(canvas: Canvas, circle: Circle) {
         val (c, r) = circle
-        canvas.drawPoint(c.real.toFloat(), c.imaginary.toFloat(), paint)
-        canvas.drawCircle(c.real.toFloat(), c.imaginary.toFloat(), r.toFloat(), paint)
+        // paint.color = circle.borderColor
+        paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
+        canvas.drawCircle(
+            dx + c.real.toFloat(),
+            dy + c.imaginary.toFloat(),
+            r.toFloat(),
+            paint)
+    }
+
+    inline fun withCanvas(action: (Canvas) -> Unit) {
+        if (holder.surface.isValid) {
+            var canvas: Canvas? = null
+            try {
+                canvas = holder.lockCanvas()
+                canvas?.let {
+                    synchronized(holder) {
+                        action(canvas)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "DodecaView > withCanvas > holder.lockCanvas:\n${e.getStackTraceString()}")
+                e.printStackTrace()
+            } finally {
+                canvas?.let {
+                    try {
+                        holder.unlockCanvasAndPost(canvas)
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "DodecaView > withCanvas > holder.unlockCanvasAndPost:\n${e.getStackTraceString()}")
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
     }
 }
