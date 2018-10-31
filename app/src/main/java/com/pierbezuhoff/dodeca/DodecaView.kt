@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.ViewGroup
 import org.apache.commons.math3.complex.Complex
 import org.jetbrains.anko.getStackTraceString
 
@@ -20,8 +21,11 @@ class DodecaView(context: Context, attributes: AttributeSet) : SurfaceView(conte
         trace = defaultTrace
     }
     var circles: MutableList<Circle>
-    var paint: Paint
+    val paint: Paint = Paint(Paint.HINTING_ON)
     lateinit var thread: DodecaThread
+    lateinit var bitmap: Bitmap // instead of canvas, to prevent triple-buffering
+    lateinit var bitmapCanvas: Canvas
+    val bitmapMatrix: Matrix = Matrix()
     val centerX: Float get() = x + width / 2
     val centerY: Float get() = y + height / 2
 
@@ -48,9 +52,10 @@ class DodecaView(context: Context, attributes: AttributeSet) : SurfaceView(conte
             )
             DDU(circles = circles)
         }
-        this.paint = Paint(Paint.HINTING_ON)
-        paint.setARGB(255, 0, 255, 255)
-        paint.style = Paint.Style.STROKE
+        paint.apply {
+            color = Color.BLUE
+            style = Paint.Style.STROKE
+        }
         holder.addCallback(this)
     }
 
@@ -60,7 +65,15 @@ class DodecaView(context: Context, attributes: AttributeSet) : SurfaceView(conte
     }
 
     override fun surfaceCreated(p0: SurfaceHolder?) {
-        thread = DodecaThread(this)
+        // to scroll all over there
+        val w = nScrollScreens * width
+        val h = nScrollScreens * width
+        bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        bitmapCanvas = Canvas(bitmap)
+//        bitmapCanvas.translate(w / 2f, h / 2f)
+//        dx -= w / 2f
+//        dy -= h / 2f
+        thread = DodecaThread(this, holder)
         thread.start()
         update()
     }
@@ -85,6 +98,10 @@ class DodecaView(context: Context, attributes: AttributeSet) : SurfaceView(conte
     /* don't redraw, just translate bitmap
      * change dx, dy, scale */
     fun updateScroll() {
+        // BUG: when V, just rect of all is shown
+//        Log.i("update", "translate: $ddx $ddy")
+//        bitmapMatrix.postTranslate(ddx, ddy)
+//        bitmapCanvas.translate(ddx, ddy)
         thread.translate = true
         dx += ddx
         dy += ddy
@@ -108,11 +125,34 @@ class DodecaView(context: Context, attributes: AttributeSet) : SurfaceView(conte
         val (c, r) = circle
         paint.color = circle.borderColor
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-        canvas.drawCircle(
-            dx + c.real.toFloat(),
-            dy + c.imaginary.toFloat(),
-            r.toFloat(),
-            paint)
+        canvas.drawCircle(dx + c.real.toFloat(), dy + c.imaginary.toFloat(), r.toFloat(), paint)
+    }
+
+    fun translateCanvas() {
+        if (holder.surface.isValid) {
+            var canvas: Canvas? = null
+            try {
+                canvas = holder.lockCanvas()
+                canvas?.let {
+                    it.translate(ddx, ddy)
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "DodecaView > withCanvas > holder.lockCanvas:\n${e.getStackTraceString()}")
+                e.printStackTrace()
+            } finally {
+                canvas?.let {
+                    try {
+                        holder.unlockCanvasAndPost(canvas)
+                    } catch (e: Exception) {
+                        Log.e(
+                            "MainActivity",
+                            "DodecaView > withCanvas > holder.unlockCanvasAndPost:\n${e.getStackTraceString()}"
+                        )
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
     }
 
     inline fun withCanvas(action: (Canvas) -> Unit) {
@@ -121,8 +161,10 @@ class DodecaView(context: Context, attributes: AttributeSet) : SurfaceView(conte
             try {
                 canvas = holder.lockCanvas()
                 canvas?.let {
+                    action(bitmapCanvas) // trick to avoid triple-buffering
                     synchronized(holder) {
-                        action(canvas)
+                        drawBackground(canvas)
+                        canvas.drawBitmap(bitmap, bitmapMatrix, null)
                     }
                 }
             } catch (e: Exception) {
@@ -146,5 +188,7 @@ class DodecaView(context: Context, attributes: AttributeSet) : SurfaceView(conte
         const val defaultDx = 0f
         const val defaultDy = 0f
         const val defaultScale = 1f
+        const val nScrollScreens = 2
+
     }
 }
