@@ -34,8 +34,8 @@ data class Circle(var center: Complex, val radius: Double, var borderColor: Int,
         val newCenter = c + circle.r2 * d / (d2 - r2)
         val newRadius = circle.r2 * radius / Math.abs(d2 - r2)
         return Circle(newCenter, newRadius, borderColor, fill, rule)
-        /* NOTE: center = 0, radius = 1; c <- |R
-        => Circle(a/(a^2-r^2), r/|a^2-r^2|)
+        /* NOTE: c = 0, r = 1; center <- |R
+        => Circle(a/(a^2-r2), radius/|a^2-r2|)
          */
     }
 
@@ -67,7 +67,7 @@ fun json2circles(filename: String): List<Circle> {
         if (center != null && radius != null)
             result.add(Circle(center, radius))
         else
-            throw JSONException("Not enough field for Circle")
+            throw JSONException("Not enough fields for Circle")
     }
     return result
 }

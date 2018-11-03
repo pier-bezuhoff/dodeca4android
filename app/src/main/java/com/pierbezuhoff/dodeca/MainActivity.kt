@@ -3,7 +3,6 @@ package com.pierbezuhoff.dodeca
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.design.widget.NavigationView
 import android.support.v4.view.GestureDetectorCompat
 import android.support.v4.view.GravityCompat
@@ -18,7 +17,6 @@ import java.io.FileInputStream
 import java.lang.Exception
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
-    private lateinit var gestureDetector: GestureDetectorCompat
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,10 +31,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         toggle.syncState()
 
         nav_view.setNavigationItemSelectedListener(this)
-        val gestureListener = DodecaGestureListener(dodecaView)
-        gestureDetector = GestureDetectorCompat(this@MainActivity, gestureListener)
-        gestureDetector.setOnDoubleTapListener(gestureListener)
-        dodecaView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+        // listen scroll, double tap and scale gestures
+        DodecaGestureDetector(this, dodecaView)
     }
 
     override fun onBackPressed() {
@@ -53,6 +49,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
+    /*
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -62,6 +59,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             else -> return super.onOptionsItemSelected(item)
         }
     }
+    */
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
@@ -74,7 +72,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 startActivityForResult(Intent.createChooser(intent, "Select .ddu"), DDU_CODE)
             }
             R.id.nav_go -> {
-                dodecaView.thread.redraw = !dodecaView.thread.redraw
+                dodecaView.updating = !dodecaView.updating
             }
             R.id.nav_trace -> {
                 dodecaView.trace = !dodecaView.trace
@@ -93,7 +91,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             data?.data?.also { uri ->
                 try {
                     dodecaView.ddu = DDU.read(
-                        FileInputStream(contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor))
+                        FileInputStream(contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor)
+                    )
                 } catch (e: Exception) {
                     e.printStackTrace()
                     toast("bad .ddu: $uri")
