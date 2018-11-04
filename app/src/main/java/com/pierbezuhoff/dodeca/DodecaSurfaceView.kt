@@ -95,7 +95,7 @@ class DodecaSurfaceView(context: Context, attributes: AttributeSet) : SurfaceVie
         }
     }
 
-    /* don't redraw, just translate bitmap
+    /* don't redrawTrace, just translate bitmap
      * change dx, dy, scale */
     fun updateScroll() {
         // BUG: when V, just rect of all is shown

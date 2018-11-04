@@ -26,7 +26,7 @@ class DodecaThread(private val dodecaSurfaceView: DodecaSurfaceView, private val
                 translate = false // auto
             }
             if (redraw) {
-//                Log.i("redraw", "trace: ${dodecaSurfaceView.trace}+")
+//                Log.i("redrawTrace", "trace: ${dodecaSurfaceView.trace}+")
                 dodecaSurfaceView.withCanvas { canvas ->
                     if (!dodecaSurfaceView.trace)
                         dodecaSurfaceView.drawBackground(canvas)

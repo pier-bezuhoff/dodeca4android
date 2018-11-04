@@ -1,16 +1,12 @@
 package com.pierbezuhoff.dodeca
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import org.apache.commons.math3.complex.Complex
 import java.util.*
-import org.jetbrains.anko.toast
 
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init()
@@ -21,19 +17,34 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             dy = defaultDy
             scale = defaultScale
             trace = defaultTrace
-            redraw = true
+            redrawTrace = true
             invalidate()
         }
     private var circles: MutableList<Circle>
-    var trace = defaultTrace
+    var trace: Boolean = defaultTrace
+    set(value) {
+        field = value
+        redrawTrace = value
+    }
 
-    var redraw = false // once, total, with background
+    private var redrawTrace: Boolean = defaultTrace // once, draw background
     var updating = true
     var translating = false
     var scaling = false
     private var lastDrawTime = 0L
     private var lastUpdateTime = 0L
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val tracePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private lateinit var traceBitmap: Bitmap
+    private lateinit var traceCanvas: Canvas
+    private val traceMatrix: Matrix
+    get() {
+        val m = Matrix()
+        m.postTranslate(dx, dy)
+        m.postScale(scale, scale, centerX, centerY)
+        return m
+    }
+    private var nUpdates: Long = 0
 
     var dx: Float = defaultDx
     private var ddx: Float = 0f
@@ -63,7 +74,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 circle1.invert(circle),
                 Circle(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
             )
-            DDU(Color.YELLOW, circles)
+            DDU(Color.WHITE, circles)
         }
         with(paint) {
             color = Color.BLUE
@@ -78,6 +89,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }, 1, dt.toLong())
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        traceBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        traceCanvas = Canvas(traceBitmap)
+        redrawTrace = trace
+    }
+
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         canvas?.let {
@@ -85,68 +103,83 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 translateCanvas(it)
             if (scaling)
                 scaleCanvas(it)
-            if (redraw)
-                redrawCanvas(it)
-            else if (updating)
+            if (updating)
                 updateCanvas(it)
+            else
+                it.drawBitmap(traceBitmap, 0f, 0f, tracePaint)
         }
     }
 
     private fun translateCanvas(canvas: Canvas) {
-        canvas.translate(ddx, ddy)
         translating = false
         ddx = 0f
         ddy = 0f
     }
 
     private fun scaleCanvas(canvas: Canvas) {
-        canvas.scale(dscale, dscale, centerX, centerY)
         scaling = false
         dscale = 1f
-    }
-
-    private fun redrawCanvas(canvas: Canvas) {
-        drawBackground(canvas)
-        drawCircles(canvas)
-        redraw = false
-        lastDrawTime = System.currentTimeMillis()
     }
 
     private fun updateCanvas(canvas: Canvas) {
         if (updating && System.currentTimeMillis() - lastUpdateTime >= updateDt) {
             updateCircles()
+            nUpdates++
             lastUpdateTime = System.currentTimeMillis()
         }
-        if (!trace)
+        if (trace) {
+            if (redrawTrace) {
+                drawBackground(traceCanvas)
+                redrawTrace = false
+            }
+            drawCircles(traceCanvas)
+            drawTraceCanvas(canvas)
+        } else {
+            drawBackground(traceCanvas)
+            drawCircles(traceCanvas)
             drawBackground(canvas)
-        drawCircles(canvas)
+            drawCircles(canvas)
+        }
         lastDrawTime = System.currentTimeMillis()
     }
 
     fun updateScroll(ddx: Float, ddy: Float) {
         this.ddx = ddx / scale
         this.ddy = ddy / scale
+        traceCanvas.translate(-this.ddx, -this.ddy)
         dx += this.ddx
         dy += this.ddy
-//        translating = true
-//        invalidate()
+        translating = true
     }
 
     fun updateScale(dscale: Float) {
         this.dscale = scale
+        // TODO: proper [feature] scaling (with traceMatrix)
+        // TODO: usual translation and scaling when stopped and not trace
+        // TODO: enlarge traceBitmap (as much as possible)
+        traceCanvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
         scale *= dscale
-//        scaling = true
+        scaling = true
 //        invalidate()
     }
 
+    private fun drawTraceCanvas(canvas: Canvas) {
+        canvas.drawBitmap(traceBitmap, traceMatrix, tracePaint)
+    }
+
     private fun drawBackground(canvas: Canvas) {
-        Log.i("draw", "bg: ${ddu.backgroundColor}")
         canvas.drawColor(ddu.backgroundColor)
     }
 
-    private fun drawCircles(canvas: Canvas) {
-        for (circle in circles)
-            drawCircle(canvas, circle)
+    private fun drawCircles(canvas: Canvas, onlyWithRules: Boolean = false) {
+        if (onlyWithRules) {
+            for (circle in circles)
+                if (circle.rule != null && circle.rule!!.isNotBlank())
+                    drawCircle(canvas, circle)
+        }
+        else
+            for (circle in circles)
+                drawCircle(canvas, circle)
     }
 
     private fun drawCircle(canvas: Canvas, circle: Circle) {
@@ -154,9 +187,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         paint.color = circle.borderColor
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
         canvas.drawCircle(
-            scale * (c.real.toFloat() + dx - centerX) + centerX,
-            scale * (c.imaginary.toFloat() + dy - centerY) + centerY,
-            scale * r.toFloat(),
+            visibleX(c.real.toFloat()),
+            visibleY(c.imaginary.toFloat()),
+            visibleR(r.toFloat()),
             paint)
     }
 
@@ -180,6 +213,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
         }
     }
+
+    private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX
+    private inline fun visibleY(y: Float): Float = scale * (y + dy - centerY) + centerY
+    private inline fun visibleR(r: Float): Float = scale * r
 
     companion object {
         private const val FPS = 300
