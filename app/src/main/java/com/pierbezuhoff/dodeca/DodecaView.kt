@@ -10,7 +10,7 @@ import android.view.View
 import org.apache.commons.math3.complex.Complex
 import java.util.*
 
-class DodecaView(context: Context, attributeSet: AttributeSet) : View(context, attributeSet) {
+class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init()
         set(value) {
             field = value
@@ -22,7 +22,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet) : View(context, a
             redraw = true
             invalidate()
         }
-    var circles: MutableList<Circle>
+    private var circles: MutableList<Circle>
     var trace = defaultTrace
 
     var redraw = false // once, total, with background
@@ -34,29 +34,32 @@ class DodecaView(context: Context, attributeSet: AttributeSet) : View(context, a
     private val paint = Paint(Paint.HINTING_ON)
 
     var dx: Float = defaultDx
-    var ddx: Float = 0f
+    private var ddx: Float = 0f
     var dy: Float = defaultDy
-    var ddy: Float = 0f
+    private var ddy: Float = 0f
     var scale: Float = defaultScale
-    var dscale: Float = 1f
+    private var dscale: Float = 1f
 
     val centerX: Float get() = x + width / 2
     val centerY: Float get() = y + height / 2
 
-    var t = 0f
+    var t = 0 // tmp
 
     init {
         this.circles = mutableListOf() // dummy, actual from ddu.set
         this.ddu = run {
-            val circle = Circle(Complex(300.0, 400.0), 200.0)
+            val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "n12")
             val circle0 = Circle(Complex(0.0, 0.0), 100.0, Color.GREEN)
-            val circle1 = Circle(Complex(450.0, 850.0), 300.0, fill = true)
+            val circle1 = Circle(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
+            val circle2 = Circle(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
             val circles = listOf(
                 circle,
-                circle0,
                 circle1,
+                circle2,
+                circle0,
                 circle0.invert(circle),
-                circle1.invert(circle)
+                circle1.invert(circle),
+                Circle(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
             )
             DDU(circles = circles)
         }
@@ -64,14 +67,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet) : View(context, a
             color = Color.BLUE
             style = Paint.Style.STROKE
         }
-        setWillNotDraw(false)
         val timer = Timer()
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 if (updating)
                     postInvalidate()
             }
-        }, 0, dt.toLong())
+        }, 1, dt.toLong())
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -124,8 +126,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet) : View(context, a
     }
 
     fun updateScroll(ddx: Float, ddy: Float) {
-        this.ddx = scale * ddx
-        this.ddy = scale * ddy
+        this.ddx = ddx / scale
+        this.ddy = ddy / scale
         dx += this.ddx
         dy += this.ddy
 //        translating = true
@@ -135,14 +137,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet) : View(context, a
     fun updateScale(dscale: Float) {
         this.dscale = scale
         scale *= dscale
-        dx *= dscale
-        dy *= dscale
 //        scaling = true
 //        invalidate()
     }
 
     private fun drawBackground(canvas: Canvas) {
-        canvas.drawColor(ddu.backgroundColor)
+//        canvas.drawColor(ddu.backgroundColor)
     }
 
     private fun drawCircles(canvas: Canvas) {
@@ -163,14 +163,18 @@ class DodecaView(context: Context, attributeSet: AttributeSet) : View(context, a
 
     private fun updateCircles() {
         val oldCircles = circles.toList()
+        val n = circles.size
         oldCircles.forEachIndexed { i, circle ->
             circle.rule?.let { rule ->
-                rule.drop(1).forEach { ch -> // drop first 'n' letter
+                val chars = if (rule.startsWith("n")) rule.drop(1) else rule
+                chars.forEach { ch -> // drop first 'n' letter
                     val j = Integer.parseInt(ch.toString()) // NOTE: Char.toInt() is ord()
-                    if (j >= circles.size)
-                        Log.e("DodecaView", "updateCircles: index $j >= ${oldCircles.size} out of `circles` bounds (from rule $rule for $circle)")
+                    if (j >= n)
+                        Log.e("DodecaView", "updateCircles: index $j >= $n out of `circles` bounds (from rule $rule for $circle)")
                     else {
-                        circles[i] = circle.invert(circles[j])
+                        // Q: maybe should be inverted with respect to new `circles[j]`
+                        // maybe it doesn't matter
+                        circles[i] = circles[i].invert(oldCircles[j])
                     }
                 }
             }
@@ -179,10 +183,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet) : View(context, a
 
     companion object {
         private const val FPS = 300
-        private const val UPS = 10 // updates per second
+        private const val UPS = 100 // updates per second
         const val dt = 1000f / FPS
         const val updateDt = 1000f / UPS
-        const val defaultTrace = false
+        const val defaultTrace = true
         const val defaultDx = 0f
         const val defaultDy = 0f
         const val defaultScale = 1f

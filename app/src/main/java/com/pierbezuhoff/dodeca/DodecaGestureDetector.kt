@@ -24,7 +24,7 @@ class DodecaGestureDetector(val activity: MainActivity, val view: DodecaView) : 
 
     override fun onDoubleTap(e: MotionEvent?): Boolean {
         e?.let {
-//            view.updateScroll(view.centerX - e.x, view.centerY - e.y)
+            view.updateScroll(view.centerX - e.x, view.centerY - e.y)
         }
         return super.onDoubleTap(e)
     }
