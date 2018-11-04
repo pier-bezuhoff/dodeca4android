@@ -7,8 +7,10 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import org.apache.commons.math3.complex.Complex
 import java.util.*
+import org.jetbrains.anko.toast
 
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init()
@@ -31,7 +33,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     var scaling = false
     private var lastDrawTime = 0L
     private var lastUpdateTime = 0L
-    private val paint = Paint(Paint.HINTING_ON)
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     var dx: Float = defaultDx
     private var ddx: Float = 0f
@@ -61,7 +63,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 circle1.invert(circle),
                 Circle(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
             )
-            DDU(circles = circles)
+            DDU(Color.YELLOW, circles)
         }
         with(paint) {
             color = Color.BLUE
@@ -78,9 +80,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-//        Log.i("I", "translating: $translating, redraw: $redraw, updating: $updating, trace: $trace, lastUpdateTime: $lastUpdateTime")
         canvas?.let {
-            canvas.save()
             if (translating)
                 translateCanvas(it)
             if (scaling)
@@ -89,7 +89,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 redrawCanvas(it)
             else if (updating)
                 updateCanvas(it)
-            canvas.restore()
         }
     }
 
@@ -104,7 +103,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         canvas.scale(dscale, dscale, centerX, centerY)
         scaling = false
         dscale = 1f
-
     }
 
     private fun redrawCanvas(canvas: Canvas) {
@@ -142,7 +140,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun drawBackground(canvas: Canvas) {
-//        canvas.drawColor(ddu.backgroundColor)
+        Log.i("draw", "bg: ${ddu.backgroundColor}")
+        canvas.drawColor(ddu.backgroundColor)
     }
 
     private fun drawCircles(canvas: Canvas) {
@@ -166,7 +165,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         val n = circles.size
         oldCircles.forEachIndexed { i, circle ->
             circle.rule?.let { rule ->
-                val chars = if (rule.startsWith("n")) rule.drop(1) else rule
+                val theRule = if (rule.startsWith("n")) rule.drop(1) else rule
+                val chars = if (true) theRule else theRule.reversed()
                 chars.forEach { ch -> // drop first 'n' letter
                     val j = Integer.parseInt(ch.toString()) // NOTE: Char.toInt() is ord()
                     if (j >= n)
