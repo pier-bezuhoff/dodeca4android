@@ -8,6 +8,9 @@ import android.view.View
 import org.apache.commons.math3.complex.Complex
 import java.util.*
 
+// TODO: proper [feature] scaling (with traceMatrix)
+// TODO: usual translation and scaling when stopped and not trace
+// TODO: enlarge traceBitmap (as much as possible)
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init()
         set(value) {
@@ -17,33 +20,33 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             dy = defaultDy
             scale = defaultScale
             trace = defaultTrace
-            redrawTrace = true
+            redrawTrace = trace
+            updating = defaultUpdating
             invalidate()
         }
     private var circles: MutableList<Circle>
     var trace: Boolean = defaultTrace
     set(value) {
         field = value
-        redrawTrace = value
+        if (trace && width > 0) // we know sizes
+            retrace()
     }
 
     private var redrawTrace: Boolean = defaultTrace // once, draw background
-    var updating = true
+    var updating = defaultUpdating
+    set(value) {
+        field = value
+        if (trace && value && width > 0) // we know sizes
+            retrace()
+    }
     var translating = false
     var scaling = false
-    private var lastDrawTime = 0L
     private var lastUpdateTime = 0L
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val tracePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private lateinit var traceBitmap: Bitmap
     private lateinit var traceCanvas: Canvas
-    private val traceMatrix: Matrix
-    get() {
-        val m = Matrix()
-        m.postTranslate(dx, dy)
-        m.postScale(scale, scale, centerX, centerY)
-        return m
-    }
+    private val traceMatrix: Matrix = Matrix()
     private var nUpdates: Long = 0
 
     var dx: Float = defaultDx
@@ -56,15 +59,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     val centerX: Float get() = x + width / 2
     val centerY: Float get() = y + height / 2
 
-    var t = 0 // tmp
-
     init {
         this.circles = mutableListOf() // dummy, actual from ddu.set
         this.ddu = run {
             val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "n12")
-            val circle0 = Circle(Complex(0.0, 0.0), 100.0, Color.GREEN)
             val circle1 = Circle(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
             val circle2 = Circle(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
+            val circle0 = Circle(Complex(0.0, 0.0), 100.0, Color.GREEN)
             val circles = listOf(
                 circle,
                 circle1,
@@ -91,9 +92,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        traceBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        traceCanvas = Canvas(traceBitmap)
-        redrawTrace = trace
+        if (trace)
+            retrace()
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -103,10 +103,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 translateCanvas(it)
             if (scaling)
                 scaleCanvas(it)
-            if (updating)
-                updateCanvas(it)
-            else
-                it.drawBitmap(traceBitmap, 0f, 0f, tracePaint)
+            when {
+                updating -> updateCanvas(it)
+                trace -> drawTraceCanvas(it)
+                else -> {
+                    // not bitmap for better scrolling & scaling
+                    drawBackground(canvas)
+                    drawCircles(canvas)
+                }
+            }
         }
     }
 
@@ -130,17 +135,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         if (trace) {
             if (redrawTrace) {
                 drawBackground(traceCanvas)
-                redrawTrace = false
             }
-            drawCircles(traceCanvas)
+            // without rule => draw only once
+            drawCircles(traceCanvas, !redrawTrace)
             drawTraceCanvas(canvas)
+            redrawTrace = false
         } else {
-            drawBackground(traceCanvas)
-            drawCircles(traceCanvas)
             drawBackground(canvas)
             drawCircles(canvas)
         }
-        lastDrawTime = System.currentTimeMillis()
     }
 
     fun updateScroll(ddx: Float, ddy: Float) {
@@ -150,20 +153,50 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         dx += this.ddx
         dy += this.ddy
         translating = true
+        if (trace)
+            if (updating)
+                retrace()
+            else {
+                traceMatrix.postTranslate(ddx, ddy)
+                invalidate()
+            }
+        else if (!updating)
+            invalidate()
     }
 
     fun updateScale(dscale: Float) {
         this.dscale = scale
-        // TODO: proper [feature] scaling (with traceMatrix)
-        // TODO: usual translation and scaling when stopped and not trace
-        // TODO: enlarge traceBitmap (as much as possible)
         traceCanvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
         scale *= dscale
         scaling = true
-//        invalidate()
+        if (trace)
+            if (updating)
+                retrace()
+            else {
+                traceMatrix.postScale(dscale, dscale, centerX, centerY)
+                invalidate()
+            }
+        else if (!updating)
+            invalidate()
+    }
+
+    /* when trace turns on or sizes change */
+    private fun retrace() {
+        Log.i(TAG, "retrace")
+        traceBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        traceCanvas = Canvas(traceBitmap)
+        traceMatrix.reset()
+        redrawTrace = trace
+        if (!updating) {
+            drawBackground(traceCanvas)
+            drawCircles(traceCanvas)
+        }
+        invalidate()
+
     }
 
     private fun drawTraceCanvas(canvas: Canvas) {
+        drawBackground(canvas)
         canvas.drawBitmap(traceBitmap, traceMatrix, tracePaint)
     }
 
@@ -203,7 +236,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 chars.forEach { ch -> // drop first 'n' letter
                     val j = Integer.parseInt(ch.toString()) // NOTE: Char.toInt() is ord()
                     if (j >= n)
-                        Log.e("DodecaView", "updateCircles: index $j >= $n out of `circles` bounds (from rule $rule for $circle)")
+                        Log.e(TAG, "updateCircles: index $j >= $n out of `circles` bounds (from rule $rule for $circle)")
                     else {
                         // Q: maybe should be inverted with respect to new `circles[j]`
                         // maybe it doesn't matter
@@ -224,8 +257,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         const val dt = 1000f / FPS
         const val updateDt = 1000f / UPS
         const val defaultTrace = true
+        const val defaultUpdating = true
         const val defaultDx = 0f
         const val defaultDy = 0f
         const val defaultScale = 1f
+        private const val TAG = "DodecaView"
     }
 }
