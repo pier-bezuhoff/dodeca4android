@@ -62,7 +62,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     init {
         this.circles = mutableListOf() // dummy, actual from ddu.set
         this.ddu = run {
-            val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "n12")
+            val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "12")
             val circle1 = Circle(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
             val circle2 = Circle(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
             val circle0 = Circle(Complex(0.0, 0.0), 100.0, Color.GREEN)
@@ -207,12 +207,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun drawCircles(canvas: Canvas, onlyWithRules: Boolean = false) {
         if (onlyWithRules) {
             for (circle in circles)
-                if (circle.rule != null && circle.rule!!.isNotBlank())
+                if (circle.rule != null && circle.rule!!.isNotBlank() && !circle.rule!!.startsWith("n"))
                     drawCircle(canvas, circle)
         }
         else
             for (circle in circles)
-                drawCircle(canvas, circle)
+                if (circle.rule != null && !circle.rule!!.startsWith("n"))
+                    drawCircle(canvas, circle)
     }
 
     private fun drawCircle(canvas: Canvas, circle: Circle) {
