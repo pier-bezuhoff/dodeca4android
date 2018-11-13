@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca
 import android.util.Log
 import android.view.SurfaceHolder
 
+// TODO: remove
 class DodecaThread(private val dodecaSurfaceView: DodecaSurfaceView, private val holder: SurfaceHolder) : Thread() {
     var running: Boolean = false
     var redraw = false

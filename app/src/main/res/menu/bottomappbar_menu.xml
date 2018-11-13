@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+            android:id="@+id/app_bar_load"
+            android:icon="@drawable/icon_open_file"
+            android:title="@string/load_button_title"
+            app:showAsAction="always"/>
+    <item
+            android:id="@+id/app_bar_save"
+            android:icon="@drawable/icon_save"
+            android:title="@string/save_button_title"
+            app:showAsAction="always"/>
+    <item
+            android:id="@+id/app_bar_go"
+            android:icon="@drawable/icon_play"
+            android:title="@string/go_button_title"
+            app:showAsAction="always"/>
+    <item
+            android:id="@+id/app_bar_trace"
+            android:icon="@drawable/icon_trace"
+            android:title="@string/trace_button_title"
+            app:showAsAction="always"/>
+    <item
+            android:id="@+id/app_bar_settings"
+            android:icon="@drawable/icon_settings"
+            android:title="@string/settings_button_title"
+            app:showAsAction="always"/>
+</menu>

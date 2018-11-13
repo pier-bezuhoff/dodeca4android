@@ -8,9 +8,8 @@ import android.view.View
 import org.apache.commons.math3.complex.Complex
 import java.util.*
 
-// TODO: proper [feature] scaling (with traceMatrix)
-// TODO: usual translation and scaling when stopped and not trace
 // TODO: enlarge traceBitmap (as much as possible)
+// TODO: when screen rotated, restart THE SAME ddu
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init()
         set(value) {
@@ -39,8 +38,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         if (trace && value && width > 0) // we know sizes
             retrace()
     }
-    var translating = false
-    var scaling = false
+    var translating = false // TODO: maybe remove
+    var scaling = false // TODO: maybe remove
     private var lastUpdateTime = 0L
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val tracePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -49,9 +48,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private val traceMatrix: Matrix = Matrix()
     private var nUpdates: Long = 0
 
-    var dx: Float = defaultDx
+    var dx: Float = defaultDx // not scaled
     private var ddx: Float = 0f
-    var dy: Float = defaultDy
+    var dy: Float = defaultDy // not scaled
     private var ddy: Float = 0f
     var scale: Float = defaultScale
     private var dscale: Float = 1f
@@ -136,8 +135,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             if (redrawTrace) {
                 drawBackground(traceCanvas)
             }
-            // without rule => draw only once
-            drawCircles(traceCanvas, !redrawTrace)
+            drawCircles(traceCanvas)
             drawTraceCanvas(canvas)
             redrawTrace = false
         } else {
@@ -182,7 +180,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* when trace turns on or sizes change */
     private fun retrace() {
-        Log.i(TAG, "retrace")
         traceBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         traceCanvas = Canvas(traceBitmap)
         traceMatrix.reset()
@@ -204,16 +201,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         canvas.drawColor(ddu.backgroundColor)
     }
 
-    private fun drawCircles(canvas: Canvas, onlyWithRules: Boolean = false) {
-        if (onlyWithRules) {
-            for (circle in circles)
-                if (circle.rule != null && circle.rule!!.isNotBlank() && !circle.rule!!.startsWith("n"))
-                    drawCircle(canvas, circle)
-        }
-        else
-            for (circle in circles)
-                if (circle.rule != null && !circle.rule!!.startsWith("n"))
-                    drawCircle(canvas, circle)
+    private fun drawCircles(canvas: Canvas) {
+        for (circle in circles)
+            if (circle.show)
+                drawCircle(canvas, circle)
     }
 
     private fun drawCircle(canvas: Canvas, circle: Circle) {
@@ -239,13 +230,19 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     if (j >= n)
                         Log.e(TAG, "updateCircles: index $j >= $n out of `circles` bounds (from rule $rule for $circle)")
                     else {
-                        // Q: maybe should be inverted with respect to new `circles[j]`
+                        // QUESTION: maybe should be inverted with respect to new `circles[j]`
                         // maybe it doesn't matter
                         circles[i] = circles[i].invert(oldCircles[j])
                     }
                 }
             }
         }
+    }
+
+    fun save(filename: String? = null) {
+        // ATTENTION: ?scale relative to view center? => check!
+        ddu.translateAndScale(dx.toDouble(), dy.toDouble(), scale.toDouble(), Complex(centerX.toDouble(), centerY.toDouble()))
+        ddu.save(filename)
     }
 
     private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX

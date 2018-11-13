@@ -11,29 +11,31 @@ import android.support.v7.app.AppCompatActivity
 import android.util.AttributeSet
 import android.view.*
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.app_bar_main.*
-import kotlinx.android.synthetic.main.content_main.*
 import org.jetbrains.anko.toast
 import java.io.FileInputStream
 import java.lang.Exception
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+    private var bottomBarShown = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        this.window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        window.decorView.apply {
+            systemUiVisibility = FULLSCREEN_UI_VISIBILITY
+        }
+        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
         setContentView(R.layout.activity_main)
-        setSupportActionBar(toolbar)
-
-        val toggle = ActionBarDrawerToggle(
-            this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close
-        )
-        drawer_layout.addDrawerListener(toggle)
-        toggle.syncState()
+        setSupportActionBar(bar)
+        // TODO: replace drawer layout with SettingsActivity or smth
+//        val toggle = ActionBarDrawerToggle(
+//            this, drawer_layout, bar, R.string.navigation_drawer_open, R.string.navigation_drawer_close
+//        )
+//        drawer_layout.addDrawerListener(toggle)
+//        toggle.syncState()
 
         nav_view.setNavigationItemSelectedListener(this)
         // listen scroll, double tap and scale gestures
-        DodecaGestureDetector(this, dodecaView)
+        DodecaGestureDetector(this, dodecaView, onSingleTap = { toggleBottomBar() })
     }
 
     override fun onBackPressed() {
@@ -45,44 +47,37 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.main, menu)
+        menuInflater.inflate(R.menu.bottomappbar_menu, menu)
         return true
     }
 
-    /*
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         when (item.itemId) {
-            R.id.action_settings -> return true
-            else -> return super.onOptionsItemSelected(item)
-        }
-    }
-    */
-
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Handle navigation view item clicks here.
-        when (item.itemId) {
-            R.id.nav_load -> {
+            R.id.app_bar_load -> {
                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = "*/*" // should be .ddu
                 }
                 startActivityForResult(Intent.createChooser(intent, "Select .ddu"), DDU_CODE)
             }
-            R.id.nav_go -> {
+            R.id.app_bar_save -> {
+                /* TODO: change circles' x, y, radius with respect to
+                dodecaView's dx, dy, scale and save (as)*/
+            }
+            R.id.app_bar_go -> {
                 dodecaView.updating = !dodecaView.updating
             }
-            R.id.nav_trace -> {
+            R.id.app_bar_trace -> {
                 dodecaView.trace = !dodecaView.trace
             }
-//            R.id.nav_manage -> { }
-//            R.id.nav_send -> { }
+            R.id.app_bar_settings -> {}
         }
-
         drawer_layout.closeDrawer(GravityCompat.START)
+        return true
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {}
         return true
     }
 
@@ -91,6 +86,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (requestCode == DDU_CODE && resultCode == Activity.RESULT_OK) {
             data?.data?.also { uri ->
                 try {
+                    // TODO: save filename or whatisit
                     dodecaView.ddu = DDU.read(
                         FileInputStream(contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor)
                     )
@@ -102,7 +98,21 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
+    private fun toggleBottomBar() {
+        if (bottomBarShown) {
+            bar.visibility = View.GONE
+            dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+        }
+        else {
+            bar.visibility = View.VISIBLE
+            dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
+        }
+        bottomBarShown = !bottomBarShown
+    }
+
     companion object {
         const val DDU_CODE = 1
+        const val FULLSCREEN_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_FULLSCREEN
+        const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
     }
 }

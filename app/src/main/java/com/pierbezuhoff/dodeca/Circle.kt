@@ -7,10 +7,13 @@ import org.apache.commons.math3.complex.Complex
 import org.json.JSONException
 import java.io.*
 
-data class Circle(var center: Complex, val radius: Double, var borderColor: Int, var fill: Boolean, var rule: String?) {
+data class Circle(var center: Complex, var radius: Double, var borderColor: Int, var fill: Boolean, var rule: String?) {
     val x: Double get() = center.real
     val y: Double get() = center.imaginary
     private val r2: Double get() = radius * radius
+    val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
+    val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
+    val show: Boolean get() = dynamic && !dynamicHidden
 
     constructor(center: Complex, radius: Double, borderColor: Int? = null, fill: Boolean? = null, rule: String? = null)
             : this(center, radius, borderColor ?: defaultBorderColor, fill ?: defaultFill, rule ?: defaultRule)
@@ -37,6 +40,16 @@ data class Circle(var center: Complex, val radius: Double, var borderColor: Int,
         /* NOTE: c = 0, r = 1; center <- |R
         => Circle(a/(a^2-r2), radius/|a^2-r2|)
          */
+    }
+
+    fun translate(dx: Double = 0.0, dy: Double = 0.0) {
+        center = Complex(x + dx, y + dy)
+    }
+
+    /* scale by `scaleFactor` relative to `center` (or 0) */
+    fun scale(scaleFactor: Double = 1.0, center: Complex = Complex.ZERO) {
+        radius *= scaleFactor
+        this.center = center + scaleFactor * (this.center - center)
     }
 
     companion object {

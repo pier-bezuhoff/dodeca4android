@@ -2,8 +2,13 @@
     <string name="app_name">Dodeca</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_title">Dodeca for Android</string>
+    <string name="nav_header_subtitle">Settings</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
+    <string name="load_button_title">Load</string>
+    <string name="go_button_title">Go</string>
+    <string name="trace_button_title">Trace</string>
+    <string name="save_button_title">Save</string>
+    <string name="settings_button_title">Settings</string>
 </resources>

@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import org.apache.commons.math3.complex.Complex
 import org.jetbrains.anko.getStackTraceString
 
+// TODO: remove
 class DodecaSurfaceView(context: Context, attributes: AttributeSet) : SurfaceView(context, attributes), SurfaceHolder.Callback {
     var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init()
     set(value) {
