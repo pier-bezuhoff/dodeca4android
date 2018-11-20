@@ -3,7 +3,6 @@ package com.pierbezuhoff.dodeca
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.support.design.widget.NavigationView
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
@@ -11,10 +10,9 @@ import android.view.View
 import android.view.WindowManager
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
-import java.io.File
-import java.net.URI
+import java.io.FileInputStream
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+class MainActivity : AppCompatActivity() {
     private var bottomBarShown = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,17 +57,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.app_bar_trace -> {
                 dodecaView.trace = !dodecaView.trace
             }
+            R.id.app_bar_clear -> {
+                dodecaView.retrace()
+            }
             R.id.app_bar_settings -> {
                 startActivityForResult(
                     Intent(this@MainActivity, SettingsActivity::class.java),
                     APPLY_SETTINGS_CODE)
             }
         }
-        return true
-    }
-
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {}
         return true
     }
 
@@ -80,9 +76,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 if (resultCode == Activity.RESULT_OK) {
                     data?.data?.also { uri ->
                         try {
-                            // BUG: now don't work
-                            dodecaView.ddu = DDU.read(File(URI(uri.path)))
-//                        FileInputStream(contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor))
+                            dodecaView.ddu = DDU.readStream(FileInputStream(
+                                contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor))
                         } catch (e: Exception) {
                             e.printStackTrace()
                             toast("bad .ddu: $uri")
@@ -90,8 +85,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     }
                 }
             APPLY_SETTINGS_CODE ->
-                dodecaView.loadSharedPreferences()
+                dodecaView.loadMajorSharedPreferences()
         }
+        dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
     }
 
     private fun toggleBottomBar() {
@@ -108,6 +104,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     companion object {
+        const val TAG = "MainActivity"
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
         // fullscreen, but with bottom navigation

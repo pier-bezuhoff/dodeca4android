@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca
 import android.graphics.Color
 import org.apache.commons.math3.complex.Complex
 import java.io.File
+import java.io.InputStream
 
 internal enum class Mode { // for scanning .ddu, before <mode parameter>
     NO, GLOBAL, RADIUS, X, Y, BORDER_COLOR, FILL, RULE, CIRCLE_AUX;
@@ -75,13 +76,13 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
     companion object {
         const val defaultBackgroundColor: Int = Color.WHITE
 
-        fun read(file: File): DDU {
+        fun readStream(stream: InputStream): DDU {
             var backgroundColor = defaultBackgroundColor
             val circles: MutableList<Circle> = mutableListOf()
             var nGlobals = 0
             var mode: Mode = Mode.NO
             var params = CircleParams()
-            file.inputStream().reader().forEachLine {
+            stream.reader().forEachLine {
                 when {
                     it.startsWith("global") -> mode = Mode.GLOBAL
                     mode == Mode.GLOBAL && it.isNotBlank() -> {
@@ -111,7 +112,13 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
                     }
                 }
             }
-            return DDU(backgroundColor, circles, file)
+            return DDU(backgroundColor, circles)
+        }
+
+        fun read(file: File): DDU {
+            val ddu = readStream(file.inputStream())
+            ddu.file = file
+            return ddu
         }
     }
 }

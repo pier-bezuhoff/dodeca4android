@@ -1,6 +1,7 @@
 package com.pierbezuhoff.dodeca
 
 import android.content.Context
+import android.content.res.AssetManager
 import android.graphics.*
 import android.preference.PreferenceManager
 import android.util.AttributeSet
@@ -8,6 +9,7 @@ import android.util.Log
 import android.view.View
 import org.apache.commons.math3.complex.Complex
 import java.io.File
+import java.lang.Exception
 import java.util.*
 
 // TODO: enlarge traceBitmap (as much as possible)
@@ -29,11 +31,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             clearMinorSharedPreferences()
             invalidate()
         }
-    private var circles: MutableList<Circle>
+    private lateinit var circles: MutableList<Circle>
+    private val sharedPreferences get() = PreferenceManager.getDefaultSharedPreferences(context)
     var trace: Boolean = defaultTrace
     set(value) {
         field = value
-        if (trace && width > 0) // we know sizes
+        if (width > 0) // we know sizes
             retrace()
     }
 
@@ -41,7 +44,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     var updating = defaultUpdating
     set(value) {
         field = value
-        if (trace && value && width > 0) // we know sizes
+        // don't know, if it's bad...
+        // we have 'clear' button...
+        if (trace && value && redrawTraceOnMove && width > 0) // we know sizes
             retrace()
     }
     private val timer = Timer()
@@ -71,22 +76,27 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     init {
         loadSharedPreferences()
-        this.circles = mutableListOf() // dummy, actual from ddu.set
-        this.ddu = run {
-            val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "12")
-            val circle1 = Circle(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
-            val circle2 = Circle(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
-            val circle0 = Circle(Complex(0.0, 0.0), 100.0, Color.GREEN)
-            val circles = listOf(
-                circle,
-                circle1,
-                circle2,
-                circle0,
-                circle0.invert(circle),
-                circle1.invert(circle),
-                Circle(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
-            )
-            DDU(Color.WHITE, circles)
+        try {
+            this.ddu = DDU.readStream(context.assets.open("ddu/290305_z1_erot2.ddu"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            this.circles = mutableListOf() // dummy, actual from ddu.set
+            this.ddu = run {
+                val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "12")
+                val circle1 = Circle(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
+                val circle2 = Circle(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
+                val circle0 = Circle(Complex(0.0, 0.0), 100.0, Color.GREEN)
+                val circles = listOf(
+                    circle,
+                    circle1,
+                    circle2,
+                    circle0,
+                    circle0.invert(circle),
+                    circle1.invert(circle),
+                    Circle(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
+                )
+                DDU(Color.WHITE, circles)
+            }
         }
         with(paint) {
             color = Color.BLUE
@@ -97,47 +107,68 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun loadSharedPreferences() {
-        PreferenceManager.getDefaultSharedPreferences(context).also {
-            redrawTraceOnMove = it.getBoolean("redraw_trace", defaultRedrawTraceOnMove)
-            showAllCircles = it.getBoolean("show_all_circles", defaultShowAllCircles)
-            reverseMotion = it.getBoolean("reverse_motion", defaultReverseMotion)
-            UPS = it.getInt("ups", defaultUPS)
-//            it.getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
+        loadMajorSharedPreferences()
+        loadMinorSharedPreferences()
+    }
+
+    fun loadMajorSharedPreferences() {
+        var updateImmediately = false
+        with (sharedPreferences) {
+            redrawTraceOnMove = getBoolean("redraw_trace", defaultRedrawTraceOnMove)
+            val newShowAllCircles = getBoolean("show_all_circles", defaultShowAllCircles)
+            if (newShowAllCircles != showAllCircles) {
+                updateImmediately = true
+                showAllCircles = newShowAllCircles
+            }
+            reverseMotion = getBoolean("reverse_motion", defaultReverseMotion)
+            UPS = getInt("ups", defaultUPS)
+//            getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
 //                UPS = it
 //            }
             // NOTE: restart/rotate screen to update FPS
-            it.getString("fps", defaultFPS.toString())?.toIntOrNull()?.let {
+            getString("fps", defaultFPS.toString())?.toIntOrNull()?.let {
                 FPS = it
                 Log.i(TAG, "FPS: $FPS")
             }
-            it.getString("shape", defaultShape.toString())?.toUpperCase()?.let {
-                shape = Shapes.valueOf(it)
+            getString("shape", defaultShape.toString())?.toUpperCase()?.let {
+                val newShape = Shapes.valueOf(it)
+                if (newShape != shape) {
+                    updateImmediately = true
+                    shape = newShape
+                }
             }
-            dx = it.getFloat("dx", dx)
-            dy = it.getFloat("dy", dy)
-            scale = it.getFloat("scale", scale)
-            trace = it.getBoolean("trace", trace)
-            updating = it.getBoolean("updating", updating)
+            if (!updating && updateImmediately)
+                invalidate()
+        }
+    }
+
+    private fun loadMinorSharedPreferences() {
+        with (sharedPreferences) {
+            dx = getFloat("dx", dx)
+            dy = getFloat("dy", dy)
+            scale = getFloat("scale", scale)
+            trace = getBoolean("trace", trace)
+            updating = getBoolean("updating", updating)
         }
     }
 
     private fun saveMinorSharedPreferences() {
-        PreferenceManager.getDefaultSharedPreferences(context).edit().also {
-            it.putFloat("dx", dx)
-            it.putFloat("dy", dy)
-            it.putFloat("scale", scale)
-            it.putBoolean("trace", trace)
-            it.putBoolean("updating", updating)
-            it.commit()
+        with (sharedPreferences.edit()) {
+            putFloat("dx", dx)
+            putFloat("dy", dy)
+            putFloat("scale", scale)
+            putBoolean("trace", trace)
+            putBoolean("updating", updating)
+            commit()
         }
     }
 
     private fun clearMinorSharedPreferences() {
-        PreferenceManager.getDefaultSharedPreferences(context).edit().also {
+        with (sharedPreferences.edit()) {
             setOf("dx", "dy", "scale", "trace", "updating").forEach { key ->
-                it.remove(key)
+                remove(key)
             }
-            it.commit()
+            commit()
         }
     }
 
@@ -217,7 +248,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     /* when trace turns on or sizes change */
-    private fun retrace() {
+    fun retrace() {
         traceBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         traceCanvas = Canvas(traceBitmap)
         traceMatrix.reset()
@@ -245,6 +276,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 drawCircle(canvas, circle)
     }
 
+    /* if `shape` != CIRCLE draw `shape` instead of circle */
     private fun drawCircle(canvas: Canvas, circle: Circle) {
         val (c, r) = circle
         paint.color = circle.borderColor
