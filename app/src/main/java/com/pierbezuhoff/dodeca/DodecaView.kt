@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import org.apache.commons.math3.complex.Complex
+import java.io.File
 import java.util.*
 
 // TODO: enlarge traceBitmap (as much as possible)
@@ -239,10 +240,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    fun save(filename: String? = null) {
+    fun save(file: File? = null) {
         // ATTENTION: ?scale relative to view center? => check!
         ddu.translateAndScale(dx.toDouble(), dy.toDouble(), scale.toDouble(), Complex(centerX.toDouble(), centerY.toDouble()))
-        ddu.save(filename)
+        ddu.save(file)
     }
 
     private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX

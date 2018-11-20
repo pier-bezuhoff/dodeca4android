@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/settings_display_title">
+        <SwitchPreference
+                android:key="redraw_trace"
+                android:defaultValue="true"
+                android:title="@string/redraw_trace_title"
+                android:summary="@string/redraw_trace_summary"/>
+        <SwitchPreference
+                android:key="show_all_circles"
+                android:defaultValue="false"
+                android:title="@string/show_all_circles_title"
+                android:summary="@string/show_all_circles_summary"/>
+        <EditTextPreference
+                android:key="ups"
+                android:defaultValue="100"
+                android:selectAllOnFocus="false"
+                android:singleLine="true"
+                android:title="@string/ups_title"
+                android:summary="@string/ups_summary"
+                android:inputType="number"
+                android:numeric="integer"/>
+        <ListPreference
+                android:key="shape"
+                android:title="@string/shape_title"
+                android:entries="@array/shapes"
+                android:entryValues="@array/shapesValues"
+                android:defaultValue="circle"
+                android:summary="@string/shape_summary"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/settings_about_title">
+        <Preference
+                android:selectable="false"
+                android:summary="@string/description_summary"/>
+        <Preference
+                android:selectable="false"
+                android:title="@string/version_title"
+                android:summary="@string/version_summary"/>
+        <Preference
+                android:title="@string/copyright_title"
+                android:summary="@string/copyright_summary"/>
+        <!-- MAYBE: add some links to websites -->
+        <Preference
+                android:title="@string/support_title"
+                android:key="@string/support_summary">
+        </Preference>
+    </PreferenceCategory>
+
+</PreferenceScreen>

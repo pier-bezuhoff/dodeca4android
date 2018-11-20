@@ -3,7 +3,6 @@ package com.pierbezuhoff.dodeca
 import android.graphics.Color
 import org.apache.commons.math3.complex.Complex
 import java.io.File
-import java.io.FileInputStream
 
 internal enum class Mode { // for scanning .ddu, before <mode parameter>
     NO, GLOBAL, RADIUS, X, Y, BORDER_COLOR, FILL, RULE, CIRCLE_AUX;
@@ -21,10 +20,11 @@ internal data class CircleParams(
 
 /* in kotlin colors are negative and strangely inverted, e.g.
 Color.BLACK = - 0xffffff - 1, etc.
+`toColor` is involution
  */
-internal fun toColor(color: Int): Int = color.inv() xor 0xffffff
+internal fun Int.toColor(): Int = this.inv() xor 0xffffff
 
-class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<Circle>, var filename: String? = null) {
+class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<Circle>, var file: File? = null) {
 
     val centroid: Complex get() {
         val sum = circles.fold(Complex.ZERO) { x, circle -> x + circle.center }
@@ -42,32 +42,51 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
         }
     }
 
-    fun save(filename: String? = null) {
-        var newFilename = filename
-        if (newFilename == null)
-            newFilename = this.filename
-        else
-            this.filename = newFilename
-        newFilename?.let {
-            // TODO: try to save
+    fun save(file: File? = null) {
+        val doBackup = this.file?.exists() == true && file == null || this.file == file
+        if (doBackup)
+            this.file!!.copyTo(File(this.file!!.absolutePath + "~"), overwrite = true)
+        file?.let {
+            this.file = file
+        }
+        this.file?.printWriter()?.use { writer ->
+            writer.println("Dodeca for Android")
+            setOf(backgroundColor, defaultBackgroundColor).forEach {
+                writer.println("global")
+                writer.println(it.toString())
+            }
+            circles.forEach { circle ->
+                writer.println("\ncircle:")
+                setOf(
+                    circle.radius.toString(),
+                    circle.x.toString(),
+                    circle.y.toString(),
+                    circle.borderColor.toColor().toString(),
+                    (if (circle.fill) 1 else 0).toString()
+                ).forEach {
+                    writer.println(it)
+                }
+                if (circle.dynamic)
+                    writer.println(circle.rule)
+            }
         }
     }
 
     companion object {
         const val defaultBackgroundColor: Int = Color.WHITE
 
-        fun read(stream: FileInputStream, filename: String? = null): DDU {
+        fun read(file: File): DDU {
             var backgroundColor = defaultBackgroundColor
             val circles: MutableList<Circle> = mutableListOf()
             var nGlobals = 0
             var mode: Mode = Mode.NO
             var params = CircleParams()
-            stream.reader().forEachLine {
+            file.inputStream().reader().forEachLine {
                 when {
                     it.startsWith("global") -> mode = Mode.GLOBAL
                     mode == Mode.GLOBAL && it.isNotBlank() -> {
                         if (nGlobals == 0)
-                            backgroundColor = toColor(it.toInt())
+                            backgroundColor = it.toInt().toColor()
                         // ignoring other (2) globals
                         nGlobals++
                         mode = Mode.NO
@@ -84,19 +103,15 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
                             Mode.RADIUS -> params.radius = it.replace(',', '.').toDouble()
                             Mode.X -> params.x = it.replace(',', '.').toDouble()
                             Mode.Y -> params.y = it.replace(',', '.').toDouble()
-                            Mode.BORDER_COLOR -> params.borderColor = toColor(it.toInt())
-                            Mode.FILL -> params.fill = it != "0" // carefull
+                            Mode.BORDER_COLOR -> params.borderColor = it.toInt().toColor()
+                            Mode.FILL -> params.fill = it != "0" // carefully
                             Mode.RULE -> params.rule = it
                         }
                         mode = mode.next()
                     }
                 }
             }
-            return DDU(backgroundColor, circles, filename)
-        }
-
-        fun readFile(filename: String): DDU {
-            return read(File(filename).inputStream(), filename)
+            return DDU(backgroundColor, circles, file)
         }
     }
 }

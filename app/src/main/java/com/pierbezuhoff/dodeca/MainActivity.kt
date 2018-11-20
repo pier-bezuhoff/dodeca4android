@@ -12,8 +12,10 @@ import android.util.AttributeSet
 import android.view.*
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
+import java.io.File
 import java.io.FileInputStream
 import java.lang.Exception
+import java.net.URI
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private var bottomBarShown = true
@@ -21,7 +23,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.decorView.apply {
-            systemUiVisibility = FULLSCREEN_UI_VISIBILITY
+            systemUiVisibility = IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
+            setOnSystemUiVisibilityChangeListener {
+                if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
+                    this.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+            }
         }
         window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         setContentView(R.layout.activity_main)
@@ -62,7 +68,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
             R.id.app_bar_save -> {
                 /* TODO: change circles' x, y, radius with respect to
-                dodecaView's dx, dy, scale and save (as)*/
+                dodecaView's dx, dy, scale and save (as) */
+                // dodecaView.save()
             }
             R.id.app_bar_go -> {
                 dodecaView.updating = !dodecaView.updating
@@ -70,7 +77,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.app_bar_trace -> {
                 dodecaView.trace = !dodecaView.trace
             }
-            R.id.app_bar_settings -> {}
+            R.id.app_bar_settings -> {
+                startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
+            }
         }
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
@@ -86,10 +95,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (requestCode == DDU_CODE && resultCode == Activity.RESULT_OK) {
             data?.data?.also { uri ->
                 try {
-                    // TODO: save filename or whatisit
-                    dodecaView.ddu = DDU.read(
-                        FileInputStream(contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor)
-                    )
+                    dodecaView.ddu = DDU.read(File(URI(uri.path)))
+//                        FileInputStream(contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor))
                 } catch (e: Exception) {
                     e.printStackTrace()
                     toast("bad .ddu: $uri")
@@ -105,7 +112,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
         else {
             bar.visibility = View.VISIBLE
-            dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
+//            dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
         }
         bottomBarShown = !bottomBarShown
     }
@@ -113,6 +120,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     companion object {
         const val DDU_CODE = 1
         const val FULLSCREEN_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_FULLSCREEN
-        const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
 }

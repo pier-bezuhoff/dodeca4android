@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="shapes">
+        <item>Circle</item>
+        <item>Square</item>
+        <item>Cross</item>
+        <item>Vertical bar</item>
+        <item>Horizontal bar</item>
+    </string-array>
+    <string-array name="shapesValues">
+        <item>circle</item>
+        <item>square</item>
+        <item>vertical-bar</item>
+        <item>horizontal-bar</item>
+    </string-array>
+</resources>
