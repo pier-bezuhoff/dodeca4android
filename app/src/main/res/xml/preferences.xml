@@ -16,6 +16,10 @@
                 android:defaultValue="false"
                 android:title="@string/show_all_circles_title"
                 android:summary="@string/show_all_circles_summary"/>
+        <SwitchPreference
+            android:key="reverse_motion"
+            android:defaultValue="false"
+            android:title="@string/reverse_motion"/>
         <!-- MAYBE: delete -->
         <!-- QUESTION: UPS/FPS > 100 = 100? -->
         <com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat

@@ -13,7 +13,7 @@ import java.util.*
 // TODO: enlarge traceBitmap (as much as possible)
 // TODO: when screen rotated, restart THE SAME ddu
 // BUG: when redrawTraceOnMove, scale and translate -- some shifts occur
-// even wrong radius, watch closely when continous scroll/scale too
+// even wrong radius, watch closely when continuous scroll/scale too
 // maybe because of center-scaling?
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init()
@@ -100,6 +100,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         PreferenceManager.getDefaultSharedPreferences(context).also {
             redrawTraceOnMove = it.getBoolean("redraw_trace", defaultRedrawTraceOnMove)
             showAllCircles = it.getBoolean("show_all_circles", defaultShowAllCircles)
+            reverseMotion = it.getBoolean("reverse_motion", defaultReverseMotion)
             UPS = it.getInt("ups", defaultUPS)
 //            it.getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
 //                UPS = it
@@ -186,15 +187,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         traceCanvas.translate(-this.ddx, -this.ddy)
         dx += this.ddx
         dy += this.ddy
-        if (trace)
-            if (updating)
-                if (redrawTraceOnMove)
-                    retrace()
+        if (trace) {
+            if (updating && redrawTraceOnMove)
+                retrace()
             else {
                 traceMatrix.postTranslate(ddx, ddy)
                 invalidate()
             }
-        else if (!updating)
+        } else if (!updating)
             invalidate()
         this.ddx = 0f
         this.ddy = 0f
@@ -204,15 +204,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         this.dscale = scale
         traceCanvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
         scale *= dscale
-        if (trace)
-            if (updating)
-                if (redrawTraceOnMove)
-                    retrace()
+        if (trace) {
+            if (updating && redrawTraceOnMove)
+                retrace()
             else {
                 traceMatrix.postScale(dscale, dscale, centerX, centerY)
                 invalidate()
             }
-        else if (!updating)
+        } else if (!updating)
             invalidate()
         this.dscale = 0f
     }
@@ -288,8 +287,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         oldCircles.forEachIndexed { i, circle ->
             circle.rule?.let { rule ->
                 val theRule = if (rule.startsWith("n")) rule.drop(1) else rule
-                val chars = if (true) theRule else theRule.reversed()
-                chars.forEach { ch -> // drop first 'n' letter
+                val chars = if (reverseMotion) theRule.reversed() else theRule
+                chars.forEach { ch ->
                     val j = Integer.parseInt(ch.toString()) // NOTE: Char.toInt() is ord()
                     if (j >= n)
                         Log.e(TAG, "updateCircles: index $j >= $n out of `circles` bounds (from rule $rule for $circle)")
@@ -324,6 +323,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var redrawTraceOnMove = defaultRedrawTraceOnMove
         private const val defaultShowAllCircles = false
         private var showAllCircles = defaultShowAllCircles
+        private const val defaultReverseMotion = false
+        private var reverseMotion = defaultReverseMotion
         private val defaultShape = Shapes.CIRCLE
         private var shape = defaultShape
         const val defaultTrace = true

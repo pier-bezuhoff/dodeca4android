@@ -34,4 +34,5 @@
     <string name="support_summary">support</string>
     <string name="fps_title">FPS</string>
     <string name="fps_summary">Frames per second, redraw speed</string>
+    <string name="reverse_motion">Reverse motion</string>
 </resources>
