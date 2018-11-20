@@ -54,7 +54,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private lateinit var traceCanvas: Canvas
     private val traceMatrix: Matrix = Matrix()
     private var traceDx = 0f // `traceBitmap` top-left corner - screen top-left corner
-    private var traceDy = 0f
+    private var traceDy = 0f // now don't work, set traceBitmapFactor to 2 and see
     private var nUpdates: Long = 0
 
     var dx: Float = defaultDx // not scaled
@@ -105,7 +105,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             // NOTE: restart/rotate screen to update FPS
             getString("fps", defaultFPS.toString())?.toIntOrNull()?.let {
                 FPS = it
-                Log.i(TAG, "FPS: $FPS")
             }
             getString("shape", defaultShape.toString())?.toUpperCase()?.let {
                 val newShape = Shapes.valueOf(it)
@@ -180,7 +179,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             if (redrawTrace) {
                 drawBackground(traceCanvas)
             }
-            drawCircles(traceCanvas)
+            withTraceCanvas {
+                drawCircles(it)
+            }
             drawTraceCanvas(canvas)
             redrawTrace = false
         } else {
@@ -236,18 +237,20 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         traceMatrix.preTranslate(traceDx, traceDy)
         redrawTrace = trace
         if (!updating) {
-            drawBackground(traceCanvas)
-            drawCircles(traceCanvas)
+            withTraceCanvas {
+                drawBackground(it)
+                drawCircles(it)
+            }
         }
         invalidate()
 
     }
 
     private fun withTraceCanvas(draw: (canvas: Canvas) -> Unit) {
-        traceCanvas.save()
-        traceCanvas.translate(traceDx, traceDy)
+//        traceCanvas.save()
+//        traceCanvas.translate(traceDx, traceDy)
         draw(traceCanvas)
-        traceCanvas.restore()
+//        traceCanvas.restore()
     }
 
     private fun drawTraceCanvas(canvas: Canvas) {
@@ -334,7 +337,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private inline fun visibleR(r: Float): Float = scale * r
 
     companion object {
-        private const val traceBitmapFactor = 2 // traceBitmap == traceBitmapFactor ^ 2 * screens
+        private const val traceBitmapFactor = 1 // traceBitmap == traceBitmapFactor ^ 2 * screens
         private const val defaultFPS = 100
         private var FPS = defaultFPS
         private const val defaultUPS = 100
