@@ -1,7 +1,6 @@
 package com.pierbezuhoff.dodeca
 
 import android.content.Context
-import android.content.res.AssetManager
 import android.graphics.*
 import android.preference.PreferenceManager
 import android.util.AttributeSet
@@ -9,7 +8,6 @@ import android.util.Log
 import android.view.View
 import org.apache.commons.math3.complex.Complex
 import java.io.File
-import java.lang.Exception
 import java.util.*
 
 // TODO: enlarge traceBitmap (as much as possible)
@@ -42,13 +40,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private var redrawTrace: Boolean = defaultTrace // once, draw background
     var updating = defaultUpdating
-    set(value) {
-        field = value
-        // don't know, if it's bad...
-        // we have 'clear' button...
-        if (trace && value && redrawTraceOnMove && width > 0) // we know sizes
-            retrace()
-    }
     private val timer = Timer()
     private val timerTask = object : TimerTask() {
             override fun run() {
@@ -62,6 +53,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private lateinit var traceBitmap: Bitmap
     private lateinit var traceCanvas: Canvas
     private val traceMatrix: Matrix = Matrix()
+    private var traceDx = 0f // `traceBitmap` top-left corner - screen top-left corner
+    private var traceDy = 0f
     private var nUpdates: Long = 0
 
     var dx: Float = defaultDx // not scaled
@@ -80,23 +73,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             this.ddu = DDU.readStream(context.assets.open("ddu/290305_z1_erot2.ddu"))
         } catch (e: Exception) {
             e.printStackTrace()
-            this.circles = mutableListOf() // dummy, actual from ddu.set
-            this.ddu = run {
-                val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "12")
-                val circle1 = Circle(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
-                val circle2 = Circle(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
-                val circle0 = Circle(Complex(0.0, 0.0), 100.0, Color.GREEN)
-                val circles = listOf(
-                    circle,
-                    circle1,
-                    circle2,
-                    circle0,
-                    circle0.invert(circle),
-                    circle1.invert(circle),
-                    Circle(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
-                )
-                DDU(Color.WHITE, circles)
-            }
+            this.ddu = exampleDDU
         }
         with(paint) {
             color = Color.BLUE
@@ -249,9 +226,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* when trace turns on or sizes change */
     fun retrace() {
-        traceBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        traceBitmap = Bitmap.createBitmap(
+            traceBitmapFactor * width, traceBitmapFactor * height,
+            Bitmap.Config.ARGB_8888)
+        traceDx = (1f - traceBitmapFactor) * width / 2
+        traceDx = (1f - traceBitmapFactor) * height / 2
         traceCanvas = Canvas(traceBitmap)
         traceMatrix.reset()
+        traceMatrix.preTranslate(traceDx, traceDy)
         redrawTrace = trace
         if (!updating) {
             drawBackground(traceCanvas)
@@ -259,6 +241,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
         invalidate()
 
+    }
+
+    private fun withTraceCanvas(draw: (canvas: Canvas) -> Unit) {
+        traceCanvas.save()
+        traceCanvas.translate(traceDx, traceDy)
+        draw(traceCanvas)
+        traceCanvas.restore()
     }
 
     private fun drawTraceCanvas(canvas: Canvas) {
@@ -345,6 +334,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private inline fun visibleR(r: Float): Float = scale * r
 
     companion object {
+        private const val traceBitmapFactor = 2 // traceBitmap == traceBitmapFactor ^ 2 * screens
         private const val defaultFPS = 100
         private var FPS = defaultFPS
         private const val defaultUPS = 100

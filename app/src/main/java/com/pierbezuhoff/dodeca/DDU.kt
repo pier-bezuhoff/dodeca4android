@@ -122,3 +122,20 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
         }
     }
 }
+
+val exampleDDU: DDU = run {
+    val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "12")
+    val circle1 = Circle(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
+    val circle2 = Circle(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
+    val circle0 = Circle(Complex(0.0, 0.0), 100.0, Color.GREEN)
+    val circles = listOf(
+        circle,
+        circle1,
+        circle2,
+        circle0,
+        circle0.invert(circle),
+        circle1.invert(circle),
+        Circle(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
+    )
+    DDU(Color.WHITE, circles)
+}
