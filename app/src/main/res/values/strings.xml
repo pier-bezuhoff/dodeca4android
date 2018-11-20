@@ -32,4 +32,6 @@
     <string name="copyright_summary">© Revolt Pimenov and Ivan Nikitin</string>
     <string name="support_title">Feedback and support</string>
     <string name="support_summary">support</string>
+    <string name="fps_title">FPS</string>
+    <string name="fps_summary">Frames per second, redraw speed</string>
 </resources>

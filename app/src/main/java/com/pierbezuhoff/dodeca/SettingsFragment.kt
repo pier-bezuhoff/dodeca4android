@@ -6,12 +6,26 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.support.v7.preference.PreferenceFragmentCompat
+import android.support.v7.preference.PreferenceManager
+import android.support.v7.preference.PreferenceScreen
 import org.jetbrains.anko.support.v4.email
 
 class SettingsFragment : PreferenceFragmentCompat() {
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        setPreferencesFromResource(R.xml.preferences, rootKey)
 
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setupPreferences(rootKey)
+    }
+
+    private fun setupPreferences(rootKey: String?) {
+        setPreferencesFromResource(R.xml.preferences, rootKey)
+        findPreference("default").setOnPreferenceClickListener {
+            val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
+            editor.clear()
+            PreferenceManager.setDefaultValues(context, R.xml.preferences, true)
+            editor.commit()
+            setupPreferences(rootKey) // a bit recursive
+            true
+        }
         findPreference("support").setOnPreferenceClickListener {
             sendFeedback(context)
             true
@@ -21,7 +35,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private fun sendFeedback(context: Context?) {
         val address = "pierbezuhoff2016@gmail.com"
         val subject = "Dodeca support"
-        val appVersion = context?.packageManager?.getPackageInfo(context?.packageName, 0)?.versionName ?: "-"
+        val appVersion = context?.packageManager?.getPackageInfo(context.packageName, 0)?.versionName ?: "-"
         val body = """
             |
             |

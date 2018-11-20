@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen
+        android:key="preference_screen"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:sample="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory android:title="@string/settings_display_title">
+
         <SwitchPreference
                 android:key="redraw_trace"
                 android:defaultValue="true"
@@ -12,14 +16,37 @@
                 android:defaultValue="false"
                 android:title="@string/show_all_circles_title"
                 android:summary="@string/show_all_circles_summary"/>
+        <!-- MAYBE: delete -->
+        <!-- QUESTION: UPS/FPS > 100 = 100? -->
+        <com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat
+            android:key="ups"
+            android:title="@string/ups_title"
+            android:summary="@string/ups_summary"
+            android:defaultValue="100"
+            sample:msbp_minValue="1"
+            sample:msbp_maxValue="100"
+            sample:msbp_interval="1"
+            sample:msbp_measurementUnit="UPS"
+            sample:msbp_dialogEnabled="false"/>
         <EditTextPreference
-                android:key="ups"
+                android:key="old_ups"
                 android:defaultValue="100"
                 android:selectAllOnFocus="false"
                 android:singleLine="true"
                 android:title="@string/ups_title"
                 android:summary="@string/ups_summary"
-                android:inputType="number"
+                android:inputType="numberDecimal"
+                android:digits="0123456789"
+                android:numeric="integer"/>
+        <EditTextPreference
+                android:key="fps"
+                android:defaultValue="100"
+                android:selectAllOnFocus="false"
+                android:singleLine="true"
+                android:title="@string/fps_title"
+                android:summary="@string/fps_summary"
+                android:inputType="numberDecimal"
+                android:digits="0123456789"
                 android:numeric="integer"/>
         <ListPreference
                 android:key="shape"
@@ -28,6 +55,9 @@
                 android:entryValues="@array/shapesValues"
                 android:defaultValue="circle"
                 android:summary="@string/shape_summary"/>
+        <Preference
+            android:key="default"
+            android:title="Restore defaults" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_about_title">

@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca
 
 import android.content.Context
 import android.graphics.*
+import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -11,6 +12,9 @@ import java.util.*
 
 // TODO: enlarge traceBitmap (as much as possible)
 // TODO: when screen rotated, restart THE SAME ddu
+// BUG: when redrawTraceOnMove, scale and translate -- some shifts occur
+// even wrong radius, watch closely when continous scroll/scale too
+// maybe because of center-scaling?
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init()
         set(value) {
@@ -22,6 +26,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             trace = defaultTrace
             redrawTrace = trace
             updating = defaultUpdating
+            clearMinorSharedPreferences()
             invalidate()
         }
     private var circles: MutableList<Circle>
@@ -39,8 +44,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         if (trace && value && width > 0) // we know sizes
             retrace()
     }
-    var translating = false // TODO: maybe remove
-    var scaling = false // TODO: maybe remove
+    private val timer = Timer()
+    private val timerTask = object : TimerTask() {
+            override fun run() {
+                if (updating)
+                    postInvalidate()
+            }
+        }
     private var lastUpdateTime = 0L
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val tracePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -60,6 +70,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     val centerY: Float get() = y + height / 2
 
     init {
+        loadSharedPreferences()
         this.circles = mutableListOf() // dummy, actual from ddu.set
         this.ddu = run {
             val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "12")
@@ -81,13 +92,52 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             color = Color.BLUE
             style = Paint.Style.STROKE
         }
-        val timer = Timer()
-        timer.scheduleAtFixedRate(object : TimerTask() {
-            override fun run() {
-                if (updating)
-                    postInvalidate()
+        timer.scheduleAtFixedRate(timerTask, 1, dt.toLong())
+        saveMinorSharedPreferences()
+    }
+
+    fun loadSharedPreferences() {
+        PreferenceManager.getDefaultSharedPreferences(context).also {
+            redrawTraceOnMove = it.getBoolean("redraw_trace", defaultRedrawTraceOnMove)
+            showAllCircles = it.getBoolean("show_all_circles", defaultShowAllCircles)
+            UPS = it.getInt("ups", defaultUPS)
+//            it.getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
+//                UPS = it
+//            }
+            // NOTE: restart/rotate screen to update FPS
+            it.getString("fps", defaultFPS.toString())?.toIntOrNull()?.let {
+                FPS = it
+                Log.i(TAG, "FPS: $FPS")
             }
-        }, 1, dt.toLong())
+            it.getString("shape", defaultShape.toString())?.toUpperCase()?.let {
+                shape = Shapes.valueOf(it)
+            }
+            dx = it.getFloat("dx", dx)
+            dy = it.getFloat("dy", dy)
+            scale = it.getFloat("scale", scale)
+            trace = it.getBoolean("trace", trace)
+            updating = it.getBoolean("updating", updating)
+        }
+    }
+
+    private fun saveMinorSharedPreferences() {
+        PreferenceManager.getDefaultSharedPreferences(context).edit().also {
+            it.putFloat("dx", dx)
+            it.putFloat("dy", dy)
+            it.putFloat("scale", scale)
+            it.putBoolean("trace", trace)
+            it.putBoolean("updating", updating)
+            it.commit()
+        }
+    }
+
+    private fun clearMinorSharedPreferences() {
+        PreferenceManager.getDefaultSharedPreferences(context).edit().also {
+            setOf("dx", "dy", "scale", "trace", "updating").forEach { key ->
+                it.remove(key)
+            }
+            it.commit()
+        }
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -99,10 +149,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         canvas?.let {
-            if (translating)
-                translateCanvas(it)
-            if (scaling)
-                scaleCanvas(it)
             when {
                 updating -> updateCanvas(it)
                 trace -> drawTraceCanvas(it)
@@ -113,17 +159,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 }
             }
         }
-    }
-
-    private fun translateCanvas(canvas: Canvas) {
-        translating = false
-        ddx = 0f
-        ddy = 0f
-    }
-
-    private fun scaleCanvas(canvas: Canvas) {
-        scaling = false
-        dscale = 1f
     }
 
     private fun updateCanvas(canvas: Canvas) {
@@ -151,32 +186,35 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         traceCanvas.translate(-this.ddx, -this.ddy)
         dx += this.ddx
         dy += this.ddy
-        translating = true
         if (trace)
             if (updating)
-                retrace()
+                if (redrawTraceOnMove)
+                    retrace()
             else {
                 traceMatrix.postTranslate(ddx, ddy)
                 invalidate()
             }
         else if (!updating)
             invalidate()
+        this.ddx = 0f
+        this.ddy = 0f
     }
 
     fun updateScale(dscale: Float) {
         this.dscale = scale
         traceCanvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
         scale *= dscale
-        scaling = true
         if (trace)
             if (updating)
-                retrace()
+                if (redrawTraceOnMove)
+                    retrace()
             else {
                 traceMatrix.postScale(dscale, dscale, centerX, centerY)
                 invalidate()
             }
         else if (!updating)
             invalidate()
+        this.dscale = 0f
     }
 
     /* when trace turns on or sizes change */
@@ -204,7 +242,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun drawCircles(canvas: Canvas) {
         for (circle in circles)
-            if (circle.show)
+            if (circle.show || showAllCircles)
                 drawCircle(canvas, circle)
     }
 
@@ -212,11 +250,36 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         val (c, r) = circle
         paint.color = circle.borderColor
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-        canvas.drawCircle(
-            visibleX(c.real.toFloat()),
-            visibleY(c.imaginary.toFloat()),
-            visibleR(r.toFloat()),
-            paint)
+        val x = visibleX(c.real.toFloat())
+        val y = visibleY(c.imaginary.toFloat())
+        val halfWidth = visibleR(r.toFloat())
+        when (shape) {
+            Shapes.CIRCLE ->
+                canvas.drawCircle(x, y, halfWidth, paint)
+            Shapes.SQUARE ->
+                canvas.drawRect(
+                    x - halfWidth, y - halfWidth,
+                    x + halfWidth, y + halfWidth,
+                    paint
+                )
+            Shapes.CROSS ->
+                canvas.drawLines(floatArrayOf(
+                    x, y - halfWidth, x, y + halfWidth,
+                    x + halfWidth, y, x - halfWidth, y
+                ), paint)
+            Shapes.VERTICAL_BAR ->
+                canvas.drawLine(
+                    x, y - halfWidth,
+                    x, y + halfWidth,
+                    paint
+                )
+            Shapes.HORIZONTAL_BAR ->
+                canvas.drawLine(
+                    x - halfWidth, y,
+                    x + halfWidth, y,
+                    paint
+                )
+        }
     }
 
     private fun updateCircles() {
@@ -251,10 +314,18 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private inline fun visibleR(r: Float): Float = scale * r
 
     companion object {
-        private const val FPS = 300
-        private const val UPS = 100 // updates per second
-        const val dt = 1000f / FPS
-        const val updateDt = 1000f / UPS
+        private const val defaultFPS = 100
+        private var FPS = defaultFPS
+        private const val defaultUPS = 100
+        private var UPS = defaultUPS // updates per second
+        val dt get() = 1000f / FPS
+        val updateDt get() = 1000f / UPS
+        private const val defaultRedrawTraceOnMove = true
+        private var redrawTraceOnMove = defaultRedrawTraceOnMove
+        private const val defaultShowAllCircles = false
+        private var showAllCircles = defaultShowAllCircles
+        private val defaultShape = Shapes.CIRCLE
+        private var shape = defaultShape
         const val defaultTrace = true
         const val defaultUpdating = true
         const val defaultDx = 0f
@@ -262,4 +333,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         const val defaultScale = 1f
         private const val TAG = "DodecaView"
     }
+}
+
+enum class Shapes {
+    CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR
 }

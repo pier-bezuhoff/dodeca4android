@@ -8,9 +8,10 @@ class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+        val fragment = SettingsFragment()
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.settings_container, SettingsFragment())
+            .replace(R.id.settings_container, fragment)
             .commit()
     }
 }

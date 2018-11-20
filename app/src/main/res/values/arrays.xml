@@ -10,7 +10,8 @@
     <string-array name="shapesValues">
         <item>circle</item>
         <item>square</item>
-        <item>vertical-bar</item>
-        <item>horizontal-bar</item>
+        <item>cross</item>
+        <item>vertical_bar</item>
+        <item>horizontal_bar</item>
     </string-array>
 </resources>
