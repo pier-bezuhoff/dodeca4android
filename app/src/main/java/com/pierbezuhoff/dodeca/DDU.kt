@@ -23,8 +23,16 @@ internal data class CircleParams(
 Color.BLACK = - 0xffffff - 1, etc.
 `toColor` is involution
  */
-internal fun Int.toColor(): Int = this.inv() xor 0xffffff
+//internal fun Int.toColor(): Int = Color.parseColor(this.toString()) //(0xff000000 xor this.toLong()).toInt()
+ internal fun Int.toColor(): Int {
+     val red = (this and 0xff0000) shr 16
+     val green = (this and 0x00ff00) shr 8
+     val blue = this and 0x0000ff
+     val color = (blue shl 16) + (green shl 8) + red
+     return color.inv() xor 0xffffff
+ }
 
+// MAYBE: serialize DDU to json
 class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<Circle>, var file: File? = null) {
 
     val centroid: Complex get() {
@@ -32,8 +40,9 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
         return sum / circles.size.toDouble()
     }
     val visibleCentroid: Complex get() {
-        val sum = circles.filter { it.show } .fold(Complex.ZERO) { x, circle -> x + circle.center }
-        return sum / circles.size.toDouble()
+        val visibleCircles = circles.filter { it.show }
+        val sum = visibleCircles.fold(Complex.ZERO) { x, circle -> x + circle.center }
+        return sum / visibleCircles.size.toDouble()
     }
 
     fun translateAndScale(dx: Double = 0.0, dy: Double = 0.0, scaleFactor: Double = 1.0, center: Complex = Complex.ZERO) {

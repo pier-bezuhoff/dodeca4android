@@ -20,6 +20,10 @@
             android:key="reverse_motion"
             android:defaultValue="false"
             android:title="@string/reverse_motion"/>
+        <SwitchPreference
+            android:key="autocenter"
+            android:defaultValue="false"
+            android:title="Autocenter"/>
         <!-- MAYBE: delete -->
         <!-- QUESTION: UPS/FPS > 100 = 100? -->
         <com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat

@@ -36,4 +36,5 @@
     <string name="fps_summary">Frames per second, redraw speed</string>
     <string name="reverse_motion">Reverse motion</string>
     <string name="clear_button_title">Clear</string>
+    <string name="one_step_button_title">One step</string>
 </resources>

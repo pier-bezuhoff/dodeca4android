@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
             R.id.app_bar_go -> {
                 dodecaView.updating = !dodecaView.updating
             }
+            R.id.app_bar_next_step -> dodecaView.oneStep()
             R.id.app_bar_trace -> {
                 dodecaView.trace = !dodecaView.trace
             }

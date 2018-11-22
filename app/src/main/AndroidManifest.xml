@@ -21,6 +21,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
             <intent-filter>
+                <!-- TODO: try opening .ddu -->
                 <data
                         android:host="*"
                         android:mimeType="*/*"

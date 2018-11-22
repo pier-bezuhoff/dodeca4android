@@ -19,6 +19,11 @@
             android:title="@string/go_button_title"
             app:showAsAction="always"/>
     <item
+            android:id="@+id/app_bar_next_step"
+            android:icon="@drawable/icon_next_step"
+            android:title="@string/one_step_button_title"
+            app:showAsAction="always"/>
+    <item
             android:id="@+id/app_bar_trace"
             android:icon="@drawable/icon_trace"
             android:title="@string/trace_button_title"

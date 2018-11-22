@@ -11,7 +11,6 @@ import java.io.File
 import java.util.*
 
 // TODO: enlarge traceBitmap (as much as possible)
-// TODO: when screen rotated, restart THE SAME ddu
 // BUG: when redrawTraceOnMove, scale and translate -- some shifts occur
 // even wrong radius, watch closely when continuous scroll/scale too
 // maybe because of center-scaling?
@@ -48,6 +47,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
         }
     private var lastUpdateTime = 0L
+    private var updateOnce = false
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val tracePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private lateinit var traceBitmap: Bitmap
@@ -98,6 +98,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 showAllCircles = newShowAllCircles
             }
             reverseMotion = getBoolean("reverse_motion", defaultReverseMotion)
+            autocenter = getBoolean("autocenter", defaultAutocenter)
+            if (autocenter && nUpdates > 0) {
+                val newCenter = ddu.visibleCentroid
+                updateScroll(
+                    newCenter.real.toFloat() - centerX,
+                    newCenter.imaginary.toFloat() - centerY)
+            }
             UPS = getInt("ups", defaultUPS)
 //            getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
 //                UPS = it
@@ -159,6 +166,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         canvas?.let {
             when {
                 updating -> updateCanvas(it)
+                updateOnce -> {
+                    updateCanvas(it)
+                    updateOnce = false
+                }
                 trace -> drawTraceCanvas(it)
                 else -> {
                     // not bitmap for better scrolling & scaling
@@ -305,6 +316,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
+    fun oneStep() {
+        updateCircles()
+        updateOnce = true
+        updating = false
+        postInvalidate()
+    }
+
     private fun updateCircles() {
         val oldCircles = circles.toList()
         val n = circles.size
@@ -350,6 +368,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var showAllCircles = defaultShowAllCircles
         private const val defaultReverseMotion = false
         private var reverseMotion = defaultReverseMotion
+        private const val defaultAutocenter = false
+        private var autocenter = defaultAutocenter
         private val defaultShape = Shapes.CIRCLE
         private var shape = defaultShape
         const val defaultTrace = true
