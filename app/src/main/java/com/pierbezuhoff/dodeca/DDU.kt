@@ -19,17 +19,12 @@ internal data class CircleParams(
     }
 }
 
-/* in kotlin colors are negative and strangely inverted, e.g.
-Color.BLACK = - 0xffffff - 1, etc.
-`toColor` is involution
- */
-//internal fun Int.toColor(): Int = Color.parseColor(this.toString()) //(0xff000000 xor this.toLong()).toInt()
- internal fun Int.toColor(): Int {
+/* In C++ (with it ddu was created) color is BBGGRR, but in Java -- AARRGGBB */
+internal fun Int.toColor(): Int {
      val red = (this and 0xff0000) shr 16
      val green = (this and 0x00ff00) shr 8
      val blue = this and 0x0000ff
-     val color = (blue shl 16) + (green shl 8) + red
-     return color.inv() xor 0xffffff
+     return Color.rgb(blue, green, red)
  }
 
 // MAYBE: serialize DDU to json

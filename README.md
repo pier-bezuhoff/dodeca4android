@@ -1,10 +1,15 @@
 # Dodeca for Android
 ...
 # TODO
+- [ ] Open file with Dodeca on click (try now)
+- [ ] Save current visible poss to ddu (rescale them)
+- [ ] Custom fixed screen orientation
+- [ ] Change color (choose on from palette ?double? tap) and save it for further changing
 - [ ] Extend trace bitmap (x 4) (fix it now)
-- [ ] Allow UPS > FPS (skipping some or smth other)
+- [ ] 'Brush' (see C++)
+- [ ] 'Fill' (all?, see C++)
+- [ ] Allow UPS > FPS (skipping some or smth other), remove FPS from settings
 - [ ] Fix scaling (when redrawTraceOnMove it's obviously broken)
-- [ ] Save current visible poss to ddu
-- [ ] ?Delete centering on double tap?
+
 - [ ] Mode for dragging circles and changing radius
 - [ ] Editing

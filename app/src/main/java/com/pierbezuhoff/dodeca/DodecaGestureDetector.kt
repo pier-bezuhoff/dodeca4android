@@ -31,6 +31,8 @@ class DodecaGestureDetector(activity: MainActivity, val view: DodecaView, val on
 
     override fun onDoubleTap(e: MotionEvent?): Boolean {
         e?.let {
+            // change to choose color
+            // see: https://github.com/martin-stone/hsv-alpha-color-picker-android
             view.updateScroll(view.centerX - e.x, view.centerY - e.y)
         }
         return super.onDoubleTap(e)
