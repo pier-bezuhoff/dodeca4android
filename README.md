@@ -3,6 +3,7 @@
 # TODO
 - [ ] Open file with Dodeca on click (try now)
 - [ ] Save current visible poss to ddu (rescale them)
+- [ ] Maybe also save current state
 - [ ] Custom fixed screen orientation
 - [ ] Change color (choose on from palette ?double? tap) and save it for further changing
 - [ ] Extend trace bitmap (x 4) (fix it now)

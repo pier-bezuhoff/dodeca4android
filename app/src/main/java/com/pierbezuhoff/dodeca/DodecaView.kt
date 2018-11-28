@@ -64,6 +64,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     var scale: Float = defaultScale
     private var dscale: Float = 1f
 
+    var pickedColor: Int? = null
+
     val centerX: Float get() = x + width / 2
     val centerY: Float get() = y + height / 2
 
@@ -314,6 +316,27 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     paint
                 )
         }
+    }
+
+    fun pickColor(x: Float, y: Float) {
+        val bitmap = Bitmap.createBitmap(layoutParams.width, layoutParams.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        layout(left, top, right, bottom)
+        draw(canvas)
+        // NOTE: sometimes traceBitmap can be used
+        pickedColor = bitmap.getPixel(x.toInt(), y.toInt())
+    }
+
+    /* Change all circles with `pickedColor` -> `newColor` */
+    fun changeColor(newColor: Int) {
+        // maybe: also change DDU?
+        pickedColor?.let {
+            circles
+                .filter { it.borderColor == pickedColor }
+                .forEach { it.borderColor = newColor }
+        }
+        pickedColor = newColor
+        postInvalidate()
     }
 
     fun oneStep() {
