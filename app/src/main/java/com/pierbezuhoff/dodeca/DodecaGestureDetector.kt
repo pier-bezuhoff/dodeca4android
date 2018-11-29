@@ -4,9 +4,10 @@ import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import com.pierbezuhoff.dodeca.R.id.action0
 import com.pierbezuhoff.dodeca.R.id.bar
 
-class DodecaGestureDetector(activity: MainActivity, val view: DodecaView, val onSingleTap: (MotionEvent?) -> Unit = {}) : GestureDetector.SimpleOnGestureListener() {
+class DodecaGestureDetector(val activity: MainActivity, val view: DodecaView, val onSingleTap: (MotionEvent?) -> Unit = {}) : GestureDetector.SimpleOnGestureListener() {
 
     init {
         val gestureDetector = GestureDetector(activity, this)
@@ -32,6 +33,7 @@ class DodecaGestureDetector(activity: MainActivity, val view: DodecaView, val on
     override fun onDoubleTap(e: MotionEvent?): Boolean {
         e?.let {
             view.pickColor(e.x, e.y)
+            activity.openColorPicker()
             // newColor <- open color chooser
             // view.changeColor(newColor)
             // see: https://github.com/martin-stone/hsv-alpha-color-picker-android

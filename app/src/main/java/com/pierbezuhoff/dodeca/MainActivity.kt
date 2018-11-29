@@ -8,6 +8,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
+import com.jaredrummler.android.colorpicker.ColorPickerDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
 import java.io.FileInputStream
@@ -58,6 +59,7 @@ class MainActivity : AppCompatActivity() {
             R.id.app_bar_trace -> {
                 dodecaView.trace = !dodecaView.trace
             }
+            R.id.app_bar_change_color -> openColorPicker()
             R.id.app_bar_clear -> {
                 dodecaView.retrace()
             }
@@ -81,7 +83,7 @@ class MainActivity : AppCompatActivity() {
                                 contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor))
                         } catch (e: Exception) {
                             e.printStackTrace()
-                            toast("bad .ddu: $uri")
+                            toast(getString(R.string.bad_ddu_format_toast) + uri)
                         }
                     }
                 }
@@ -89,6 +91,18 @@ class MainActivity : AppCompatActivity() {
                 dodecaView.loadMajorSharedPreferences()
         }
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+    }
+
+    fun openColorPicker() {
+        val fromColor = dodecaView.pickedColor
+        if (fromColor != null) {
+            ColorPickerDialog
+                .newBuilder()
+                .setColor(fromColor)
+                .create()
+        } else {
+            toast(getString(R.string.please_pick_color_toast))
+        }
     }
 
     private fun toggleBottomBar() {

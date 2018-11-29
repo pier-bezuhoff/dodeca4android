@@ -36,5 +36,5 @@ dependencies {
     implementation "org.jetbrains.anko:anko-commons:$anko_version"
     implementation "org.jetbrains.anko:anko-design:$anko_version"
     implementation 'com.pavelsikun:material-seekbar-preference:2.3.0'
-    implementation 'com.rarepebble:colorpicker:2.4.1'
+    implementation 'com.jaredrummler:colorpicker-compat:1.0.5'
 }
