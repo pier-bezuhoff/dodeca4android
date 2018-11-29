@@ -319,12 +319,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun pickColor(x: Float, y: Float) {
-        val bitmap = Bitmap.createBitmap(layoutParams.width, layoutParams.height, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        layout(left, top, right, bottom)
+        // layout(left, top, right, bottom)
         draw(canvas)
         // NOTE: sometimes traceBitmap can be used
         pickedColor = bitmap.getPixel(x.toInt(), y.toInt())
+        Log.i(TAG, pickedColor.toString())
     }
 
     /* Change all circles with `pickedColor` -> `newColor` */
