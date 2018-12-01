@@ -1,34 +1,36 @@
 package com.pierbezuhoff.dodeca
 
 import android.graphics.Color
+import android.net.Uri
 import org.apache.commons.math3.complex.Complex
-import java.io.File
 import java.io.InputStream
+import java.io.OutputStream
 
 internal enum class Mode { // for scanning .ddu, before <mode parameter>
     NO, GLOBAL, RADIUS, X, Y, BORDER_COLOR, FILL, RULE, CIRCLE_AUX;
-    fun next(): Mode = Mode.values().elementAtOrElse( ordinal + 1, { Mode.CIRCLE_AUX })
+    fun next(): Mode = Mode.values().elementAtOrElse(ordinal + 1) { Mode.CIRCLE_AUX }
 }
 
 internal data class CircleParams(
     var radius: Double? = null, var x: Double? = null, var y: Double? = null,
     var borderColor: Int? = null, var fill: Boolean? = null, var rule: String? = null) {
     /* CircleParams MUST have [radius], [x] and [y] */
-    fun toCircle(): Circle {
-        return Circle(Complex(x!!, y!!), radius!!, borderColor, fill, rule)
-    }
+    fun toCircle(): Circle = Circle(Complex(x!!, y!!), radius!!, borderColor, fill, rule)
 }
 
 /* In C++ (with it ddu was created) color is BBGGRR, but in Java -- AARRGGBB */
-internal fun Int.toColor(): Int {
-     val red = (this and 0xff0000) shr 16
-     val green = (this and 0x00ff00) shr 8
-     val blue = this and 0x0000ff
-     return Color.rgb(blue, green, red)
- }
+internal val Int.red: Int get() = (this and 0xff0000) shr 16
+internal val Int.green: Int get() = (this and 0x00ff00) shr 8
+internal val Int.blue: Int get() = this and 0x0000ff
 
-// MAYBE: serialize DDU to json
-class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<Circle>, var file: File? = null) {
+/* BBGGRR -> AARRGGBB */
+internal fun Int.toColor(): Int = Color.rgb(blue, green, red)
+
+/* AARRGGBB -> BBGGRR */
+internal fun Int.fromColor(): Int = blue shl 16 + green shl 8 + red
+
+// maybe: serialize DDU to json
+class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<Circle>, var uri: Uri? = null) {
 
     val centroid: Complex get() {
         val sum = circles.fold(Complex.ZERO) { x, circle -> x + circle.center }
@@ -47,32 +49,31 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
         }
     }
 
-    fun save(file: File? = null) {
-        val doBackup = this.file?.exists() == true && file == null || this.file == file
-        if (doBackup)
-            this.file!!.copyTo(File(this.file!!.absolutePath + "~"), overwrite = true)
-        file?.let {
-            this.file = file
-        }
-        this.file?.printWriter()?.use { writer ->
-            writer.println("Dodeca for Android")
-            setOf(backgroundColor, defaultBackgroundColor).forEach {
-                writer.println("global")
-                writer.println(it.toString())
+    fun saveStream(stream: OutputStream) {
+        // maybe: use buffered stream
+        stream.use {
+            val writeln = { s: String -> it.write(s.toByteArray()) }
+            writeln("Dodeca for Android")
+            setOf(
+                backgroundColor.fromColor(),
+                defaultBackgroundColor.fromColor()
+            ).forEach { param ->
+                writeln("global")
+                writeln(param.toString())
             }
             circles.forEach { circle ->
-                writer.println("\ncircle:")
+                writeln("\ncircle:")
                 setOf(
-                    circle.radius.toString(),
-                    circle.x.toString(),
-                    circle.y.toString(),
-                    circle.borderColor.toColor().toString(),
-                    (if (circle.fill) 1 else 0).toString()
-                ).forEach {
-                    writer.println(it)
+                    circle.radius,
+                    circle.x,
+                    circle.y,
+                    circle.borderColor.fromColor(),
+                    if (circle.fill) 1 else 0
+                ).forEach { param ->
+                    writeln(param.toString())
                 }
-                if (circle.dynamic)
-                    writer.println(circle.rule)
+                if (circle.dynamic) // dynamic => rule != null
+                    writeln(circle.rule!!)
             }
         }
     }
@@ -117,12 +118,6 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
                 }
             }
             return DDU(backgroundColor, circles)
-        }
-
-        fun read(file: File): DDU {
-            val ddu = readStream(file.inputStream())
-            ddu.file = file
-            return ddu
         }
     }
 }

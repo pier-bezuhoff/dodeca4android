@@ -2,19 +2,21 @@ package com.pierbezuhoff.dodeca
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.support.v7.app.AppCompatActivity
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.view.WindowManager
-import com.jaredrummler.android.colorpicker.ColorPickerDialog
+import android.util.Log
+import android.view.*
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
+import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
     private var bottomBarShown = true
+    private val dduDir get() = File(filesDir, "ddu")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +33,14 @@ class MainActivity : AppCompatActivity() {
 
         // listen scroll, double tap and scale gestures
         DodecaGestureDetector(this, dodecaView, onSingleTap = { toggleBottomBar() })
+        // handle outer implicit intent
+        if (intent.action == Intent.ACTION_VIEW && intent.type?.endsWith("ddu") == true) {
+            intent.data?.let { readUri(it) }
+        } else {
+            // if not extracted
+            dduDir.mkdir()
+            extractDDUfromAssets()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -41,16 +51,33 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.app_bar_load -> {
-                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "*/*" // should be .ddu
+                    data = Uri.parse(dduDir.path) // don't work
+                    type = "*/*"
                 }
+//                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+//                    addCategory(Intent.CATEGORY_OPENABLE)
+//                    type = "*/*" // should be .ddu
+//                }
                 startActivityForResult(Intent.createChooser(intent, "Select .ddu"), DDU_CODE)
             }
             R.id.app_bar_save -> {
-                /* TODO: change circles' x, y, radius with respect to
-                dodecaView's dx, dy, scale and save (as) */
-                // dodecaView.save()
+                val ddu = dodecaView.prepareDDUToSave()
+                if (ddu.uri == null)
+                    toast("Error while saving ddu: ddu has no uri")
+                else {
+                    try {
+                        ddu.uri?.let { uri ->
+                            Log.i(TAG, "Saving ddu at ${uri.path}")
+                            ddu.saveStream(FileOutputStream(
+                                contentResolver.openFileDescriptor(uri, "w")?.fileDescriptor))
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        toast("Error while saving ddu")
+                    }
+                }
             }
             R.id.app_bar_go -> {
                 dodecaView.updating = !dodecaView.updating
@@ -59,7 +86,7 @@ class MainActivity : AppCompatActivity() {
             R.id.app_bar_trace -> {
                 dodecaView.trace = !dodecaView.trace
             }
-            R.id.app_bar_change_color -> openColorPicker()
+            // R.id.app_bar_change_color -> openColorPicker()
             R.id.app_bar_clear -> {
                 dodecaView.retrace()
             }
@@ -77,15 +104,7 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             DDU_CODE ->
                 if (resultCode == Activity.RESULT_OK) {
-                    data?.data?.also { uri ->
-                        try {
-                            dodecaView.ddu = DDU.readStream(FileInputStream(
-                                contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor))
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            toast(getString(R.string.bad_ddu_format_toast) + uri)
-                        }
-                    }
+                    data?.data?.let { readUri(it) }
                 }
             APPLY_SETTINGS_CODE ->
                 dodecaView.loadMajorSharedPreferences()
@@ -93,13 +112,23 @@ class MainActivity : AppCompatActivity() {
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
     }
 
+    private fun readUri(uri: Uri) {
+        Log.i(TAG, uri.toString())
+        try {
+            val ddu = DDU.readStream(FileInputStream(
+                contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor))
+            ddu.uri = uri
+            dodecaView.ddu = ddu
+        } catch (e: Exception) {
+            e.printStackTrace()
+            toast(getString(R.string.bad_ddu_format_toast) + uri.path)
+        }
+    }
+
     fun openColorPicker() {
         val fromColor = dodecaView.pickedColor
         if (fromColor != null) {
-            ColorPickerDialog
-                .newBuilder()
-                .setColor(fromColor)
-                .create()
+            // TODO: fromColor -> chooseNewColor -> dodecaView.changeColor(it)
         } else {
             toast(getString(R.string.please_pick_color_toast))
         }
@@ -113,9 +142,25 @@ class MainActivity : AppCompatActivity() {
         else {
             bar.visibility = View.VISIBLE
             // don't let that sticky bottom nav. return, always immersive
-//            dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
+            // dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
         }
         bottomBarShown = !bottomBarShown
+    }
+
+    private fun extractDDUfromAssets() {
+        val bufferSize = 1024
+        val dir = dduDir
+        assets.list("ddu")?.forEach { name ->
+            val source = "ddu/$name"
+            val targetFile = File(dir, name)
+            targetFile.createNewFile()
+            Log.i(TAG, "Copying asset $source to ${targetFile.path}")
+            assets.open(source).use { input ->
+                FileOutputStream(targetFile).use { output ->
+                    input.copyTo(output, bufferSize)
+                }
+            }
+        }
     }
 
     companion object {
