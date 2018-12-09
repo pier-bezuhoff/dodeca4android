@@ -2,16 +2,16 @@ package com.pierbezuhoff.dodeca
 
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.*
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.WindowManager
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
@@ -35,11 +35,11 @@ class MainActivity : AppCompatActivity() {
         DodecaGestureDetector(this, dodecaView, onSingleTap = { toggleBottomBar() })
         // handle outer implicit intent
         if (intent.action == Intent.ACTION_VIEW && intent.type?.endsWith("ddu") == true) {
-            intent.data?.let { readUri(it) }
+            intent.data?.path?.let { readPath(it) }
         } else {
             // if not extracted
             dduDir.mkdir()
-            extractDDUfromAssets()
+            extractDDUFromAssets()
         }
     }
 
@@ -51,31 +51,30 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.app_bar_load -> {
-                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    data = Uri.parse(dduDir.path) // don't work
-                    type = "*/*"
-                }
-//                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                val intent = Intent(this, DDUChooserActivity::class.java)
+                intent.putExtra("dirPath", dduDir.absolutePath)
+                startActivityForResult(intent, DDU_CODE)
+//                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
 //                    addCategory(Intent.CATEGORY_OPENABLE)
-//                    type = "*/*" // should be .ddu
+//                    data = Uri.parse(dduDir.path) // don't work
+//                    type = "*/*"
 //                }
-                startActivityForResult(Intent.createChooser(intent, "Select .ddu"), DDU_CODE)
+//                startActivityForResult(Intent.createChooser(intent, "Select .ddu"), DDU_CODE)
             }
             R.id.app_bar_save -> {
                 val ddu = dodecaView.prepareDDUToSave()
-                if (ddu.uri == null)
-                    toast("Error while saving ddu: ddu has no uri")
+                if (ddu.file == null) // then save as
+                    toast("Error while saving ddu: ddu has no file")
                 else {
                     try {
-                        ddu.uri?.let { uri ->
-                            Log.i(TAG, "Saving ddu at ${uri.path}")
-                            ddu.saveStream(FileOutputStream(
-                                contentResolver.openFileDescriptor(uri, "w")?.fileDescriptor))
+                        ddu.file?.let { file ->
+                            Log.i(TAG, "Saving ddu at ${file.path}")
+                            ddu.saveStream(file.outputStream())
+                            toast("ddu saved at ${file.name}")
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        toast("Error while saving ddu")
+                        toast("Error while saving ddu, see log")
                     }
                 }
             }
@@ -104,7 +103,8 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             DDU_CODE ->
                 if (resultCode == Activity.RESULT_OK) {
-                    data?.data?.let { readUri(it) }
+                    data?.getStringExtra("path")?.let { readPath(it) }
+//                    data?.data?.let { readUri(it) }
                 }
             APPLY_SETTINGS_CODE ->
                 dodecaView.loadMajorSharedPreferences()
@@ -112,16 +112,13 @@ class MainActivity : AppCompatActivity() {
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
     }
 
-    private fun readUri(uri: Uri) {
-        Log.i(TAG, uri.toString())
+    private fun readPath(path: String) {
         try {
-            val ddu = DDU.readStream(FileInputStream(
-                contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor))
-            ddu.uri = uri
-            dodecaView.ddu = ddu
+            val file = File(path)
+            dodecaView.ddu = DDU.readFile(file)
         } catch (e: Exception) {
             e.printStackTrace()
-            toast(getString(R.string.bad_ddu_format_toast) + uri.path)
+            toast(getString(R.string.bad_ddu_format_toast) + path)
         }
     }
 
@@ -147,7 +144,7 @@ class MainActivity : AppCompatActivity() {
         bottomBarShown = !bottomBarShown
     }
 
-    private fun extractDDUfromAssets() {
+    private fun extractDDUFromAssets() {
         val bufferSize = 1024
         val dir = dduDir
         assets.list("ddu")?.forEach { name ->

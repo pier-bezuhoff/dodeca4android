@@ -39,5 +39,5 @@
     <string name="one_step_button_title">One step</string>
     <string name="change_color_button_title">Change color</string>
     <string name="please_pick_color_toast">Double tap to pick color</string>
-    <string name="bad_ddu_format_toast">bad .ddu:</string>
+    <string name="bad_ddu_format_toast">bad .ddu: </string>
 </resources>
