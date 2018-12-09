@@ -370,10 +370,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* scale and translate all circles in ddu according to current view */
     fun prepareDDUToSave(): DDU {
-        // ATTENTION: ?scale relative to view center? => check!
-        ddu
-        ddu.translateAndScale(dx.toDouble(), dy.toDouble(), scale.toDouble(), Complex(centerX.toDouble(), centerY.toDouble()))
-        return ddu
+        // BUG: after scaling planets 2 circles got lost! (12 -> 10)
+        return ddu.copy().apply {
+            translateAndScale(
+                dx.toDouble(), dy.toDouble(),
+                scale.toDouble(),
+                Complex(centerX.toDouble(), centerY.toDouble())
+            )
+        }
     }
 
     private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX
