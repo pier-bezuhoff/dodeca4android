@@ -1,8 +1,8 @@
 package com.pierbezuhoff.dodeca
 
 import android.graphics.Color
-import android.net.Uri
 import org.apache.commons.math3.complex.Complex
+import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -19,18 +19,19 @@ internal data class CircleParams(
 }
 
 /* In C++ (with it ddu was created) color is BBGGRR, but in Java -- AARRGGBB */
-internal val Int.red: Int get() = (this and 0xff0000) shr 16
-internal val Int.green: Int get() = (this and 0x00ff00) shr 8
-internal val Int.blue: Int get() = this and 0x0000ff
+val Int.red: Int get() = (this and 0xff0000) shr 16
+val Int.green: Int get() = (this and 0x00ff00) shr 8
+val Int.blue: Int get() = this and 0x0000ff
 
 /* BBGGRR -> AARRGGBB */
-internal fun Int.toColor(): Int = Color.rgb(blue, green, red)
+fun Int.toColor(): Int = Color.rgb(blue, green, red)
+// = ((blue shl 16) + (green shl 8) + red).inv() xor 0xffffff
 
 /* AARRGGBB -> BBGGRR */
-internal fun Int.fromColor(): Int = blue shl 16 + green shl 8 + red
+fun Int.fromColor(): Int = Color.red(this) shl 16 + Color.green(this) shl 8 + Color.blue(this)
 
 // maybe: serialize DDU to json
-class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<Circle>, var uri: Uri? = null) {
+class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<Circle>, var file: File? = null) {
 
     val centroid: Complex get() {
         val sum = circles.fold(Complex.ZERO) { x, circle -> x + circle.center }
@@ -42,6 +43,8 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
         return sum / visibleCircles.size.toDouble()
     }
 
+    fun copy() = DDU(backgroundColor, circles.map { it.copy() }, file)
+
     fun translateAndScale(dx: Double = 0.0, dy: Double = 0.0, scaleFactor: Double = 1.0, center: Complex = Complex.ZERO) {
         circles.forEach {
             it.translate(dx, dy)
@@ -52,7 +55,7 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
     fun saveStream(stream: OutputStream) {
         // maybe: use buffered stream
         stream.use {
-            val writeln = { s: String -> it.write(s.toByteArray()) }
+            val writeln = { s: String -> it.write("$s\n".toByteArray()) }
             writeln("Dodeca for Android")
             setOf(
                 backgroundColor.fromColor(),
@@ -80,6 +83,10 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
 
     companion object {
         const val defaultBackgroundColor: Int = Color.WHITE
+
+        fun readFile(file: File): DDU {
+            return readStream(file.inputStream()).apply { this.file = file }
+        }
 
         fun readStream(stream: InputStream): DDU {
             var backgroundColor = defaultBackgroundColor
