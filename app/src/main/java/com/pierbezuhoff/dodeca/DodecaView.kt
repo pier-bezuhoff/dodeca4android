@@ -1,14 +1,18 @@
 package com.pierbezuhoff.dodeca
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
 import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import org.apache.commons.math3.complex.Complex
-import java.io.File
-import java.util.*
+import java.util.Timer
+import java.util.TimerTask
 
 // TODO: enlarge traceBitmap (as much as possible)
 // BUG: when redrawTraceOnMove, scale and translate -- some shifts occur
@@ -22,7 +26,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             dx = defaultDx
             dy = defaultDy
             scale = defaultScale
-            trace = defaultTrace
+            trace = value.trace ?: defaultTrace
             redrawTrace = trace
             updating = defaultUpdating
             clearMinorSharedPreferences()
@@ -377,6 +381,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 scale.toDouble(),
                 Complex(centerX.toDouble(), centerY.toDouble())
             )
+            trace = this@DodecaView.trace
         }
     }
 

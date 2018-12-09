@@ -30,8 +30,14 @@ internal fun Int.toColor(): Int = Color.rgb(blue, green, red)
 /* AARRGGBB -> BBGGRR */
 internal fun Int.fromColor(): Int = (Color.blue(this) shl 16) + (Color.green(this) shl 8) + Color.red(this)
 
+
 // maybe: serialize DDU to json
-class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<Circle>, var file: File? = null) {
+class DDU(
+    var backgroundColor: Int = defaultBackgroundColor,
+    var trace: Boolean? = null,
+    var restGlobals: List<Int> = emptyList(),
+    var circles: List<Circle> = emptyList(),
+    var file: File? = null) {
 
     val centroid: Complex get() {
         val sum = circles.fold(Complex.ZERO) { x, circle -> x + circle.center }
@@ -43,7 +49,7 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
         return sum / visibleCircles.size.toDouble()
     }
 
-    fun copy() = DDU(backgroundColor, circles.map { it.copy() }, file)
+    fun copy() = DDU(backgroundColor, trace, restGlobals.toList(), circles.map { it.copy() }, file)
 
     fun translateAndScale(dx: Double = 0.0, dy: Double = 0.0, scaleFactor: Double = 1.0, center: Complex = Complex.ZERO) {
         circles.forEach {
@@ -57,16 +63,19 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
         stream.use {
             val writeln = { s: String -> it.write("$s\n".toByteArray()) }
             writeln("Dodeca for Android")
-            setOf(
+            val globals = mutableListOf(
                 backgroundColor.fromColor(),
-                defaultBackgroundColor.fromColor()
-            ).forEach { param ->
+                *restGlobals.toTypedArray()
+            )
+            if (restGlobals.size == 2 && trace != null)
+                globals.add(if (trace!!) 1 else 0) // trace cannot *become* null
+            globals.forEach { param ->
                 writeln("global")
                 writeln(param.toString())
             }
             circles.forEach { circle ->
                 writeln("\ncircle:")
-                setOf(
+                listOf(
                     circle.radius,
                     circle.x,
                     circle.y,
@@ -89,7 +98,9 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
         }
 
         fun readStream(stream: InputStream): DDU {
-            var backgroundColor = defaultBackgroundColor
+            var backgroundColor: Int = defaultBackgroundColor
+            var trace: Boolean? = null
+            val restGlobals: MutableList<Int> = mutableListOf()
             val circles: MutableList<Circle> = mutableListOf()
             var nGlobals = 0
             var mode: Mode = Mode.NO
@@ -98,9 +109,11 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
                 when {
                     it.startsWith("global") -> mode = Mode.GLOBAL
                     mode == Mode.GLOBAL && it.isNotBlank() -> {
-                        if (nGlobals == 0)
-                            backgroundColor = it.toInt().toColor()
-                        // ignoring other (2) globals
+                        when (nGlobals) {
+                            0 -> backgroundColor = it.toInt().toColor()
+                            1, 2 -> restGlobals.add(it.toInt()) // don't know, what this 2 means ("howInvers" and "howAnim")
+                            3 -> trace = it != "0" // mine
+                        }
                         nGlobals++
                         mode = Mode.NO
                     }
@@ -127,7 +140,7 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
             if (mode > Mode.Y) { // we have at least radius and center
                 circles.add(params.toCircle())
             }
-            return DDU(backgroundColor, circles)
+            return DDU(backgroundColor, trace, restGlobals, circles)
         }
     }
 }
@@ -146,5 +159,5 @@ val exampleDDU: DDU = run {
         circle1.invert(circle),
         Circle(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
     )
-    DDU(Color.WHITE, circles)
+    DDU(Color.WHITE, circles = circles)
 }
