@@ -19,16 +19,16 @@ internal data class CircleParams(
 }
 
 /* In C++ (with it ddu was created) color is BBGGRR, but in Java -- AARRGGBB */
-val Int.red: Int get() = (this and 0xff0000) shr 16
-val Int.green: Int get() = (this and 0x00ff00) shr 8
-val Int.blue: Int get() = this and 0x0000ff
+internal val Int.red: Int get() = (this and 0xff0000) shr 16
+internal val Int.green: Int get() = (this and 0x00ff00) shr 8
+internal val Int.blue: Int get() = this and 0x0000ff
 
 /* BBGGRR -> AARRGGBB */
-fun Int.toColor(): Int = Color.rgb(blue, green, red)
+internal fun Int.toColor(): Int = Color.rgb(blue, green, red)
 // = ((blue shl 16) + (green shl 8) + red).inv() xor 0xffffff
 
 /* AARRGGBB -> BBGGRR */
-fun Int.fromColor(): Int = Color.red(this) shl 16 + Color.green(this) shl 8 + Color.blue(this)
+internal fun Int.fromColor(): Int = (Color.blue(this) shl 16) + (Color.green(this) shl 8) + Color.red(this)
 
 // maybe: serialize DDU to json
 class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<Circle>, var file: File? = null) {
@@ -123,6 +123,9 @@ class DDU(var backgroundColor: Int = defaultBackgroundColor, var circles: List<C
                         mode = mode.next()
                     }
                 }
+            }
+            if (mode > Mode.Y) { // we have at least radius and center
+                circles.add(params.toCircle())
             }
             return DDU(backgroundColor, circles)
         }
