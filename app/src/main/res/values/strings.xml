@@ -2,10 +2,10 @@
     <string name="app_name" translatable="false">Dodeca</string>
 
     <!-- Strings related to bottom bar -->
-    <string name="load_button_title">Load</string>
+    <string name="load_button_title">Load ddu</string>
     <string name="go_button_title">Play/pause</string>
     <string name="trace_button_title">Toggle trace</string>
-    <string name="save_button_title">Save</string>
+    <string name="save_button_title">Save ddu</string>
     <string name="settings_button_title">Settings</string>
 
     <!-- Toasts -->
@@ -38,9 +38,10 @@
     <string name="fps_summary">Frames per second, redraw speed</string>
     <string name="reverse_motion">Reverse motion</string>
     <string name="clear_button_title">Clear</string>
-    <string name="one_step_button_title">One step</string>
+    <string name="one_step_button_title">Stepwise: one step</string>
     <string name="change_color_button_title">Change color</string>
     <string name="restore_defaults_title">Restore default settings</string>
     <string name="autocenter_title">Autocenter</string>
     <string name="restore_default_ddus_title">Restore default ddu-s</string>
+    <string name="feedback_subject" translatable="false">Dodeca support</string>
 </resources>

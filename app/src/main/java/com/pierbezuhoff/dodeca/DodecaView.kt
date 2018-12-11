@@ -98,6 +98,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     fun loadMajorSharedPreferences() {
         var updateImmediately = false
+        if (autocenterOnce) {
+            val center = Complex(centerX.toDouble(), centerY.toDouble())
+            val dz = scrollToCentroid(center, circles.filter { it.show } .map { visibleCenter(it) })
+            updateScroll(dz.real.toFloat(), dz.imaginary.toFloat())
+            autocenterOnce = false
+        }
         with (sharedPreferences) {
             redrawTraceOnMove = getBoolean("redraw_trace", defaultRedrawTraceOnMove)
             val newShowAllCircles = getBoolean("show_all_circles", defaultShowAllCircles)
@@ -106,12 +112,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 showAllCircles = newShowAllCircles
             }
             reverseMotion = getBoolean("reverse_motion", defaultReverseMotion)
-            autocenter = getBoolean("autocenter", defaultAutocenter)
-            if (autocenter && nUpdates > 0) {
-                val center = Complex(centerX.toDouble(), centerY.toDouble())
-                val dz = scrollToCentroid(center, circles.filter { it.show } .map { visibleCenter(it) })
-                updateScroll(dz.real.toFloat(), dz.imaginary.toFloat())
-            }
             UPS = getInt("ups", defaultUPS)
 //            getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
 //                UPS = it
@@ -404,10 +404,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var showAllCircles = defaultShowAllCircles
         private const val defaultReverseMotion = false
         private var reverseMotion = defaultReverseMotion
-        private const val defaultAutocenter = false
-        private var autocenter = defaultAutocenter
         private val defaultShape = Shapes.CIRCLE
         private var shape = defaultShape
+        var autocenterOnce = false
         const val defaultTrace = true
         const val defaultUpdating = true
         const val defaultDx = 0f
