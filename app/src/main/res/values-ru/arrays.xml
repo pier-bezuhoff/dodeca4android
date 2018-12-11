@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="shapes">
+        <item>Окружность</item>
+        <item>Квадрат</item>
+        <item>Крест</item>
+        <item>Вертикальная черта</item>
+        <item>Горизонтальная черта</item>
+    </string-array>
+    <string-array name="shapesValues">
+        <item>circle</item>
+        <item>square</item>
+        <item>cross</item>
+        <item>vertical_bar</item>
+        <item>horizontal_bar</item>
+    </string-array>
+</resources>

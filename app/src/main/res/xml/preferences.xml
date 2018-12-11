@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
         android:key="preference_screen"
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:sample="http://schemas.android.com/apk/res-auto">
+        xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <PreferenceCategory android:title="@string/settings_display_title">
 
@@ -35,9 +34,7 @@
             <!--sample:msbp_interval="1"-->
             <!--sample:msbp_measurementUnit="UPS"-->
             <!--sample:msbp_dialogEnabled="false"/>-->
-        <com.pierbezuhoff.dodeca.TemplatedEditTextPreference
-                xmlns:templated="http://schemas.android.com/apk/res/com.pierbezuhoff.dodeca"
-                templated:template="Speed is %s"
+        <EditTextPreference
                 android:key="old_ups"
                 android:defaultValue="100"
                 android:selectAllOnFocus="false"
