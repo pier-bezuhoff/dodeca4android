@@ -30,7 +30,7 @@ class DDUChooserActivity : AppCompatActivity() {
         }
         setContentView(R.layout.activity_dduchooser)
 
-        viewManager  = LinearLayoutManager(this)
+        viewManager  = LinearLayoutManager(this) // type mismatch?
         viewAdapter = DDUAdapter(dduDir, ::onChoose)
         recyclerView = ddu_recycler_view.apply {
             layoutManager = viewManager

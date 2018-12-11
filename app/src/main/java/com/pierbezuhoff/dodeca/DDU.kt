@@ -1,10 +1,12 @@
 package com.pierbezuhoff.dodeca
 
 import android.graphics.Color
+import android.util.Log
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.Math.abs
 
 internal enum class Mode { // for scanning .ddu, before <mode parameter>
     NO, GLOBAL, RADIUS, X, Y, BORDER_COLOR, FILL, RULE, CIRCLE_AUX;
@@ -38,16 +40,6 @@ class DDU(
     var restGlobals: List<Int> = emptyList(),
     var circles: List<Circle> = emptyList(),
     var file: File? = null) {
-
-    val centroid: Complex get() {
-        val sum = circles.fold(Complex.ZERO) { x, circle -> x + circle.center }
-        return sum / circles.size.toDouble()
-    }
-    val visibleCentroid: Complex get() {
-        val visibleCircles = circles.filter { it.show }
-        val sum = visibleCircles.fold(Complex.ZERO) { x, circle -> x + circle.center }
-        return sum / visibleCircles.size.toDouble()
-    }
 
     fun copy() = DDU(backgroundColor, trace, restGlobals.toList(), circles.map { it.copy() }, file)
 

@@ -15,6 +15,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun setupPreferences(rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
+        findPreference("autocenter").setOnPreferenceClickListener {
+            // DodecaView: autocenter once on return
+            true
+        }
+        findPreference("default_ddus").setOnPreferenceClickListener {
+            // MainActivity: rmdir dduDir, export ddus
+            true
+        }
         findPreference("default").setOnPreferenceClickListener {
             val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
             editor.clear()
@@ -45,14 +53,5 @@ class SettingsFragment : PreferenceFragmentCompat() {
             | Device manufacturer: ${Build.MANUFACTURER}
         """.trimMargin()
         email(address, subject, body)
-        // following approach does not work ("No Activity found to handle Intent...")
-//        val sending = Intent(Intent.ACTION_SENDTO)
-//        with (sending) {
-//            data = Uri.parse("mailto:")
-//            type = "message/rfc822"
-//            putExtra(Intent.EXTRA_EMAIL, arrayOf("pierbezuhoff2016@gmail.com"))
-//            putExtra(Intent.EXTRA_SUBJECT, "Dodeca support")
-//            putExtra(Intent.EXTRA_TEXT, body)
-//        }
     }
 }

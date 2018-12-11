@@ -1,20 +1,23 @@
 <resources>
-    <string name="app_name">Dodeca</string>
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Dodeca for Android</string>
-    <string name="nav_header_subtitle">Settings</string>
-    <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Settings</string>
+    <string name="app_name" translatable="false">Dodeca</string>
+
+    <!-- Strings related to bottom bar -->
     <string name="load_button_title">Load</string>
-    <string name="go_button_title">Go</string>
-    <string name="trace_button_title">Trace</string>
+    <string name="go_button_title">Play/pause</string>
+    <string name="trace_button_title">Toggle trace</string>
     <string name="save_button_title">Save</string>
     <string name="settings_button_title">Settings</string>
+
+    <!-- Toasts -->
+    <string name="please_pick_color_toast">Double tap to pick color</string>
+    <string name="bad_ddu_format_toast">"bad ddu format: "</string>
+    <string name="error_ddu_save_no_file_toast">Error while saving ddu: ddu has no file</string>
+    <string name="error_ddu_save_toast">Error while saving ddu, see log</string>
+    <string name="ddu_saved_toast">Saving ddu at</string>
+
     <string name="title_activity_settings">Settings</string>
 
-    <!-- Strings related to Settings -->
-
+    <!-- Strings related to settings -->
     <string name="redraw_trace_title">Redraw trace</string>
     <string name="redraw_trace_summary">Clear trace on scroll and scale</string>
     <string name="show_all_circles_title">Show all circles</string>
@@ -27,17 +30,17 @@
     <string name="settings_about_title">About</string>
     <string name="description_summary">Android port for Dodeca</string>
     <string name="version_title">Version</string>
-    <string name="version_summary">Dodeca 1.0</string>
-    <string name="copyright_title">Copyright</string>
+    <string name="version_summary" translatable="false">Dodeca 1.0</string>
+    <string name="copyright_title" translatable="false">Copyright</string>
     <string name="copyright_summary">© Revolt Pimenov and Ivan Nikitin</string>
     <string name="support_title">Feedback and support</string>
-    <string name="support_summary">support</string>
-    <string name="fps_title">FPS</string>
+    <string name="fps_title" translatable="false">FPS</string>
     <string name="fps_summary">Frames per second, redraw speed</string>
     <string name="reverse_motion">Reverse motion</string>
     <string name="clear_button_title">Clear</string>
     <string name="one_step_button_title">One step</string>
     <string name="change_color_button_title">Change color</string>
-    <string name="please_pick_color_toast">Double tap to pick color</string>
-    <string name="bad_ddu_format_toast">bad .ddu: </string>
+    <string name="restore_defaults_title">Restore default settings</string>
+    <string name="autocenter_title">Autocenter</string>
+    <string name="restore_default_ddus_title">Restore default ddu-s</string>
 </resources>

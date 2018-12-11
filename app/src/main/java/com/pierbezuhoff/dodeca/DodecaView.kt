@@ -11,6 +11,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import org.apache.commons.math3.complex.Complex
+import java.io.File
 import java.util.Timer
 import java.util.TimerTask
 
@@ -76,7 +77,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     init {
         loadSharedPreferences()
         try {
-            this.ddu = DDU.readStream(context.assets.open("ddu/290305_z1_erot2.ddu"))
+            val exampleDDUFile = File(File(context.filesDir, "ddu"), "290305_z1_erot2.ddu")
+            this.ddu = DDU.readFile(exampleDDUFile)
         } catch (e: Exception) {
             e.printStackTrace()
             this.ddu = exampleDDU
@@ -106,10 +108,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             reverseMotion = getBoolean("reverse_motion", defaultReverseMotion)
             autocenter = getBoolean("autocenter", defaultAutocenter)
             if (autocenter && nUpdates > 0) {
-                val newCenter = ddu.visibleCentroid
-                updateScroll(
-                    newCenter.real.toFloat() - centerX,
-                    newCenter.imaginary.toFloat() - centerY)
+                val center = Complex(centerX.toDouble(), centerY.toDouble())
+                val dz = scrollToCentroid(center, circles.filter { it.show } .map { visibleCenter(it) })
+                updateScroll(dz.real.toFloat(), dz.imaginary.toFloat())
             }
             UPS = getInt("ups", defaultUPS)
 //            getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
@@ -300,8 +301,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 canvas.drawRect(
                     x - halfWidth, y - halfWidth,
                     x + halfWidth, y + halfWidth,
-                    paint
-                )
+                    paint)
             Shapes.CROSS ->
                 canvas.drawLines(floatArrayOf(
                     x, y - halfWidth, x, y + halfWidth,
@@ -311,18 +311,17 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 canvas.drawLine(
                     x, y - halfWidth,
                     x, y + halfWidth,
-                    paint
-                )
+                    paint)
             Shapes.HORIZONTAL_BAR ->
                 canvas.drawLine(
                     x - halfWidth, y,
                     x + halfWidth, y,
-                    paint
-                )
+                    paint)
         }
     }
 
     fun pickColor(x: Float, y: Float) {
+        // TODO: color picker/changer or discard
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         // layout(left, top, right, bottom)
@@ -374,7 +373,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* scale and translate all circles in ddu according to current view */
     fun prepareDDUToSave(): DDU {
-        // BUG: after scaling planets 2 circles got lost! (12 -> 10)
         return ddu.copy().apply {
             translateAndScale(
                 dx.toDouble(), dy.toDouble(),
@@ -387,6 +385,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX
     private inline fun visibleY(y: Float): Float = scale * (y + dy - centerY) + centerY
+    private inline fun visibleCenter(circle: Circle): Complex = Complex(
+        visibleX(circle.x.toFloat()).toDouble(),
+        visibleY(circle.y.toFloat()).toDouble())
     private inline fun visibleR(r: Float): Float = scale * r
 
     companion object {
