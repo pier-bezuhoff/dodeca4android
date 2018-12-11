@@ -16,3 +16,26 @@ operator fun Complex.div(divisor: Complex): Complex = this.divide(divisor)
 operator fun Double.div(divisor: Complex): Complex = divisor.reciprocal().multiply(this)
 operator fun Complex.div(divisor: Double): Complex = this.divide(divisor)
 fun Complex.abs2(): Double = (this * this.conjugate()).real
+
+fun mean(zs: List<Complex>) : Complex {
+    val n = zs.size
+    val sum = zs.foldRight(Complex.ZERO, Complex::plus)
+    return sum / n.toDouble()
+}
+
+fun scrollToCentroid(center: Complex, zs: List<Complex>) : Complex {
+    // algorithm to decide whether to center x and y or not
+//    val mean = mean(zs)
+//    val deltas = zs.map { it - mean }
+//    val mu2 = mean(deltas.map { it * it }) // variance
+//    val mu3 = mean(deltas.map { it * it * it }) // 3-rd central moment
+//    val xAsymK = mu3.real / sqrt(mu2.real.absoluteValue).pow(3) // skewness
+//    val yAsymK = mu3.imaginary / sqrt(mu2.imaginary.absoluteValue).pow(3)
+//    val threshold = zs.size * 10.0 // maybe: delete
+//    val dx = if (xAsymK.absoluteValue > threshold && !xAsymK.isNaN()) 0.0 else center.real - mean.real
+//    val dy = if (yAsymK.absoluteValue > threshold && !yAsymK.isNaN()) 0.0 else center.imaginary - mean.imaginary
+//    Log.i("scrollToCentroid", "xAsymK: $xAsymK, yAsymK: $yAsymK, threshold: $threshold\ndx: $dx, dy: $dy")
+//    return Complex(dx, dy)
+    return center - mean(zs)
+}
+

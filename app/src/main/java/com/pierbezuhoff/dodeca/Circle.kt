@@ -3,9 +3,13 @@ package com.pierbezuhoff.dodeca
 import android.graphics.Color
 import android.util.JsonReader
 import android.util.JsonWriter
+import android.util.Log
 import org.apache.commons.math3.complex.Complex
 import org.json.JSONException
 import java.io.*
+import java.lang.Math.abs
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 data class Circle(var center: Complex, var radius: Double, var borderColor: Int, var fill: Boolean, var rule: String?) {
     val x: Double get() = center.real
@@ -56,6 +60,8 @@ data class Circle(var center: Complex, var radius: Double, var borderColor: Int,
         const val defaultBorderColor: Int = Color.BLACK
         const val defaultFill = false
         val defaultRule: String? = null
+
+        fun visibleCentroid(circles: List<Circle>) : Complex = mean(circles.filter { it.show } .map { it.center })
     }
 }
 

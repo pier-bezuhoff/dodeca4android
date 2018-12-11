@@ -37,9 +37,13 @@ class MainActivity : AppCompatActivity() {
         if (intent.action == Intent.ACTION_VIEW && intent.type?.endsWith("ddu") == true) {
             intent.data?.path?.let { readPath(it) }
         } else {
-            // if not extracted
-            dduDir.mkdir()
-            extractDDUFromAssets()
+            if (!dduDir.exists()) {
+                Log.i(TAG, "Extracting assets into $dduDir")
+                dduDir.mkdir()
+                extractDDUFromAssets()
+            } else {
+                Log.i(TAG, "$dduDir already exists")
+            }
         }
     }
 
@@ -54,27 +58,23 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this, DDUChooserActivity::class.java)
                 intent.putExtra("dirPath", dduDir.absolutePath)
                 startActivityForResult(intent, DDU_CODE)
-//                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-//                    addCategory(Intent.CATEGORY_OPENABLE)
-//                    data = Uri.parse(dduDir.path) // don't work
-//                    type = "*/*"
-//                }
-//                startActivityForResult(Intent.createChooser(intent, "Select .ddu"), DDU_CODE)
             }
             R.id.app_bar_save -> {
                 val ddu = dodecaView.prepareDDUToSave()
-                if (ddu.file == null) // then save as
-                    toast("Error while saving ddu: ddu has no file")
+                if (ddu.file == null) {
+                    // then save as
+                    toast(getString(R.string.error_ddu_save_no_file_toast))
+                }
                 else {
                     try {
                         ddu.file?.let { file ->
-                            Log.i(TAG, "Saving ddu at ${file.path}")
+                            Log.i(TAG, getString(R.string.ddu_saved_toast) + " ${file.path}")
                             ddu.saveStream(file.outputStream())
                             toast("ddu saved at ${file.name}")
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        toast("Error while saving ddu, see log")
+                        toast(getString(R.string.error_ddu_save_toast))
                     }
                 }
             }

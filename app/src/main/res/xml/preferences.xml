@@ -20,10 +20,9 @@
             android:key="reverse_motion"
             android:defaultValue="false"
             android:title="@string/reverse_motion"/>
-        <SwitchPreference
+        <Preference
             android:key="autocenter"
-            android:defaultValue="false"
-            android:title="Autocenter"/>
+            android:title="@string/autocenter_title"/>
         <!-- MAYBE: delete -->
         <!-- QUESTION: UPS/FPS > 100 = 100? -->
         <com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat
@@ -64,8 +63,11 @@
                 android:defaultValue="circle"
                 android:summary="@string/shape_summary"/>
         <Preference
+            android:key="default_ddus"
+            android:title="@string/restore_default_ddus_title" />
+        <Preference
             android:key="default"
-            android:title="Restore defaults" />
+            android:title="@string/restore_defaults_title" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_about_title">
@@ -82,8 +84,7 @@
         <!-- MAYBE: add some links to websites -->
         <Preference
                 android:title="@string/support_title"
-                android:key="@string/support_summary">
-        </Preference>
+                android:key="support" />
     </PreferenceCategory>
 
 </PreferenceScreen>
