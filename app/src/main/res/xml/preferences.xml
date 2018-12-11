@@ -25,17 +25,19 @@
             android:title="@string/autocenter_title"/>
         <!-- MAYBE: delete -->
         <!-- QUESTION: UPS/FPS > 100 = 100? -->
-        <com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat
-            android:key="ups"
-            android:title="@string/ups_title"
-            android:summary="@string/ups_summary"
-            android:defaultValue="100"
-            sample:msbp_minValue="1"
-            sample:msbp_maxValue="100"
-            sample:msbp_interval="1"
-            sample:msbp_measurementUnit="UPS"
-            sample:msbp_dialogEnabled="false"/>
-        <EditTextPreference
+        <!--<com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat-->
+            <!--android:key="ups"-->
+            <!--android:title="@string/ups_title"-->
+            <!--android:summary="@string/ups_summary"-->
+            <!--android:defaultValue="100"-->
+            <!--sample:msbp_minValue="1"-->
+            <!--sample:msbp_maxValue="100"-->
+            <!--sample:msbp_interval="1"-->
+            <!--sample:msbp_measurementUnit="UPS"-->
+            <!--sample:msbp_dialogEnabled="false"/>-->
+        <com.pierbezuhoff.dodeca.TemplatedEditTextPreference
+                xmlns:templated="http://schemas.android.com/apk/res/com.pierbezuhoff.dodeca"
+                templated:template="Speed is %s"
                 android:key="old_ups"
                 android:defaultValue="100"
                 android:selectAllOnFocus="false"
@@ -45,16 +47,16 @@
                 android:inputType="numberDecimal"
                 android:digits="0123456789"
                 android:numeric="integer"/>
-        <EditTextPreference
-                android:key="fps"
-                android:defaultValue="100"
-                android:selectAllOnFocus="false"
-                android:singleLine="true"
-                android:title="@string/fps_title"
-                android:summary="@string/fps_summary"
-                android:inputType="numberDecimal"
-                android:digits="0123456789"
-                android:numeric="integer"/>
+        <!--<EditTextPreference-->
+                <!--android:key="fps"-->
+                <!--android:defaultValue="100"-->
+                <!--android:selectAllOnFocus="false"-->
+                <!--android:singleLine="true"-->
+                <!--android:title="@string/fps_title"-->
+                <!--android:summary="@string/fps_summary"-->
+                <!--android:inputType="numberDecimal"-->
+                <!--android:digits="0123456789"-->
+                <!--android:numeric="integer"/>-->
         <ListPreference
                 android:key="shape"
                 android:title="@string/shape_title"

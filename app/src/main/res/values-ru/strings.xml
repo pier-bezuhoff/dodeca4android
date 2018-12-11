@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- add translation here -->
-    <string name="load_button_title">Загрузить</string>
+    <string name="load_button_title">Загрузить файл ddu</string>
     <string name="go_button_title">Запустить/приостановить</string>
     <string name="trace_button_title">Включить/выключить след</string>
-    <string name="save_button_title">Сохранить файл</string>
+    <string name="save_button_title">Сохранить файл ddu</string>
     <string name="settings_button_title">Настройки</string>
     <string name="title_activity_settings">Настройки</string>
     <string name="redraw_trace_title">Перерисовка следа</string>
@@ -14,7 +14,7 @@
     <string name="ups_title">Скорость</string>
     <string name="ups_summary">Число пересчётов окружностей в секунду (скорость движения окружностей)</string>
     <string name="shape_title">Форма</string>
-    <string name="shape_summary">Показывать _ вместо окружности</string>
+    <string name="shape_summary">Показывать выбранную форму вместо окружности</string>
     <string name="settings_display_title">Внешний вид</string>
     <string name="settings_about_title">Информация</string>
     <string name="description_summary">Порт Dodeca для Android</string>
@@ -24,7 +24,7 @@
     <string name="fps_summary">Число перерисовок в секунду, скорость перерисовки</string>
     <string name="reverse_motion">Обратить движение</string>
     <string name="clear_button_title">Очистить</string>
-    <string name="one_step_button_title">Один шаг</string>
+    <string name="one_step_button_title">Пошагово: один шаг</string>
     <string name="change_color_button_title">Поменять цвет</string>
     <string name="please_pick_color_toast">Двойное нажатие, чтобы выбрать цвет</string>
     <string name="bad_ddu_format_toast">Неправильный формат ddu</string>

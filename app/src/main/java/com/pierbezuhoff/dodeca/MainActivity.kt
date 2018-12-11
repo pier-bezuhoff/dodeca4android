@@ -104,10 +104,18 @@ class MainActivity : AppCompatActivity() {
             DDU_CODE ->
                 if (resultCode == Activity.RESULT_OK) {
                     data?.getStringExtra("path")?.let { readPath(it) }
-//                    data?.data?.let { readUri(it) }
                 }
-            APPLY_SETTINGS_CODE ->
+            APPLY_SETTINGS_CODE -> {
+                if (resultCode == Activity.RESULT_OK) {
+                    if (data?.getBooleanExtra("autocenter", false) == true) {
+                        DodecaView.autocenterOnce = true
+                    }
+                    if (data?.getBooleanExtra("default_ddus", false) == true) {
+                        extractDDUFromAssets()
+                    }
+                }
                 dodecaView.loadMajorSharedPreferences()
+            }
         }
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
     }
