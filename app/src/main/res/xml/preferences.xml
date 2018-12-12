@@ -54,6 +54,8 @@
                 <!--android:inputType="numberDecimal"-->
                 <!--android:digits="0123456789"-->
                 <!--android:numeric="integer"/>-->
+        <!-- Following warning is shown possibly because TemplatedListPreference : ...v7.ListPreference -->
+        <!-- Hope this doesn't break things on some devices -->
         <com.pierbezuhoff.dodeca.TemplatedListPreference
                 android:key="shape"
                 android:title="@string/shape_title"
@@ -61,6 +63,9 @@
                 android:entryValues="@array/shapesValues"
                 android:defaultValue="circle"
                 android:summary="@string/shape_summary"/>
+        <Preference
+                android:key="default_ddu"
+                android:title="@string/restore_default_ddu_title" />
         <Preference
             android:key="default_ddus"
             android:title="@string/restore_default_ddus_title" />

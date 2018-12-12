@@ -16,26 +16,20 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun setupPreferences(rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
-        findPreference("autocenter").setOnPreferenceClickListener {
-            settingsActivity?.resultIntent?.putExtra("autocenter", true)
-            true
+        val hooking: (String, (String) -> Unit) -> Unit = { param, action ->
+            findPreference(param).setOnPreferenceClickListener { action(param); true }
         }
-        findPreference("default_ddus").setOnPreferenceClickListener {
-            settingsActivity?.resultIntent?.putExtra("default_ddus", true)
-            true
+        setOf("autocenter", "default_ddu", "default_ddus").forEach {
+            hooking(it) { settingsActivity?.resultIntent?.putExtra(it, true) }
         }
-        findPreference("default").setOnPreferenceClickListener {
+        hooking("default") {
             val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
             editor.clear()
             PreferenceManager.setDefaultValues(context, R.xml.preferences, true)
             editor.commit()
             setupPreferences(rootKey) // a bit recursive
-            true
         }
-        findPreference("support").setOnPreferenceClickListener {
-            sendFeedback(context)
-            true
-        }
+        hooking("support") { sendFeedback(context) }
     }
 
     private fun sendFeedback(context: Context?) {

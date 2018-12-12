@@ -68,9 +68,9 @@ class MainActivity : AppCompatActivity() {
                 else {
                     try {
                         ddu.file?.let { file ->
-                            Log.i(TAG, getString(R.string.ddu_saved_toast) + " ${file.path}")
+                            Log.i(TAG, "Saving ddu at at ${file.path}")
                             ddu.saveStream(file.outputStream())
-                            toast("ddu saved at ${file.name}")
+                            toast(getString(R.string.ddu_saved_toast) + " ${file.name}")
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -107,12 +107,19 @@ class MainActivity : AppCompatActivity() {
                 }
             APPLY_SETTINGS_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
-                    if (data?.getBooleanExtra("autocenter", false) == true) {
-                        DodecaView.autocenterOnce = true
+                    val having = { param: String, action: () -> Unit ->
+                        if (data?.getBooleanExtra(param, false) == true) {
+                            action()
+                        }
                     }
-                    if (data?.getBooleanExtra("default_ddus", false) == true) {
-                        extractDDUFromAssets()
+                    having("autocenter") { DodecaView.autocenterOnce = true }
+                    having("default_ddu") {
+                        dodecaView.ddu.file?.let { file ->
+                            extract1DDU(file.name)
+                            dodecaView.ddu = DDU.readFile(file)
+                        }
                     }
+                    having("default_ddus") { extractDDUFromAssets() }
                 }
                 dodecaView.loadMajorSharedPreferences()
             }
@@ -156,14 +163,18 @@ class MainActivity : AppCompatActivity() {
         val bufferSize = 1024
         val dir = dduDir
         assets.list("ddu")?.forEach { name ->
-            val source = "ddu/$name"
-            val targetFile = File(dir, name)
-            targetFile.createNewFile()
-            Log.i(TAG, "Copying asset $source to ${targetFile.path}")
-            assets.open(source).use { input ->
-                FileOutputStream(targetFile).use { output ->
-                    input.copyTo(output, bufferSize)
-                }
+            extract1DDU(name, dir, bufferSize)
+        }
+    }
+
+    private fun extract1DDU(name: String, dir: File = dduDir, bufferSize: Int = 1024) {
+        val source = "ddu/$name"
+        val targetFile = File(dir, name)
+        targetFile.createNewFile()
+        Log.i(TAG, "Copying asset $source to ${targetFile.path}")
+        assets.open(source).use { input ->
+            FileOutputStream(targetFile).use { output ->
+                input.copyTo(output, bufferSize)
             }
         }
     }
