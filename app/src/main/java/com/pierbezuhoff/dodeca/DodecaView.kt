@@ -76,6 +76,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     init {
         loadSharedPreferences()
+        // TODO: add most recent ddu to sharedPreference and try to load it here
         try {
             val exampleDDUFile = File(File(context.filesDir, "ddu"), "290305_z1_erot2.ddu")
             this.ddu = DDU.readFile(exampleDDUFile)

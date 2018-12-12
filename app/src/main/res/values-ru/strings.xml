@@ -6,7 +6,6 @@
     <string name="trace_button_title">Включить/выключить след</string>
     <string name="save_button_title">Сохранить файл ddu</string>
     <string name="settings_button_title">Настройки</string>
-    <string name="title_activity_settings">Настройки</string>
     <string name="redraw_trace_title">Перерисовка следа</string>
     <string name="redraw_trace_summary">Убирать след при перемещении и масштабировании</string>
     <string name="show_all_circles_title">Показать все окружности</string>
@@ -19,7 +18,9 @@
     <string name="settings_about_title">Информация</string>
     <string name="description_summary">Порт Dodeca для Android</string>
     <string name="version_title">Версия</string>
-    <string name="copyright_summary">© Револьт Пименов и Иван Никитин</string>
+    <string name="copyright_summary">© Револьт Пименов (алгоритмы, эстетическая геометрия), Иван Никитин
+        (программирование)
+    </string>
     <string name="support_title">Обратная связь и поддержка</string>
     <string name="fps_summary">Число перерисовок в секунду, скорость перерисовки</string>
     <string name="reverse_motion">Обратить движение</string>
@@ -30,8 +31,9 @@
     <string name="bad_ddu_format_toast">Неправильный формат ddu</string>
     <string name="error_ddu_save_no_file_toast">Ошибка во время сохранения ddu: ddu не привязано к файлу</string>
     <string name="error_ddu_save_toast">Ошибка во время сохранения ddu: см. лог</string>
-    <string name="ddu_saved_toast">Сохранение ddu в</string>
     <string name="restore_defaults_title">Восстановить настройки по умолчанию</string>
     <string name="autocenter_title">Автоцентровка</string>
     <string name="restore_default_ddus_title">Восстановить исходные файлы ddu</string>
+    <string name="restore_default_ddu_title">Восстановить исходную версию данного файла ddu</string>
+    <string name="ddu_saved_toast">Файл ddu сохранён в</string>
 </resources>
