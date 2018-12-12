@@ -1,18 +1,14 @@
 package com.pierbezuhoff.dodeca
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
-import android.support.v7.preference.EditTextPreference
 import android.support.v7.preference.PreferenceFragmentCompat
 import android.support.v7.preference.PreferenceManager
-import android.util.Log
 import org.jetbrains.anko.support.v4.email
 
-class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
+class SettingsFragment : PreferenceFragmentCompat() {
     var settingsActivity: SettingsActivity? = null
-    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setupPreferences(rootKey)
@@ -40,33 +36,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedP
             sendFeedback(context)
             true
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        sharedPreferences = preferenceManager.sharedPreferences
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this)
-        sharedPreferences.all.entries.filterIsInstance(EditTextPreference::class.java).forEach { updateSummary(it) }
-    }
-
-    override fun onPause() {
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
-        super.onPause()
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (sharedPreferences != null && key != null) {
-            val changedPreference = sharedPreferences.all[key]
-            when (changedPreference) { is EditTextPreference -> updateSummary(changedPreference) }
-        }
-    }
-
-    private fun updateSummary(preference: EditTextPreference) {
-        preference.summary = preference.text
-        // BUG: don't work now
-        // TODO: extend TextEditPreference
-        // see: https://stackoverflow.com/questions/531427/how-do-i-display-the-current-value-of-an-android-preference-in-the-preference-su/11609799
-        Log.i("Preference", "summary = ${preference.summary}")
     }
 
     private fun sendFeedback(context: Context?) {

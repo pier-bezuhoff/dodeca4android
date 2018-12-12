@@ -23,9 +23,9 @@
     <string name="show_all_circles_title">Show all circles</string>
     <string name="show_all_circles_summary">Show hidden and static circles</string>
     <string name="ups_title">Speed</string>
-    <string name="ups_summary">Updates per second (speed of circle motion) (%s)</string> <!-- tmp -->
+    <string name="ups_summary">%s updates per second (speed of circle motion)</string>
     <string name="shape_title">Shape</string>
-    <string name="shape_summary">Shape to show instead of circle</string>
+    <string name="shape_summary">Show \'%s\' instead of circle</string>
     <string name="settings_display_title">Display</string>
     <string name="settings_about_title">About</string>
     <string name="description_summary">Android port for Dodeca</string>
