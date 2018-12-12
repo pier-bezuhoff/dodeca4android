@@ -34,16 +34,16 @@
             <!--sample:msbp_interval="1"-->
             <!--sample:msbp_measurementUnit="UPS"-->
             <!--sample:msbp_dialogEnabled="false"/>-->
-        <EditTextPreference
-                android:key="old_ups"
-                android:defaultValue="100"
-                android:selectAllOnFocus="false"
-                android:singleLine="true"
-                android:title="@string/ups_title"
-                android:summary="@string/ups_summary"
-                android:inputType="numberDecimal"
-                android:digits="0123456789"
-                android:numeric="integer"/>
+        <!--<com.pierbezuhoff.dodeca.TemplatedEditTextPreference-->
+                <!--android:key="old_ups"-->
+                <!--android:defaultValue="100"-->
+                <!--android:selectAllOnFocus="false"-->
+                <!--android:singleLine="true"-->
+                <!--android:title="@string/ups_title"-->
+                <!--android:summary="@string/ups_summary"-->
+                <!--android:inputType="numberDecimal"-->
+                <!--android:digits="0123456789"-->
+                <!--android:numeric="integer"/>-->
         <!--<EditTextPreference-->
                 <!--android:key="fps"-->
                 <!--android:defaultValue="100"-->
@@ -54,7 +54,7 @@
                 <!--android:inputType="numberDecimal"-->
                 <!--android:digits="0123456789"-->
                 <!--android:numeric="integer"/>-->
-        <ListPreference
+        <com.pierbezuhoff.dodeca.TemplatedListPreference
                 android:key="shape"
                 android:title="@string/shape_title"
                 android:entries="@array/shapes"

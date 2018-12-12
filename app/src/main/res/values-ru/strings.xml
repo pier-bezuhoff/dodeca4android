@@ -12,9 +12,9 @@
     <string name="show_all_circles_title">Показать все окружности</string>
     <string name="show_all_circles_summary">Показать скрытые и неподвижные окружности</string>
     <string name="ups_title">Скорость</string>
-    <string name="ups_summary">Число пересчётов окружностей в секунду (скорость движения окружностей)</string>
+    <string name="ups_summary">%s пересчётов окружностей в секунду (скорость движения окружностей)</string>
     <string name="shape_title">Форма</string>
-    <string name="shape_summary">Показывать выбранную форму вместо окружности</string>
+    <string name="shape_summary">Показывать \'%s\' вместо окружности</string>
     <string name="settings_display_title">Внешний вид</string>
     <string name="settings_about_title">Информация</string>
     <string name="description_summary">Порт Dodeca для Android</string>
