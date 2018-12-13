@@ -6,16 +6,21 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
+import permissions.dispatcher.NeedsPermission
+import permissions.dispatcher.OnNeverAskAgain
+import permissions.dispatcher.OnPermissionDenied
+import permissions.dispatcher.OnShowRationale
+import permissions.dispatcher.PermissionRequest
+import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.reflect.KMutableProperty0
@@ -154,6 +159,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
     private fun readUri(uri: Uri) {
         Log.i(TAG, "reading ddu from uri $uri")
         try {
@@ -161,18 +167,8 @@ class MainActivity : AppCompatActivity() {
             val targetFile = File(dduDir, name)
             val overwrite = targetFile.exists()
             // BUG: works with 'content' scheme, permission denied with 'file'
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE))
-                    // show explanation
-                else
-                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),PERMISSION_REQUEST_CODE)
-            }
+            // until in seetings > permission > storage > dodeca > +
             val inputStream = applicationContext.contentResolver.openInputStream(uri)
-//            val inputStream = when (uri.scheme) {
-//                "content" -> contentResolver.openInputStream(uri)
-//                "file" -> File(uri.path).inputStream()
-//                else -> throw IOException("unsupported Uri scheme: ${uri.scheme}")
-//            }
             inputStream?.let {
                 it.use { input ->
                     FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
@@ -191,6 +187,28 @@ class MainActivity : AppCompatActivity() {
             e.printStackTrace()
             toast(getString(R.string.bad_ddu_format_toast) + uri.path)
         }
+    }
+
+    @OnShowRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
+    fun showRationaleForReadExternalStorage(request: PermissionRequest) {
+        showRationaleDialog("to import ddu", request)
+    }
+
+    @OnPermissionDenied(Manifest.permission.READ_EXTERNAL_STORAGE)
+    fun onReadExternalStorageDenied() { toast("Permission denied => import failed") }
+
+    @OnNeverAskAgain(Manifest.permission.READ_EXTERNAL_STORAGE)
+    fun onReadExternalStorageNeverAskAgain() {
+        // setup var, maybe show smth bad
+    }
+
+    private fun showRationaleDialog(message: String, request: PermissionRequest) {
+        alert(message) {
+            title = "Permission request"
+            positiveButton("Allow") { request.proceed() }
+            negativeButton("Deny") { request.cancel() }
+            isCancelable = false
+        }.show()
     }
 
     fun openColorPicker() {

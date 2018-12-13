@@ -3,8 +3,8 @@ package com.pierbezuhoff.dodeca
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.support.v7.preference.PreferenceFragmentCompat
-import android.support.v7.preference.PreferenceManager
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceManager
 import org.jetbrains.anko.support.v4.email
 
 class SettingsFragment : PreferenceFragmentCompat() {

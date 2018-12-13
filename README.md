@@ -3,7 +3,7 @@
 # TODO
 - [ ] Icon
 - [ ] Help
-- [ ] When implicit intent -- read stream and copy into dduDir
+- [ ] When file schema: check new permission dispatcher + add translations
 - [ ] Increase bottom bar button size
 - [ ] Hide bottom bar after 30s -> settings
 - [ ] Open file with Dodeca on click (is it possible for custom ext), override recent ddu and treat .ddu and .DDU as one!
