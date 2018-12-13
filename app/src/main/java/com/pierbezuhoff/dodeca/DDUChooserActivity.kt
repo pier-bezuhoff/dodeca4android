@@ -3,11 +3,11 @@ package com.pierbezuhoff.dodeca
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.DefaultItemAnimator
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -18,9 +18,9 @@ import java.io.File
 
 class DDUChooserActivity : AppCompatActivity() {
     private lateinit var dduDir: File
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var viewAdapter: RecyclerView.Adapter<*>
-    private lateinit var viewManager: RecyclerView.LayoutManager
+    private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
+    private lateinit var viewAdapter: androidx.recyclerview.widget.RecyclerView.Adapter<*>
+    private lateinit var viewManager: androidx.recyclerview.widget.RecyclerView.LayoutManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,13 +30,18 @@ class DDUChooserActivity : AppCompatActivity() {
         }
         setContentView(R.layout.activity_dduchooser)
 
-        viewManager  = LinearLayoutManager(this) // type mismatch?
+        viewManager  = androidx.recyclerview.widget.LinearLayoutManager(this) // type mismatch?
         viewAdapter = DDUAdapter(dduDir, ::onChoose)
         recyclerView = ddu_recycler_view.apply {
             layoutManager = viewManager
             adapter = viewAdapter
-            addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
-            itemAnimator = DefaultItemAnimator()
+            addItemDecoration(
+                androidx.recyclerview.widget.DividerItemDecoration(
+                    context,
+                    androidx.recyclerview.widget.LinearLayoutManager.VERTICAL
+                )
+            )
+            itemAnimator = androidx.recyclerview.widget.DefaultItemAnimator()
         }
     }
 
@@ -54,8 +59,8 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 }
 
-class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
-    class DDUViewHolder(val view: View) : RecyclerView.ViewHolder(view)
+class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : androidx.recyclerview.widget.RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
+    class DDUViewHolder(val view: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view)
 
     private var files: Array<File> = dir.listFiles()
 
