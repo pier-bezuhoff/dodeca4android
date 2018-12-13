@@ -175,8 +175,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        // Q: does it ever run?
-        Log.i(TAG, "Now you know: onSizeChanged is not absolutely useless!")
         super.onSizeChanged(w, h, oldw, oldh)
         if (trace)
             retrace()

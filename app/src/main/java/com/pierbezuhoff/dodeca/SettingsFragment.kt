@@ -26,14 +26,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
             val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
             editor.clear()
             PreferenceManager.setDefaultValues(context, R.xml.preferences, true)
-            editor.commit()
-            setupPreferences(rootKey) // a bit recursive
+            editor.apply()
+            setupPreferences(rootKey) // a bit recursive, update defaults
         }
         hooking("support") { sendFeedback(context) }
     }
 
     private fun sendFeedback(context: Context?) {
-        val address = "pierbezuhoff2016@gmail.com"
+        val address = getString(R.string.developer_email) // mine
         val subject = getString(R.string.feedback_subject)
         val appVersion = context?.packageManager?.getPackageInfo(context.packageName, 0)?.versionName ?: "-"
         val body = """

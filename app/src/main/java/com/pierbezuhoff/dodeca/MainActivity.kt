@@ -1,8 +1,13 @@
 package com.pierbezuhoff.dodeca
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
@@ -13,10 +18,12 @@ import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.reflect.KMutableProperty0
 
+@RuntimePermissions
 class MainActivity : AppCompatActivity() {
     private var bottomBarShown = true
-    private val dduDir get() = File(filesDir, "ddu")
+    private val dduDir by lazy { File(filesDir, "ddu") }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,16 +41,18 @@ class MainActivity : AppCompatActivity() {
         // listen scroll, double tap and scale gestures
         DodecaGestureDetector(this, dodecaView, onSingleTap = { toggleBottomBar() })
         // handle outer implicit intent
-        if (intent.action == Intent.ACTION_VIEW && intent.type?.endsWith("ddu") == true) {
-            intent.data?.path?.let { readPath(it) }
+        Log.i(TAG, "Dodeca started${if (intent.action == Intent.ACTION_VIEW) " from implicit intent: ${intent.data?.path ?: "-"}" else ""}")
+        if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
+                intent.type?.endsWith("ddu", ignoreCase = true) == true ||
+                intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)) {
+            intent.data?.let { readUri(it) }
+        }
+        if (!dduDir.exists()) {
+            Log.i(TAG, "Extracting assets into $dduDir")
+            dduDir.mkdir()
+            extractDDUFromAssets()
         } else {
-            if (!dduDir.exists()) {
-                Log.i(TAG, "Extracting assets into $dduDir")
-                dduDir.mkdir()
-                extractDDUFromAssets()
-            } else {
-                Log.i(TAG, "$dduDir already exists")
-            }
+            Log.i(TAG, "$dduDir already exists")
         }
     }
 
@@ -78,17 +87,11 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            R.id.app_bar_go -> {
-                dodecaView.updating = !dodecaView.updating
-            }
+            R.id.app_bar_go -> toggle(dodecaView::updating)
             R.id.app_bar_next_step -> dodecaView.oneStep()
-            R.id.app_bar_trace -> {
-                dodecaView.trace = !dodecaView.trace
-            }
+            R.id.app_bar_trace -> toggle(dodecaView::trace)
             // R.id.app_bar_change_color -> openColorPicker()
-            R.id.app_bar_clear -> {
-                dodecaView.retrace()
-            }
+            R.id.app_bar_clear -> dodecaView.retrace()
             R.id.app_bar_settings -> {
                 startActivityForResult(
                     Intent(this@MainActivity, SettingsActivity::class.java),
@@ -127,13 +130,66 @@ class MainActivity : AppCompatActivity() {
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // granted finally
+                } else {
+
+                }
+            }
+        }
+    }
+
     private fun readPath(path: String) {
+        Log.i(TAG, "reading ddu from path $path...")
         try {
             val file = File(path)
             dodecaView.ddu = DDU.readFile(file)
         } catch (e: Exception) {
             e.printStackTrace()
             toast(getString(R.string.bad_ddu_format_toast) + path)
+        }
+    }
+
+    private fun readUri(uri: Uri) {
+        Log.i(TAG, "reading ddu from uri $uri")
+        try {
+            val name = File(uri.path).name
+            val targetFile = File(dduDir, name)
+            val overwrite = targetFile.exists()
+            // BUG: works with 'content' scheme, permission denied with 'file'
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE))
+                    // show explanation
+                else
+                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),PERMISSION_REQUEST_CODE)
+            }
+            val inputStream = applicationContext.contentResolver.openInputStream(uri)
+//            val inputStream = when (uri.scheme) {
+//                "content" -> contentResolver.openInputStream(uri)
+//                "file" -> File(uri.path).inputStream()
+//                else -> throw IOException("unsupported Uri scheme: ${uri.scheme}")
+//            }
+            inputStream?.let {
+                it.use { input ->
+                    FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
+                }
+                if (overwrite) {
+                    // maybe: show alert dialog
+                    Log.i(TAG, "Original ddu was overwritten by imported ddu $name")
+                    toast(getString(R.string.imported_ddu_overwrites_original_toast) + " $name")
+                } else {
+                    Log.i(TAG, "imported ddu $name")
+                    toast(getString(R.string.imported_ddu_toast) + " $name")
+                }
+                dodecaView.ddu = DDU.readFile(targetFile)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            toast(getString(R.string.bad_ddu_format_toast) + uri.path)
         }
     }
 
@@ -156,36 +212,39 @@ class MainActivity : AppCompatActivity() {
             // don't let that sticky bottom nav. return, always immersive
             // dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
         }
-        bottomBarShown = !bottomBarShown
+        toggle(::bottomBarShown)
     }
 
     private fun extractDDUFromAssets() {
-        val bufferSize = 1024
         val dir = dduDir
         assets.list("ddu")?.forEach { name ->
-            extract1DDU(name, dir, bufferSize)
+            extract1DDU(name, dir)
         }
     }
 
-    private fun extract1DDU(name: String, dir: File = dduDir, bufferSize: Int = 1024) {
+    private fun extract1DDU(name: String, dir: File = dduDir) {
         val source = "ddu/$name"
         val targetFile = File(dir, name)
         targetFile.createNewFile()
         Log.i(TAG, "Copying asset $source to ${targetFile.path}")
         assets.open(source).use { input ->
-            FileOutputStream(targetFile).use { output ->
-                input.copyTo(output, bufferSize)
-            }
+            FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
         }
     }
 
     companion object {
         const val TAG = "MainActivity"
+        const val BUFFER_SIZE = DEFAULT_BUFFER_SIZE
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
+        const val PERMISSION_REQUEST_CODE = 3
         // fullscreen, but with bottom navigation
         const val FULLSCREEN_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_FULLSCREEN
         // distraction free
         const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
+}
+
+internal fun toggle(prop: KMutableProperty0<Boolean>) {
+    prop.set(!prop.get())
 }

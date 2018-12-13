@@ -3,6 +3,8 @@
 # TODO
 - [ ] Icon
 - [ ] Help
+- [ ] When implicit intent -- read stream and copy into dduDir
+- [ ] Increase bottom bar button size
 - [ ] Hide bottom bar after 30s -> settings
 - [ ] Open file with Dodeca on click (is it possible for custom ext), override recent ddu and treat .ddu and .DDU as one!
 - [ ] Different shapes for different circles, add shape map or global shape to ddu globals

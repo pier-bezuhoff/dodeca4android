@@ -18,6 +18,8 @@
     <string name="error_ddu_save_no_file_toast">Error while saving ddu: ddu has no file</string>
     <string name="error_ddu_save_toast">Error while saving ddu, see log</string>
     <string name="ddu_saved_toast">ddu saved at</string>
+    <string name="imported_ddu_overwrites_original_toast">Original ddu was overwritten by imported ddu</string>
+    <string name="imported_ddu_toast">New ddu was imported:</string>
 
     <!-- Strings related to settings -->
     <string name="settings_display_title">Display</string>
@@ -47,4 +49,5 @@
     <string name="copyright_summary">© Revolt Pimenov (algorithms, esthetic geometry) and Ivan Nikitin (programming)</string>
     <string name="support_title">Feedback and support</string>
     <string name="feedback_subject" translatable="false">Dodeca support</string>
+    <string name="developer_email">pierbezuhoff2016@gmail.com</string>
 </resources>

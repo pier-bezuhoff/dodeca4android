@@ -36,4 +36,6 @@
     <string name="restore_default_ddus_title">Восстановить исходные файлы ddu</string>
     <string name="restore_default_ddu_title">Восстановить исходную версию данного файла ddu</string>
     <string name="ddu_saved_toast">Файл ddu сохранён в</string>
+    <string name="imported_ddu_overwrites_original_toast">Исходный файл ddu был перезаписан импортом</string>
+    <string name="imported_ddu_toast">Импортирован новый файл ddu:</string>
 </resources>
