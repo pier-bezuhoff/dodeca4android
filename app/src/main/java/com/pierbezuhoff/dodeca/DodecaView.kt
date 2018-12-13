@@ -1,6 +1,7 @@
 package com.pierbezuhoff.dodeca
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -30,7 +31,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             trace = value.trace ?: defaultTrace
             redrawTrace = trace
             updating = defaultUpdating
+            value.file?.let { file ->
+                sharedPreferences.editing { putString("recent_ddu", file.name) }
+            }
             clearMinorSharedPreferences()
+            if (autocenterAlways && width > 0) // we know sizes
+                autocenter()
             invalidate()
         }
     private lateinit var circles: MutableList<Circle>
@@ -76,10 +82,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     init {
         loadSharedPreferences()
-        // TODO: add most recent ddu to sharedPreference and try to load it here
         try {
-            val exampleDDUFile = File(File(context.filesDir, "ddu"), "290305_z1_erot2.ddu")
-            this.ddu = DDU.readFile(exampleDDUFile)
+            val recentDDU by lazy { sharedPreferences.getString("recent_ddu", null) }
+            if (preferRecentDDU && recentDDU == null) {
+                val exampleDDUFile = File(File(context.filesDir, "ddu"), "290305_z1_erot2.ddu")
+                this.ddu = DDU.readFile(exampleDDUFile)
+            } else {
+                val dduFile = File(File(context.filesDir, "ddu"), recentDDU)
+                this.ddu = DDU.readFile(dduFile)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             this.ddu = exampleDDU
@@ -100,9 +111,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     fun loadMajorSharedPreferences() {
         var updateImmediately = false
         if (autocenterOnce) {
-            val center = Complex(centerX.toDouble(), centerY.toDouble())
-            val dz = scrollToCentroid(center, circles.filter { it.show } .map { visibleCenter(it) })
-            updateScroll(dz.real.toFloat(), dz.imaginary.toFloat())
+            autocenter()
             autocenterOnce = false
         }
         with (sharedPreferences) {
@@ -144,26 +153,30 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun saveMinorSharedPreferences() {
-        with (sharedPreferences.edit()) {
+        sharedPreferences.editing {
             putFloat("dx", dx)
             putFloat("dy", dy)
             putFloat("scale", scale)
             putBoolean("trace", trace)
             putBoolean("updating", updating)
-            commit()
         }
     }
 
     private fun clearMinorSharedPreferences() {
-        with (sharedPreferences.edit()) {
-            setOf("dx", "dy", "scale", "trace", "updating").forEach { key ->
-                remove(key)
-            }
-            commit()
+        sharedPreferences.editing {
+            setOf("dx", "dy", "scale", "trace", "updating").forEach { remove(it) }
         }
     }
 
+    private fun autocenter() {
+        val center = Complex(centerX.toDouble(), centerY.toDouble())
+        val dz = scrollToCentroid(center, circles.filter { it.show } .map { visibleCenter(it) })
+        updateScroll(dz.real.toFloat(), dz.imaginary.toFloat())
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        // Q: does it ever run?
+        Log.i(TAG, "Now you know: onSizeChanged is not absolutely useless!")
         super.onSizeChanged(w, h, oldw, oldh)
         if (trace)
             retrace()
@@ -198,9 +211,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             if (redrawTrace) {
                 drawBackground(traceCanvas)
             }
-            withTraceCanvas {
-                drawCircles(it)
-            }
+            withTraceCanvas { drawCircles(it) }
             drawTraceCanvas(canvas)
             redrawTrace = false
         } else {
@@ -265,6 +276,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     }
 
+    // Q: why not used?
     private fun withTraceCanvas(draw: (canvas: Canvas) -> Unit) {
 //        traceCanvas.save()
 //        traceCanvas.translate(traceDx, traceDy)
@@ -407,7 +419,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var reverseMotion = defaultReverseMotion
         private val defaultShape = Shapes.CIRCLE
         private var shape = defaultShape
+        private const val defaultAutocenterAlways = false
+        var autocenterAlways = defaultAutocenterAlways // TODO: add to preferences
         var autocenterOnce = false
+        private val defaultPreferRecentDDU = true
+        var preferRecentDDU = defaultPreferRecentDDU // TODO: add to preferences
         const val defaultTrace = true
         const val defaultUpdating = true
         const val defaultDx = 0f
@@ -419,4 +435,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
 enum class Shapes {
     CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR
+}
+
+inline fun SharedPreferences.editing(block: SharedPreferences.Editor.() -> Unit) {
+    with(this.edit()) {
+        this.block()
+        apply()
+    }
 }
