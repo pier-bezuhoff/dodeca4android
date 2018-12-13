@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
           package="com.pierbezuhoff.dodeca">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
@@ -19,28 +18,32 @@
                 android:screenOrientation="locked"
                 android:theme="@style/AppTheme.NoActionBar"> <!-- android:style/Theme.NoTitleBar.Fullscreen"> -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter>
-
-                <!-- TODO: try opening .ddu -->
-                <data
-                        android:host="*"
-                        android:mimeType="*/*"
-                        android:pathPattern=".*\\.ddu"
-                        android:scheme="content"/>
-
-                <action android:name="android.intent.action.VIEW"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
-                <!-- <category android:name="android.intent.category.BROWSABLE"/> -->
+            <intent-filter android:priority="100">
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <!-- v possibly useless -->
+                <data android:mimeType="application/ddu" />
+                <data android:mimeType="application/vnd.ddu" />
+                <data android:mimeType="application/octet-stream" />
+                <!-- ^ -->
+                <data android:pathPattern=".*\\.ddu" />
+                <data android:pathPattern=".*\\.DDU" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:scheme="http" />
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                 <category android:name="android.intent.category.BROWSABLE" />
             </intent-filter>
         </activity>
         <activity android:name=".SettingsActivity">
             <intent-filter>
-                <action android:name="android.intent.action.SEND"/>
+                <action android:name="android.intent.action.SEND" />
             </intent-filter>
         </activity>
         <activity android:name=".DDUChooserActivity">
