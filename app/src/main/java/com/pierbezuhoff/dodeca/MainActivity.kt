@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
                 intent.putExtra("dirPath", dduDir.absolutePath)
                 startActivityForResult(intent, DDU_CODE)
             }
-            R.id.app_bar_save -> {
+            R.id.app_bar_save -> { // maybe: run in background
                 val ddu = dodecaView.prepareDDUToSave()
                 if (ddu.file == null) {
                     // then save as
