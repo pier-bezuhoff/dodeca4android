@@ -14,7 +14,7 @@
 
     <!-- Toasts -->
     <string name="please_pick_color_toast">Double tap to pick color</string>
-    <string name="bad_ddu_format_toast">"bad ddu format: "</string>
+    <string name="bad_ddu_format_toast">bad ddu format:</string>
     <string name="error_ddu_save_no_file_toast">Error while saving ddu: ddu has no file</string>
     <string name="error_ddu_save_toast">Error while saving ddu, see log</string>
     <string name="ddu_saved_toast">ddu saved at</string>
@@ -50,4 +50,10 @@
     <string name="support_title">Feedback and support</string>
     <string name="feedback_subject" translatable="false">Dodeca support</string>
     <string name="developer_email">pierbezuhoff2016@gmail.com</string>
+    <string name="permission_storage_message">Please, allow storage access to import this ddu</string>
+    <string name="permission_storage_accusation">You denied storage access permission. Why? you cannot import ddu now!
+    </string>
+    <string name="permission_rationale_dialog_title">Permission request</string>
+    <string name="permission_rationale_dialog_allow">Allow</string>
+    <string name="permission_rationale_dialog_deny">Deny</string>
 </resources>

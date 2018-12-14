@@ -12,12 +12,15 @@ import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
-import permissions.dispatcher.*
+import permissions.dispatcher.NeedsPermission
+import permissions.dispatcher.OnPermissionDenied
+import permissions.dispatcher.OnShowRationale
+import permissions.dispatcher.PermissionRequest
+import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.reflect.KMutableProperty0
@@ -29,6 +32,14 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // extracting assets
+        if (!dduDir.exists()) {
+            Log.i(TAG, "Extracting assets into $dduDir")
+            dduDir.mkdir()
+            extractDDUFromAssets()
+        } else {
+            Log.i(TAG, "$dduDir already exists")
+        }
         window.decorView.apply {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
             setOnSystemUiVisibilityChangeListener {
@@ -39,28 +50,15 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
         window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         setContentView(R.layout.activity_main)
         setSupportActionBar(bar)
-
         // listen scroll, double tap and scale gestures
         DodecaGestureDetector(this, dodecaView, onSingleTap = { toggleBottomBar() })
-        // handle outer implicit intent
+        // handling launch from implicit intent
         Log.i(TAG, "Dodeca started${if (intent.action == Intent.ACTION_VIEW) " from implicit intent: ${intent.data?.path ?: "-"}" else ""}")
         if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
                 intent.type?.endsWith("ddu", ignoreCase = true) == true ||
                 intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)) {
-            intent.data?.let { readUri(it) }
+            intent.data?.let { readUriWithPermissionCheck(it) }
         }
-        if (!dduDir.exists()) {
-            Log.i(TAG, "Extracting assets into $dduDir")
-            dduDir.mkdir()
-            extractDDUFromAssets()
-        } else {
-            Log.i(TAG, "$dduDir already exists")
-        }
-//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-//            Log.i(TAG, "permission group STORAGE not granted")
-//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), PERMISSION_REQUEST_CODE)
-//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), PERMISSION_REQUEST_CODE)
-//        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -113,7 +111,7 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
         when (requestCode) {
             DDU_CODE ->
                 if (resultCode == Activity.RESULT_OK) {
-                    data?.getStringExtra("path")?.let { readPath(it) }
+                    data?.getStringExtra("path")?.let { readPathWithPermissionCheck(it) }
                 }
             APPLY_SETTINGS_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
@@ -140,19 +138,9 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         onRequestPermissionsResult(requestCode, grantResults)
-        when (requestCode) {
-            PERMISSION_REQUEST_CODE -> {
-                permissions.zip(grantResults.asIterable()).forEach { (permission, grantResult) ->
-                    if (grantResult == PackageManager.PERMISSION_GRANTED)
-                        Log.i(TAG, "permission $permission granted")
-                    else
-                        Log.i(TAG, "permission $permission rejected")
-                }
-            }
-        }
     }
 
-    @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
     fun readPath(path: String) {
         Log.i(TAG, "reading ddu from path $path...")
         try {
@@ -160,17 +148,15 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
             dodecaView.ddu = DDU.readFile(file)
         } catch (e: Exception) {
             e.printStackTrace()
-            toast(getString(R.string.bad_ddu_format_toast) + path)
+            toast(getString(R.string.bad_ddu_format_toast) + " $path")
         }
     }
 
-    @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun readUri(uri: Uri) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            Log.i(TAG, "permission WRITE_EXTERNAL_STORAGE not granted yet!top" +
-                "t")
+            Log.i(TAG, "permission WRITE_EXTERNAL_STORAGE not granted yet!")
         }
-//        needPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         Log.i(TAG, "reading ddu from uri $uri")
         try {
             val name = File(uri.path).name
@@ -199,32 +185,19 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
         }
     }
 
-    @OnShowRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    @OnShowRationale(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun showRationaleForReadExternalStorage(request: PermissionRequest) {
-        showRationaleDialog("to import ddu", request)
+        showRationaleDialog(getString(R.string.permission_storage_message), request)
     }
 
-    @OnNeverAskAgain(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-    fun onNeverAskAgainStorage() { toast("never? bad!") }
-
-    @OnPermissionDenied(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-    fun onDeniedStorage() { toast("why? you cannot import ddu now!") }
-
-    private fun needPermission(permission: String) {
-        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-            Log.i(TAG, "permission $permission not granted yet")
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission))
-                0 // show smth
-//                showRationaleDialog("to import ddu")
-            ActivityCompat.requestPermissions(this, arrayOf(permission), PERMISSION_REQUEST_CODE)
-        }
-    }
+    @OnPermissionDenied(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    fun onDeniedStorage() { toast(getString(R.string.permission_storage_accusation)) }
 
     private fun showRationaleDialog(message: String, request: PermissionRequest) {
         alert(message) {
-            title = "Permission request"
-            positiveButton("Allow") { request.proceed() }
-            negativeButton("Deny") { request.cancel() }
+            title = getString(R.string.permission_rationale_dialog_title)
+            positiveButton(getString(R.string.permission_rationale_dialog_allow)) { request.proceed() }
+            negativeButton(getString(R.string.permission_rationale_dialog_deny)) { request.cancel() }
             isCancelable = false
         }.show()
     }
@@ -273,7 +246,6 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
         const val BUFFER_SIZE = DEFAULT_BUFFER_SIZE
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
-        const val PERMISSION_REQUEST_CODE = 3
         // fullscreen, but with bottom navigation
         const val FULLSCREEN_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_FULLSCREEN
         // distraction free

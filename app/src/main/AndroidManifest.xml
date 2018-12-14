@@ -4,7 +4,6 @@
         package="com.pierbezuhoff.dodeca" >
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!--<uses-permission android:name="android.permission.CAMERA" /> &lt;!&ndash; tmp &ndash;&gt;-->
     <permission-group android:name="android.permission-group.STORAGE" />
     <application
             android:allowBackup="true"
