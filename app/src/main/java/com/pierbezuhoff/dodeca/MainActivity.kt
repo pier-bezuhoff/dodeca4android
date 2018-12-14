@@ -26,7 +26,7 @@ import java.io.FileOutputStream
 import kotlin.reflect.KMutableProperty0
 
 @RuntimePermissions
-class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissionsResultCallback*/ {
+class MainActivity : AppCompatActivity() {
     private var bottomBarShown = true
     private val dduDir by lazy { File(filesDir, "ddu") }
 
@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
         // extracting assets
         if (!dduDir.exists()) {
             Log.i(TAG, "Extracting assets into $dduDir")
+            // maybe: also compare their content
             dduDir.mkdir()
             extractDDUFromAssets()
         } else {
@@ -73,13 +74,13 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
                 intent.putExtra("dirPath", dduDir.absolutePath)
                 startActivityForResult(intent, DDU_CODE)
             }
-            R.id.app_bar_save -> { // maybe: run in background
+            R.id.app_bar_save -> {
                 val ddu = dodecaView.prepareDDUToSave()
                 if (ddu.file == null) {
                     // then save as
                     toast(getString(R.string.error_ddu_save_no_file_toast))
                 }
-                else {
+                else { // maybe: run in background
                     try {
                         ddu.file?.let { file ->
                             Log.i(TAG, "Saving ddu at at ${file.path}")
@@ -162,8 +163,7 @@ class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissions
             val name = File(uri.path).name
             val targetFile = File(dduDir, name)
             val overwrite = targetFile.exists()
-            // BUG: works with 'content' scheme, permission denied with 'file'
-            // until in seetings > permission > storage > dodeca > +
+            // NOTE: when 'file' scheme (namely from ZArchiver) WRITE_EXTERNAL_STORAGE permission is obligatory
             val inputStream = applicationContext.contentResolver.openInputStream(uri)
             inputStream?.let {
                 it.use { input ->
