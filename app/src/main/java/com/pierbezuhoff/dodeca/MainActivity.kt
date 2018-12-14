@@ -12,21 +12,18 @@ import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
-import permissions.dispatcher.NeedsPermission
-import permissions.dispatcher.OnNeverAskAgain
-import permissions.dispatcher.OnPermissionDenied
-import permissions.dispatcher.OnShowRationale
-import permissions.dispatcher.PermissionRequest
-import permissions.dispatcher.RuntimePermissions
+import permissions.dispatcher.*
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.reflect.KMutableProperty0
 
 @RuntimePermissions
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() /*, ActivityCompat.OnRequestPermissionsResultCallback*/ {
     private var bottomBarShown = true
     private val dduDir by lazy { File(filesDir, "ddu") }
 
@@ -59,6 +56,11 @@ class MainActivity : AppCompatActivity() {
         } else {
             Log.i(TAG, "$dduDir already exists")
         }
+//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+//            Log.i(TAG, "permission group STORAGE not granted")
+//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), PERMISSION_REQUEST_CODE)
+//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), PERMISSION_REQUEST_CODE)
+//        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -137,18 +139,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        onRequestPermissionsResult(requestCode, grantResults)
         when (requestCode) {
             PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // granted finally
-                } else {
-
+                permissions.zip(grantResults.asIterable()).forEach { (permission, grantResult) ->
+                    if (grantResult == PackageManager.PERMISSION_GRANTED)
+                        Log.i(TAG, "permission $permission granted")
+                    else
+                        Log.i(TAG, "permission $permission rejected")
                 }
             }
         }
     }
 
-    private fun readPath(path: String) {
+    @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    fun readPath(path: String) {
         Log.i(TAG, "reading ddu from path $path...")
         try {
             val file = File(path)
@@ -159,8 +164,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-    private fun readUri(uri: Uri) {
+    @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    fun readUri(uri: Uri) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            Log.i(TAG, "permission WRITE_EXTERNAL_STORAGE not granted yet!top" +
+                "t")
+        }
+//        needPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         Log.i(TAG, "reading ddu from uri $uri")
         try {
             val name = File(uri.path).name
@@ -189,17 +199,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @OnShowRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
+    @OnShowRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun showRationaleForReadExternalStorage(request: PermissionRequest) {
         showRationaleDialog("to import ddu", request)
     }
 
-    @OnPermissionDenied(Manifest.permission.READ_EXTERNAL_STORAGE)
-    fun onReadExternalStorageDenied() { toast("Permission denied => import failed") }
+    @OnNeverAskAgain(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    fun onNeverAskAgainStorage() { toast("never? bad!") }
 
-    @OnNeverAskAgain(Manifest.permission.READ_EXTERNAL_STORAGE)
-    fun onReadExternalStorageNeverAskAgain() {
-        // setup var, maybe show smth bad
+    @OnPermissionDenied(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    fun onDeniedStorage() { toast("why? you cannot import ddu now!") }
+
+    private fun needPermission(permission: String) {
+        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            Log.i(TAG, "permission $permission not granted yet")
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission))
+                0 // show smth
+//                showRationaleDialog("to import ddu")
+            ActivityCompat.requestPermissions(this, arrayOf(permission), PERMISSION_REQUEST_CODE)
+        }
     }
 
     private fun showRationaleDialog(message: String, request: PermissionRequest) {

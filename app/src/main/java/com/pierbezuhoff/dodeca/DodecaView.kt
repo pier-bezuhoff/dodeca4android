@@ -15,6 +15,7 @@ import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.reflect.KMutableProperty0
 
 // TODO: enlarge traceBitmap (as much as possible)
 // BUG: when redrawTraceOnMove, scale and translate -- some shifts occur
@@ -32,7 +33,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             redrawTrace = trace
             updating = defaultUpdating
             value.file?.let { file ->
-                sharedPreferences.editing { putString("recent_ddu", file.name) }
+                editing { putString("recent_ddu", file.name) }
             }
             clearMinorSharedPreferences()
             if (autocenterAlways && width > 0) // we know sizes
@@ -40,7 +41,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             invalidate()
         }
     private lateinit var circles: MutableList<Circle>
-    private val sharedPreferences get() = PreferenceManager.getDefaultSharedPreferences(context)
+    val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var trace: Boolean = defaultTrace
     set(value) {
         field = value
@@ -110,10 +111,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     fun loadMajorSharedPreferences() {
         var updateImmediately = false
-        if (autocenterOnce) {
-            autocenter()
-            autocenterOnce = false
-        }
+        upon(::autocenterOnce) { autocenter() }
         with (sharedPreferences) {
             redrawTraceOnMove = getBoolean("redraw_trace", defaultRedrawTraceOnMove)
             val newShowAllCircles = getBoolean("show_all_circles", defaultShowAllCircles)
@@ -153,7 +151,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun saveMinorSharedPreferences() {
-        sharedPreferences.editing {
+        editing {
             putFloat("dx", dx)
             putFloat("dy", dy)
             putFloat("scale", scale)
@@ -163,7 +161,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun clearMinorSharedPreferences() {
-        sharedPreferences.editing {
+        editing {
             setOf("dx", "dy", "scale", "trace", "updating").forEach { remove(it) }
         }
     }
@@ -202,16 +200,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun updateCanvas(canvas: Canvas) {
         if (updating && System.currentTimeMillis() - lastUpdateTime >= updateDt) {
             updateCircles()
-            nUpdates++
             lastUpdateTime = System.currentTimeMillis()
         }
         if (trace) {
-            if (redrawTrace) {
-                drawBackground(traceCanvas)
-            }
+            upon(::redrawTrace) { drawBackground(traceCanvas) }
             withTraceCanvas { drawCircles(it) }
             drawTraceCanvas(canvas)
-            redrawTrace = false
         } else {
             drawBackground(canvas)
             drawCircles(canvas)
@@ -255,6 +249,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* when trace turns on or sizes change */
     fun retrace() {
+        // TODO: test when traceBitmapFactor != 1
         traceBitmap = Bitmap.createBitmap(
             traceBitmapFactor * width, traceBitmapFactor * height,
             Bitmap.Config.ARGB_8888)
@@ -271,7 +266,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
         }
         invalidate()
-
     }
 
     // Q: why not used?
@@ -287,14 +281,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         canvas.drawBitmap(traceBitmap, traceMatrix, tracePaint)
     }
 
-    private fun drawBackground(canvas: Canvas) {
-        canvas.drawColor(ddu.backgroundColor)
-    }
+    private fun drawBackground(canvas: Canvas) = canvas.drawColor(ddu.backgroundColor)
 
     private fun drawCircles(canvas: Canvas) {
-        for (circle in circles)
-            if (circle.show || showAllCircles)
-                drawCircle(canvas, circle)
+        circles.filter { it.show || showAllCircles }.forEach { drawCircle(canvas, it) }
     }
 
     /* if `shape` != CIRCLE draw `shape` instead of circle */
@@ -306,28 +296,23 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         val y = visibleY(c.imaginary.toFloat())
         val halfWidth = visibleR(r.toFloat())
         when (shape) {
-            Shapes.CIRCLE ->
-                canvas.drawCircle(x, y, halfWidth, paint)
-            Shapes.SQUARE ->
-                canvas.drawRect(
-                    x - halfWidth, y - halfWidth,
-                    x + halfWidth, y + halfWidth,
-                    paint)
-            Shapes.CROSS ->
-                canvas.drawLines(floatArrayOf(
-                    x, y - halfWidth, x, y + halfWidth,
-                    x + halfWidth, y, x - halfWidth, y
-                ), paint)
-            Shapes.VERTICAL_BAR ->
-                canvas.drawLine(
-                    x, y - halfWidth,
-                    x, y + halfWidth,
-                    paint)
-            Shapes.HORIZONTAL_BAR ->
-                canvas.drawLine(
-                    x - halfWidth, y,
-                    x + halfWidth, y,
-                    paint)
+            Shapes.CIRCLE -> canvas.drawCircle(x, y, halfWidth, paint)
+            Shapes.SQUARE -> canvas.drawRect(
+                x - halfWidth, y - halfWidth,
+                x + halfWidth, y + halfWidth,
+                paint)
+            Shapes.CROSS -> canvas.drawLines(floatArrayOf(
+                x, y - halfWidth, x, y + halfWidth,
+                x + halfWidth, y, x - halfWidth, y
+            ), paint)
+            Shapes.VERTICAL_BAR -> canvas.drawLine(
+                x, y - halfWidth,
+                x, y + halfWidth,
+                paint)
+            Shapes.HORIZONTAL_BAR -> canvas.drawLine(
+                x - halfWidth, y,
+                x + halfWidth, y,
+                paint)
         }
     }
 
@@ -346,9 +331,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     fun changeColor(newColor: Int) {
         // maybe: also change DDU?
         pickedColor?.let {
-            circles
-                .filter { it.borderColor == pickedColor }
-                .forEach { it.borderColor = newColor }
+            circles.filter { it.borderColor == pickedColor }.forEach { it.borderColor = newColor }
         }
         pickedColor = newColor
         postInvalidate()
@@ -362,6 +345,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun updateCircles() {
+        nUpdates++
         val oldCircles = circles.toList()
         val n = circles.size
         oldCircles.forEachIndexed { i, circle ->
@@ -401,6 +385,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         visibleY(circle.y.toFloat()).toDouble())
     private inline fun visibleR(r: Float): Float = scale * r
 
+    private fun editing(block: SharedPreferences.Editor.() -> Unit) {
+        with (sharedPreferences.edit()) {
+            this.block()
+            apply()
+        }
+    }
+
     companion object {
         private const val traceBitmapFactor = 1 // traceBitmap == traceBitmapFactor ^ 2 * screens
         private const val defaultFPS = 100
@@ -435,9 +426,9 @@ enum class Shapes {
     CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR
 }
 
-inline fun SharedPreferences.editing(block: SharedPreferences.Editor.() -> Unit) {
-    with(this.edit()) {
-        this.block()
-        apply()
+internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
+    if (prop.get()) {
+        prop.set(false)
+        action()
     }
 }
