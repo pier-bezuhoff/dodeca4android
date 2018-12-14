@@ -18,8 +18,8 @@
     <string name="settings_about_title">Информация</string>
     <string name="description_summary">Порт Dodeca для Android</string>
     <string name="version_title">Версия</string>
-    <string name="copyright_summary">© Револьт Пименов (алгоритмы, эстетическая геометрия), Иван Никитин
-        (программирование)
+    <string name="copyright_summary">© Револьт Пименов (алгоритмы, эстетическая геометрия),
+        Иван Никитин (программирование)
     </string>
     <string name="support_title">Обратная связь и поддержка</string>
     <string name="fps_summary">Число перерисовок в секунду, скорость перерисовки</string>
@@ -38,4 +38,9 @@
     <string name="ddu_saved_toast">Файл ddu сохранён в</string>
     <string name="imported_ddu_overwrites_original_toast">Исходный файл ddu был перезаписан импортом</string>
     <string name="imported_ddu_toast">Импортирован новый файл ddu:</string>
+    <string name="permission_rationale_dialog_allow">Разрешить</string>
+    <string name="permission_rationale_dialog_deny">Отклонить</string>
+    <string name="permission_storage_message">Пожалуйста, разрешите доступ к файлам на устройстве, чтобы импортировать данный файл ddu</string>
+    <string name="permission_storage_accusation">Вы не разрешили доступ к файлам. Файл ddu не может быть импортирован!</string>
+    <string name="permission_rationale_dialog_title">Запрос на разрешение доступа</string>
 </resources>
