@@ -18,6 +18,6 @@
 - [ ] Fix scaling (when redrawTraceOnMove it's obviously broken)
 - [ ] Knot?
 - [ ] Allow UPS > FPS (skipping some or smth other), remove FPS from settings
-
+- [ ] I wish I could inline some annotation-based property marking, TemplateHaskell~
 - [ ] Mode for dragging circles and changing radius
 - [ ] Editing
