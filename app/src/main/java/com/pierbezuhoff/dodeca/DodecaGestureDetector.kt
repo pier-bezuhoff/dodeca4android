@@ -1,23 +1,28 @@
 package com.pierbezuhoff.dodeca
 
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
-import com.pierbezuhoff.dodeca.R.id.action0
-import com.pierbezuhoff.dodeca.R.id.bar
+import android.view.View
 
-class DodecaGestureDetector(val activity: MainActivity, val view: DodecaView, val onSingleTap: (MotionEvent?) -> Unit = {}) : GestureDetector.SimpleOnGestureListener() {
+class DodecaGestureDetector(
+    activity: MainActivity,
+    val view: DodecaView,
+    val onSingleTap: (MotionEvent?) -> Unit = {}
+) : GestureDetector.SimpleOnGestureListener(), View.OnTouchListener {
+    private val gestureDetector = GestureDetector(activity, this)
+    private val scaleListener = ScaleListener(view)
+    private val scaleDetector = ScaleGestureDetector(activity, scaleListener)
 
     init {
-        val gestureDetector = GestureDetector(activity, this)
         gestureDetector.setOnDoubleTapListener(this)
-        val scaleListener = ScaleListener(view)
-        val scaleDetector = ScaleGestureDetector(activity, scaleListener)
-        view.setOnTouchListener { _, event ->
-            gestureDetector.onTouchEvent(event)
-            scaleDetector.onTouchEvent(event)
-        }
+        view.setOnTouchListener(this)
+    }
+
+    override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+        gestureDetector.onTouchEvent(event)
+        scaleDetector.onTouchEvent(event)
+        return true
     }
 
     override fun onDown(e: MotionEvent?): Boolean {
