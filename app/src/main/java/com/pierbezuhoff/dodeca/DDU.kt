@@ -16,11 +16,7 @@ internal data class CircleParams(
     var borderColor: Int? = null, var fill: Boolean? = null, var rule: String? = null) {
     /* CircleParams MUST have [radius], [x] and [y] */
     fun toCircleFigure(): CircleFigure =
-        CircleFigure(
-            Complex(x!!, y!!), radius!!,
-            borderColor ?: CircleFigure.defaultBorderColor,
-            fill ?: CircleFigure.defaultFill,
-            rule ?: CircleFigure.defaultRule)
+        circleFigure(x!!, y!!, radius!!, borderColor, fill, rule)
 }
 
 /* In C++ (with it ddu was created) color is BBGGRR, but in Java -- AARRGGBB */
@@ -73,17 +69,15 @@ class DDU(
             }
             circles.forEach { circle ->
                 writeln("\ncircle:")
-                listOf(
-                    circle.radius,
-                    circle.x,
-                    circle.y,
-                    circle.borderColor.fromColor(),
-                    if (circle.fill) 1 else 0
-                ).forEach { param ->
-                    writeln(param.toString())
+                with(circle) {
+                    listOf(
+                        radius, x, y,
+                        borderColor.fromColor(),
+                        if (fill) 1 else 0
+                    ).forEach { param -> writeln(param.toString()) }
+                    if (circle.dynamic) // dynamic => rule != null
+                        writeln(circle.rule!!)
                 }
-                if (circle.dynamic) // dynamic => rule != null
-                    writeln(circle.rule!!)
             }
         }
     }
@@ -144,18 +138,18 @@ class DDU(
 }
 
 val exampleDDU: DDU = run {
-    val circle = CircleFigure(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "12")
-    val circle1 = CircleFigure(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
-    val circle2 = CircleFigure(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
-    val circle0 = CircleFigure(Complex(0.0, 0.0), 100.0, Color.GREEN)
+    val circle = circleFigure(300.0, 400.0, 200.0, Color.BLUE, rule = "12")
+    val circle1 = circleFigure(450.0, 850.0, 300.0, Color.LTGRAY)
+    val circle2 = circleFigure(460.0, 850.0, 300.0, Color.DKGRAY)
+    val circle0 = circleFigure(0.0, 0.0, 100.0, Color.GREEN)
     val circles: List<CircleFigure> = listOf(
         circle,
         circle1,
         circle2,
         circle0,
-        circle0.inverted(circle),
-        circle1.inverted(circle),
-        CircleFigure(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
+        circle0.inverted(circle.circle),
+        circle1.inverted(circle.circle),
+        circleFigure(600.0, 900.0, 10.0, Color.RED, fill = true)
     )
     DDU(Color.WHITE, circles = circles)
 }

@@ -168,7 +168,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun autocenter() {
         val center = Complex(centerX.toDouble(), centerY.toDouble())
-        val (dx, dy) = center - mean(circles.filter(CircleFigure::show).map(::visibleCenter))
+        val visibleCenters = circles
+            .filter(CircleFigure::show)
+            .map { visibleCenter(it.center) }
+        val (dx, dy) = center - mean(visibleCenters)
         updateScroll(dx.toFloat(), dy.toFloat())
     }
 
@@ -279,7 +282,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* if `shape` != CIRCLE draw `shape` instead of circle */
     private fun drawCircle(canvas: Canvas, circle: CircleFigure) {
-        val (c, r) = circle
+        val (c, r) = circle.circle
         paint.color = circle.borderColor
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
         val x = visibleX(c.real.toFloat())
@@ -349,7 +352,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     else {
                         // QUESTION: maybe should be inverted with respect to new `circles[j]`
                         // maybe it doesn't matter
-                        circles[i].invert(oldCircles[j])
+                        circles[i].invert(oldCircles[j].circle)
                     }
                 }
             }
@@ -370,9 +373,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX
     private inline fun visibleY(y: Float): Float = scale * (y + dy - centerY) + centerY
-    private inline fun visibleCenter(circle: Circle): Complex = Complex(
-        visibleX(circle.x.toFloat()).toDouble(),
-        visibleY(circle.y.toFloat()).toDouble())
+    private inline fun visibleCenter(center: Complex): Complex =
+        Complex(
+            visibleX(center.real.toFloat()).toDouble(),
+            visibleY(center.imaginary.toFloat()).toDouble())
     private inline fun visibleR(r: Float): Float = scale * r
 
     private fun editing(block: SharedPreferences.Editor.() -> Unit) {
