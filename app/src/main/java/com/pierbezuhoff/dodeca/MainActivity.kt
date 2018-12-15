@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
                 intent.type?.endsWith("ddu", ignoreCase = true) == true ||
                 intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)) {
-            intent.data?.let { readUriWithPermissionCheck(it) }
+            intent.data?.let(::readUriWithPermissionCheck)
         }
     }
 
@@ -181,7 +181,7 @@ class MainActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            toast(getString(R.string.bad_ddu_format_toast) + uri.path)
+            toast(getString(R.string.bad_ddu_format_toast) + " ${uri.path}")
         }
     }
 
@@ -218,7 +218,6 @@ class MainActivity : AppCompatActivity() {
         }
         else {
             bar.visibility = View.VISIBLE
-            // don't let that sticky bottom nav. return, always immersive
             // dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
         }
         toggle(::bottomBarShown)
@@ -226,16 +225,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun extractDDUFromAssets() {
         val dir = dduDir
-        assets.list("ddu")?.forEach { name ->
-            extract1DDU(name, dir)
-        }
+        assets.list("ddu")?.forEach { name -> extract1DDU(name, dir) }
     }
 
     private fun extract1DDU(name: String, dir: File = dduDir) {
         val source = "ddu/$name"
         val targetFile = File(dir, name)
-        targetFile.createNewFile()
-        Log.i(TAG, "Copying asset $source to ${targetFile.path}")
+        if (targetFile.createNewFile())
+            Log.i(TAG, "Copying asset $source to ${targetFile.path}")
+        else
+            Log.i(TAG, "Overwriting ${targetFile.path} by asset $source")
         assets.open(source).use { input ->
             FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
         }

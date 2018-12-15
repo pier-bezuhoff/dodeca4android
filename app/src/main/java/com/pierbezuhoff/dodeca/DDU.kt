@@ -15,7 +15,12 @@ internal data class CircleParams(
     var radius: Double? = null, var x: Double? = null, var y: Double? = null,
     var borderColor: Int? = null, var fill: Boolean? = null, var rule: String? = null) {
     /* CircleParams MUST have [radius], [x] and [y] */
-    fun toCircle(): Circle = Circle(Complex(x!!, y!!), radius!!, borderColor, fill, rule)
+    fun toCircleFigure(): CircleFigure =
+        CircleFigure(
+            Complex(x!!, y!!), radius!!,
+            borderColor ?: CircleFigure.defaultBorderColor,
+            fill ?: CircleFigure.defaultFill,
+            rule ?: CircleFigure.defaultRule)
 }
 
 /* In C++ (with it ddu was created) color is BBGGRR, but in Java -- AARRGGBB */
@@ -28,7 +33,8 @@ internal fun Int.toColor(): Int = Color.rgb(blue, green, red)
 // = ((blue shl 16) + (green shl 8) + red).inv() xor 0xffffff
 
 /* AARRGGBB -> BBGGRR */
-internal fun Int.fromColor(): Int = (Color.blue(this) shl 16) + (Color.green(this) shl 8) + Color.red(this)
+internal fun Int.fromColor(): Int =
+    (Color.blue(this) shl 16) + (Color.green(this) shl 8) + Color.red(this)
 
 
 // maybe: serialize DDU to json
@@ -36,11 +42,12 @@ class DDU(
     var backgroundColor: Int = defaultBackgroundColor,
     var trace: Boolean? = null,
     var restGlobals: List<Int> = emptyList(),
-    var circles: List<Circle> = emptyList(),
+    var circles: List<CircleFigure> = emptyList(),
     var file: File? = null
 ) {
 
-    fun copy() = DDU(backgroundColor, trace, restGlobals.toList(), circles.map { it.copy() }, file)
+    // NOTE: copy(newRule = null) resolves overload ambiguity
+    fun copy() = DDU(backgroundColor, trace, restGlobals.toList(), circles.map { it.copy(newRule = null) }, file)
 
     fun translateAndScale(dx: Double = 0.0, dy: Double = 0.0, scaleFactor: Double = 1.0, center: Complex = Complex.ZERO) {
         circles.forEach {
@@ -92,7 +99,7 @@ class DDU(
             var backgroundColor: Int = defaultBackgroundColor
             var trace: Boolean? = null
             val restGlobals: MutableList<Int> = mutableListOf()
-            val circles: MutableList<Circle> = mutableListOf()
+            val circles: MutableList<CircleFigure> = mutableListOf()
             var nGlobals = 0
             var mode: Mode = Mode.NO
             var params = CircleParams()
@@ -110,7 +117,7 @@ class DDU(
                     }
                     it.startsWith("circle:") -> {
                         if (mode > Mode.Y) { // we have at least radius and center
-                            circles.add(params.toCircle())
+                            circles.add(params.toCircleFigure())
                         }
                         params = CircleParams() // clear params
                         mode = Mode.RADIUS
@@ -129,7 +136,7 @@ class DDU(
                 }
             }
             if (mode > Mode.Y) { // we have at least radius and center
-                circles.add(params.toCircle())
+                circles.add(params.toCircleFigure())
             }
             return DDU(backgroundColor, trace, restGlobals, circles)
         }
@@ -137,18 +144,18 @@ class DDU(
 }
 
 val exampleDDU: DDU = run {
-    val circle = Circle(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "12")
-    val circle1 = Circle(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
-    val circle2 = Circle(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
-    val circle0 = Circle(Complex(0.0, 0.0), 100.0, Color.GREEN)
-    val circles = listOf(
+    val circle = CircleFigure(Complex(300.0, 400.0), 200.0, Color.BLUE, rule = "12")
+    val circle1 = CircleFigure(Complex(450.0, 850.0), 300.0, Color.LTGRAY)
+    val circle2 = CircleFigure(Complex(460.0, 850.0), 300.0, Color.DKGRAY)
+    val circle0 = CircleFigure(Complex(0.0, 0.0), 100.0, Color.GREEN)
+    val circles: List<CircleFigure> = listOf(
         circle,
         circle1,
         circle2,
         circle0,
-        circle0.invert(circle),
-        circle1.invert(circle),
-        Circle(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
+        circle0.inverted(circle),
+        circle1.inverted(circle),
+        CircleFigure(Complex(600.0, 900.0), 10.0, Color.RED, fill = true)
     )
     DDU(Color.WHITE, circles = circles)
 }

@@ -22,7 +22,7 @@ import kotlin.reflect.KMutableProperty0
 // even wrong radius, watch closely when continuous scroll/scale too
 // maybe because of center-scaling?
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
-    var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init()
+    var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init(), because I cannot use lateinit here
         set(value) {
             field = value
             circles = value.circles.toMutableList()
@@ -40,7 +40,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 autocenter()
             invalidate()
         }
-    private lateinit var circles: MutableList<Circle>
+    private lateinit var circles: MutableList<CircleFigure>
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var trace: Boolean = defaultTrace
     set(value) {
@@ -168,8 +168,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun autocenter() {
         val center = Complex(centerX.toDouble(), centerY.toDouble())
-        val dz = scrollToCentroid(center, circles.filter { it.show } .map { visibleCenter(it) })
-        updateScroll(dz.real.toFloat(), dz.imaginary.toFloat())
+        val (dx, dy) = center - mean(circles.filter(CircleFigure::show).map(::visibleCenter))
+        updateScroll(dx.toFloat(), dy.toFloat())
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -204,7 +204,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
         if (trace) {
             upon(::redrawTrace) { drawBackground(traceCanvas) }
-            withTraceCanvas { drawCircles(it) }
+            drawCircles(traceCanvas)
             drawTraceCanvas(canvas)
         } else {
             drawBackground(canvas)
@@ -260,20 +260,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         traceMatrix.preTranslate(traceDx, traceDy)
         redrawTrace = trace
         if (!updating) {
-            withTraceCanvas {
-                drawBackground(it)
-                drawCircles(it)
-            }
+            drawBackground(traceCanvas)
+            drawCircles(traceCanvas)
         }
         invalidate()
-    }
-
-    // Q: why not used?
-    private fun withTraceCanvas(draw: (canvas: Canvas) -> Unit) {
-//        traceCanvas.save()
-//        traceCanvas.translate(traceDx, traceDy)
-        draw(traceCanvas)
-//        traceCanvas.restore()
     }
 
     private fun drawTraceCanvas(canvas: Canvas) {
@@ -288,7 +278,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     /* if `shape` != CIRCLE draw `shape` instead of circle */
-    private fun drawCircle(canvas: Canvas, circle: Circle) {
+    private fun drawCircle(canvas: Canvas, circle: CircleFigure) {
         val (c, r) = circle
         paint.color = circle.borderColor
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
@@ -359,7 +349,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     else {
                         // QUESTION: maybe should be inverted with respect to new `circles[j]`
                         // maybe it doesn't matter
-                        circles[i] = circles[i].invert(oldCircles[j])
+                        circles[i].invert(oldCircles[j])
                     }
                 }
             }

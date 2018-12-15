@@ -15,15 +15,28 @@ operator fun Complex.times(factor: Double): Complex = this.multiply(factor)
 operator fun Complex.div(divisor: Complex): Complex = this.divide(divisor)
 operator fun Double.div(divisor: Complex): Complex = divisor.reciprocal().multiply(this)
 operator fun Complex.div(divisor: Double): Complex = this.divide(divisor)
+operator fun Complex.component1(): Double = real
+operator fun Complex.component2(): Double = imaginary
 fun Complex.abs2(): Double = (this * this.conjugate()).real
 
-fun mean(zs: List<Complex>) : Complex {
+/* Inverts [this] complex point with respect to [circle]
+ * [circle].center == [this].center => Complex.INF */
+fun Complex.inverted(circle: Circle): Complex {
+    val (c, r) = circle
+    return when {
+        r == 0.0 -> c
+        c == this || r == Double.POSITIVE_INFINITY -> Complex.INF
+        else -> c + circle.r2 / (this - c).conjugate()
+    }
+}
+
+internal fun mean(zs: List<Complex>) : Complex {
     val n = zs.size
     val sum = zs.foldRight(Complex.ZERO, Complex::plus)
     return sum / n.toDouble()
 }
 
-fun scrollToCentroid(center: Complex, zs: List<Complex>) : Complex {
+internal fun scrollToCentroid(center: Complex, zs: List<Complex>) : Complex {
     // algorithm to decide whether to center x and y or not
 //    val mean = mean(zs)
 //    val deltas = zs.map { it - mean }
