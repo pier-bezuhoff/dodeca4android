@@ -2,12 +2,15 @@ package com.pierbezuhoff.dodeca
 
 import android.graphics.Color
 import org.apache.commons.math3.complex.Complex
+import java.util.StringJoiner
 
 /* radius >= 0 */
 open class Circle(var center: Complex, var radius: Double) {
     val x: Double get() = center.real
     val y: Double get() = center.imaginary
     val r2: Double get() = radius * radius
+
+    constructor(x: Double, y: Double, radius: Double) : this(Complex(x, y), radius)
 
     operator fun component1(): Complex = center
     operator fun component2(): Double = radius
@@ -38,7 +41,7 @@ open class Circle(var center: Complex, var radius: Double) {
     }
 
     /* Inverts [this] with respect to [circle] */
-    fun invert(circle: Circle) {
+    open fun invert(circle: Circle) {
         val (c, r) = circle
         when {
             r == 0.0 -> {
@@ -97,6 +100,25 @@ class CircleFigure(center: Complex, radius: Double,
         circle: Circle,
         borderColor: Int = defaultBorderColor, fill: Boolean = defaultFill, rule: String? = defaultRule
     ) : this(circle.center, circle.radius, borderColor, fill, rule)
+
+    constructor(
+        x: Double, y: Double, radius: Double,
+        borderColor: Int = defaultBorderColor, fill: Boolean = defaultFill, rule: String? = defaultRule
+    ) : this(Circle(x, y, radius), borderColor, fill, rule)
+
+    constructor(
+        x: Double, y: Double, radius: Double,
+        borderColor: Int? = null, fill: Boolean? = null, rule: String? = null
+    ) : this(Circle(x, y, radius), borderColor ?: defaultBorderColor, fill ?: defaultFill, rule ?: defaultRule)
+
+    override fun toString(): String = """CircleFigure(
+        |  center = ($x, $y)
+        |  radius = $radius
+        |  borderColor = ${borderColor.fromColor()}
+        |  fill = $fill
+        |  rule = $rule
+        |)
+    """.trimMargin()
 
     override fun inverted(circle: Circle): CircleFigure =
         CircleFigure(super.inverted(circle), borderColor, fill, rule)

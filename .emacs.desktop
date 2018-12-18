@@ -2,19 +2,19 @@
 ;; --------------------------------------------------------------------------
 ;; Desktop File for Emacs
 ;; --------------------------------------------------------------------------
-;; Created Sat Dec 15 02:08:53 2018
+;; Created Sun Dec 16 15:12:10 2018
 ;; Desktop file format version 208
 ;; Emacs version 26.1
 
 ;; Global section:
-(setq desktop-saved-frameset [frameset 1 (23572 14341 765378 434000) (desktop . "208") "pierbezuhoff@dell-g3-3579" nil nil ((((minibuffer . t) (undecorated) (override-redirect) (font-backend xft x) (font . "-1ASC-Droid Sans Mono-normal-normal-normal-*-23-*-*-*-m-0-iso10646-1") (font-parameter . "Droid Sans Mono 14") (border-width . 0) (internal-border-width . 0) (right-divider-width . 0) (bottom-divider-width . 0) (vertical-scroll-bars) (horizontal-scroll-bars) (foreground-color . "#f6f3e8") (background-color . "#242424") (mouse-color . "black") (border-color . "black") (screen-gamma) (line-spacing) (left-fringe . 8) (right-fringe . 8) (no-special-glyphs) (scroll-bar-foreground) (scroll-bar-background) (menu-bar-lines . 0) (tool-bar-lines . 0) (title) (wait-for-wm . t) (tool-bar-position . top) (inhibit-double-buffering) (icon-type . t) (auto-raise) (auto-lower) (cursor-type . box) (scroll-bar-width . 0) (scroll-bar-height . 0) (alpha) (no-focus-on-map) (no-accept-focus) (fullscreen . maximized) (visibility . t) (skip-taskbar) (z-group) (display-type . color) (background-mode . dark) (cursor-color . "#656565") (sticky) (environment) (frameset--id . "14F2-D381-6089-B45A") (frameset--mini t . t) (modeline . t) (unsplittable) (icon-name) (display . ":1") (explicit-name) (height . 36) (width . 136) (left + -1) (top . 33)) ((min-height . 4) (min-width . 10) (min-height-ignore . 2) (min-width-ignore . 4) (min-height-safe . 1) (min-width-safe . 2) (min-pixel-height . 112) (min-pixel-width . 140) (min-pixel-height-ignore . 56) (min-pixel-width-ignore . 56) (min-pixel-height-safe . 28) (min-pixel-width-safe . 28)) leaf (pixel-width . 1920) (pixel-height . 981) (total-width . 137) (total-height . 35) (normal-height . 1.0) (normal-width . 1.0) (buffer "README.md" (selected . t) (hscroll . 0) (fringes 8 8 nil) (margins nil) (scroll-bars nil 0 t nil 0 t) (vscroll . 0) (dedicated) (point . 1) (start . 1))))])
+(setq desktop-saved-frameset [frameset 1 (23574 16666 382266 501000) (desktop . "208") "pierbezuhoff@dell-g3-3579" nil nil ((((minibuffer . t) (undecorated) (override-redirect) (font-backend xft x) (font . "-1ASC-Droid Sans Mono-normal-normal-normal-*-23-*-*-*-m-0-iso10646-1") (font-parameter . "Droid Sans Mono 14") (border-width . 0) (internal-border-width . 0) (right-divider-width . 0) (bottom-divider-width . 0) (vertical-scroll-bars) (horizontal-scroll-bars) (foreground-color . "#f6f3e8") (background-color . "#242424") (mouse-color . "black") (border-color . "black") (screen-gamma) (line-spacing) (left-fringe . 8) (right-fringe . 8) (no-special-glyphs) (scroll-bar-foreground) (scroll-bar-background) (menu-bar-lines . 0) (tool-bar-lines . 0) (title) (wait-for-wm . t) (tool-bar-position . top) (inhibit-double-buffering) (icon-type . t) (auto-raise) (auto-lower) (cursor-type . box) (scroll-bar-width . 0) (scroll-bar-height . 0) (alpha) (no-focus-on-map) (no-accept-focus) (fullscreen . maximized) (visibility . t) (skip-taskbar) (z-group) (display-type . color) (background-mode . dark) (cursor-color . "#656565") (sticky) (environment) (frameset--id . "14F2-D381-6089-B45A") (frameset--mini t . t) (modeline . t) (unsplittable) (icon-name) (display . ":1") (explicit-name) (height . 36) (width . 136) (left + -1) (top . 33)) ((min-height . 4) (min-width . 10) (min-height-ignore . 2) (min-width-ignore . 4) (min-height-safe . 1) (min-width-safe . 2) (min-pixel-height . 112) (min-pixel-width . 140) (min-pixel-height-ignore . 56) (min-pixel-width-ignore . 56) (min-pixel-height-safe . 28) (min-pixel-width-safe . 28)) leaf (pixel-width . 1920) (pixel-height . 981) (total-width . 137) (total-height . 35) (normal-height . 1.0) (normal-width . 1.0) (buffer "README.md" (selected . t) (hscroll . 0) (fringes 8 8 nil) (margins nil) (scroll-bars nil 0 t nil 0 t) (vscroll . 0) (dedicated) (point . 89) (start . 1))))])
 (setq desktop-missing-file-warning nil)
 (setq tags-file-name nil)
 (setq tags-table-list nil)
 (setq search-ring '("formulstepadd" "step" "StepAdd" "RE"))
 (setq regexp-search-ring nil)
 (setq register-alist nil)
-(setq file-name-history '("~/Programming/Android/Dodeca/"))
+(setq file-name-history '("~/Programming/Android/Dodeca/" "/home/pierbezuhoff/Programming/Android/Dodeca/app/src/main/java/com/pierbezuhoff/dodeca/Circle.kt" "~/Programming/Android/Dodeca/"))
 
 ;; Buffer section -- buffers listed in same order as in buffer list:
 (desktop-create-buffer 208
@@ -22,11 +22,71 @@
   "README.md"
   'markdown-mode
   '(eldoc-mode override-global-mode)
-  1
+  89
   '(nil nil)
   nil
   nil
-  '((tab-width . 4) (buffer-display-time 23572 14335 782687 16000) (buffer-file-coding-system . undecided-unix))
+  '((tab-width . 4) (buffer-display-time 23574 16664 292557 369000) (buffer-file-coding-system . undecided-unix))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "/home/pierbezuhoff/Downloads/Dodeca-source/rezult_android/040406_mnim_3.ddu"
+  "040406_mnim_3.ddu"
+  'fundamental-mode
+  '(override-global-mode)
+  1047
+  '(2703 nil)
+  nil
+  nil
+  '((buffer-display-time 23574 16630 843943 775000) (buffer-file-coding-system . undecided-dos))
+  '((mark-ring (396))))
+
+(desktop-create-buffer 208
+  nil
+  "rezult_android"
+  'dired-mode
+  '(override-global-mode)
+  419
+  '(nil nil)
+  t
+  '("/home/pierbezuhoff/Downloads/Dodeca-source/rezult_android/")
+  '((buffer-display-time 23574 13062 102368 791000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "Dodeca-source"
+  'dired-mode
+  '(override-global-mode)
+  1078
+  '(nil nil)
+  t
+  '("/home/pierbezuhoff/Downloads/Dodeca-source/")
+  '((buffer-display-time 23574 13053 121745 569000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "/home/pierbezuhoff/Programming/Android/Dodeca/app/src/main/java/com/pierbezuhoff/dodeca/Circle.kt"
+  "Circle.kt"
+  'kotlin-mode
+  '(override-global-mode)
+  1
+  '(3968 nil)
+  nil
+  nil
+  '((buffer-display-time 23574 10015 856630 711000) (buffer-file-coding-system . undecided-unix))
+  '((mark-ring (1))))
+
+(desktop-create-buffer 208
+  "/home/pierbezuhoff/Programming/Android/Dodeca/app/src/main/java/com/pierbezuhoff/dodeca/DodecaView.kt"
+  "DodecaView.kt"
+  'kotlin-mode
+  '(override-global-mode)
+  1894
+  '(nil nil)
+  nil
+  nil
+  '((buffer-display-time 23574 9995 213463 176000) (buffer-file-coding-system . undecided-unix))
   '((mark-ring nil)))
 
 (desktop-create-buffer 208
@@ -38,19 +98,7 @@
   '(nil nil)
   t
   '("/home/pierbezuhoff/Programming/Android/Dodeca/app/src/main/java/com/pierbezuhoff/dodeca/")
-  '((buffer-display-time 23572 14333 435133 728000))
-  '((mark-ring nil)))
-
-(desktop-create-buffer 208
-  "/home/pierbezuhoff/Programming/Android/Dodeca/app/src/main/java/com/pierbezuhoff/dodeca/DodecaView.kt"
-  "DodecaView.kt"
-  'kotlin-mode
-  '(override-global-mode)
-  1
-  '(nil nil)
-  nil
-  nil
-  '((buffer-display-time 23572 14330 297932 807000) (buffer-file-coding-system . undecided-unix))
+  '((buffer-display-time 23574 9805 170552 185000))
   '((mark-ring nil)))
 
 (desktop-create-buffer 208
@@ -62,7 +110,7 @@
   '(nil nil)
   nil
   nil
-  '((buffer-display-time 23572 14326 342052 211000) (buffer-file-coding-system . undecided-unix))
+  '((buffer-display-time 23574 9798 106714 641000) (buffer-file-coding-system . undecided-unix))
   '((mark-ring nil)))
 
 (desktop-create-buffer 208
@@ -74,20 +122,8 @@
   '(9619 nil)
   nil
   nil
-  '((buffer-display-time 23572 14302 60512 589000) (buffer-file-coding-system . windows-1251-unix))
+  '((buffer-display-time 23574 9773 837003 91000) (buffer-file-coding-system . windows-1251-unix))
   '((mark-ring (6224 801 801 1))))
-
-(desktop-create-buffer 208
-  nil
-  "Dodeca-source"
-  'dired-mode
-  '(override-global-mode)
-  1020
-  '(nil nil)
-  t
-  '("/home/pierbezuhoff/Downloads/Dodeca-source/")
-  '((buffer-display-time 23572 14238 693 670000))
-  '((mark-ring nil)))
 
 (desktop-create-buffer 208
   nil
@@ -98,6 +134,6 @@
   '(259 nil)
   t
   '("/home/pierbezuhoff/Programming/Android/Dodeca/")
-  '((buffer-display-time 23572 14307 10636 389000))
+  '((buffer-display-time 23574 9813 690511 347000))
   '((mark-ring nil)))
 
