@@ -3,6 +3,8 @@ package com.pierbezuhoff.dodeca
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import androidx.preference.ListPreference
+import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import org.jetbrains.anko.support.v4.email
@@ -16,6 +18,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun setupPreferences(rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
+        (findPreference("shape") as ListPreference).let {
+            it.summaryProvider = Preference.SummaryProvider<ListPreference> { preference ->
+                getString(R.string.shape_summary).format(preference.entry)
+            }
+        }
         val hooking: (String, (String) -> Unit) -> Unit = { param, action ->
             findPreference(param).setOnPreferenceClickListener { action(param); true }
         }

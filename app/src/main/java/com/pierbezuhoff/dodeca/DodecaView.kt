@@ -54,6 +54,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private val timer = Timer()
     private val timerTask = object : TimerTask() {
             override fun run() {
+                if (!::traceCanvas.isInitialized && width > 0)
+                    retrace()
                 if (updating)
                     postInvalidate()
             }
@@ -120,14 +122,18 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 showAllCircles = newShowAllCircles
             }
             reverseMotion = getBoolean("reverse_motion", defaultReverseMotion)
-            UPS = getInt("ups", defaultUPS)
+//            UPS = getInt("ups", defaultUPS)
 //            getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
 //                UPS = it
 //            }
             // NOTE: restart/rotate screen to update FPS
-            getString("fps", defaultFPS.toString())?.toIntOrNull()?.let {
-                FPS = it
-            }
+//            getString("fps", defaultFPS.toString())?.toIntOrNull()?.let {
+//                FPS = it
+//            }
+            val autocenterAlways0 = autocenterAlways
+            autocenterAlways = getBoolean("autocenter_always", defaultAutocenterAlways)
+            if (autocenterAlways && !autocenterAlways0 && width > 0)
+                autocenter()
             getString("shape", defaultShape.toString())?.toUpperCase()?.let {
                 val newShape = Shapes.valueOf(it)
                 if (newShape != shape) {
@@ -336,7 +342,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun updateCircles() {
         nUpdates++
-        val oldCircles = circles.toList()
+        val oldCircles = circles.map { it.copy(newRule = null) }
         val n = circles.size
         oldCircles.forEachIndexed { i, circle ->
             circle.rule?.let { rule ->
@@ -349,7 +355,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     else {
                         // QUESTION: maybe should be inverted with respect to new `circles[j]`
                         // maybe it doesn't matter
+//                        Log.i(TAG, "original: ${circles[i]}")
+//                        Log.i(TAG, "inverted: ${circles[i].inverted(oldCircles[j])}")
+//                        circles[i] = circles[i].inverted(oldCircles[j])
                         circles[i].invert(oldCircles[j])
+//                        Log.i(TAG, "invert: ${circles[i]}\n")
                     }
                 }
             }
