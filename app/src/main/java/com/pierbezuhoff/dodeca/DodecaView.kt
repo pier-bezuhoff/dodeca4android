@@ -316,7 +316,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun oneStep() {
-        
         updateCircles()
         lastUpdateTime = System.currentTimeMillis()
         updateOnce = true
@@ -452,7 +451,7 @@ enum class Shapes {
                 paint)
         }
     }
-    fun draw(canvas: Canvas, halfWidth: Float, paint: Paint) {
+    fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, pointX: Float, pointY: Float, point: Complex, paint: Paint) {
         when(this) {
             CIRCLE -> canvas.drawCircle(0f, 0f, halfWidth, paint)
             POINTED_CIRCLE -> {
