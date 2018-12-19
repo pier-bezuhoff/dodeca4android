@@ -2,7 +2,6 @@ package com.pierbezuhoff.dodeca
 
 import android.graphics.Color
 import org.apache.commons.math3.complex.Complex
-import java.util.StringJoiner
 
 /* radius >= 0 */
 open class Circle(var center: Complex, var radius: Double) {
@@ -85,6 +84,8 @@ class CircleFigure(center: Complex, radius: Double,
     var fill: Boolean = defaultFill,
     var rule: String? = defaultRule
 ) : Circle(center, radius) {
+    // point.abs() === 1
+    var point: Complex = Complex.ONE // indicate direction when inverting
     val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
     val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
     val show: Boolean get() = dynamic && !dynamicHidden
@@ -94,7 +95,10 @@ class CircleFigure(center: Complex, radius: Double,
         newBorderColor: Int? = null, newFill: Boolean? = null, newRule: String? = null
     ): CircleFigure = CircleFigure(
         newCenter ?: center, newRadius ?: radius,
-        newBorderColor ?: borderColor, newFill ?: fill, newRule ?: rule)
+        newBorderColor ?: borderColor, newFill ?: fill, newRule ?: rule
+    ).apply {
+        point = this@CircleFigure.point
+    }
 
     constructor(
         circle: Circle,
@@ -114,6 +118,7 @@ class CircleFigure(center: Complex, radius: Double,
     override fun toString(): String = """CircleFigure(
         |  center = ($x, $y)
         |  radius = $radius
+        |  point = $point
         |  borderColor = ${borderColor.fromColor()}
         |  fill = $fill
         |  rule = $rule
@@ -121,7 +126,18 @@ class CircleFigure(center: Complex, radius: Double,
     """.trimMargin()
 
     override fun inverted(circle: Circle): CircleFigure =
-        CircleFigure(super.inverted(circle), borderColor, fill, rule)
+        CircleFigure(super.inverted(circle), borderColor, fill, rule).apply {
+            point = this@CircleFigure.invertedPoint(circle)
+        }
+
+    override fun invert(circle: Circle) {
+        super.invert(circle)
+        point = invertedPoint(circle) // .also { Log.i("invert", "$point -> $it") }
+    }
+
+    private fun invertedPoint(circle: Circle): Complex = (center + point).inverted(circle).run {
+        if (this.abs() == 0.0) Complex.ONE else (this - center).normalized()
+    }
 
     companion object {
         const val defaultBorderColor: Int = Color.BLACK

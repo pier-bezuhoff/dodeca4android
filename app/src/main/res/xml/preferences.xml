@@ -10,7 +10,7 @@
                 android:defaultValue="true"
                 android:title="@string/redraw_trace_title"
                 android:summary="@string/redraw_trace_summary"/>
-        <!-- not in main branch -->
+        <!-- NOTE: not in master branch -->
         <SwitchPreference
                 android:key="show_all_circles"
                 android:defaultValue="false"
@@ -59,8 +59,6 @@
         <!--android:inputType="numberDecimal"-->
         <!--android:digits="0123456789"-->
         <!--android:numeric="integer"/>-->
-        <!-- Following warning is shown possibly because TemplatedListPreference : ...v7.ListPreference -->
-        <!-- Hope this doesn't break things on some devices -->
         <ListPreference
                 android:key="shape"
                 android:title="@string/shape_title"

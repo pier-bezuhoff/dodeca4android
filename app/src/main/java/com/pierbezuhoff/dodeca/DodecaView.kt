@@ -11,6 +11,7 @@ import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import androidx.core.graphics.withMatrix
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.util.Timer
@@ -62,8 +63,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     private var lastUpdateTime: Long = 0L
     private var updateOnce = false
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private val tracePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val paint = Paint(defaultPaint)
+    private val tracePaint = Paint(defaultPaint)
     private lateinit var traceBitmap: Bitmap
     private lateinit var traceCanvas: Canvas
     private val traceMatrix = Matrix()
@@ -284,10 +285,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         val (c, r) = circle
         paint.color = circle.borderColor
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-        val x = visibleX(c.real.toFloat())
-        val y = visibleY(c.imaginary.toFloat())
+        val (x, y) = visibleComplex(c)
         val halfWidth = visibleR(r.toFloat())
-        shape.draw(canvas, x, y, halfWidth, paint)
+        val matrix = Matrix().apply {
+            postTranslate(x, y)
+//            postRotate(-circle.point.degrees.toFloat())
+        }
+        canvas.withMatrix(matrix) {
+            shape.draw(this, halfWidth, paint)
+        }
     }
 
     fun pickColor(x: Float, y: Float) {
@@ -353,6 +359,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX
     private inline fun visibleY(y: Float): Float = scale * (y + dy - centerY) + centerY
+    private fun visibleComplex(z: Complex): Pair<Float, Float> = Pair(visibleX(z.real.toFloat()), visibleY(z.imaginary.toFloat()))
     private inline fun visibleCenter(circle: Circle): Complex = Complex(
         visibleX(circle.x.toFloat()).toDouble(),
         visibleY(circle.y.toFloat()).toDouble())
@@ -367,6 +374,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     companion object {
         private const val traceBitmapFactor = 1 // traceBitmap == traceBitmapFactor ^ 2 * screens
+        val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         private const val defaultFPS = 100
         // FIX: changing FPS and UPS does not work properly
         private var FPS = defaultFPS
@@ -390,6 +398,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var reverseMotion = defaultReverseMotion
         private val defaultShape = Shapes.CIRCLE
         private var shape = defaultShape
+        private const val defaultRotateShapes = true
+        var rotateShapes = defaultRotateShapes // TODO: add to preferences
         private const val defaultAutocenterAlways = false
         var autocenterAlways = defaultAutocenterAlways
         var autocenterOnce = false
@@ -405,41 +415,36 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 }
 
 enum class Shapes {
-    CIRCLE {
-        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
-            canvas.drawCircle(x, y, halfWidth, paint)
-        }
-    },
-    SQUARE {
-        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
-            canvas.drawRect(
-                x - halfWidth, y - halfWidth,
-                x + halfWidth, y + halfWidth,
+    CIRCLE, POINTED_CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR;
+    private val pointPaint = Paint(DodecaView.defaultPaint).apply {
+        color = Color.MAGENTA
+        strokeWidth = 3.0f
+    }
+    fun draw(canvas: Canvas, halfWidth: Float, paint: Paint) {
+        when(this) {
+            CIRCLE -> canvas.drawCircle(0f, 0f, halfWidth, paint)
+            POINTED_CIRCLE -> {
+                canvas.drawCircle(0f, 0f, halfWidth, paint)
+                canvas.drawPoint(halfWidth, 0f, pointPaint)
+            }
+            SQUARE -> canvas.drawRect(
+                -halfWidth, -halfWidth,
+                halfWidth, halfWidth,
                 paint)
-        }
-    }, CROSS {
-        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
-            canvas.drawLines(floatArrayOf(
-                x, y - halfWidth, x, y + halfWidth,
-                x + halfWidth, y, x - halfWidth, y
+            CROSS -> canvas.drawLines(floatArrayOf(
+                0f, -halfWidth, 0f, halfWidth,
+                halfWidth, 0f, -halfWidth, 0f
             ), paint)
-        }
-    }, VERTICAL_BAR {
-        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
-            canvas.drawLine(
-                x, y - halfWidth,
-                x, y + halfWidth,
+            VERTICAL_BAR -> canvas.drawLine(
+                0f, -halfWidth,
+                0f, halfWidth,
+                paint)
+            HORIZONTAL_BAR -> canvas.drawLine(
+                -halfWidth, 0f,
+                halfWidth, 0f,
                 paint)
         }
-    }, HORIZONTAL_BAR {
-        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
-            canvas.drawLine(
-                x - halfWidth, y,
-                x + halfWidth, y,
-                paint)
-        }
-    };
-    abstract fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint)
+    }
 }
 
 internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {

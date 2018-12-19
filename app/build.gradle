@@ -27,7 +27,6 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0-alpha01'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.preference:preference:1.1.0-alpha01'
-//    implementation 'com.google.android.material:material:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
     implementation 'androidx.recyclerview:recyclerview:1.1.0-alpha01'
     testImplementation 'junit:junit:4.12'
@@ -38,8 +37,10 @@ dependencies {
     implementation "org.jetbrains.anko:anko:$anko_version"
     implementation "org.jetbrains.anko:anko-commons:$anko_version"
     implementation "org.jetbrains.anko:anko-design:$anko_version"
+    implementation 'androidx.core:core-ktx:1.0.1'
     implementation "com.github.hotchemi:permissionsdispatcher:$permission_dispatcher_version"
     kapt "com.github.hotchemi:permissionsdispatcher-processor:$permission_dispatcher_version"
     implementation 'com.pavelsikun:material-seekbar-preference:2.3.0'
+    // implementation 'com.google.android.material:material:1.0.0'
     // implementation 'com.jaredrummler:colorpicker-compat:1.0.5'
 }

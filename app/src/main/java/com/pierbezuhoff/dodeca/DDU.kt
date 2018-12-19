@@ -112,7 +112,7 @@ class DDU(
                 if (mode > Mode.Y) { // we have at least radius and center
                     circles.add(params.toCircleFigure())
                 } else if (mode >= Mode.RADIUS) {
-                    Log.w("DDU.readStream", "Unexpected end of circle")
+                    Log.w("DDU.readStream", "Unexpected end of circle, discarding...")
                 }
             }
             stream.reader().forEachLine {
