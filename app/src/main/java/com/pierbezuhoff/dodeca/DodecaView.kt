@@ -60,16 +60,16 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     postInvalidate()
             }
         }
-    private var lastUpdateTime = 0L
+    private var lastUpdateTime: Long = 0L
     private var updateOnce = false
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val tracePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private lateinit var traceBitmap: Bitmap
     private lateinit var traceCanvas: Canvas
-    private val traceMatrix: Matrix = Matrix()
-    private var traceDx = 0f // `traceBitmap` top-left corner - screen top-left corner
-    private var traceDy = 0f // now don't work, set traceBitmapFactor to 2 and see
-    private var nUpdates: Long = 0
+    private val traceMatrix = Matrix()
+    private var traceDx: Float = 0f // `traceBitmap` top-left corner - screen top-left corner
+    private var traceDy: Float = 0f // now don't work, set traceBitmapFactor to 2 and see
+    private var nUpdates: Long = 0L
 
     var dx: Float = defaultDx // not scaled
     private var ddx: Float = 0f
