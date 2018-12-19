@@ -61,7 +61,6 @@ class MainActivity : AppCompatActivity() {
             intent.data?.let(::readUriWithPermissionCheck)
         }
         dodecaView.nUpdatesView = n_updates
-        dodecaView.upsView = ups
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
