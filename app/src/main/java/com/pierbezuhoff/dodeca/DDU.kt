@@ -1,6 +1,7 @@
 package com.pierbezuhoff.dodeca
 
 import android.graphics.Color
+import android.util.Log
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.io.InputStream
@@ -16,7 +17,7 @@ internal data class CircleParams(
     var borderColor: Int? = null, var fill: Boolean? = null, var rule: String? = null) {
     /* CircleParams MUST have [radius], [x] and [y] */
     fun toCircleFigure(): CircleFigure =
-        circleFigure(x!!, y!!, radius!!, borderColor, fill, rule)
+        CircleFigure(x!!, y!!, radius!!, borderColor, fill, rule)
 }
 
 /* In C++ (with it ddu was created) color is BBGGRR, but in Java -- AARRGGBB */
@@ -44,6 +45,14 @@ class DDU(
 
     // NOTE: copy(newRule = null) resolves overload ambiguity
     fun copy() = DDU(backgroundColor, trace, restGlobals.toList(), circles.map { it.copy(newRule = null) }, file)
+
+    override fun toString(): String = """DDU(
+        |backgroundColor = ${backgroundColor.fromColor()}
+        |restGlobals = $restGlobals
+        |trace = $trace
+        |file = $file
+        |circles = $circles
+    """.trimMargin()
 
     fun translateAndScale(dx: Double = 0.0, dy: Double = 0.0, scaleFactor: Double = 1.0, center: Complex = Complex.ZERO) {
         circles.forEach {
@@ -97,6 +106,13 @@ class DDU(
             var nGlobals = 0
             var mode: Mode = Mode.NO
             var params = CircleParams()
+            val appendCircle: () -> Unit = {
+                if (mode > Mode.Y) { // we have at least radius and center
+                    circles.add(params.toCircleFigure())
+                } else if (mode >= Mode.RADIUS) {
+                    Log.w("DDU.readStream", "Unexpected end of circle")
+                }
+            }
             stream.reader().forEachLine {
                 when {
                     it.startsWith("global") -> mode = Mode.GLOBAL
@@ -110,9 +126,7 @@ class DDU(
                         mode = Mode.NO
                     }
                     it.startsWith("circle:") -> {
-                        if (mode > Mode.Y) { // we have at least radius and center
-                            circles.add(params.toCircleFigure())
-                        }
+                        appendCircle()
                         params = CircleParams() // clear params
                         mode = Mode.RADIUS
                     }
@@ -129,27 +143,25 @@ class DDU(
                     }
                 }
             }
-            if (mode > Mode.Y) { // we have at least radius and center
-                circles.add(params.toCircleFigure())
-            }
+            appendCircle()
             return DDU(backgroundColor, trace, restGlobals, circles)
         }
     }
 }
 
 val exampleDDU: DDU = run {
-    val circle = circleFigure(300.0, 400.0, 200.0, Color.BLUE, rule = "12")
-    val circle1 = circleFigure(450.0, 850.0, 300.0, Color.LTGRAY)
-    val circle2 = circleFigure(460.0, 850.0, 300.0, Color.DKGRAY)
-    val circle0 = circleFigure(0.0, 0.0, 100.0, Color.GREEN)
+    val circle = CircleFigure(300.0, 400.0, 200.0, Color.BLUE, rule = "12")
+    val circle1 = CircleFigure(450.0, 850.0, 300.0, Color.LTGRAY)
+    val circle2 = CircleFigure(460.0, 850.0, 300.0, Color.DKGRAY)
+    val circle0 = CircleFigure(0.0, 0.0, 100.0, Color.GREEN)
     val circles: List<CircleFigure> = listOf(
         circle,
         circle1,
         circle2,
         circle0,
-        circle0.inverted(circle.circle),
-        circle1.inverted(circle.circle),
-        circleFigure(600.0, 900.0, 10.0, Color.RED, fill = true)
+        circle0.inverted(circle),
+        circle1.inverted(circle),
+        CircleFigure(600.0, 900.0, 10.0, Color.RED, fill = true)
     )
     DDU(Color.WHITE, circles = circles)
 }

@@ -43,4 +43,6 @@
     <string name="permission_storage_message">Пожалуйста, разрешите доступ к файлам на устройстве, чтобы импортировать данный файл ddu</string>
     <string name="permission_storage_accusation">Вы не разрешили доступ к файлам. Файл ddu не может быть импортирован!</string>
     <string name="permission_rationale_dialog_title">Запрос на разрешение доступа</string>
+    <string name="always_autocenter_title">Всегда проводить автоцентровку</string>
+    <string name="always_autocenter_summary">Проводить автоцентровку при загрузке файла ddu</string>
 </resources>

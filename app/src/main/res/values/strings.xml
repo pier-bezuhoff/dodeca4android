@@ -29,6 +29,8 @@
     <string name="show_all_circles_summary">Show hidden and static circles</string>
     <string name="reverse_motion">Reverse motion</string>
     <string name="autocenter_title">Autocenter</string>
+    <string name="always_autocenter_title">Always autocenter</string>
+    <string name="always_autocenter_summary">Autocenter when loading new ddu</string>
     <!-- v ups and fps are unused now -->
     <string name="ups_title">Speed</string>
     <string name="ups_summary">%s updates per second (speed of circle motion)</string>

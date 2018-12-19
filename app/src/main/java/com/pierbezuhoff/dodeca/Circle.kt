@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca
 
 import android.graphics.Color
 import org.apache.commons.math3.complex.Complex
+import java.util.StringJoiner
 
 interface Invertible<Self> {
     /* return [this] inverted with respect to [circle] */
@@ -52,7 +53,7 @@ open class Circle(var center: Complex, var radius: Double) : Shape<Circle> {
     }
 
     /* Inverts [this] with respect to [circle] */
-    override fun invert(circle: Circle) {
+    open fun invert(circle: Circle) {
         val (c, r) = circle
         when {
             r == 0.0 -> {
@@ -146,10 +147,32 @@ class Figure<A>(
         newInvertible ?: shape,
         newBorderColor ?: borderColor, newFill ?: fill, newRule ?: rule)
 
-    override fun inverted(circle: Circle): Figure<A> = Figure(shape.inverted(circle), borderColor, fill, rule)
-    override fun invert(circle: Circle) { shape.invert(circle) }
-    override fun translate(dx: Double, dy: Double) { shape.translate(dx, dy) }
-    override fun scale(scaleFactor: Double, center: Complex) { shape.scale(scaleFactor, center) }
+    constructor(
+        circle: Circle,
+        borderColor: Int = defaultBorderColor, fill: Boolean = defaultFill, rule: String? = defaultRule
+    ) : this(circle.center, circle.radius, borderColor, fill, rule)
+
+    constructor(
+        x: Double, y: Double, radius: Double,
+        borderColor: Int = defaultBorderColor, fill: Boolean = defaultFill, rule: String? = defaultRule
+    ) : this(Circle(x, y, radius), borderColor, fill, rule)
+
+    constructor(
+        x: Double, y: Double, radius: Double,
+        borderColor: Int? = null, fill: Boolean? = null, rule: String? = null
+    ) : this(Circle(x, y, radius), borderColor ?: defaultBorderColor, fill ?: defaultFill, rule ?: defaultRule)
+
+    override fun toString(): String = """CircleFigure(
+        |  center = ($x, $y)
+        |  radius = $radius
+        |  borderColor = ${borderColor.fromColor()}
+        |  fill = $fill
+        |  rule = $rule
+        |)
+    """.trimMargin()
+
+    override fun inverted(circle: Circle): CircleFigure =
+        CircleFigure(super.inverted(circle), borderColor, fill, rule)
 
     companion object {
         const val defaultBorderColor: Int = Color.BLACK
