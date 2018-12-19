@@ -13,7 +13,6 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import androidx.core.graphics.withRotation
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import kotlin.concurrent.fixedRateTimer
@@ -328,9 +327,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun updateCircles() {
         nUpdates += if (reverseMotion) -1 else 1
-        nUpdatesView?.text = "%d updates".format(nUpdates)
+        nUpdatesView?.text = context.getString(R.string.n_updates_text).format(nUpdates)
         if (nUpdates - last20NUpdates >= 20) {
-            time20UpdatesView?.text = "20 updates per %.2f seconds".format((lastUpdateTime - last20UpdateTime) / 1000f)
+            time20UpdatesView?.text = context.getString(R.string.time_20_updates_text).format((lastUpdateTime - last20UpdateTime) / 1000f)
             last20NUpdates = nUpdates
             last20UpdateTime = lastUpdateTime
         }
@@ -430,8 +429,10 @@ enum class Shapes {
     }
     fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, pointX: Float, pointY: Float, point: Complex, paint: Paint) {
         val center by lazy { Complex(x.toDouble(), y.toDouble()) }
-        fun rotated(x: Float, y: Float): PointF =
+        fun trueRotated(x: Float, y: Float): PointF =
             (center + (Complex(x.toDouble(), y.toDouble()) - center) * point).run { PointF(real.toFloat(), imaginary.toFloat()) }
+        val rotated: (Float, Float) -> PointF =
+            if (DodecaView.rotateShapes) { x, y -> trueRotated(x, y) } else { x, y -> PointF(x, y) }
         val top by lazy { rotated(x, y - halfWidth) }
         val bottom by lazy { rotated(x, y + halfWidth) }
         val left by lazy { rotated(x - halfWidth, y) }
