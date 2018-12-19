@@ -12,12 +12,15 @@ operator fun Complex.minus(subtrahend: Double): Complex = this.subtract(subtrahe
 operator fun Complex.times(factor: Complex): Complex = this.multiply(factor)
 operator fun Double.times(factor: Complex): Complex = factor.multiply(this)
 operator fun Complex.times(factor: Double): Complex = this.multiply(factor)
+operator fun Complex.times(factor: Float): Complex = this.multiply(factor.toDouble())
 operator fun Complex.div(divisor: Complex): Complex = this.divide(divisor)
 operator fun Double.div(divisor: Complex): Complex = divisor.reciprocal().multiply(this)
 operator fun Complex.div(divisor: Double): Complex = this.divide(divisor)
 operator fun Complex.component1(): Double = real
 operator fun Complex.component2(): Double = imaginary
 fun Complex.abs2(): Double = (this * this.conjugate()).real
+fun Complex.normalized(): Complex = if (this == Complex.ZERO) Complex.ZERO else this / this.abs()
+val Complex.degrees: Double get() = Math.toDegrees(argument)
 
 /* Inverts [this] complex point with respect to [circle]
  * [circle].center == [this].center => Complex.INF */
