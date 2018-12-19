@@ -10,6 +10,7 @@
                 android:defaultValue="true"
                 android:title="@string/redraw_trace_title"
                 android:summary="@string/redraw_trace_summary"/>
+        <!-- not in main branch -->
         <SwitchPreference
                 android:key="show_all_circles"
                 android:defaultValue="false"

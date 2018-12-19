@@ -224,15 +224,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         traceCanvas.translate(-this.ddx, -this.ddy)
         dx += this.ddx
         dy += this.ddy
-        if (trace) {
-            if (updating && redrawTraceOnMove)
-                retrace()
-            else {
-                traceMatrix.postTranslate(ddx, ddy)
-                invalidate()
-            }
-        } else if (!updating)
-            invalidate()
+        updatingTrace { traceMatrix.postTranslate(ddx, ddy) }
         this.ddx = 0f
         this.ddy = 0f
     }
@@ -241,16 +233,20 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         this.dscale = scale
         traceCanvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
         scale *= dscale
+        updatingTrace { traceMatrix.postScale(dscale, dscale, centerX, centerY) }
+        this.dscale = 0f
+    }
+
+    private fun updatingTrace(action: () -> Unit) {
         if (trace) {
-            if (updating && redrawTraceOnMove)
+            if (updating && redrawTraceOnMove || !updating && shouldRedrawTraceOnMoveWhenPaused)
                 retrace()
             else {
-                traceMatrix.postScale(dscale, dscale, centerX, centerY)
+                action()
                 invalidate()
             }
         } else if (!updating)
             invalidate()
-        this.dscale = 0f
     }
 
     /* when trace turns on or sizes change */
@@ -291,25 +287,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         val x = visibleX(c.real.toFloat())
         val y = visibleY(c.imaginary.toFloat())
         val halfWidth = visibleR(r.toFloat())
-        when (shape) {
-            Shapes.CIRCLE -> canvas.drawCircle(x, y, halfWidth, paint)
-            Shapes.SQUARE -> canvas.drawRect(
-                x - halfWidth, y - halfWidth,
-                x + halfWidth, y + halfWidth,
-                paint)
-            Shapes.CROSS -> canvas.drawLines(floatArrayOf(
-                x, y - halfWidth, x, y + halfWidth,
-                x + halfWidth, y, x - halfWidth, y
-            ), paint)
-            Shapes.VERTICAL_BAR -> canvas.drawLine(
-                x, y - halfWidth,
-                x, y + halfWidth,
-                paint)
-            Shapes.HORIZONTAL_BAR -> canvas.drawLine(
-                x - halfWidth, y,
-                x + halfWidth, y,
-                paint)
-        }
+        shape.draw(canvas, x, y, halfWidth, paint)
     }
 
     fun pickColor(x: Float, y: Float) {
@@ -341,7 +319,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun updateCircles() {
-        nUpdates++
+        nUpdates += if (reverseMotion) -1 else 1
         val oldCircles = circles.map { it.copy(newRule = null) }
         val n = circles.size
         oldCircles.forEachIndexed { i, circle ->
@@ -349,17 +327,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 val theRule = if (rule.startsWith("n")) rule.drop(1) else rule
                 val chars = if (reverseMotion) theRule.reversed() else theRule
                 chars.forEach { ch ->
-                    val j = Integer.parseInt(ch.toString()) // NOTE: Char.toInt() is ord()
-                    if (j >= n)
+                    val j = Integer.parseInt(ch.toString())
+                    if (j >= n) {
                         Log.e(TAG, "updateCircles: index $j >= $n out of `circles` bounds (from rule $rule for $circle)")
+                    }
                     else {
-                        // QUESTION: maybe should be inverted with respect to new `circles[j]`
-                        // maybe it doesn't matter
-//                        Log.i(TAG, "original: ${circles[i]}")
-//                        Log.i(TAG, "inverted: ${circles[i].inverted(oldCircles[j])}")
-//                        circles[i] = circles[i].inverted(oldCircles[j])
                         circles[i].invert(oldCircles[j])
-//                        Log.i(TAG, "invert: ${circles[i]}\n")
                     }
                 }
             }
@@ -395,6 +368,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     companion object {
         private const val traceBitmapFactor = 1 // traceBitmap == traceBitmapFactor ^ 2 * screens
         private const val defaultFPS = 100
+        // FIX: changing FPS and UPS does not work properly
         private var FPS = defaultFPS
         private const val defaultUPS = 100
         private var UPS = defaultUPS // updates per second
@@ -402,6 +376,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         val updateDt get() = 1000f / UPS
         private const val defaultRedrawTraceOnMove = true
         private var redrawTraceOnMove = defaultRedrawTraceOnMove
+        enum class RedrawOnMoveWhenPaused { ALWAYS, NEVER, RESPECT_REDRAW_TRACE_ON_MOVE }
+        private val defaultRedrawTraceOnMoveWhenPaused = RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE
+        var redrawTraceOnMoveWhenPaused = defaultRedrawTraceOnMoveWhenPaused // TODO: add to preferences
+        private val shouldRedrawTraceOnMoveWhenPaused get() = when (redrawTraceOnMoveWhenPaused) {
+            RedrawOnMoveWhenPaused.ALWAYS -> true
+            RedrawOnMoveWhenPaused.NEVER -> false
+            RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE -> redrawTraceOnMove
+        }
         private const val defaultShowAllCircles = false
         private var showAllCircles = defaultShowAllCircles
         private const val defaultReverseMotion = false
@@ -409,9 +391,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private val defaultShape = Shapes.CIRCLE
         private var shape = defaultShape
         private const val defaultAutocenterAlways = false
-        var autocenterAlways = defaultAutocenterAlways // TODO: add to preferences
+        var autocenterAlways = defaultAutocenterAlways
         var autocenterOnce = false
-        private val defaultPreferRecentDDU = true
+        private const val defaultPreferRecentDDU = true
         var preferRecentDDU = defaultPreferRecentDDU // TODO: add to preferences
         const val defaultTrace = true
         const val defaultUpdating = true
@@ -423,7 +405,41 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 }
 
 enum class Shapes {
-    CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR
+    CIRCLE {
+        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
+            canvas.drawCircle(x, y, halfWidth, paint)
+        }
+    },
+    SQUARE {
+        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
+            canvas.drawRect(
+                x - halfWidth, y - halfWidth,
+                x + halfWidth, y + halfWidth,
+                paint)
+        }
+    }, CROSS {
+        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
+            canvas.drawLines(floatArrayOf(
+                x, y - halfWidth, x, y + halfWidth,
+                x + halfWidth, y, x - halfWidth, y
+            ), paint)
+        }
+    }, VERTICAL_BAR {
+        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
+            canvas.drawLine(
+                x, y - halfWidth,
+                x, y + halfWidth,
+                paint)
+        }
+    }, HORIZONTAL_BAR {
+        override fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint) {
+            canvas.drawLine(
+                x - halfWidth, y,
+                x + halfWidth, y,
+                paint)
+        }
+    };
+    abstract fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, paint: Paint)
 }
 
 internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
