@@ -60,7 +60,8 @@ class MainActivity : AppCompatActivity() {
                 intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)) {
             intent.data?.let(::readUriWithPermissionCheck)
         }
-        DodecaView.nUpdatesView = n_updates
+        dodecaView.nUpdatesView = n_updates
+        dodecaView.upsView = ups
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
