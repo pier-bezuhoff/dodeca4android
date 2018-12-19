@@ -11,6 +11,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
@@ -60,6 +61,7 @@ class MainActivity : AppCompatActivity() {
                 intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)) {
             intent.data?.let(::readUriWithPermissionCheck)
         }
+        adjustStat()
         dodecaView.nUpdatesView = n_updates
         dodecaView.time20UpdatesView = updates_20
     }
@@ -123,6 +125,7 @@ class MainActivity : AppCompatActivity() {
                             action()
                         }
                     }
+                    adjustStat()
                     having("autocenter") { DodecaView.autocenterOnce = true }
                     having("default_ddu") {
                         dodecaView.ddu.file?.let { file ->
@@ -202,6 +205,14 @@ class MainActivity : AppCompatActivity() {
             negativeButton(getString(R.string.permission_rationale_dialog_deny)) { request.cancel() }
             isCancelable = false
         }.show()
+    }
+
+    private fun adjustStat() {
+        if (dodecaView.sharedPreferences.getBoolean("show_stat", false)) {
+            stat.visibility = LinearLayout.VISIBLE
+        } else {
+            stat.visibility = LinearLayout.GONE
+        }
     }
 
     fun openColorPicker() {

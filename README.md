@@ -4,6 +4,7 @@
 - [ ] Help
 - [ ] Update circles in other thread (see Log for b3/b4)
 - [ ] More flexible icons for bottom bar
+- [ ] Rotate square
 - [ ] Also see com.android.support:palette-v7:28.0.0
 - [ ] Also see android-ktx
 - [ ] Increase bottom bar button size
