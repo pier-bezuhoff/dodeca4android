@@ -10,7 +10,6 @@ import android.graphics.Paint
 import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
-import android.view.TextureView
 import android.view.View
 import android.widget.TextView
 import androidx.core.graphics.withMatrix
@@ -18,6 +17,7 @@ import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.concurrent.fixedRateTimer
 import kotlin.reflect.KMutableProperty0
 
 // TODO: enlarge traceBitmap (as much as possible)
@@ -46,6 +46,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     private lateinit var circles: MutableList<CircleFigure>
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
+    var nUpdatesView: TextView? = null
+    var upsView: TextView? = null
     var trace: Boolean = defaultTrace
     set(value) {
         field = value
@@ -55,15 +57,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private var redrawTrace: Boolean = defaultTrace // once, draw background
     var updating = defaultUpdating
-    private val timer = Timer()
-    private val timerTask = object : TimerTask() {
-            override fun run() {
-                if (!::traceCanvas.isInitialized && width > 0)
-                    retrace()
-                if (updating)
-                    postInvalidate()
-            }
-        }
     private var lastUpdateTime: Long = 0L
     private var updateOnce = false
     private val paint = Paint(defaultPaint)
@@ -106,7 +99,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             color = Color.BLUE
             style = Paint.Style.STROKE
         }
-        timer.scheduleAtFixedRate(timerTask, 1, dt.toLong())
+        fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
+            if (!::traceCanvas.isInitialized && width > 0)
+                retrace()
+            if (updating)
+                postInvalidate()
+        }
         saveMinorSharedPreferences()
     }
 
@@ -322,6 +320,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     fun oneStep() {
         updateCircles()
+        lastUpdateTime = System.currentTimeMillis()
         updateOnce = true
         updating = false
         postInvalidate()
@@ -377,7 +376,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     companion object {
-        var nUpdatesView: TextView? = null
         private const val traceBitmapFactor = 1 // traceBitmap == traceBitmapFactor ^ 2 * screens
         val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         private const val defaultFPS = 100
