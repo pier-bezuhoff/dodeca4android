@@ -78,17 +78,15 @@ class DDU(
             }
             circles.forEach { circle ->
                 writeln("\ncircle:")
-                listOf(
-                    circle.radius,
-                    circle.x,
-                    circle.y,
-                    circle.borderColor.fromColor(),
-                    if (circle.fill) 1 else 0
-                ).forEach { param ->
-                    writeln(param.toString())
+                with(circle) {
+                    listOf(
+                        radius, x, y,
+                        borderColor.fromColor(),
+                        if (fill) 1 else 0
+                    ).forEach { param -> writeln(param.toString()) }
+                    if (circle.dynamic) // dynamic => rule != null
+                        writeln(circle.rule!!)
                 }
-                if (circle.dynamic) // dynamic => rule != null
-                    writeln(circle.rule!!)
             }
         }
     }
