@@ -10,81 +10,86 @@
                 android:defaultValue="true"
                 android:title="@string/redraw_trace_title"
                 android:summary="@string/redraw_trace_summary"/>
+        <!-- not in main branch -->
         <SwitchPreference
                 android:key="show_all_circles"
                 android:defaultValue="false"
                 android:title="@string/show_all_circles_title"
                 android:summary="@string/show_all_circles_summary"/>
         <SwitchPreference
-            android:key="reverse_motion"
-            android:defaultValue="false"
-            android:title="@string/reverse_motion"/>
+                android:key="reverse_motion"
+                android:defaultValue="false"
+                android:title="@string/reverse_motion"/>
         <Preference
-            android:key="autocenter"
-            android:title="@string/autocenter_title"/>
+                android:key="autocenter"
+                android:title="@string/autocenter_title"/>
+        <SwitchPreference
+                android:key="autocenter_always"
+                android:title="@string/always_autocenter_title"
+                android:summary="@string/always_autocenter_summary" />
         <!-- MAYBE: delete -->
         <!-- QUESTION: UPS/FPS > 100 = 100? -->
         <!--<com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat-->
-            <!--android:key="ups"-->
-            <!--android:title="@string/ups_title"-->
-            <!--android:summary="@string/ups_summary"-->
-            <!--android:defaultValue="100"-->
-            <!--sample:msbp_minValue="1"-->
-            <!--sample:msbp_maxValue="100"-->
-            <!--sample:msbp_interval="1"-->
-            <!--sample:msbp_measurementUnit="UPS"-->
-            <!--sample:msbp_dialogEnabled="false"/>-->
-        <!--<com.pierbezuhoff.dodeca.TemplatedEditTextPreference-->
-                <!--android:key="old_ups"-->
-                <!--android:defaultValue="100"-->
-                <!--android:selectAllOnFocus="false"-->
-                <!--android:singleLine="true"-->
-                <!--android:title="@string/ups_title"-->
-                <!--android:summary="@string/ups_summary"-->
-                <!--android:inputType="numberDecimal"-->
-                <!--android:digits="0123456789"-->
-                <!--android:numeric="integer"/>-->
+        <!--android:key="ups"-->
+        <!--android:title="@string/ups_title"-->
+        <!--android:summary="@string/ups_summary"-->
+        <!--android:defaultValue="100"-->
+        <!--sample:msbp_minValue="1"-->
+        <!--sample:msbp_maxValue="100"-->
+        <!--sample:msbp_interval="1"-->
+        <!--sample:msbp_measurementUnit="UPS"-->
+        <!--sample:msbp_dialogEnabled="false"/>-->
         <!--<EditTextPreference-->
-                <!--android:key="fps"-->
-                <!--android:defaultValue="100"-->
-                <!--android:selectAllOnFocus="false"-->
-                <!--android:singleLine="true"-->
-                <!--android:title="@string/fps_title"-->
-                <!--android:summary="@string/fps_summary"-->
-                <!--android:inputType="numberDecimal"-->
-                <!--android:digits="0123456789"-->
-                <!--android:numeric="integer"/>-->
+        <!--android:key="old_ups"-->
+        <!--android:defaultValue="100"-->
+        <!--android:selectAllOnFocus="false"-->
+        <!--android:singleLine="true"-->
+        <!--android:title="@string/ups_title"-->
+        <!--android:summary="@string/ups_summary"-->
+        <!--android:inputType="numberDecimal"-->
+        <!--android:digits="0123456789"-->
+        <!--android:numeric="integer"/>-->
+        <!--<EditTextPreference-->
+        <!--android:key="fps"-->
+        <!--android:defaultValue="100"-->
+        <!--android:selectAllOnFocus="false"-->
+        <!--android:singleLine="true"-->
+        <!--android:title="@string/fps_title"-->
+        <!--android:summary="@string/fps_summary"-->
+        <!--android:inputType="numberDecimal"-->
+        <!--android:digits="0123456789"-->
+        <!--android:numeric="integer"/>-->
         <!-- Following warning is shown possibly because TemplatedListPreference : ...v7.ListPreference -->
         <!-- Hope this doesn't break things on some devices -->
-        <com.pierbezuhoff.dodeca.TemplatedListPreference
+        <ListPreference
                 android:key="shape"
                 android:title="@string/shape_title"
                 android:entries="@array/shapes"
                 android:entryValues="@array/shapesValues"
                 android:defaultValue="circle"
-                android:summary="@string/shape_summary"/>
+                android:summary="@string/shape_summary" />
         <Preference
                 android:key="default_ddu"
                 android:title="@string/restore_default_ddu_title" />
         <Preference
-            android:key="default_ddus"
-            android:title="@string/restore_default_ddus_title" />
+                android:key="default_ddus"
+                android:title="@string/restore_default_ddus_title" />
         <Preference
-            android:key="default"
-            android:title="@string/restore_defaults_title" />
+                android:key="default"
+                android:title="@string/restore_defaults_title" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_about_title">
         <Preference
                 android:selectable="false"
-                android:summary="@string/description_summary"/>
+                android:summary="@string/description_summary" />
         <Preference
                 android:selectable="false"
                 android:title="@string/version_title"
-                android:summary="@string/version_summary"/>
+                android:summary="@string/version_summary" />
         <Preference
                 android:title="@string/copyright_title"
-                android:summary="@string/copyright_summary"/>
+                android:summary="@string/copyright_summary" />
         <!-- MAYBE: add some links to websites -->
         <Preference
                 android:title="@string/support_title"
