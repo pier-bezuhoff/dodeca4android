@@ -12,7 +12,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import androidx.core.graphics.withMatrix
+import androidx.core.graphics.withRotation
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import kotlin.concurrent.fixedRateTimer
@@ -41,12 +41,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 autocenter()
             invalidate()
             nUpdates = 0
-            last50UpdateTime = lastUpdateTime
-            last50NUpdates = 0
+            last20NUpdates = nUpdates
+            lastUpdateTime = System.currentTimeMillis()
+            last20UpdateTime = lastUpdateTime
         }
     private lateinit var circles: MutableList<CircleFigure>
     private val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var nUpdatesView: TextView? = null
+    var time20UpdatesView: TextView? = null
     var trace: Boolean = defaultTrace
     set(value) {
         field = value
@@ -67,8 +69,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var traceDy: Float = 0f // now don't work, set traceBitmapFactor to 2 and see
     private var nUpdates: Long = 0L
 
-    private var last50NUpdates: Long = 0L
-    private var last50UpdateTime: Long = 0L
+    private var last20NUpdates: Long = 0L
+    private var last20UpdateTime: Long = 0L
 
     var dx: Float = defaultDx // not scaled
     private var ddx: Float = 0f
@@ -290,7 +292,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
         val (x, y) = visibleComplex(c)
         val halfWidth = visibleR(r.toFloat())
-        val (pointX, pointY) = visibleComplex(circle.point)
+        val (pointX, pointY) = visibleComplex(r * circle.point)
         shape.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, paint)
     }
 
@@ -326,10 +328,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun updateCircles() {
         nUpdates += if (reverseMotion) -1 else 1
         nUpdatesView?.text = "%d updates".format(nUpdates)
-        if (nUpdates - last50NUpdates >= 50) {
-            Log.i(TAG, "50 updates per ${(lastUpdateTime - last50UpdateTime) / 1000}")
-            last50NUpdates = nUpdates
-            last50UpdateTime = lastUpdateTime
+        if (nUpdates - last20NUpdates >= 20) {
+            time20UpdatesView?.text = "20 updates per %.2f seconds".format((lastUpdateTime - last20UpdateTime) / 1000f)
+            last20NUpdates = nUpdates
+            last20UpdateTime = lastUpdateTime
         }
         val oldCircles = circles.map { it.copy(newRule = null) }
         val n = circles.size
@@ -425,55 +427,39 @@ enum class Shapes {
         color = Color.MAGENTA
         strokeWidth = 3.0f
     }
-    fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, point: Complex, paint: Paint) {
+    fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, pointX: Float, pointY: Float, point: Complex, paint: Paint) {
+        val matrix by lazy { Matrix().apply { postTranslate(x, y); postRotate(point.degrees.toFloat()) } }
         when(this) {
             CIRCLE -> canvas.drawCircle(x, y, halfWidth, paint)
             POINTED_CIRCLE -> {
                 canvas.drawCircle(x, y, halfWidth, paint)
-                // point
-                canvas.drawPoint(x + halfWidth, y, pointPaint)
+                canvas.drawPoint(x + pointX, y + pointY, pointPaint)
             }
-            SQUARE -> canvas.drawRect(
-                x - halfWidth, y - halfWidth,
-                x + halfWidth, y + halfWidth,
-                paint)
-            CROSS -> canvas.drawLines(floatArrayOf(
-                x, y - halfWidth, x, y + halfWidth,
-                x + halfWidth, y, x - halfWidth, y
-            ), paint)
-            VERTICAL_BAR -> canvas.drawLine(
-                x, y - halfWidth,
-                x, y + halfWidth,
-                paint)
-            HORIZONTAL_BAR -> canvas.drawLine(
-                x - halfWidth, y,
-                x + halfWidth, y,
-                paint)
-        }
-    }
-    fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, pointX: Float, pointY: Float, point: Complex, paint: Paint) {
-        when(this) {
-            CIRCLE -> canvas.drawCircle(0f, 0f, halfWidth, paint)
-            POINTED_CIRCLE -> {
-                canvas.drawCircle(0f, 0f, halfWidth, paint)
-                canvas.drawPoint(halfWidth, 0f, pointPaint)
+            else -> canvas.withRotation(point.degrees.toFloat(), x, y) {
+                when (this) {
+                    SQUARE -> drawRect(
+                        x - halfWidth, y - halfWidth,
+                        x + halfWidth, y + halfWidth,
+                        paint
+                    )
+                    CROSS -> drawLines(
+                        floatArrayOf(
+                            x, y - halfWidth, x, y + halfWidth,
+                            x + halfWidth, y, x - halfWidth, y
+                        ), paint
+                    )
+                    VERTICAL_BAR -> drawLine(
+                        x, y - halfWidth,
+                        x, y + halfWidth,
+                        paint
+                    )
+                    HORIZONTAL_BAR -> drawLine(
+                        x - halfWidth, y,
+                        x + halfWidth, y,
+                        paint
+                    )
+                }
             }
-            SQUARE -> canvas.drawRect(
-                -halfWidth, -halfWidth,
-                halfWidth, halfWidth,
-                paint)
-            CROSS -> canvas.drawLines(floatArrayOf(
-                0f, -halfWidth, 0f, halfWidth,
-                halfWidth, 0f, -halfWidth, 0f
-            ), paint)
-            VERTICAL_BAR -> canvas.drawLine(
-                0f, -halfWidth,
-                0f, halfWidth,
-                paint)
-            HORIZONTAL_BAR -> canvas.drawLine(
-                -halfWidth, 0f,
-                halfWidth, 0f,
-                paint)
         }
     }
 }
