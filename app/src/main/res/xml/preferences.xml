@@ -25,8 +25,14 @@
                 android:title="@string/autocenter_title"/>
         <SwitchPreference
                 android:key="autocenter_always"
+                android:defaultValue="true"
                 android:title="@string/always_autocenter_title"
                 android:summary="@string/always_autocenter_summary" />
+        <SwitchPreference
+                android:key="show_stat"
+                android:defaultValue="false"
+                android:title="@string/show_stat_title"
+        />
         <!-- MAYBE: delete -->
         <!-- QUESTION: UPS/FPS > 100 = 100? -->
         <!--<com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat-->

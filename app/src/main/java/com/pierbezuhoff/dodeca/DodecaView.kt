@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.PointF
 import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
@@ -46,7 +47,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             last20UpdateTime = lastUpdateTime
         }
     private lateinit var circles: MutableList<CircleFigure>
-    private val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
+    val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var nUpdatesView: TextView? = null
     var time20UpdatesView: TextView? = null
     var trace: Boolean = defaultTrace
@@ -428,38 +429,32 @@ enum class Shapes {
         strokeWidth = 3.0f
     }
     fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, pointX: Float, pointY: Float, point: Complex, paint: Paint) {
-        val matrix by lazy { Matrix().apply { postTranslate(x, y); postRotate(point.degrees.toFloat()) } }
+        val center by lazy { Complex(x.toDouble(), y.toDouble()) }
+        fun rotated(x: Float, y: Float): PointF =
+            (center + (Complex(x.toDouble(), y.toDouble()) - center) * point).run { PointF(real.toFloat(), imaginary.toFloat()) }
+        val top by lazy { rotated(x, y - halfWidth) }
+        val bottom by lazy { rotated(x, y + halfWidth) }
+        val left by lazy { rotated(x - halfWidth, y) }
+        val right by lazy { rotated(x + halfWidth, y) }
         when(this) {
             CIRCLE -> canvas.drawCircle(x, y, halfWidth, paint)
             POINTED_CIRCLE -> {
                 canvas.drawCircle(x, y, halfWidth, paint)
                 canvas.drawPoint(x + pointX, y + pointY, pointPaint)
             }
-            else -> canvas.withRotation(point.degrees.toFloat(), x, y) {
-                when (this) {
-                    SQUARE -> drawRect(
-                        x - halfWidth, y - halfWidth,
-                        x + halfWidth, y + halfWidth,
-                        paint
-                    )
-                    CROSS -> drawLines(
-                        floatArrayOf(
-                            x, y - halfWidth, x, y + halfWidth,
-                            x + halfWidth, y, x - halfWidth, y
-                        ), paint
-                    )
-                    VERTICAL_BAR -> drawLine(
-                        x, y - halfWidth,
-                        x, y + halfWidth,
-                        paint
-                    )
-                    HORIZONTAL_BAR -> drawLine(
-                        x - halfWidth, y,
-                        x + halfWidth, y,
-                        paint
-                    )
-                }
-            }
+            SQUARE -> canvas.drawRect( // how to rotate rect?
+                x - halfWidth, y - halfWidth,
+                x + halfWidth, y + halfWidth,
+                paint
+            )
+            CROSS -> canvas.drawLines(
+                floatArrayOf(
+                    top.x, top.y, bottom.x, bottom.y,
+                    left.x, left.y, right.x, right.y
+                ), paint
+            )
+            VERTICAL_BAR -> canvas.drawLine(top.x, top.y, bottom.x, bottom.y, paint)
+            HORIZONTAL_BAR -> canvas.drawLine(left.x, left.y, right.x, right.y, paint)
         }
     }
 }

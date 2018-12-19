@@ -59,4 +59,5 @@
     <string name="permission_rationale_dialog_title">Permission request</string>
     <string name="permission_rationale_dialog_allow">Allow</string>
     <string name="permission_rationale_dialog_deny">Deny</string>
+    <string name="show_stat_title">Show statistics</string>
 </resources>
