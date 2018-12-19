@@ -10,7 +10,9 @@ import android.graphics.Paint
 import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
+import android.view.TextureView
 import android.view.View
+import android.widget.TextView
 import androidx.core.graphics.withMatrix
 import org.apache.commons.math3.complex.Complex
 import java.io.File
@@ -40,6 +42,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             if (autocenterAlways && width > 0) // we know sizes
                 autocenter()
             invalidate()
+            nUpdates = 0
         }
     private lateinit var circles: MutableList<CircleFigure>
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
@@ -326,6 +329,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun updateCircles() {
         nUpdates += if (reverseMotion) -1 else 1
+        nUpdatesView?.text = "%d updates".format(nUpdates)
         val oldCircles = circles.map { it.copy(newRule = null) }
         val n = circles.size
         oldCircles.forEachIndexed { i, circle ->
@@ -373,6 +377,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     companion object {
+        var nUpdatesView: TextView? = null
         private const val traceBitmapFactor = 1 // traceBitmap == traceBitmapFactor ^ 2 * screens
         val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         private const val defaultFPS = 100
