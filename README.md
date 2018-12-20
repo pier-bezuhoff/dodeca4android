@@ -2,6 +2,7 @@
 ...
 # TODO
 - [ ] Help
+- [ ] h-bar and cross rotates wrong
 - [ ] Increase bottom bar button size
 - [ ] More flexible icons for bottom bar
 - [ ] Hide bottom bar after 30s -> settings
