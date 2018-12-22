@@ -242,14 +242,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         this.ddy = 0f
     }
 
-    fun updateScale(dscale: Float, focusX: Float?, focusY: Float?) {
+    fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
         this.dscale = scale
-        val focusX = focusX ?: centerX
-        val focusY = focusY ?: centerY
-        traceCanvas.scale(1 / dscale, 1 / dscale, focusX, focusY)
+        traceCanvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
         scale *= dscale
-        updatingTrace { traceMatrix.postScale(dscale, dscale, focusX, focusY) }
+        updatingTrace { traceMatrix.postScale(dscale, dscale, centerX, centerY) }
         this.dscale = 0f
+        val ddx = if (focusX ?: 0f == 0f) 0f else (1 - dscale) * (focusX!! - centerX)
+        val ddy = if (focusY ?: 0f == 0f) 0f else (1 - dscale) * (focusY!! - centerY)
+        updateScroll(ddx, ddy)
     }
 
     private fun updatingTrace(action: () -> Unit) {
