@@ -2,6 +2,7 @@
 ...
 # TODO
 - [ ] Help
+- [ ] PreferenceScreen.remove for develop-only preferences
 - [ ] Increase bottom bar button size
 - [ ] More flexible icons for bottom bar
 - [ ] Hide bottom bar after 30s -> settings

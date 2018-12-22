@@ -117,12 +117,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         var updateImmediately = false
         upon(::autocenterOnce) { autocenter() }
         with (sharedPreferences) {
-            redrawTraceOnMove = getBoolean("redraw_trace", defaultRedrawTraceOnMove)
-            val newShowAllCircles = getBoolean("show_all_circles", defaultShowAllCircles)
-            if (newShowAllCircles != showAllCircles) {
-                updateImmediately = true
-                showAllCircles = newShowAllCircles
-            }
+            redrawTraceOnMove.getPreference(sharedPreferences)
+            showAllCircles.getPreference(sharedPreferences) { updateImmediately = true }
             val newShowCenters = getBoolean("show_centers", defaultShowCenters)
             if (newShowCenters != showCenters) {
                 updateImmediately = true
@@ -260,7 +256,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun updatingTrace(action: () -> Unit) {
         if (trace) {
-            if (updating && redrawTraceOnMove || !updating && shouldRedrawTraceOnMoveWhenPaused)
+            if (updating && redrawTraceOnMove.value || !updating && shouldRedrawTraceOnMoveWhenPaused)
                 retrace()
             else {
                 action()
@@ -297,7 +293,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun drawBackground(canvas: Canvas) = canvas.drawColor(ddu.backgroundColor)
 
     private fun drawCircles(canvas: Canvas) {
-        circles.filter { it.show || showAllCircles }.forEach { drawCircle(canvas, it) }
+        circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
     }
 
     /* if `shape` != CIRCLE draw `shape` instead of circle */
@@ -396,6 +392,24 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
+    private class Option<T>(val key: String, val default: T) where T: Any {
+        var value: T = default
+        fun getPreference(sharedPreferences: SharedPreferences, onChange: (T) -> Unit = {}): T {
+            val newValue: T = when (default) {
+                is Boolean -> sharedPreferences.getBoolean(key, default) as T
+                is String -> sharedPreferences.getString(key, default) as T
+                is Float -> sharedPreferences.getFloat(key, default) as T
+                is Int -> sharedPreferences.getInt(key, default) as T
+                is Long -> sharedPreferences.getLong(key, default) as T
+                else -> throw Exception("Unsupported type: ${default.javaClass.name}")
+            }
+            if (value != newValue)
+                onChange(newValue)
+            value = newValue
+            return value
+        }
+    }
+
     companion object {
         private const val traceBitmapFactor = 1 // traceBitmap == traceBitmapFactor ^ 2 * screens
         val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
@@ -409,18 +423,18 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var UPS = defaultUPS // updates per second
         val dt get() = 1000f / FPS
         val updateDt get() = 1000f / UPS
-        private const val defaultRedrawTraceOnMove = true
-        private var redrawTraceOnMove = defaultRedrawTraceOnMove
+        private var redrawTraceOnMove = Option("redraw_trace", true)
         enum class RedrawOnMoveWhenPaused { ALWAYS, NEVER, RESPECT_REDRAW_TRACE_ON_MOVE }
         private val defaultRedrawTraceOnMoveWhenPaused = RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE
         var redrawTraceOnMoveWhenPaused = defaultRedrawTraceOnMoveWhenPaused // maybe: add to preferences
         private val shouldRedrawTraceOnMoveWhenPaused get() = when (redrawTraceOnMoveWhenPaused) {
             RedrawOnMoveWhenPaused.ALWAYS -> true
             RedrawOnMoveWhenPaused.NEVER -> false
-            RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE -> redrawTraceOnMove
+            RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE -> redrawTraceOnMove.value
         }
-        private const val defaultShowAllCircles = false
-        private var showAllCircles = defaultShowAllCircles
+//        private const val defaultShowAllCircles = false
+//        private var showAllCircles = defaultShowAllCircles
+        private var showAllCircles = Option("show_all_circles", false)
         private const val defaultShowCenters = false
         var showCenters = defaultShowCenters
         private const val defaultShowOutline = false
