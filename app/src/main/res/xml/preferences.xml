@@ -21,6 +21,12 @@
                 android:key="show_centers"
                 android:defaultValue="false"
                 android:title="@string/show_centers_title"/>
+        <!-- NOTE: not in master branch -->
+        <SwitchPreference
+                android:key="rotate_shapes"
+                android:defaultValue="true"
+                android:title="@string/rotate_shapes_title"
+                android:summary="@string/rotate_shapes_summary"/>
         <SwitchPreference
                 android:key="reverse_motion"
                 android:defaultValue="false"
