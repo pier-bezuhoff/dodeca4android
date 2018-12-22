@@ -128,6 +128,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 updateImmediately = true
                 showCenters = newShowCenters
             }
+            val newRotateShapes = getBoolean("rotate_shapes", defaultRotateShapes)
+            if (newRotateShapes != rotateShapes) {
+                updateImmediately = true
+                rotateShapes = newRotateShapes
+            }
             reverseMotion = getBoolean("reverse_motion", defaultReverseMotion)
 //            UPS = getInt("ups", defaultUPS)
 //            getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
@@ -237,11 +242,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         this.ddy = 0f
     }
 
-    fun updateScale(dscale: Float) {
+    fun updateScale(dscale: Float, focusX: Float?, focusY: Float?) {
         this.dscale = scale
-        traceCanvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
+        val focusX = focusX ?: centerX
+        val focusY = focusY ?: centerY
+        traceCanvas.scale(1 / dscale, 1 / dscale, focusX, focusY)
         scale *= dscale
-        updatingTrace { traceMatrix.postScale(dscale, dscale, centerX, centerY) }
+        updatingTrace { traceMatrix.postScale(dscale, dscale, focusX, focusY) }
         this.dscale = 0f
     }
 
@@ -398,7 +405,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var redrawTraceOnMove = defaultRedrawTraceOnMove
         enum class RedrawOnMoveWhenPaused { ALWAYS, NEVER, RESPECT_REDRAW_TRACE_ON_MOVE }
         private val defaultRedrawTraceOnMoveWhenPaused = RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE
-        var redrawTraceOnMoveWhenPaused = defaultRedrawTraceOnMoveWhenPaused // TODO: add to preferences
+        var redrawTraceOnMoveWhenPaused = defaultRedrawTraceOnMoveWhenPaused // maybe: add to preferences
         private val shouldRedrawTraceOnMoveWhenPaused get() = when (redrawTraceOnMoveWhenPaused) {
             RedrawOnMoveWhenPaused.ALWAYS -> true
             RedrawOnMoveWhenPaused.NEVER -> false
@@ -407,7 +414,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private const val defaultShowAllCircles = false
         private var showAllCircles = defaultShowAllCircles
         private const val defaultShowCenters = false
-        var showCenters = defaultShowCenters // TODO: add to preferences
+        var showCenters = defaultShowCenters
         private const val defaultReverseMotion = false
         private var reverseMotion = defaultReverseMotion
         private val defaultShape = Shapes.CIRCLE
@@ -418,6 +425,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         var autocenterAlways = defaultAutocenterAlways
         var autocenterOnce = false
         private const val defaultPreferRecentDDU = true
+        // maybe: add load random
         var preferRecentDDU = defaultPreferRecentDDU // TODO: add to preferences
         const val defaultTrace = true
         const val defaultUpdating = true

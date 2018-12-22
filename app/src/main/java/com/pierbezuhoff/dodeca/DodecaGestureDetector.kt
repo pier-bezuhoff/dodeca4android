@@ -19,9 +19,10 @@ class DodecaGestureDetector(
         view.setOnTouchListener(this)
     }
 
-    override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+    override fun onTouch(view: View?, event: MotionEvent?): Boolean {
         gestureDetector.onTouchEvent(event)
         scaleDetector.onTouchEvent(event)
+        view?.performClick()
         return true
     }
 

@@ -49,4 +49,6 @@
     <string name="n_updates_text">%d пересчётов</string>
     <string name="time_20_updates_text">20 пересчётов за %.2f секунд</string>
     <string name="show_centers_title">Показывать центры окружностей</string>
+    <string name="rotate_shapes_title">Поворачивать при инверсии</string>
+    <string name="rotate_shapes_summary">Поворачивать квадрат, крест, черту при инверсии</string>
 </resources>
