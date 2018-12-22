@@ -37,7 +37,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 editing { putString("recent_ddu", file.name) }
             }
             clearMinorSharedPreferences()
-            if (autocenterAlways && width > 0) // we know sizes
+            if (autocenterAlways.value && width > 0) // we know sizes
                 autocenter()
             invalidate()
             nUpdates = 0
@@ -88,7 +88,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         loadSharedPreferences()
         try {
             val recentDDU by lazy { sharedPreferences.getString("recent_ddu", null) }
-            if (preferRecentDDU && recentDDU == null) {
+            if (preferRecentDDU.value && recentDDU == null) {
                 val exampleDDUFile = File(File(context.filesDir, "ddu"), "290305_z1_erot2.ddu")
                 this.ddu = DDU.readFile(exampleDDUFile)
             } else {
@@ -116,48 +116,18 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     fun loadMajorSharedPreferences() {
         var updateImmediately = false
         upon(::autocenterOnce) { autocenter() }
-        with (sharedPreferences) {
-            redrawTraceOnMove.getPreference(sharedPreferences)
-            showAllCircles.getPreference(sharedPreferences) { updateImmediately = true }
-            val newShowCenters = getBoolean("show_centers", defaultShowCenters)
-            if (newShowCenters != showCenters) {
-                updateImmediately = true
-                showCenters = newShowCenters
-            }
-            val newRotateShapes = getBoolean("rotate_shapes", defaultRotateShapes)
-            if (newRotateShapes != rotateShapes) {
-                updateImmediately = true
-                rotateShapes = newRotateShapes
-            }
-            val newShowOutline = getBoolean("show_outline", defaultShowOutline)
-            if (newShowOutline != showOutline) {
-                updateImmediately = true
-                showOutline = newShowOutline
-            }
-            reverseMotion = getBoolean("reverse_motion", defaultReverseMotion)
-//            UPS = getInt("ups", defaultUPS)
-//            getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
-//                UPS = it
-//            }
-            // NOTE: restart/rotate screen to update FPS
-//            getString("fps", defaultFPS.toString())?.toIntOrNull()?.let {
-//                FPS = it
-//            }
-            val newAutocenterAlways = getBoolean("autocenter_always", defaultAutocenterAlways)
-            if (newAutocenterAlways && !autocenterAlways && width > 0) {
-                autocenterAlways = newAutocenterAlways
-                autocenter()
-            }
-            getString("shape", defaultShape.toString())?.toUpperCase()?.let {
-                val newShape = Shapes.valueOf(it)
-                if (newShape != shape) {
-                    updateImmediately = true
-                    shape = newShape
-                }
-            }
-            if (!updating && updateImmediately)
-                invalidate()
+        listOf(redrawTraceOnMove, reverseMotion).forEach { it.getPreference(sharedPreferences) }
+        listOf(showAllCircles, showCenters, showOutline, rotateShapes, shape).forEach {
+            it.getPreference(sharedPreferences) { updateImmediately = true }
         }
+        // load FPS/UPS
+        // NOTE: restart/rotate screen to update FPS
+        autocenterAlways.getPreference(sharedPreferences) {
+            if (it && width > 0)
+                autocenter()
+        }
+        if (!updating && updateImmediately)
+            invalidate()
     }
 
     private fun loadMinorSharedPreferences() {
@@ -304,9 +274,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         val (x, y) = visibleComplex(c)
         val halfWidth = visibleR(r.toFloat())
         val (pointX, pointY) = visibleComplex(c + r * circle.point)
-        if (showOutline)
-            shape.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, outlinePaint)
-        shape.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, paint)
+        if (showOutline.value)
+            shape.value.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, outlinePaint)
+        shape.value.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, paint)
     }
 
     fun pickColor(x: Float, y: Float) {
@@ -339,7 +309,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun updateCircles() {
-        nUpdates += if (reverseMotion) -1 else 1
+        nUpdates += if (reverseMotion.value) -1 else 1
         nUpdatesView?.text = context.getString(R.string.n_updates_text).format(nUpdates)
         if (nUpdates - last20NUpdates >= 20) {
             time20UpdatesView?.text = context.getString(R.string.time_20_updates_text).format((lastUpdateTime - last20UpdateTime) / 1000f)
@@ -351,7 +321,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         oldCircles.forEachIndexed { i, circle ->
             circle.rule?.let { rule ->
                 val theRule = if (rule.startsWith("n")) rule.drop(1) else rule
-                val chars = if (reverseMotion) theRule.reversed() else theRule
+                val chars = if (reverseMotion.value) theRule.reversed() else theRule
                 chars.forEach { ch ->
                     val j = Integer.parseInt(ch.toString())
                     if (j >= n) {
@@ -392,10 +362,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private class Option<T>(val key: String, val default: T) where T: Any {
+    open class Option<T>(val key: String, val default: T) where T: Any {
         var value: T = default
-        fun getPreference(sharedPreferences: SharedPreferences, onChange: (T) -> Unit = {}): T {
-            val newValue: T = when (default) {
+        open fun fetchPreference(sharedPreferences: SharedPreferences): T = when (default) {
                 is Boolean -> sharedPreferences.getBoolean(key, default) as T
                 is String -> sharedPreferences.getString(key, default) as T
                 is Float -> sharedPreferences.getFloat(key, default) as T
@@ -403,6 +372,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 is Long -> sharedPreferences.getLong(key, default) as T
                 else -> throw Exception("Unsupported type: ${default.javaClass.name}")
             }
+        fun getPreference(sharedPreferences: SharedPreferences, onChange: (T) -> Unit = {}): T {
+            val newValue: T = fetchPreference(sharedPreferences)
             if (value != newValue)
                 onChange(newValue)
             value = newValue
@@ -416,42 +387,34 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             color = Color.BLACK
             style = Paint.Style.STROKE
         }
-        private const val defaultFPS = 100
         // FIX: changing FPS and UPS does not work properly
-        private var FPS = defaultFPS
-        private const val defaultUPS = 100
-        private var UPS = defaultUPS // updates per second
-        val dt get() = 1000f / FPS
-        val updateDt get() = 1000f / UPS
+        private var FPS = Option("fps", 100)
+        private var UPS = Option("ups", 100) // updates per second
+        val dt get() = 1000f / FPS.value
+        val updateDt get() = 1000f / UPS.value
         private var redrawTraceOnMove = Option("redraw_trace", true)
         enum class RedrawOnMoveWhenPaused { ALWAYS, NEVER, RESPECT_REDRAW_TRACE_ON_MOVE }
-        private val defaultRedrawTraceOnMoveWhenPaused = RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE
-        var redrawTraceOnMoveWhenPaused = defaultRedrawTraceOnMoveWhenPaused // maybe: add to preferences
-        private val shouldRedrawTraceOnMoveWhenPaused get() = when (redrawTraceOnMoveWhenPaused) {
+        private var redrawTraceOnMoveWhenPaused =
+            Option("redraw_trace_when_paused", RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE)
+        private val shouldRedrawTraceOnMoveWhenPaused get() = when (redrawTraceOnMoveWhenPaused.value) {
             RedrawOnMoveWhenPaused.ALWAYS -> true
             RedrawOnMoveWhenPaused.NEVER -> false
             RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE -> redrawTraceOnMove.value
         }
-//        private const val defaultShowAllCircles = false
-//        private var showAllCircles = defaultShowAllCircles
         private var showAllCircles = Option("show_all_circles", false)
-        private const val defaultShowCenters = false
-        var showCenters = defaultShowCenters
-        private const val defaultShowOutline = false
+        var showCenters = Option("show_centers", false)
         private val outlinePaint = Paint(defaultPaint).apply { style = Paint.Style.STROKE; color = Color.BLACK }
-        private var showOutline = defaultShowOutline
-        private const val defaultReverseMotion = false
-        private var reverseMotion = defaultReverseMotion
-        private val defaultShape = Shapes.CIRCLE
-        private var shape = defaultShape
-        private const val defaultRotateShapes = false
-        var rotateShapes = defaultRotateShapes
-        private const val defaultAutocenterAlways = false
-        var autocenterAlways = defaultAutocenterAlways
+        private var showOutline = Option("show_outline", false)
+        private var reverseMotion = Option("reverse_motion", false)
+        private var shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
+            override fun fetchPreference(sharedPreferences: SharedPreferences): Shapes =
+                sharedPreferences.getString(key, default.toString()) ?.toUpperCase()?.let { Shapes.valueOf(it) } ?: default
+        }
+        var rotateShapes = Option("rotate_shapes", false)
+        var autocenterAlways = Option("autocenter_always", false)
         var autocenterOnce = false
-        private const val defaultPreferRecentDDU = true
         // maybe: add load random
-        var preferRecentDDU = defaultPreferRecentDDU // TODO: add to preferences
+        var preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences
         const val defaultTrace = true
         const val defaultUpdating = true
         const val defaultDx = 0f
@@ -472,7 +435,7 @@ enum class Shapes {
         fun trueRotated(x: Float, y: Float): PointF =
             (center + (Complex(x.toDouble(), y.toDouble()) - center) * point).run { PointF(real.toFloat(), imaginary.toFloat()) }
         val rotated: (Float, Float) -> PointF =
-            if (DodecaView.rotateShapes) { x, y -> trueRotated(x, y) } else { x, y -> PointF(x, y) }
+            if (DodecaView.rotateShapes.value) { x, y -> trueRotated(x, y) } else { x, y -> PointF(x, y) }
         val top by lazy { rotated(x, y - halfWidth) }
         val bottom by lazy { rotated(x, y + halfWidth) }
         val left by lazy { rotated(x - halfWidth, y) }
@@ -497,7 +460,7 @@ enum class Shapes {
             VERTICAL_BAR -> canvas.drawLine(top.x, top.y, bottom.x, bottom.y, paint)
             HORIZONTAL_BAR -> canvas.drawLine(left.x, left.y, right.x, right.y, paint)
         }
-        if (DodecaView.showCenters)
+        if (DodecaView.showCenters.value)
             canvas.drawPoint(x, y, pointPaint)
     }
 }
