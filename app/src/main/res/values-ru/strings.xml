@@ -45,4 +45,8 @@
     <string name="permission_rationale_dialog_title">Запрос на разрешение доступа</string>
     <string name="always_autocenter_title">Всегда проводить автоцентровку</string>
     <string name="always_autocenter_summary">Проводить автоцентровку при загрузке файла ddu</string>
+    <string name="show_stat_title">Показывать статистику</string>
+    <string name="n_updates_text">%d пересчётов</string>
+    <string name="time_20_updates_text">20 пересчётов за %.2f секунд</string>
+    <string name="show_centers_title">Показывать центры окружностей</string>
 </resources>
