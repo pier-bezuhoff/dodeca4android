@@ -132,7 +132,7 @@ class CircleFigure(center: Complex, radius: Double,
 
     override fun invert(circle: Circle) {
         super.invert(circle)
-        point = invertedPoint(circle) // .also { Log.i("invert", "$point -> $it") }
+        point = invertedPoint(circle)
     }
 
     private fun invertedPoint(circle: Circle): Complex = (center + point).inverted(circle).run {

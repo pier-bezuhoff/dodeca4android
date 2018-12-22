@@ -24,9 +24,14 @@
         <!-- NOTE: not in master branch -->
         <SwitchPreference
                 android:key="rotate_shapes"
-                android:defaultValue="true"
+                android:defaultValue="false"
                 android:title="@string/rotate_shapes_title"
                 android:summary="@string/rotate_shapes_summary"/>
+        <!-- NOTE: not in master branch -->
+        <SwitchPreference
+                android:key="show_outline"
+                android:defaultValue="false"
+                android:title="@string/show_outline_title"/>
         <SwitchPreference
                 android:key="reverse_motion"
                 android:defaultValue="false"

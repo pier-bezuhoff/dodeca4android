@@ -51,4 +51,5 @@
     <string name="show_centers_title">Показывать центры окружностей</string>
     <string name="rotate_shapes_title">Поворачивать при инверсии</string>
     <string name="rotate_shapes_summary">Поворачивать к̶в̶а̶д̶р̶а̶т̶, крест, черту при инверсии</string>
+    <string name="show_outline_title">Показывать абрис</string>
 </resources>
