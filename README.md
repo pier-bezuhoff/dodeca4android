@@ -2,7 +2,8 @@
 ...
 # TODO
 - [ ] Help
-- [ ] PreferenceScreen.remove for develop-only preferences
+- [ ] Proper reverse motion
+- [ ] Extract preferences default values
 - [ ] Increase bottom bar button size
 - [ ] More flexible icons for bottom bar
 - [ ] Hide bottom bar after 30s -> settings

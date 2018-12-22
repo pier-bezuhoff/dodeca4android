@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -18,6 +19,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun setupPreferences(rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
+        if (MainActivity.LIMITED_VERSION) {
+            ADVANCED_PREFERENCES.forEach {
+                val removed = findPreference(it).let { it.parent?.removePreference(it) }
+                if (removed != true)
+                    Log.w("Preferences", "Advanced preference $it was not removed")
+            }
+        }
         (findPreference("shape") as ListPreference).let {
             it.summaryProvider = Preference.SummaryProvider<ListPreference> { preference ->
                 getString(R.string.shape_summary).format(preference.entry)
@@ -55,5 +63,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
             | Device manufacturer: ${Build.MANUFACTURER}
         """.trimMargin()
         email(address, subject, body)
+    }
+
+    companion object {
+        private val ADVANCED_PREFERENCES = setOf(
+            "show_all_circles", "show_centers", "rotate_shapes", "show_outline", "show_stat"
+        )
     }
 }
