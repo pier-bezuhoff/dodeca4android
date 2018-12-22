@@ -27,6 +27,10 @@
     <string name="redraw_trace_summary">Clear trace on scroll and scale</string>
     <string name="show_all_circles_title">Show all circles</string>
     <string name="show_all_circles_summary">Show hidden and static circles</string>
+    <string name="show_centers_title">Show circle centers</string>
+    <string name="show_stat_title">Show statistics</string>
+    <string name="n_updates_text">%d updates</string>
+    <string name="time_20_updates_text">20 updates per %.2f seconds</string>
     <string name="reverse_motion">Reverse motion</string>
     <string name="autocenter_title">Autocenter</string>
     <string name="always_autocenter_title">Always autocenter</string>
@@ -59,7 +63,4 @@
     <string name="permission_rationale_dialog_title">Permission request</string>
     <string name="permission_rationale_dialog_allow">Allow</string>
     <string name="permission_rationale_dialog_deny">Deny</string>
-    <string name="show_stat_title">Show statistics</string>
-    <string name="n_updates_text">%d updates</string>
-    <string name="time_20_updates_text">20 updates per %.2f seconds</string>
 </resources>

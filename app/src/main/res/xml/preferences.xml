@@ -16,6 +16,11 @@
                 android:defaultValue="false"
                 android:title="@string/show_all_circles_title"
                 android:summary="@string/show_all_circles_summary"/>
+        <!-- NOTE: not in master branch -->
+        <SwitchPreference
+                android:key="show_centers"
+                android:defaultValue="false"
+                android:title="@string/show_centers_title"/>
         <SwitchPreference
                 android:key="reverse_motion"
                 android:defaultValue="false"

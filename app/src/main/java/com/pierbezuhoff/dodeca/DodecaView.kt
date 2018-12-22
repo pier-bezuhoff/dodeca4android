@@ -99,10 +99,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             e.printStackTrace()
             this.ddu = exampleDDU
         }
-        with(paint) {
-            color = Color.BLUE
-            style = Paint.Style.STROKE
-        }
         fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
             if (!::traceCanvas.isInitialized && width > 0)
                 retrace()
@@ -127,6 +123,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 updateImmediately = true
                 showAllCircles = newShowAllCircles
             }
+            val newShowCenters = getBoolean("show_centers", defaultShowCenters)
+            if (newShowCenters != showCenters) {
+                updateImmediately = true
+                showCenters = newShowCenters
+            }
             reverseMotion = getBoolean("reverse_motion", defaultReverseMotion)
 //            UPS = getInt("ups", defaultUPS)
 //            getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
@@ -136,10 +137,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 //            getString("fps", defaultFPS.toString())?.toIntOrNull()?.let {
 //                FPS = it
 //            }
-            val autocenterAlways0 = autocenterAlways
-            autocenterAlways = getBoolean("autocenter_always", defaultAutocenterAlways)
-            if (autocenterAlways && !autocenterAlways0 && width > 0)
+            val newAutocenterAlways = getBoolean("autocenter_always", defaultAutocenterAlways)
+            if (newAutocenterAlways && !autocenterAlways && width > 0) {
+                autocenterAlways = newAutocenterAlways
                 autocenter()
+            }
             getString("shape", defaultShape.toString())?.toUpperCase()?.let {
                 val newShape = Shapes.valueOf(it)
                 if (newShape != shape) {
@@ -381,7 +383,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     companion object {
         private const val traceBitmapFactor = 1 // traceBitmap == traceBitmapFactor ^ 2 * screens
-        val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
+            color = Color.BLACK
+            style = Paint.Style.STROKE
+        }
         private const val defaultFPS = 100
         // FIX: changing FPS and UPS does not work properly
         private var FPS = defaultFPS
@@ -401,6 +406,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
         private const val defaultShowAllCircles = false
         private var showAllCircles = defaultShowAllCircles
+        private const val defaultShowCenters = false
+        var showCenters = defaultShowCenters // TODO: add to preferences
         private const val defaultReverseMotion = false
         private var reverseMotion = defaultReverseMotion
         private val defaultShape = Shapes.CIRCLE
@@ -457,6 +464,8 @@ enum class Shapes {
             VERTICAL_BAR -> canvas.drawLine(top.x, top.y, bottom.x, bottom.y, paint)
             HORIZONTAL_BAR -> canvas.drawLine(left.x, left.y, right.x, right.y, paint)
         }
+        if (DodecaView.showCenters)
+            canvas.drawPoint(x, y, pointPaint)
     }
 }
 
