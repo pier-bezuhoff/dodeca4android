@@ -133,6 +133,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 updateImmediately = true
                 rotateShapes = newRotateShapes
             }
+            val newShowOutline = getBoolean("show_outline", defaultShowOutline)
+            if (newShowOutline != showOutline) {
+                updateImmediately = true
+                showOutline = newShowOutline
+            }
             reverseMotion = getBoolean("reverse_motion", defaultReverseMotion)
 //            UPS = getInt("ups", defaultUPS)
 //            getString("ups", defaultUPS.toString())?.toIntOrNull()?.let {
@@ -302,7 +307,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
         val (x, y) = visibleComplex(c)
         val halfWidth = visibleR(r.toFloat())
-        val (pointX, pointY) = visibleComplex(r * circle.point)
+        val (pointX, pointY) = visibleComplex(c + r * circle.point)
+        if (showOutline)
+            shape.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, outlinePaint)
         shape.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, paint)
     }
 
@@ -416,12 +423,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var showAllCircles = defaultShowAllCircles
         private const val defaultShowCenters = false
         var showCenters = defaultShowCenters
+        private const val defaultShowOutline = false
+        private val outlinePaint = Paint(defaultPaint).apply { style = Paint.Style.STROKE; color = Color.BLACK }
+        private var showOutline = defaultShowOutline
         private const val defaultReverseMotion = false
         private var reverseMotion = defaultReverseMotion
         private val defaultShape = Shapes.CIRCLE
         private var shape = defaultShape
-        private const val defaultRotateShapes = true
-        var rotateShapes = defaultRotateShapes // TODO: add to preferences
+        private const val defaultRotateShapes = false
+        var rotateShapes = defaultRotateShapes
         private const val defaultAutocenterAlways = false
         var autocenterAlways = defaultAutocenterAlways
         var autocenterOnce = false
@@ -457,7 +467,7 @@ enum class Shapes {
             CIRCLE -> canvas.drawCircle(x, y, halfWidth, paint)
             POINTED_CIRCLE -> {
                 canvas.drawCircle(x, y, halfWidth, paint)
-                canvas.drawPoint(x + pointX, y + pointY, pointPaint)
+                canvas.drawPoint(pointX, pointY, pointPaint)
             }
             SQUARE -> canvas.drawRect( // how to rotate rect?
                 x - halfWidth, y - halfWidth,
