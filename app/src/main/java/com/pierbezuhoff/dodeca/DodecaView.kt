@@ -411,7 +411,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 sharedPreferences.getString(key, default.toString()) ?.toUpperCase()?.let { Shapes.valueOf(it) } ?: default
         }
         var rotateShapes = Option("rotate_shapes", false)
-        var autocenterAlways = Option("autocenter_always", false)
+        var autocenterAlways = Option("autocenter_always", true)
         var autocenterOnce = false
         // maybe: add load random
         var preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences

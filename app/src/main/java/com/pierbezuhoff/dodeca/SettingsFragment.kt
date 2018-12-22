@@ -21,7 +21,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences, rootKey)
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach {
-                val removed = findPreference(it).let { it.parent?.removePreference(it) }
+                val removed = findPreference<Preference>(it).let { it.parent?.removePreference(it) }
                 if (removed != true)
                     Log.w("Preferences", "Advanced preference $it was not removed")
             }
@@ -31,8 +31,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 getString(R.string.shape_summary).format(preference.entry)
             }
         }
-        val hooking: (String, (String) -> Unit) -> Unit = { param, action ->
-            findPreference(param).setOnPreferenceClickListener { action(param); true }
+        val hooking = { param: String, action: (String) -> Unit ->
+            findPreference<Preference>(param).setOnPreferenceClickListener { action(param); true }
         }
         setOf("autocenter", "default_ddu", "default_ddus").forEach {
             hooking(it) { settingsActivity?.resultIntent?.putExtra(it, true) }
