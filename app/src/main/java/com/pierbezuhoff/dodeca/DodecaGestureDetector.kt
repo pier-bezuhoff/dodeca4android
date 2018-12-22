@@ -58,7 +58,7 @@ class DodecaGestureDetector(
 class ScaleListener(val view: DodecaView) : ScaleGestureDetector.SimpleOnScaleGestureListener() {
     override fun onScale(detector: ScaleGestureDetector?): Boolean {
         detector?.let {
-            view.updateScale(detector.scaleFactor)
+            view.updateScale(detector.scaleFactor, detector.focusX, detector.focusY)
         }
         super.onScale(detector)
         return true
