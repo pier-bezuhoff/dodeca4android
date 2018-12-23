@@ -2,6 +2,7 @@
 ...
 # TODO
 - [ ] Help
+- [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
 - [ ] Proper reverse motion
 - [ ] Extract preferences default values
 - [ ] Increase bottom bar button size

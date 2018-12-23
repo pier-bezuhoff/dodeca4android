@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             DDU_CODE ->
                 if (resultCode == Activity.RESULT_OK) {
-                    data?.getStringExtra("path")?.let { readPathWithPermissionCheck(it) }
+                    data?.getStringExtra("path")?.let { readPath(it) }
                 }
             APPLY_SETTINGS_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
