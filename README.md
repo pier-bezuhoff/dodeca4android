@@ -4,10 +4,15 @@
 - [ ] Help
 - [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
 - [ ] Proper reverse motion
-- [ ] Extract preferences default values
 - [ ] Increase bottom bar button size
+- [ ] Autorotate in settings
+- [ ] Icon: transparent bg + better quality
+- [ ] Bottom bar descriptions don't work on Fedor's phone
+- [ ] Extend trace bitmap (x 4) (fix it now)
+- [ ] For release: disable Log.i-s
 - [ ] More flexible icons for bottom bar
-- [ ] Hide bottom bar after 30s -> settings
+- [ ] Hide bottom bar after 30s ?-> settings
+- [ ] Maybe: reset shape to circle when new ddu
 - [ ] Also see com.android.support:palette-v7:28.0.0
 - [ ] Change color (choose from palette on ?double? tap) and save it for further changing
 - [ ] Update circles in other thread (see Log for b3/b4)
@@ -17,7 +22,6 @@
 - [ ] Focusing mode: following specific circle
 - [ ] Store shape in ddu
 - [ ] Different shapes for different circles, add shape map or global shape to ddu globals
-- [ ] Extend trace bitmap (x 4) (fix it now)
 - [ ] 'Brush' (see C++)
 - [ ] 'Fill' (all?, see C++)
 - [ ] Fix scaling (when redrawTraceOnMove it's obviously broken)

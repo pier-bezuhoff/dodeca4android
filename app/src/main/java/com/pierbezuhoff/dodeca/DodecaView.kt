@@ -364,6 +364,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     open class Option<T>(val key: String, val default: T) where T: Any {
         var value: T = default
+        init {
+            // WARNING: assign Option<T> even for inherited classes
+            // effectively forgetting overwritten methods, etc.
+            options[key] = this
+        }
         open fun fetchPreference(sharedPreferences: SharedPreferences): T = when (default) {
                 is Boolean -> sharedPreferences.getBoolean(key, default) as T
                 is String -> sharedPreferences.getString(key, default) as T
@@ -378,6 +383,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 onChange(newValue)
             value = newValue
             return value
+        }
+        companion object {
+            val options: MutableMap<String, Option<*>> = mutableMapOf()
         }
     }
 
@@ -471,3 +479,9 @@ internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
         action()
     }
 }
+//
+//fun <T> f(a: T): T = when (a) {
+//    is Boolean -> true
+//    is Int -> 0
+//    else -> a
+//}
