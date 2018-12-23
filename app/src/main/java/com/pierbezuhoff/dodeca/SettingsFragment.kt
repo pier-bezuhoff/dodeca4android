@@ -8,6 +8,7 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import androidx.preference.SwitchPreference
 import org.jetbrains.anko.support.v4.email
 
 class SettingsFragment : PreferenceFragmentCompat() {
@@ -26,7 +27,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     Log.w("Preferences", "Advanced preference $it was not removed")
             }
         }
-        (findPreference("shape") as ListPreference).let {
+        (findPreference<ListPreference>("shape")).let {
             it.summaryProvider = Preference.SummaryProvider<ListPreference> { preference ->
                 getString(R.string.shape_summary).format(preference.entry)
             }
