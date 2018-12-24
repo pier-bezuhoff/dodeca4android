@@ -24,12 +24,15 @@ import permissions.dispatcher.PermissionRequest
 import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Timer
+import kotlin.concurrent.timerTask
 import kotlin.reflect.KMutableProperty0
 
 @RuntimePermissions
 class MainActivity : AppCompatActivity() {
     private var bottomBarShown = true
     private val dduDir by lazy { File(filesDir, "ddu") }
+    private var bottomBarHideTimer: Timer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         adjustStat()
         dodecaView.nUpdatesView = n_updates
         dodecaView.time20UpdatesView = updates_20
+        hideBottomBarAfterAWhile()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -224,16 +228,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun hideBottomBarAfterAWhile() {
+        bottomBarHideTimer = Timer("bottomBarHideTimer")
+        bottomBarHideTimer?.schedule(timerTask {
+            bar.post { hideBottomBar() }
+            bottomBarHideTimer = null
+        }, 1000L * BOTTOM_BAR_HIDE_DELAY)
+    }
+
+    private fun hideBottomBar() {
+        bar.visibility = View.GONE
+        dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+        bottomBarShown = false
+        bottomBarHideTimer?.cancel()
+    }
+
     private fun toggleBottomBar() {
         if (bottomBarShown) {
-            bar.visibility = View.GONE
-            dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+            hideBottomBar()
         }
         else {
             bar.visibility = View.VISIBLE
             // dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
+            hideBottomBarAfterAWhile()
+            bottomBarShown = true
         }
-        toggle(::bottomBarShown)
     }
 
     private fun extractDDUFromAssets() {
@@ -263,6 +282,7 @@ class MainActivity : AppCompatActivity() {
         const val FULLSCREEN_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_FULLSCREEN
         // distraction free
         const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        const val BOTTOM_BAR_HIDE_DELAY = 20 // seconds
     }
 }
 
