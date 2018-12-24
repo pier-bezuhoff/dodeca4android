@@ -310,9 +310,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun updateCircles() {
         nUpdates += if (reverseMotion.value) -1 else 1
-        nUpdatesView?.text = context.getString(R.string.n_updates_text).format(nUpdates)
+        nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
         if (nUpdates - last20NUpdates >= 20) {
-            time20UpdatesView?.text = context.getString(R.string.time_20_updates_text).format((lastUpdateTime - last20UpdateTime) / 1000f)
+            time20UpdatesView?.text = context.getString(R.string.stat_20_updates_per_text).format((lastUpdateTime - last20UpdateTime) / 1000f)
             last20NUpdates = nUpdates
             last20UpdateTime = lastUpdateTime
         }
@@ -395,7 +395,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             color = Color.BLACK
             style = Paint.Style.STROKE
         }
-        // FIX: changing FPS and UPS does not work properly
+        // FIX: changing FPS and UPS does not work properly, not in preferences now
         private var FPS = Option("fps", 100)
         private var UPS = Option("ups", 100) // updates per second
         val dt get() = 1000f / FPS.value

@@ -46,10 +46,12 @@
     <string name="always_autocenter_title">Всегда проводить автоцентровку</string>
     <string name="always_autocenter_summary">Проводить автоцентровку при загрузке файла ddu</string>
     <string name="show_stat_title">Показывать статистику</string>
-    <string name="n_updates_text">%d пересчётов</string>
-    <string name="time_20_updates_text">20 пересчётов за %.2f секунд</string>
+    <string name="stat_n_updates_text">%d пересчётов</string>
+    <string name="stat_20_updates_per_text">20 пересчётов за %.2f секунд</string>
     <string name="show_centers_title">Показывать центры окружностей</string>
     <string name="rotate_shapes_title">Поворачивать при инверсии</string>
     <string name="rotate_shapes_summary">Поворачивать к̶в̶а̶д̶р̶а̶т̶, крест, черту при инверсии</string>
     <string name="show_outline_title">Показывать абрис</string>
+    <string name="stat_n_updates_initial">\? пересчётов</string>
+    <string name="stat_20_updates_per_initial">20 пересчётов за ?</string>
 </resources>
