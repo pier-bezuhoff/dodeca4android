@@ -479,9 +479,3 @@ internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
         action()
     }
 }
-//
-//fun <T> f(a: T): T = when (a) {
-//    is Boolean -> true
-//    is Int -> 0
-//    else -> a
-//}
