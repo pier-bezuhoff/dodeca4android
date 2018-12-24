@@ -32,8 +32,10 @@
     <string name="rotate_shapes_summary">Rotate s̶q̶u̶a̶r̶e̶, cross, bars when updating</string>
     <string name="show_outline_title">Show outline</string>
     <string name="show_stat_title">Show statistics</string>
-    <string name="n_updates_text">%d updates</string>
-    <string name="time_20_updates_text">20 updates per %.2f seconds</string>
+    <string name="stat_n_updates_text">%d updates</string>
+    <string name="stat_20_updates_per_text">20 updates per %.2f seconds</string>
+    <string name="stat_n_updates_initial"># of updates</string>
+    <string name="stat_20_updates_per_initial">20 updates per #</string>
     <string name="reverse_motion">Reverse motion</string>
     <string name="autocenter_title">Autocenter</string>
     <string name="always_autocenter_title">Always autocenter</string>
@@ -66,5 +68,4 @@
     <string name="permission_rationale_dialog_title">Permission request</string>
     <string name="permission_rationale_dialog_allow">Allow</string>
     <string name="permission_rationale_dialog_deny">Deny</string>
-    <string name="show_advanced_title">Show advanced preferences</string>
 </resources>

@@ -118,8 +118,10 @@
                 android:summary="@string/copyright_summary" />
         <!-- MAYBE: add some links to websites -->
         <Preference
+                android:key="support"
                 android:title="@string/support_title"
-                android:key="support" />
+        />
+        <!--android:summary="Report technical issues or suggest new features"-->
     </PreferenceCategory>
 
 </PreferenceScreen>

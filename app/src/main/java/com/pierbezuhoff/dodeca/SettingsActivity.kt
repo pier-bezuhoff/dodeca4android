@@ -11,6 +11,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+        // maybe: use some androidx.ktx
         val fragment = SettingsFragment()
         fragment.settingsActivity = this
         supportFragmentManager
