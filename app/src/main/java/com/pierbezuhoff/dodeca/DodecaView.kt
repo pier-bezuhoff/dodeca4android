@@ -100,8 +100,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             this.ddu = exampleDDU
         }
         fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
-            if (!::traceCanvas.isInitialized && width > 0)
-                retrace()
             if (updating)
                 postInvalidate()
         }
@@ -164,8 +162,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        if (trace)
+        if (!::traceCanvas.isInitialized)
             retrace()
+        if (autocenterAlways.value)
+            autocenter()
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -274,9 +274,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         val (x, y) = visibleComplex(c)
         val halfWidth = visibleR(r.toFloat())
         val (pointX, pointY) = visibleComplex(c + r * circle.point)
-        if (showOutline.value)
-            shape.value.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, outlinePaint)
-        shape.value.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, paint)
+        shape.value.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, showOutline.value, paint)
     }
 
     fun pickColor(x: Float, y: Float) {
@@ -362,13 +360,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    open class Option<T>(val key: String, val default: T) where T: Any {
+    open class Option<T>(val key: String, val default: T) where T : Any {
         var value: T = default
-        init {
-            // WARNING: assign Option<T> even for inherited classes
-            // effectively forgetting overwritten methods, etc.
-            options[key] = this
-        }
+
         open fun fetchPreference(sharedPreferences: SharedPreferences): T = when (default) {
                 is Boolean -> sharedPreferences.getBoolean(key, default) as T
                 is String -> sharedPreferences.getString(key, default) as T
@@ -377,6 +371,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 is Long -> sharedPreferences.getLong(key, default) as T
                 else -> throw Exception("Unsupported type: ${default.javaClass.name}")
             }
+
         fun getPreference(sharedPreferences: SharedPreferences, onChange: (T) -> Unit = {}): T {
             val newValue: T = fetchPreference(sharedPreferences)
             if (value != newValue)
@@ -384,8 +379,16 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             value = newValue
             return value
         }
-        companion object {
-            val options: MutableMap<String, Option<*>> = mutableMapOf()
+
+        fun setPreference(editor: SharedPreferences.Editor) {
+            when (value) {
+                is Boolean -> editor.putBoolean(key, value as Boolean)
+                is String -> editor.putString(key, value as String)
+                is Float -> editor.putFloat(key, value as Float)
+                is Int -> editor.putInt(key, value as Int)
+                is Long -> editor.putLong(key, value as Long)
+                else -> throw Exception("Unsupported type: ${value.javaClass.name}")
+            }
         }
     }
 
@@ -411,7 +414,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
         private var showAllCircles = Option("show_all_circles", false)
         var showCenters = Option("show_centers", false)
-        private val outlinePaint = Paint(defaultPaint).apply { style = Paint.Style.STROKE; color = Color.BLACK }
         private var showOutline = Option("show_outline", false)
         private var reverseMotion = Option("reverse_motion", false)
         private var shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
@@ -434,11 +436,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
 enum class Shapes {
     CIRCLE, POINTED_CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR;
-    private val pointPaint = Paint(DodecaView.defaultPaint).apply {
-        color = Color.MAGENTA
-        strokeWidth = 3.0f
-    }
-    fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, pointX: Float, pointY: Float, point: Complex, paint: Paint) {
+
+    fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, pointX: Float, pointY: Float, point: Complex, drawOutline: Boolean, paint: Paint) {
         val center by lazy { Complex(x.toDouble(), y.toDouble()) }
         fun trueRotated(x: Float, y: Float): PointF =
             (center + (Complex(x.toDouble(), y.toDouble()) - center) * point).run { PointF(real.toFloat(), imaginary.toFloat()) }
@@ -468,8 +467,28 @@ enum class Shapes {
             VERTICAL_BAR -> canvas.drawLine(top.x, top.y, bottom.x, bottom.y, paint)
             HORIZONTAL_BAR -> canvas.drawLine(left.x, left.y, right.x, right.y, paint)
         }
+        if (drawOutline)
+            when(this) {
+                CIRCLE, POINTED_CIRCLE -> canvas.drawCircle(x, y, halfWidth, outlinePaint)
+                SQUARE -> canvas.drawRect( // how to rotate rect?
+                    x - halfWidth, y - halfWidth,
+                    x + halfWidth, y + halfWidth,
+                    outlinePaint
+                )
+            }
         if (DodecaView.showCenters.value)
             canvas.drawPoint(x, y, pointPaint)
+    }
+
+    companion object {
+        private val pointPaint = Paint(DodecaView.defaultPaint).apply {
+            color = Color.MAGENTA
+            strokeWidth = 3.0f
+        }
+        val outlinePaint = Paint(DodecaView.defaultPaint).apply {
+            style = Paint.Style.STROKE
+            color = Color.BLACK
+        }
     }
 }
 
