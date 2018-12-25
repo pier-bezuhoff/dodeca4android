@@ -73,12 +73,5 @@
     <string name="permission_rationale_dialog_deny">Deny</string>
 
     <!-- Help -->
-    <string name="general_help">
-            Motion:
-        Displayed ddu can be dragged and scrolled.
-            Bottom bar:
-        Toggle bottom bar by tapping on area above it.
-        For each button long tap shows brief description, more detailed description can be found further.
-    </string>
-    <string name="help_button_help">Shows this help</string>
+    <string name="help_title">Help</string>
 </resources>

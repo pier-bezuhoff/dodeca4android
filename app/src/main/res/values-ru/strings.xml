@@ -55,4 +55,5 @@
     <string name="stat_n_updates_initial">\? пересчётов</string>
     <string name="stat_20_updates_per_initial">20 пересчётов за ?</string>
     <string name="help_button_title">Справка</string>
+    <string name="help_title">Справка</string>
 </resources>
