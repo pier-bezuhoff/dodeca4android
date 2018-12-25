@@ -49,7 +49,7 @@ class DDU(
     override fun toString(): String = """DDU(
         |backgroundColor = ${backgroundColor.fromColor()}
         |restGlobals = $restGlobals
-        |trace = $trace
+        |drawTrace = $trace
         |file = $file
         |circles = $circles
     """.trimMargin()
@@ -71,7 +71,7 @@ class DDU(
                 *restGlobals.toTypedArray()
             )
             if (restGlobals.size == 2 && trace != null)
-                globals.add(if (trace!!) 1 else 0) // trace cannot *become* null
+                globals.add(if (trace!!) 1 else 0) // drawTrace cannot *become* null
             globals.forEach { param ->
                 writeln("global")
                 writeln(param.toString())

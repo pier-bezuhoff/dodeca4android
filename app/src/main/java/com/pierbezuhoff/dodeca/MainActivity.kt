@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.app_bar_go -> toggle(dodecaView::updating)
             R.id.app_bar_next_step -> dodecaView.oneStep()
-            R.id.app_bar_trace -> toggle(dodecaView::trace)
+            R.id.app_bar_trace -> toggle(dodecaView::drawTrace)
             // R.id.app_bar_change_color -> openColorPicker()
             R.id.app_bar_clear -> dodecaView.retrace()
             R.id.app_bar_settings -> {
