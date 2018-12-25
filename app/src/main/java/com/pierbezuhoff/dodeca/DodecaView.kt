@@ -31,7 +31,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             dy = defaultDy
             scale = defaultScale
             trace = value.trace ?: defaultTrace
-            redrawTrace = trace
+            redrawTraceOnce = trace
             updating = defaultUpdating
             value.file?.let { file ->
                 editing { putString("recent_ddu", file.name) }
@@ -56,7 +56,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             retrace()
     }
 
-    private var redrawTrace: Boolean = defaultTrace // once, draw background
+    private var redrawTraceOnce: Boolean = defaultTrace
     var updating = defaultUpdating
     private var lastUpdateTime: Long = 0L
     private var updateOnce = false
@@ -193,7 +193,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             lastUpdateTime = System.currentTimeMillis()
         }
         if (trace) {
-            upon(::redrawTrace) { drawBackground(traceCanvas) }
+            upon(::redrawTraceOnce) { drawBackground(traceCanvas) }
             drawCircles(traceCanvas)
             drawTraceCanvas(canvas)
         } else {
@@ -242,12 +242,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         traceBitmap = Bitmap.createBitmap(
             traceBitmapFactor * width, traceBitmapFactor * height,
             Bitmap.Config.ARGB_8888)
-        traceDx = (1f - traceBitmapFactor) * width / 2
-        traceDx = (1f - traceBitmapFactor) * height / 2
+        traceDx = 0f // (traceBitmapFactor - 1f) * width / 2
+        traceDx = 0f // (traceBitmapFactor - 1f) * height / 2
         traceCanvas = Canvas(traceBitmap)
         traceMatrix.reset()
         traceMatrix.preTranslate(traceDx, traceDy)
-        redrawTrace = trace
+        redrawTraceOnce = trace
         if (!updating) {
             drawBackground(traceCanvas)
             drawCircles(traceCanvas)
@@ -393,7 +393,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     companion object {
-        private const val traceBitmapFactor = 1 // traceBitmap == traceBitmapFactor ^ 2 * screens
+        private const val traceBitmapFactor = 2 // traceBitmap == traceBitmapFactor ^ 2 * screens
         val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
             color = Color.BLACK
             style = Paint.Style.STROKE
@@ -418,7 +418,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var reverseMotion = Option("reverse_motion", false)
         private var shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
             override fun fetchPreference(sharedPreferences: SharedPreferences): Shapes =
-                sharedPreferences.getString(key, default.toString()) ?.toUpperCase()?.let { Shapes.valueOf(it) } ?: default
+                sharedPreferences.getString(key, default.toString())?.toUpperCase()?.let { Shapes.valueOf(it) } ?: default
         }
         var rotateShapes = Option("rotate_shapes", false)
         var autocenterAlways = Option("autocenter_always", true)
