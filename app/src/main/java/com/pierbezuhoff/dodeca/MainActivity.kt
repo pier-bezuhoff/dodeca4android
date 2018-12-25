@@ -76,6 +76,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        showBottomBar()
         when (item.itemId) {
             R.id.app_bar_help -> {
                 val intent = Intent(this, HelpActivity::class.java)
