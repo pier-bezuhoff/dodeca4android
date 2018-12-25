@@ -4,6 +4,11 @@
         xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+            android:id="@+id/app_bar_help"
+            android:icon="@drawable/ic_help"
+            android:title="@string/help_button_title"
+            app:showAsAction="always"/>
+    <item
             android:id="@+id/app_bar_load"
             android:icon="@drawable/icon_open_file"
             android:title="@string/load_button_title"

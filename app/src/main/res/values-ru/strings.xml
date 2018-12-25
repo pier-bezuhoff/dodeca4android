@@ -54,4 +54,5 @@
     <string name="show_outline_title">Показывать абрис</string>
     <string name="stat_n_updates_initial">\? пересчётов</string>
     <string name="stat_20_updates_per_initial">20 пересчётов за ?</string>
+    <string name="help_button_title">Справка</string>
 </resources>

@@ -2,6 +2,7 @@
     <string name="app_name" translatable="false">Dodeca</string>
 
     <!-- Strings related to bottom bar -->
+    <string name="help_button_title">Help</string>
     <string name="load_button_title">Load ddu</string>
     <string name="save_button_title">Save ddu</string>
     <string name="go_button_title">Play/pause</string>

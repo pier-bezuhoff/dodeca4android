@@ -77,6 +77,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.app_bar_help -> {
+                // show Help
+            }
             R.id.app_bar_load -> {
                 val intent = Intent(this, DDUChooserActivity::class.java)
                 intent.putExtra("dirPath", dduDir.absolutePath)
@@ -121,6 +124,7 @@ class MainActivity : AppCompatActivity() {
             DDU_CODE ->
                 if (resultCode == Activity.RESULT_OK) {
                     data?.getStringExtra("path")?.let { readPath(it) }
+                    showBottomBar()
                 }
             APPLY_SETTINGS_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
@@ -137,9 +141,13 @@ class MainActivity : AppCompatActivity() {
                             dodecaView.ddu = DDU.readFile(file)
                         }
                     }
-                    having("default_ddus") { extractDDUFromAssets() }
+                    having("default_ddus") {
+                        extractDDUFromAssets()
+                        dodecaView.ddu.file?.let { file -> dodecaView.ddu = DDU.readFile(file) }
+                    }
                 }
                 dodecaView.loadMajorSharedPreferences()
+                showBottomBar()
             }
         }
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
@@ -243,17 +251,17 @@ class MainActivity : AppCompatActivity() {
         bottomBarHideTimer?.cancel()
     }
 
-    private fun toggleBottomBar() {
-        if (bottomBarShown) {
-            hideBottomBar()
-        }
-        else {
-            bar.visibility = View.VISIBLE
-            // dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
-            hideBottomBarAfterAWhile()
-            bottomBarShown = true
-        }
+    private fun showBottomBar() {
+        bottomBarHideTimer?.cancel()
+        bar.visibility = View.VISIBLE
+        // dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
+        hideBottomBarAfterAWhile()
+        bottomBarShown = true
     }
+
+    private fun toggleBottomBar() =
+        if (bottomBarShown) hideBottomBar()
+        else showBottomBar()
 
     private fun extractDDUFromAssets() {
         val dir = dduDir
