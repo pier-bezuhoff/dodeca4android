@@ -78,7 +78,8 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.app_bar_help -> {
-                // show Help
+                val intent = Intent(this, HelpActivity::class.java)
+                startActivityForResult(intent, HELP_CODE)
             }
             R.id.app_bar_load -> {
                 val intent = Intent(this, DDUChooserActivity::class.java)
@@ -149,6 +150,7 @@ class MainActivity : AppCompatActivity() {
                 dodecaView.loadMajorSharedPreferences()
                 showBottomBar()
             }
+            HELP_CODE -> showBottomBar()
         }
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
     }
@@ -286,6 +288,7 @@ class MainActivity : AppCompatActivity() {
         const val BUFFER_SIZE = DEFAULT_BUFFER_SIZE
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
+        const val HELP_CODE = 3
         // fullscreen, but with bottom navigation
         const val FULLSCREEN_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_FULLSCREEN
         // distraction free
