@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import androidx.core.graphics.withMatrix
 
 class Trace(val paint: Paint) {
     var initialized = false
@@ -14,10 +15,8 @@ class Trace(val paint: Paint) {
     var dx: Float = 0f
     var dy: Float = 0f
 
-    fun onCanvas(draw: (Canvas) -> Unit) {
-        canvas.translate(-dx, -dy)
-        draw(canvas)
-        canvas.translate(dx, dy)
+    fun withCanvas(draw: Canvas.() -> Unit) {
+        canvas.withMatrix(matrix) { draw() }
     }
 
     fun retrace(width: Int, height: Int) {

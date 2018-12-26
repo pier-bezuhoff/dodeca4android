@@ -66,15 +66,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var last20NUpdates: Long = 0L
     private var last20UpdateTime: Long = 0L
 
-    // visible(r) = center + scale * (r + dr - center), where dr = (dx, dy); center = (centerX, centerY)
-    /* T(dx, dy) = [1 0 dx]
-    *              [0 1 dy]
-    *              [0 0 1]
-    *
-    * S(sx, sy) = [sx 0 0]
-    *             [0 sy 0]
-    *             [0 0  1]
-    * */
+    // ddu:r -> motion -> visilbe:r
     private val motion = object : Option<Matrix>("matrix", Matrix()) {
         override fun fetchPreference(sharedPreferences: SharedPreferences): Matrix {
             with(sharedPreferences) {
@@ -84,14 +76,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 return Matrix().apply { postTranslate(dx, dy); postScale(scale, scale, centerX, centerY) }
             }
         }
-
-        override fun setPreference(editor: SharedPreferences.Editor) {
+        override fun putPreference(editor: SharedPreferences.Editor) {
             with(editor) {
-                putFloat("key", value.)
+                putFloat("dx", value.dx)
+                putFloat("dy", value.dy)
+                putFloat("scale", value.sx) // sx == sy
             }
         }
     }
-
+    val motionMatrix get() = motion.value
     var pickedColor: Int? = null
 
     val centerX: Float get() = x + width / 2
@@ -151,10 +144,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun saveMinorSharedPreferences() {
         editing {
-            motion.setPreference(this)
-            putFloat("dx", dx)
-            putFloat("dy", dy)
-            putFloat("scale", scale)
+            motion.putPreference(this)
             putBoolean("drawTrace", drawTrace)
             putBoolean("updating", updating)
         }
@@ -167,9 +157,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun autocenter() {
-        val center = Complex(centerX.toDouble(), centerY.toDouble())
-        val (dx, dy) = center - mean(circles.filter(CircleFigure::show).map(::visibleCenter))
-        updateScroll(dx.toFloat(), dy.toFloat())
+        val center = ComplexFF(centerX, centerY)
+//        val (dx, dy) = (center - mean(circles.filter(CircleFigure::show).map(::visibleCenter))).asFF()
+//        updateScroll(dx, dy)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -215,10 +205,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun updateScroll(ddx: Float, ddy: Float) {
-        motion.postTranslate(ddx, ddy)
-        val (ddx, ddy) = Pair(ddx / scale, ddy / scale)
-        dx += ddx
-        dy += ddy
+        motion.value.postTranslate(ddx, ddy)
         if (drawTrace) {
 //            trace.canvas.translate(-this.ddx, -this.ddy)
 //            updatingTrace { trace.matrix.postTranslate(ddx, ddy) }
@@ -226,16 +213,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
-        motion.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
-        scale *= dscale
+        motion.value.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
         if (drawTrace) {
 //            val (cX, cY) = Pair(centerX - trace.dx, centerY - trace.dy)
 //            trace.canvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
 //            updatingTrace { trace.matrix.postScale(dscale, dscale, centerX, centerY) }
         }
-        val ddx = if (focusX ?: 0f == 0f) 0f else (1 - dscale) * (focusX!! - centerX)
-        val ddy = if (focusY ?: 0f == 0f) 0f else (1 - dscale) * (focusY!! - centerY)
-        updateScroll(ddx, ddy)
     }
 
     /* when drawTrace: retrace if should do it on move, else do [action] */
@@ -264,9 +247,16 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         invalidate()
     }
 
+    private fun onTraceCanvas(draw: (Canvas) -> Unit) {
+        trace. { it.withMatrix(motion.value) { draw(this) } }
+    }
+
     /* draw trace canvas on DodecaView canvas */
     private fun drawTraceCanvas(canvas: Canvas) {
-        canvas.drawBitmap(trace.bitmap, Matrix(motion).apply { postConcat(trace.matrix) }, trace.paint)
+        canvas.drawBitmap(
+            trace.bitmap,
+            trace.matrix, // Matrix(trace.matrix).apply { postConcat(motion.value) },
+            trace.paint)
     }
 
     /* draw background color on [canvas] */
@@ -274,9 +264,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* draw `circles` on [canvas] */
     private fun drawCircles(canvas: Canvas) {
-        canvas.withMatrix(motion) {
+//        canvas.withMatrix(motion.value) {
             circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
-        }
+//        }
     }
 
     /* draw shape from [circle] on [canvas] */
@@ -284,25 +274,26 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         val (c, r) = circle
         paint.color = circle.borderColor
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-        val p = c + r * circle.point
+        val (x, y) = c.asFF()
+        val (pX, pY) = (c + r * circle.point).asFF()
         shape.value.draw(
             canvas,
-            c.real.toFloat(), c.imaginary.toFloat(),
+            x, y,
             r.toFloat(),
-            p.real.toFloat(), p.imaginary.toFloat(),
+            pX, pY,
             circle.point, showOutline.value, paint)
     }
 
     /* draw shape from [circle] on [canvas] */
-    private fun _drawCircle(canvas: Canvas, circle: CircleFigure) {
-        val (c, r) = circle
-        paint.color = circle.borderColor
-        paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-        val (x, y) = visibleComplex(c)
-        val halfWidth = visibleR(r.toFloat())
-        val (pointX, pointY) = visibleComplex(c + r * circle.point)
-        shape.value.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, showOutline.value, paint)
-    }
+//    private fun _drawCircle(canvas: Canvas, circle: CircleFigure) {
+//        val (c, r) = circle
+//        paint.color = circle.borderColor
+//        paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
+//        val (x, y) = visibleComplex(c)
+//        val halfWidth = visibleR(r.toFloat())
+//        val (pointX, pointY) = visibleComplex(c + r * circle.point)
+//        shape.value.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, showOutline.value, paint)
+//    }
 
     fun pickColor(x: Float, y: Float) {
         // TODO: color picker/changer or discard
@@ -363,22 +354,22 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     /* scale and translate all circles in ddu according to current view */
     fun prepareDDUToSave(): DDU {
         return ddu.copy().apply {
-            translateAndScale(
-                dx.toDouble(), dy.toDouble(),
-                scale.toDouble(),
-                Complex(centerX.toDouble(), centerY.toDouble())
-            )
+//            translateAndScale(
+//                dx.toDouble(), dy.toDouble(),
+//                scale.toDouble(),
+//                Complex(centerX.toDouble(), centerY.toDouble())
+//            )
             trace = this@DodecaView.drawTrace
         }
     }
 
-    private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX
-    private inline fun visibleY(y: Float): Float = scale * (y + dy - centerY) + centerY
-    private fun visibleComplex(z: Complex): Pair<Float, Float> = Pair(visibleX(z.real.toFloat()), visibleY(z.imaginary.toFloat()))
-    private inline fun visibleCenter(circle: Circle): Complex = Complex(
-        visibleX(circle.x.toFloat()).toDouble(),
-        visibleY(circle.y.toFloat()).toDouble())
-    private inline fun visibleR(r: Float): Float = scale * r
+//    private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX
+//    private inline fun visibleY(y: Float): Float = scale * (y + dy - centerY) + centerY
+//    private fun visibleComplex(z: Complex): Pair<Float, Float> = Pair(visibleX(z.real.toFloat()), visibleY(z.imaginary.toFloat()))
+//    private inline fun visibleCenter(circle: Circle): Complex = Complex(
+//        visibleX(circle.x.toFloat()).toDouble(),
+//        visibleY(circle.y.toFloat()).toDouble())
+//    private inline fun visibleR(r: Float): Float = scale * r
 
     private fun editing(block: SharedPreferences.Editor.() -> Unit) {
         with (sharedPreferences.edit()) {
@@ -407,7 +398,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             return value
         }
 
-        open fun setPreference(editor: SharedPreferences.Editor) {
+        open fun putPreference(editor: SharedPreferences.Editor) {
             when (value) {
                 is Boolean -> editor.putBoolean(key, value as Boolean)
                 is String -> editor.putString(key, value as String)

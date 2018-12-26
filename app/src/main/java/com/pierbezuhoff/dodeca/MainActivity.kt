@@ -274,10 +274,11 @@ class MainActivity : AppCompatActivity() {
     private fun extract1DDU(name: String, dir: File = dduDir) {
         val source = "ddu/$name"
         val targetFile = File(dir, name)
-        if (targetFile.createNewFile())
+        if (targetFile.createNewFile()) {
             Log.i(TAG, "Copying asset $source to ${targetFile.path}")
-        else
+        } else {
             Log.i(TAG, "Overwriting ${targetFile.path} by asset $source")
+        }
         assets.open(source).use { input ->
             FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
         }
