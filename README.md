@@ -5,12 +5,12 @@ Min version: 4.4 KitKat (28 >= API >= 19)
 - [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
 - [ ] Proper reverse motion
 - [ ] Increase bottom bar button size
-- [ ] Autorotate screen in settings
-- [ ] Bottom bar descriptions don't work on Fedor's phone
-- [ ] For release: disable Log.i-s
 - [ ] More flexible icons for bottom bar
 - [ ] Also see com.android.support:palette-v7:28.0.0
 - [ ] Change color (choose from palette on ?double? tap) and save it for further changing
+- [ ] Autorotate screen in settings
+- [ ] Bottom bar descriptions don't work on Fedor's phone
+- [ ] For release: disable Log.i-s
 - [ ] Update circles in other thread (see Log for b3/b4)
 - [ ] Rotate square
 - [ ] Allow UPS > FPS (skipping some or smth other), remove FPS from settings
