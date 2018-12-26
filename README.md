@@ -2,12 +2,13 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
+- [ ] Extend trace bitmap (x 4) (fix it now)
+- [ ] Scale not from center, but from (0,0)
 - [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
 - [ ] Proper reverse motion
 - [ ] Increase bottom bar button size
 - [ ] Autorotate screen in settings
 - [ ] Bottom bar descriptions don't work on Fedor's phone
-- [ ] Extend trace bitmap (x 4) (fix it now)
 - [ ] For release: disable Log.i-s
 - [ ] More flexible icons for bottom bar
 - [ ] Also see com.android.support:palette-v7:28.0.0

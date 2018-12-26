@@ -18,6 +18,7 @@ operator fun Double.div(divisor: Complex): Complex = divisor.reciprocal().multip
 operator fun Complex.div(divisor: Double): Complex = this.divide(divisor)
 operator fun Complex.component1(): Double = real
 operator fun Complex.component2(): Double = imaginary
+fun Complex.asFF(): Pair<Float, Float> = Pair(real.toFloat(), imaginary.toFloat())
 fun Complex.abs2(): Double = (this * this.conjugate()).real
 fun Complex.normalized(): Complex = if (this == Complex.ZERO) Complex.ZERO else this / this.abs()
 val Complex.degrees: Double get() = Math.toDegrees(argument)

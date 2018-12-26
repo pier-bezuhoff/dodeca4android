@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
-import androidx.core.graphics.withTranslation
 
 class Trace(val paint: Paint) {
     var initialized = false
@@ -16,7 +15,6 @@ class Trace(val paint: Paint) {
     var dy: Float = 0f
 
     fun onCanvas(draw: (Canvas) -> Unit) {
-        // what does canvas.translate?
         canvas.translate(-dx, -dy)
         draw(canvas)
         canvas.translate(dx, dy)
@@ -35,6 +33,6 @@ class Trace(val paint: Paint) {
     }
 
     companion object {
-        const val factor: Int = 2 // bitmap == (factor ^ 2) * screens
+        const val factor: Int = 1 // bitmap == (factor ^ 2) * screens
     }
 }

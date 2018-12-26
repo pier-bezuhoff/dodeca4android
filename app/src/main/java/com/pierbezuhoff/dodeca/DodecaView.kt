@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PointF
 import android.preference.PreferenceManager
@@ -12,6 +13,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.widget.TextView
+import androidx.core.graphics.withMatrix
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import kotlin.concurrent.fixedRateTimer
@@ -26,9 +28,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         set(value) {
             field = value
             circles = value.circles.toMutableList()
-            dx = defaultDx
-            dy = defaultDy
-            scale = defaultScale
+            motion.value.reset()
             drawTrace = value.trace ?: defaultDrawTrace
             redrawTraceOnce = drawTrace
             updating = defaultUpdating
@@ -67,12 +67,30 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var last20UpdateTime: Long = 0L
 
     // visible(r) = center + scale * (r + dr - center), where dr = (dx, dy); center = (centerX, centerY)
-    var dx: Float = defaultDx // not scaled
-    var dy: Float = defaultDy
-    private var ddx: Float = 0f
-    private var ddy: Float = 0f
-    var scale: Float = defaultScale
-    private var dscale: Float = 1f
+    /* T(dx, dy) = [1 0 dx]
+    *              [0 1 dy]
+    *              [0 0 1]
+    *
+    * S(sx, sy) = [sx 0 0]
+    *             [0 sy 0]
+    *             [0 0  1]
+    * */
+    private val motion = object : Option<Matrix>("matrix", Matrix()) {
+        override fun fetchPreference(sharedPreferences: SharedPreferences): Matrix {
+            with(sharedPreferences) {
+                val dx = getFloat("dx", 0f)
+                val dy = getFloat("dy", 0f)
+                val scale = getFloat("scale", 1f)
+                return Matrix().apply { postTranslate(dx, dy); postScale(scale, scale, centerX, centerY) }
+            }
+        }
+
+        override fun setPreference(editor: SharedPreferences.Editor) {
+            with(editor) {
+                putFloat("key", value.)
+            }
+        }
+    }
 
     var pickedColor: Int? = null
 
@@ -125,9 +143,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun loadMinorSharedPreferences() {
         with (sharedPreferences) {
-            dx = getFloat("dx", dx)
-            dy = getFloat("dy", dy)
-            scale = getFloat("scale", scale)
+            motion.getPreference(sharedPreferences)
             drawTrace = getBoolean("drawTrace", drawTrace)
             updating = getBoolean("updating", updating)
         }
@@ -135,6 +151,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun saveMinorSharedPreferences() {
         editing {
+            motion.setPreference(this)
             putFloat("dx", dx)
             putFloat("dy", dy)
             putFloat("scale", scale)
@@ -173,8 +190,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     updateOnce = false
                 }
                 drawTrace -> drawTraceCanvas(it)
-                else -> {
-                    // not bitmap for better scrolling & scaling
+                else -> { // pause and no trace
                     drawBackground(canvas)
                     drawCircles(canvas)
                 }
@@ -199,27 +215,24 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun updateScroll(ddx: Float, ddy: Float) {
-        this.ddx = ddx / scale
-        this.ddy = ddy / scale
-        dx += this.ddx
-        dy += this.ddy
+        motion.postTranslate(ddx, ddy)
+        val (ddx, ddy) = Pair(ddx / scale, ddy / scale)
+        dx += ddx
+        dy += ddy
         if (drawTrace) {
-            trace.canvas.translate(-this.ddx, -this.ddy)
-            updatingTrace { trace.matrix.postTranslate(ddx, ddy) }
+//            trace.canvas.translate(-this.ddx, -this.ddy)
+//            updatingTrace { trace.matrix.postTranslate(ddx, ddy) }
         }
-        this.ddx = 0f
-        this.ddy = 0f
     }
 
     fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
-        this.dscale = scale
+        motion.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
         scale *= dscale
         if (drawTrace) {
 //            val (cX, cY) = Pair(centerX - trace.dx, centerY - trace.dy)
-            trace.canvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
-            updatingTrace { trace.matrix.postScale(dscale, dscale, centerX, centerY) }
+//            trace.canvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
+//            updatingTrace { trace.matrix.postScale(dscale, dscale, centerX, centerY) }
         }
-        this.dscale = 0f
         val ddx = if (focusX ?: 0f == 0f) 0f else (1 - dscale) * (focusX!! - centerX)
         val ddy = if (focusY ?: 0f == 0f) 0f else (1 - dscale) * (focusY!! - centerY)
         updateScroll(ddx, ddy)
@@ -253,19 +266,35 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* draw trace canvas on DodecaView canvas */
     private fun drawTraceCanvas(canvas: Canvas) {
-        canvas.drawBitmap(trace.bitmap, trace.matrix, trace.paint)
+        canvas.drawBitmap(trace.bitmap, Matrix(motion).apply { postConcat(trace.matrix) }, trace.paint)
     }
 
-    /* draw bakcground color on [canvas] */
+    /* draw background color on [canvas] */
     private fun drawBackground(canvas: Canvas) = canvas.drawColor(ddu.backgroundColor)
 
     /* draw `circles` on [canvas] */
     private fun drawCircles(canvas: Canvas) {
-        circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
+        canvas.withMatrix(motion) {
+            circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
+        }
     }
 
     /* draw shape from [circle] on [canvas] */
     private fun drawCircle(canvas: Canvas, circle: CircleFigure) {
+        val (c, r) = circle
+        paint.color = circle.borderColor
+        paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
+        val p = c + r * circle.point
+        shape.value.draw(
+            canvas,
+            c.real.toFloat(), c.imaginary.toFloat(),
+            r.toFloat(),
+            p.real.toFloat(), p.imaginary.toFloat(),
+            circle.point, showOutline.value, paint)
+    }
+
+    /* draw shape from [circle] on [canvas] */
+    private fun _drawCircle(canvas: Canvas, circle: CircleFigure) {
         val (c, r) = circle
         paint.color = circle.borderColor
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
@@ -378,7 +407,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             return value
         }
 
-        fun setPreference(editor: SharedPreferences.Editor) {
+        open fun setPreference(editor: SharedPreferences.Editor) {
             when (value) {
                 is Boolean -> editor.putBoolean(key, value as Boolean)
                 is String -> editor.putString(key, value as String)
@@ -424,9 +453,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         var preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences
         const val defaultDrawTrace = true
         const val defaultUpdating = true
-        const val defaultDx = 0f
-        const val defaultDy = 0f
-        const val defaultScale = 1f
         private const val TAG = "DodecaView"
     }
 }
