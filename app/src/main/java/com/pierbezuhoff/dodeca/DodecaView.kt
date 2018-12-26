@@ -49,14 +49,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     var nUpdatesView: TextView? = null
     var time20UpdatesView: TextView? = null
     var drawTrace: Boolean = defaultDrawTrace
-    set(value) {
-        field = value
-        if (width > 0) // we know sizes
-            retrace()
-    }
+        set(value) {
+            field = value
+            if (width > 0) // we know sizes
+                retrace()
+        }
 
     private var redrawTraceOnce: Boolean = defaultDrawTrace
     var updating = defaultUpdating
+        set(value) { if (drawTrace) trace.motion.reset(); field = value }
     private var lastUpdateTime: Long = 0L
     private var updateOnce = false
     private val paint = Paint(defaultPaint)
@@ -180,9 +181,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     updateOnce = false
                 }
                 drawTrace -> drawTraceCanvas(it)
-                else -> { // pause and no trace
-                    drawBackground(canvas)
-                    drawCircles(canvas)
+                else -> onCanvas(it) { // pause and no trace
+                    drawBackground(it)
+                    drawCircles(it)
                 }
             }
         }
@@ -195,30 +196,27 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             lastUpdateTime = System.currentTimeMillis()
         }
         if (drawTrace) {
-            upon(::redrawTraceOnce) { trace.onCanvas { drawBackground(it) } }
-            trace.onCanvas { drawCircles(it) }
+            onTraceCanvas {
+                upon(::redrawTraceOnce) { drawBackground(it) }
+                drawCircles(it)
+            }
             drawTraceCanvas(canvas)
         } else {
-            drawBackground(canvas)
-            drawCircles(canvas)
+            onCanvas(canvas) {
+                drawBackground(it)
+                drawCircles(it)
+            }
         }
     }
 
     fun updateScroll(ddx: Float, ddy: Float) {
         motion.value.postTranslate(ddx, ddy)
-        if (drawTrace) {
-//            trace.canvas.translate(-this.ddx, -this.ddy)
-//            updatingTrace { trace.matrix.postTranslate(ddx, ddy) }
-        }
+        updatingTrace { trace.motion.postTranslate(ddx, ddy) }
     }
 
     fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
         motion.value.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
-        if (drawTrace) {
-//            val (cX, cY) = Pair(centerX - trace.dx, centerY - trace.dy)
-//            trace.canvas.scale(1 / dscale, 1 / dscale, centerX, centerY)
-//            updatingTrace { trace.matrix.postScale(dscale, dscale, centerX, centerY) }
-        }
+        updatingTrace { trace.motion.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
     }
 
     /* when drawTrace: retrace if should do it on move, else do [action] */
@@ -239,7 +237,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         trace.retrace(width, height)
         redrawTraceOnce = drawTrace
         if (!updating) {
-            trace.onCanvas {
+            onTraceCanvas {
                 drawBackground(it)
                 drawCircles(it)
             }
@@ -247,15 +245,19 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         invalidate()
     }
 
+    private fun onCanvas(canvas: Canvas, draw: (Canvas) -> Unit) {
+        canvas.withMatrix(motion.value) { draw(this) }
+    }
+
     private fun onTraceCanvas(draw: (Canvas) -> Unit) {
-        trace. { it.withMatrix(motion.value) { draw(this) } }
+        onCanvas(trace.canvas) { draw(it) }
     }
 
     /* draw trace canvas on DodecaView canvas */
     private fun drawTraceCanvas(canvas: Canvas) {
         canvas.drawBitmap(
             trace.bitmap,
-            trace.matrix, // Matrix(trace.matrix).apply { postConcat(motion.value) },
+            trace.motion,
             trace.paint)
     }
 
@@ -264,9 +266,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* draw `circles` on [canvas] */
     private fun drawCircles(canvas: Canvas) {
-//        canvas.withMatrix(motion.value) {
-            circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
-//        }
+        circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
     }
 
     /* draw shape from [circle] on [canvas] */
