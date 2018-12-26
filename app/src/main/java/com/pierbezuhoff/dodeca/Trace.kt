@@ -4,15 +4,15 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
-import androidx.core.graphics.withMatrix
 
 class Trace(val paint: Paint) {
     var initialized = false
     lateinit var bitmap: Bitmap
     lateinit var canvas: Canvas
     val translation = Matrix() // factor => pre translation
-    val motion = Matrix() // visible canvas = motion canvas
+    val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
     // `bitmap` top-left corner - screen top-left corner
+    val blitMatrix get() = Matrix(translation).apply { postConcat(motion) }
 
     // visible
     fun translate(dx: Float, dy: Float) {
@@ -34,11 +34,11 @@ class Trace(val paint: Paint) {
         translation.reset()
         translation.preTranslate(dx, dy)
         motion.reset()
-        canvas.translate(dx, dy)
+        canvas.translate(-dx, -dy)
         initialized = true
     }
 
     companion object {
-        const val factor: Int = 1 // bitmap == (factor ^ 2) * screens
+        const val factor: Int = 2 // bitmap == (factor ^ 2) * screens
     }
 }

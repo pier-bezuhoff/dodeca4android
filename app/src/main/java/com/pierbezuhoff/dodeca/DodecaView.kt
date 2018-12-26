@@ -260,7 +260,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun drawTraceCanvas(canvas: Canvas) {
         canvas.drawBitmap(
             trace.bitmap,
-            trace.motion, // + translation
+            trace.blitMatrix,
             trace.paint)
     }
 
