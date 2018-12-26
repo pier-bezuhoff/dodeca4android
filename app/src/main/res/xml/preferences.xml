@@ -7,7 +7,7 @@
 
         <SwitchPreference
                 android:key="redraw_trace"
-                android:defaultValue="true"
+                android:defaultValue="false"
                 android:title="@string/redraw_trace_title"
                 android:summary="@string/redraw_trace_summary"/>
         <!-- NOTE: not in master branch -->
