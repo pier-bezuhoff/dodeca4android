@@ -65,6 +65,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var last20UpdateTime: Long = 0L
 
     // ddu:r -> motion -> visilbe:r
+    // (motion $); trace -> g -> (g . motion $); g(trace)
     private val motion = object : Option<Matrix>("matrix", Matrix()) {
         override fun fetchPreference(sharedPreferences: SharedPreferences): Matrix {
             with(sharedPreferences) {
@@ -82,7 +83,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
         }
     }
-    val motionMatrix get() = motion.value
+    val motionMatrix get() = motion.value // tmp
     val dx get() = motion.value.dx
     val dy get() = motion.value.dy
     val scale get() = motion.value.sx
@@ -159,8 +160,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun autocenter() {
         val center = ComplexFF(centerX, centerY)
-//        val (dx, dy) = (center - mean(circles.filter(CircleFigure::show).map(::visibleCenter))).asFF()
-//        updateScroll(dx, dy)
+        val visibleCenters = circles.filter(CircleFigure::show).map { visible(center) }
+        val (dx, dy) = (center - mean(visibleCenters)).asFF()
+        updateScroll(dx, dy)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -211,13 +213,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     fun updateScroll(ddx: Float, ddy: Float) {
         motion.value.postTranslate(ddx, ddy)
-        trace.canvas.translate(ddx, ddy)
-        updatingTrace { trace.translation.postTranslate(ddx / scale, ddy / scale) }
+        updatingTrace { trace.translate(ddx, ddy) }
     }
 
     fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
         motion.value.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
-        updatingTrace { trace.translation.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
+        updatingTrace { trace.scale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
     }
 
     /* when drawTrace: retrace if should do it on move, else do [action] */
@@ -236,6 +237,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     /* when drawTrace turns on or sizes change */
     fun retrace() {
         trace.retrace(width, height)
+        trace.canvas.concat(motion.value)
         redrawTraceOnce = drawTrace
         if (!updating) {
             onTraceCanvas {
@@ -251,14 +253,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun onTraceCanvas(draw: (Canvas) -> Unit) {
-        onCanvas(trace.canvas) { draw(it) }
+        draw(trace.canvas)
     }
 
     /* draw trace canvas on DodecaView canvas */
     private fun drawTraceCanvas(canvas: Canvas) {
         canvas.drawBitmap(
             trace.bitmap,
-            trace.translation,
+            trace.motion, // + translation
             trace.paint)
     }
 
@@ -364,6 +366,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
+    private fun visible(z: Complex): Complex = motion.value.move(z)
 //    private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX
 //    private inline fun visibleY(y: Float): Float = scale * (y + dy - centerY) + centerY
 //    private fun visibleComplex(z: Complex): Pair<Float, Float> = Pair(visibleX(z.real.toFloat()), visibleY(z.imaginary.toFloat()))
