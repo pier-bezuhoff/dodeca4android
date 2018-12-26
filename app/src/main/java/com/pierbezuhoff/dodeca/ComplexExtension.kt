@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca
 
 import org.apache.commons.math3.complex.Complex
 
+fun ComplexFF(x: Float, y: Float): Complex = Complex(x.toDouble(), y.toDouble())
 operator fun Complex.unaryMinus(): Complex = this.negate()
 operator fun Complex.plus(addend: Complex): Complex = this.add(addend)
 operator fun Double.plus(addend: Complex): Complex = addend.add(this)
