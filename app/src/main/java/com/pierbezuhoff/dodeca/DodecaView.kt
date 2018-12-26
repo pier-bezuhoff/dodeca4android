@@ -17,6 +17,7 @@ import androidx.core.graphics.withMatrix
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import kotlin.concurrent.fixedRateTimer
+import kotlin.properties.Delegates
 import kotlin.reflect.KMutableProperty0
 
 // TODO: enlarge traceBitmap (as much as possible)
@@ -48,16 +49,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var nUpdatesView: TextView? = null
     var time20UpdatesView: TextView? = null
-    var drawTrace: Boolean = defaultDrawTrace
-        set(value) {
-            field = value
-            if (width > 0) // we know sizes
-                retrace()
-        }
+    var drawTrace: Boolean by Delegates.observable(defaultDrawTrace) { _, _, _ ->
+        if (width > 0) retrace()
+    }
 
     private var redrawTraceOnce: Boolean = defaultDrawTrace
     var updating = defaultUpdating
-        set(value) { if (drawTrace) trace.motion.reset(); field = value }
     private var lastUpdateTime: Long = 0L
     private var updateOnce = false
     private val paint = Paint(defaultPaint)
@@ -74,7 +71,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 val dx = getFloat("dx", 0f)
                 val dy = getFloat("dy", 0f)
                 val scale = getFloat("scale", 1f)
-                return Matrix().apply { postTranslate(dx, dy); postScale(scale, scale, centerX, centerY) }
+                return Matrix().apply { postTranslate(dx, dy); postScale(scale, scale) }
             }
         }
         override fun putPreference(editor: SharedPreferences.Editor) {
@@ -86,6 +83,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
     val motionMatrix get() = motion.value
+    val dx get() = motion.value.dx
+    val dy get() = motion.value.dy
+    val scale get() = motion.value.sx
     var pickedColor: Int? = null
 
     val centerX: Float get() = x + width / 2
@@ -211,12 +211,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     fun updateScroll(ddx: Float, ddy: Float) {
         motion.value.postTranslate(ddx, ddy)
-        updatingTrace { trace.motion.postTranslate(ddx, ddy) }
+        trace.canvas.translate(ddx, ddy)
+        updatingTrace { trace.translation.postTranslate(ddx / scale, ddy / scale) }
     }
 
     fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
         motion.value.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
-        updatingTrace { trace.motion.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
+        updatingTrace { trace.translation.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
     }
 
     /* when drawTrace: retrace if should do it on move, else do [action] */
@@ -257,7 +258,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun drawTraceCanvas(canvas: Canvas) {
         canvas.drawBitmap(
             trace.bitmap,
-            trace.motion,
+            trace.translation,
             trace.paint)
     }
 
