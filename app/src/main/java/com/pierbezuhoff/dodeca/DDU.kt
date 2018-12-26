@@ -54,13 +54,6 @@ class DDU(
         |circles = $circles
     """.trimMargin()
 
-    fun translateAndScale(dx: Double = 0.0, dy: Double = 0.0, scaleFactor: Double = 1.0, center: Complex = Complex.ZERO) {
-        circles.forEach {
-            it.translate(dx, dy)
-            it.scale(scaleFactor, center)
-        }
-    }
-
     fun saveStream(stream: OutputStream) {
         // maybe: use buffered stream
         stream.use {
