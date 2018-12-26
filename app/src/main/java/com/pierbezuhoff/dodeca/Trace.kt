@@ -11,12 +11,15 @@ class Trace(val paint: Paint) {
     lateinit var bitmap: Bitmap
     lateinit var canvas: Canvas
     val matrix = Matrix()
-    // `traceBitmap` top-left corner - screen top-left corner
+    // `bitmap` top-left corner - screen top-left corner
     var dx: Float = 0f
     var dy: Float = 0f
 
     fun onCanvas(draw: (Canvas) -> Unit) {
-        canvas.withTranslation(-dx, -dy) { draw(this) }
+        // what does canvas.translate?
+        canvas.translate(-dx, -dy)
+        draw(canvas)
+        canvas.translate(dx, dy)
     }
 
     fun retrace(width: Int, height: Int) {

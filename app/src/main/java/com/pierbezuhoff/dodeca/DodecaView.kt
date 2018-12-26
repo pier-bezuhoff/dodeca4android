@@ -66,9 +66,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var last20NUpdates: Long = 0L
     private var last20UpdateTime: Long = 0L
 
+    // visible(r) = center + scale * (r + dr - center), where dr = (dx, dy); center = (centerX, centerY)
     var dx: Float = defaultDx // not scaled
+    var dy: Float = defaultDy
     private var ddx: Float = 0f
-    var dy: Float = defaultDy // not scaled
     private var ddy: Float = 0f
     var scale: Float = defaultScale
     private var dscale: Float = 1f
@@ -203,7 +204,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         dx += this.ddx
         dy += this.ddy
         if (drawTrace) {
-//            trace.canvas.translate(-this.ddx, -this.ddy)
+            trace.canvas.translate(-this.ddx, -this.ddy)
             updatingTrace { trace.matrix.postTranslate(ddx, ddy) }
         }
         this.ddx = 0f
