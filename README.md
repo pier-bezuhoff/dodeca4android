@@ -2,8 +2,6 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] Extend trace bitmap (x 4) (fix it now)
-- [ ] Scale not from center, but from (0,0)
 - [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
 - [ ] Proper reverse motion
 - [ ] Increase bottom bar button size
@@ -15,7 +13,6 @@ Min version: 4.4 KitKat (28 >= API >= 19)
 - [ ] Change color (choose from palette on ?double? tap) and save it for further changing
 - [ ] Update circles in other thread (see Log for b3/b4)
 - [ ] Rotate square
-- [ ] Fix scaling (when redrawTraceOnMove it's obviously broken)
 - [ ] Allow UPS > FPS (skipping some or smth other), remove FPS from settings
 - [ ] Addtional bottom bar control: stop, step back
 - [ ] Focusing mode: following specific circle

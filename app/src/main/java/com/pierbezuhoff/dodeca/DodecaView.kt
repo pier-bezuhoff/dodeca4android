@@ -20,10 +20,6 @@ import kotlin.concurrent.fixedRateTimer
 import kotlin.properties.Delegates
 import kotlin.reflect.KMutableProperty0
 
-// TODO: enlarge traceBitmap (as much as possible)
-// BUG: when redrawTraceOnMove, scale and translate -- some shifts occur
-// even wrong radius, watch closely when continuous scroll/scale too
-// maybe because of center-scaling?
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init(), because I cannot use lateinit here
         set(value) {
@@ -65,7 +61,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var last20UpdateTime: Long = 0L
 
     // ddu:r -> motion -> visilbe:r
-    // (motion $); trace -> g -> (g . motion $); g(trace)
     private val motion = object : Option<Matrix>("matrix", Matrix()) {
         override fun fetchPreference(sharedPreferences: SharedPreferences): Matrix {
             with(sharedPreferences) {
@@ -83,7 +78,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
         }
     }
-    val motionMatrix get() = motion.value // tmp
     val dx get() = motion.value.dx
     val dy get() = motion.value.dy
     val scale get() = motion.value.sx
@@ -279,24 +273,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
         val (x, y) = c.asFF()
         val (pX, pY) = (c + r * circle.point).asFF()
-        shape.value.draw(
-            canvas,
-            x, y,
-            r.toFloat(),
-            pX, pY,
-            circle.point, showOutline.value, paint)
+        shape.value.draw(canvas, x, y, r.toFloat(), pX, pY, circle.point, showOutline.value, paint)
     }
-
-    /* draw shape from [circle] on [canvas] */
-//    private fun _drawCircle(canvas: Canvas, circle: CircleFigure) {
-//        val (c, r) = circle
-//        paint.color = circle.borderColor
-//        paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-//        val (x, y) = visibleComplex(c)
-//        val halfWidth = visibleR(r.toFloat())
-//        val (pointX, pointY) = visibleComplex(c + r * circle.point)
-//        shape.value.draw(canvas, x, y, halfWidth, pointX, pointY, circle.point, showOutline.value, paint)
-//    }
 
     fun pickColor(x: Float, y: Float) {
         // TODO: color picker/changer or discard
@@ -357,23 +335,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     /* scale and translate all circles in ddu according to current view */
     fun prepareDDUToSave(): DDU {
         return ddu.copy().apply {
-//            translateAndScale(
-//                dx.toDouble(), dy.toDouble(),
-//                scale.toDouble(),
-//                Complex(centerX.toDouble(), centerY.toDouble())
-//            )
+            circles.forEach {
+                it.center = visible(it.center)
+                it.radius *= scale
+            }
             trace = this@DodecaView.drawTrace
         }
     }
 
     private fun visible(z: Complex): Complex = motion.value.move(z)
-//    private inline fun visibleX(x: Float): Float = scale * (x + dx - centerX) + centerX
-//    private inline fun visibleY(y: Float): Float = scale * (y + dy - centerY) + centerY
-//    private fun visibleComplex(z: Complex): Pair<Float, Float> = Pair(visibleX(z.real.toFloat()), visibleY(z.imaginary.toFloat()))
-//    private inline fun visibleCenter(circle: Circle): Complex = Complex(
-//        visibleX(circle.x.toFloat()).toDouble(),
-//        visibleY(circle.y.toFloat()).toDouble())
-//    private inline fun visibleR(r: Float): Float = scale * r
 
     private fun editing(block: SharedPreferences.Editor.() -> Unit) {
         with (sharedPreferences.edit()) {
