@@ -40,6 +40,6 @@ class Trace(val paint: Paint) {
 
     companion object {
         // TODO: add to preferences
-        const val factor: Int = 2 // bitmap == (factor ^ 2) * screens
+        const val factor: Int = 1 // bitmap == (factor ^ 2) * screens
     }
 }

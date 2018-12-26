@@ -21,9 +21,8 @@ import kotlin.properties.Delegates
 import kotlin.reflect.KMutableProperty0
 
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
-    var ddu: DDU = DDU(circles = emptyList()) // dummy, actual from init(), because I cannot use lateinit here
-        set(value) {
-            field = value
+    var ddu: DDU by Delegates.observable(DDU(circles = emptyList())) // dummy, actual from init(), because I cannot use lateinit here
+        { _, _, value ->
             circles = value.circles.toMutableList()
             motion.value.reset()
             drawTrace = value.trace ?: defaultDrawTrace
@@ -33,13 +32,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 editing { putString("recent_ddu", file.name) }
             }
             clearMinorSharedPreferences()
-            if (autocenterAlways.value && width > 0) // we know sizes
-                autocenter()
-            invalidate()
             nUpdates = 0
             last20NUpdates = nUpdates
             lastUpdateTime = System.currentTimeMillis()
             last20UpdateTime = lastUpdateTime
+            if (autocenterAlways.value && width > 0) // we know sizes
+                autocenter()
+            invalidate()
         }
     private lateinit var circles: MutableList<CircleFigure>
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
@@ -154,8 +153,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun autocenter() {
         val center = ComplexFF(centerX, centerY)
-        val visibleCenters = circles.filter(CircleFigure::show).map { visible(center) }
-        val (dx, dy) = (center - mean(visibleCenters)).asFF()
+        val shownCircles = circles.filter(CircleFigure::show)
+        val visibleCenter = mean(shownCircles.map { visible(it.center) })
+        val (dx, dy) = (center - visibleCenter).asFF()
         updateScroll(dx, dy)
     }
 
@@ -343,7 +343,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private fun visible(z: Complex): Complex = motion.value.move(z)
+    private fun visible(z: Complex): Complex {
+        return motion.value.move(z)
+    }
 
     private fun editing(block: SharedPreferences.Editor.() -> Unit) {
         with (sharedPreferences.edit()) {
@@ -426,9 +428,9 @@ enum class Shapes {
     CIRCLE, POINTED_CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR;
 
     fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, pointX: Float, pointY: Float, point: Complex, drawOutline: Boolean, paint: Paint) {
-        val center by lazy { Complex(x.toDouble(), y.toDouble()) }
+        val center by lazy { ComplexFF(x, y) }
         fun trueRotated(x: Float, y: Float): PointF =
-            (center + (Complex(x.toDouble(), y.toDouble()) - center) * point).run { PointF(real.toFloat(), imaginary.toFloat()) }
+            (center + (ComplexFF(x, y) - center) * point).run { PointF(real.toFloat(), imaginary.toFloat()) }
         val rotated: (Float, Float) -> PointF =
             if (DodecaView.rotateShapes.value) { x, y -> trueRotated(x, y) } else { x, y -> PointF(x, y) }
         val top by lazy { rotated(x, y - halfWidth) }
