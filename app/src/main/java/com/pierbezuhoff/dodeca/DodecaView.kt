@@ -205,11 +205,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
+    /* scroll/translate screen and trace */
     fun updateScroll(ddx: Float, ddy: Float) {
         motion.value.postTranslate(ddx, ddy)
         updatingTrace { trace.translate(ddx, ddy) }
     }
 
+    /* scale screen and trace */
     fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
         motion.value.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
         updatingTrace { trace.scale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
@@ -287,7 +289,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         Log.i(TAG, pickedColor.toString())
     }
 
-    /* Change all circles with `pickedColor` -> `newColor` */
+    /* change all circles with `pickedColor` -> `newColor` */
     fun changeColor(newColor: Int) {
         // maybe: also change DDU?
         pickedColor?.let {
@@ -396,7 +398,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var UPS = Option("ups", 100) // updates per second
         val dt get() = 1000f / FPS.value
         val updateDt get() = 1000f / UPS.value
-        private var redrawTraceOnMove = Option("redraw_trace", true)
+        private var redrawTraceOnMove = Option("redraw_trace", false)
         enum class RedrawOnMoveWhenPaused { ALWAYS, NEVER, RESPECT_REDRAW_TRACE_ON_MOVE }
         private var redrawTraceOnMoveWhenPaused =
             Option("redraw_trace_when_paused", RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE)
