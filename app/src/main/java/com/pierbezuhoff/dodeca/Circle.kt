@@ -145,3 +145,5 @@ class CircleFigure(center: Complex, radius: Double,
         val defaultRule: String? = null
     }
 }
+
+val List<CircleFigure>.centroid get() = mean(map { it.center })
