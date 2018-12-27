@@ -123,10 +123,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
             // load FPS/UPS
             // NOTE: restart/rotate screen to update FPS
-            fetch(autocenterAlways) {
-                if (it && width > 0)
-                    autocenter()
-            }
+            fetch(autocenterAlways) { if (it && width > 0) autocenter() }
+            fetch(canvasFactor) { if (width > 0) retrace() }
         }
         if (!updating && updateImmediately)
             invalidate()
@@ -378,11 +376,21 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
             override fun peek(sharedPreferences: SharedPreferences): Shapes =
                 sharedPreferences.getString(key, default.toString())?.toUpperCase()?.let { Shapes.valueOf(it) } ?: default
+            override fun put(editor: SharedPreferences.Editor) {
+                editor.putString(key, toString().capitalize())
+            }
         }
         var rotateShapes = Option("rotate_shapes", false)
         var autocenterAlways = Option("autocenter_always", true)
         var autocenterOnce = false
         // maybe: add load random
+        var canvasFactor = object : Option<Int>("canvas_factor", 2) {
+            override fun peek(sharedPreferences: SharedPreferences): Int =
+                sharedPreferences.getString(key, default.toString())?.let { Integer.parseInt(it) } ?: default
+            override fun put(editor: SharedPreferences.Editor) {
+                editor.putString(key, toString())
+            }
+        }
         var preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences
         const val defaultDrawTrace = true
         const val defaultUpdating = true

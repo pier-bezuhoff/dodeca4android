@@ -100,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                             ddu.saveStream(file.outputStream())
                             toast(getString(R.string.ddu_saved_toast) + " ${file.name}")
                         }
-                    } catch (e: Exception) {
+                    } catch (e: Throwable) {
                         e.printStackTrace()
                         toast(getString(R.string.error_ddu_save_toast))
                     }

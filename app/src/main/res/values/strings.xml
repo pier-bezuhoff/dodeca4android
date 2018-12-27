@@ -41,6 +41,8 @@
     <string name="autocenter_title">Autocenter</string>
     <string name="always_autocenter_title">Always autocenter</string>
     <string name="always_autocenter_summary">Autocenter when loading new ddu</string>
+    <string name="canvas_factor_title">Canvas factor</string>
+    <string name="canvas_factor_summary">Canvas is %s times larger than visible screen</string>
     <!-- v ups and fps are unused now -->
     <string name="ups_title">Speed</string>
     <string name="ups_summary">%s updates per second (speed of circle motion)</string>
