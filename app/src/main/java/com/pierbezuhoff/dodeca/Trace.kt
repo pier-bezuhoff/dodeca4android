@@ -10,9 +10,11 @@ class Trace(val paint: Paint) {
     lateinit var bitmap: Bitmap
     lateinit var canvas: Canvas
     // `bitmap` top-left corner - screen top-left corner
-    private val translation = Matrix() // factor => pre translation
+    private val translation = Matrix() // defaultFactor => pre translation
     val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
     val blitMatrix get() = Matrix(translation).apply { postConcat(motion) }
+    // TODO: add to preferences
+    var factor: Int = defaultFactor // bitmap == (factor ^ 2) * screens
 
     // visible
     fun translate(dx: Float, dy: Float) {
@@ -39,7 +41,6 @@ class Trace(val paint: Paint) {
     }
 
     companion object {
-        // TODO: add to preferences
-        const val factor: Int = 2 // bitmap == (factor ^ 2) * screens
+        const val defaultFactor: Int = 2
     }
 }
