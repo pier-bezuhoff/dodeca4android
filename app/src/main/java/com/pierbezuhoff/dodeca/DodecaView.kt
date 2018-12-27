@@ -21,7 +21,8 @@ import kotlin.properties.Delegates
 import kotlin.reflect.KMutableProperty0
 
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
-    var ddu: DDU by Delegates.observable(DDU(circles = emptyList())) // dummy, actual from init(), because I cannot use lateinit here
+    // dummy default, actual from init(), because I cannot use lateinit here
+    var ddu: DDU by Delegates.observable(DDU(circles = emptyList()))
         { _, _, value ->
             circles = value.circles.toMutableList()
             motion.value.reset()
