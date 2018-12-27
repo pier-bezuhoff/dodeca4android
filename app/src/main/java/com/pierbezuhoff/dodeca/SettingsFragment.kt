@@ -8,7 +8,6 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import androidx.preference.SwitchPreference
 import org.jetbrains.anko.support.v4.email
 
 class SettingsFragment : PreferenceFragmentCompat() {
@@ -22,18 +21,26 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences, rootKey)
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach {
-                val removed = findPreference<Preference>(it).let { it.parent?.removePreference(it) }
+                val removed = findPreference<Preference>(it)?.let { it.parent?.removePreference(it) }
                 if (removed != true)
                     Log.w("Preferences", "Advanced preference $it was not removed")
             }
         }
-        (findPreference<ListPreference>("shape")).let {
-            it.summaryProvider = Preference.SummaryProvider<ListPreference> { preference ->
-                getString(R.string.shape_summary).format(preference.entry)
-            }
+        mapOf(
+            "shape" to R.string.shape_summary,
+            "canvas_factor" to R.string.canvas_factor_summary
+        ).forEach { (key, summaryResource) ->
+            findPreference<ListPreference>(key)?.summaryProvider =
+                Preference.SummaryProvider<ListPreference> { preference ->
+                    getString(summaryResource).format(preference.entry)
+                }
         }
+        findPreference<ListPreference>("canvas_factor")?.summaryProvider =
+            Preference.SummaryProvider<ListPreference> { preference ->
+                getString(R.string.canvas_factor_summary).format(preference.entry)
+            }
         val hooking = { param: String, action: (String) -> Unit ->
-            findPreference<Preference>(param).setOnPreferenceClickListener { action(param); true }
+            findPreference<Preference>(param)?.setOnPreferenceClickListener { action(param); true }
         }
         setOf("autocenter", "default_ddu", "default_ddus").forEach {
             hooking(it) { settingsActivity?.resultIntent?.putExtra(it, true) }
@@ -68,7 +75,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     companion object {
         private val ADVANCED_PREFERENCES = setOf(
-            "show_all_circles", "show_centers", "rotate_shapes", "show_outline", "show_stat"
+            "show_all_circles", "show_centers", "rotate_shapes", "show_stat"
         )
     }
 }

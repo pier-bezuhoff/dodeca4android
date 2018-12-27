@@ -8,12 +8,18 @@
         <item>Vertical bar</item>
         <item>Horizontal bar</item>
     </string-array>
-    <string-array name="shapesValues">
+    <string-array name="shapes_values">
         <item>circle</item>
         <item>pointed_circle</item>
         <item>square</item>
         <item>cross</item>
         <item>vertical_bar</item>
         <item>horizontal_bar</item>
+    </string-array>
+
+    <string-array name="canvas_factors">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
     </string-array>
 </resources>

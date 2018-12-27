@@ -3,6 +3,7 @@ Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
 - [ ] Add preference: trace.factor, inactivity interval
+- [ ] values/defaults.xml for preferences defaults
 - [ ] Do not retrace on language change
 - [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
 - [ ] Proper reverse motion

@@ -7,10 +7,13 @@ abstract class SharedPreference<T>(val default: T) where T : Any {
 
     abstract fun peek(sharedPreferences: SharedPreferences): T
 
-    fun fetch(sharedPreferences: SharedPreferences, onChange: (T) -> Unit = {}) {
+    // NOTE: fetch(_) { * } == fetch(_, onPostChange = { * })
+    fun fetch(sharedPreferences: SharedPreferences, onPreChange: (T) -> Unit = {}, onPostChange: (T) -> Unit = {}) {
         val newValue = peek(sharedPreferences)
-        if (value != newValue) onChange(newValue)
+        val changed = value != newValue
+        if (changed) onPreChange(newValue)
         value = newValue
+        if (changed) onPostChange(value)
     }
 
     abstract fun put(editor: SharedPreferences.Editor)
@@ -39,8 +42,10 @@ open class Option<T>(val key: String, default: T) : SharedPreference<T>(default)
     }
 }
 
-fun <T: Any> SharedPreferences.fetch(preference: SharedPreference<T>, onChange: (T) -> Unit = {}) =
-    preference.fetch(this, onChange)
+fun <T: Any> SharedPreferences.fetch(
+    preference: SharedPreference<T>,
+    onPreChange: (T) -> Unit = {}, onPostChange: (T) -> Unit = {}
+) = preference.fetch(this, onPreChange, onPostChange)
 
 fun <T: Any> SharedPreferences.Editor.put(preference: SharedPreference<T>) =
     preference.put(this)

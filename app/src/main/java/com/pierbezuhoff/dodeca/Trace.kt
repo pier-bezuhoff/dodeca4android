@@ -4,17 +4,17 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.util.Log
 
 class Trace(val paint: Paint) {
     var initialized = false
     lateinit var bitmap: Bitmap
     lateinit var canvas: Canvas
     // `bitmap` top-left corner - screen top-left corner
-    private val translation = Matrix() // defaultFactor => pre translation
+    private val translation = Matrix() // factor => pre translation
     val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
     val blitMatrix get() = Matrix(translation).apply { postConcat(motion) }
-    // TODO: add to preferences
-    var factor: Int = defaultFactor // bitmap == (factor ^ 2) * screens
+    private val factor: Int get() = DodecaView.canvasFactor.value // bitmap == (factor ^ 2) * screens
 
     // visible
     fun translate(dx: Float, dy: Float) {
@@ -38,9 +38,5 @@ class Trace(val paint: Paint) {
         motion.reset()
         canvas.translate(-dx, -dy)
         initialized = true
-    }
-
-    companion object {
-        const val defaultFactor: Int = 2
     }
 }

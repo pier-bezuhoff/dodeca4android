@@ -56,4 +56,6 @@
     <string name="stat_20_updates_per_initial">20 пересчётов за ?</string>
     <string name="help_button_title">Справка</string>
     <string name="help_title">Справка</string>
+    <string name="canvas_factor_summary">Холст превосходит видимый экран в %s раз</string>
+    <string name="canvas_factor_title">Размер холста</string>
 </resources>
