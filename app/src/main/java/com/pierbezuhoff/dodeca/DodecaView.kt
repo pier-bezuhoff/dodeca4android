@@ -59,9 +59,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var last20NUpdates: Long = 0L
     private var last20UpdateTime: Long = 0L
 
-    // ddu:r -> motion -> visilbe:r
-    private val motion = object : Option<Matrix>("matrix", Matrix()) {
-        override fun fetchPreference(sharedPreferences: SharedPreferences): Matrix {
+    // ddu:r -> motion -> visible:r
+    private val motion = object : SharedPreference<Matrix>(Matrix()) {
+        override fun peek(sharedPreferences: SharedPreferences): Matrix {
             with(sharedPreferences) {
                 val dx = getFloat("dx", 0f)
                 val dy = getFloat("dy", 0f)
@@ -69,7 +69,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 return Matrix().apply { postTranslate(dx, dy); postScale(scale, scale) }
             }
         }
-        override fun putPreference(editor: SharedPreferences.Editor) {
+        override fun put(editor: SharedPreferences.Editor) {
             with(editor) {
                 putFloat("dx", value.dx)
                 putFloat("dy", value.dy)
@@ -115,15 +115,17 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     fun loadMajorSharedPreferences() {
         var updateImmediately = false
         upon(::autocenterOnce) { autocenter() }
-        listOf(redrawTraceOnMove, reverseMotion).forEach { it.getPreference(sharedPreferences) }
-        listOf(showAllCircles, showCenters, showOutline, rotateShapes, shape).forEach {
-            it.getPreference(sharedPreferences) { updateImmediately = true }
-        }
-        // load FPS/UPS
-        // NOTE: restart/rotate screen to update FPS
-        autocenterAlways.getPreference(sharedPreferences) {
-            if (it && width > 0)
-                autocenter()
+        with(sharedPreferences) {
+            listOf(redrawTraceOnMove, reverseMotion).forEach { fetch(it) }
+            listOf(showAllCircles, showCenters, showOutline, rotateShapes, shape).forEach {
+                fetch(it) { updateImmediately = true }
+            }
+            // load FPS/UPS
+            // NOTE: restart/rotate screen to update FPS
+            fetch(autocenterAlways) {
+                if (it && width > 0)
+                    autocenter()
+            }
         }
         if (!updating && updateImmediately)
             invalidate()
@@ -131,7 +133,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun loadMinorSharedPreferences() {
         with (sharedPreferences) {
-            motion.getPreference(sharedPreferences)
+            fetch(motion)
             drawTrace = getBoolean("drawTrace", drawTrace)
             updating = getBoolean("updating", updating)
         }
@@ -139,7 +141,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun saveMinorSharedPreferences() {
         editing {
-            motion.putPreference(this)
+            put(motion)
             putBoolean("drawTrace", drawTrace)
             putBoolean("updating", updating)
         }
@@ -244,24 +246,19 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         invalidate()
     }
 
-    private fun onCanvas(canvas: Canvas, draw: (Canvas) -> Unit) {
+    private fun onCanvas(canvas: Canvas, draw: (Canvas) -> Unit) =
         canvas.withMatrix(motion.value) { draw(this) }
-    }
 
-    private fun onTraceCanvas(draw: (Canvas) -> Unit) {
+    private fun onTraceCanvas(draw: (Canvas) -> Unit) =
         draw(trace.canvas)
-    }
 
     /* draw trace canvas on DodecaView canvas */
-    private fun drawTraceCanvas(canvas: Canvas) {
-        canvas.drawBitmap(
-            trace.bitmap,
-            trace.blitMatrix,
-            trace.paint)
-    }
+    private fun drawTraceCanvas(canvas: Canvas) =
+        canvas.drawBitmap(trace.bitmap, trace.blitMatrix, trace.paint)
 
     /* draw background color on [canvas] */
-    private fun drawBackground(canvas: Canvas) = canvas.drawColor(ddu.backgroundColor)
+    private fun drawBackground(canvas: Canvas) =
+        canvas.drawColor(ddu.backgroundColor)
 
     /* draw `circles` on [canvas] */
     private fun drawCircles(canvas: Canvas) {
@@ -345,46 +342,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private fun visible(z: Complex): Complex {
-        return motion.value.move(z)
-    }
+    private fun visible(z: Complex): Complex = motion.value.move(z)
 
     private fun editing(block: SharedPreferences.Editor.() -> Unit) {
         with (sharedPreferences.edit()) {
             this.block()
             apply()
-        }
-    }
-
-    open class Option<T>(val key: String, val default: T) where T : Any {
-        var value: T = default
-
-        open fun fetchPreference(sharedPreferences: SharedPreferences): T = when (default) {
-                is Boolean -> sharedPreferences.getBoolean(key, default) as T
-                is String -> sharedPreferences.getString(key, default) as T
-                is Float -> sharedPreferences.getFloat(key, default) as T
-                is Int -> sharedPreferences.getInt(key, default) as T
-                is Long -> sharedPreferences.getLong(key, default) as T
-                else -> throw Exception("Unsupported type: ${default.javaClass.name}")
-            }
-
-        fun getPreference(sharedPreferences: SharedPreferences, onChange: (T) -> Unit = {}): T {
-            val newValue: T = fetchPreference(sharedPreferences)
-            if (value != newValue)
-                onChange(newValue)
-            value = newValue
-            return value
-        }
-
-        open fun putPreference(editor: SharedPreferences.Editor) {
-            when (value) {
-                is Boolean -> editor.putBoolean(key, value as Boolean)
-                is String -> editor.putString(key, value as String)
-                is Float -> editor.putFloat(key, value as Float)
-                is Int -> editor.putInt(key, value as Int)
-                is Long -> editor.putLong(key, value as Long)
-                else -> throw Exception("Unsupported type: ${value.javaClass.name}")
-            }
         }
     }
 
@@ -412,7 +375,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var showOutline = Option("show_outline", false)
         private var reverseMotion = Option("reverse_motion", false)
         private var shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
-            override fun fetchPreference(sharedPreferences: SharedPreferences): Shapes =
+            override fun peek(sharedPreferences: SharedPreferences): Shapes =
                 sharedPreferences.getString(key, default.toString())?.toUpperCase()?.let { Shapes.valueOf(it) } ?: default
         }
         var rotateShapes = Option("rotate_shapes", false)
