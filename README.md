@@ -2,11 +2,11 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] Add preference: trace.factor, inactivity interval
+- [ ] Add preference: inactivity interval
 - [ ] values/defaults.xml for preferences defaults
 - [ ] Do not retrace on language change
 - [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
-- [ ] Proper reverse motion
+- [ ] Proper/better reverse motion
 - [ ] Increase bottom bar button size
 - [ ] More flexible icons for bottom bar
 - [ ] Also see com.android.support:palette-v7:28.0.0
