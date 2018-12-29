@@ -37,12 +37,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             last20NUpdates = nUpdates
             lastUpdateTime = System.currentTimeMillis()
             last20UpdateTime = lastUpdateTime
-            if (width > 0) { // we know sizes
-                if (autocenterAlways.value)
-                    autocenter()
-                else if (value.bestCenter != null)
-                    centerize(value.bestCenter!!)
-            }
+            centerize(value)
             invalidate()
         }
     private lateinit var circles: MutableList<CircleFigure>
@@ -94,13 +89,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         loadSharedPreferences()
         try {
             val recentDDU by lazy { sharedPreferences.getString("recent_ddu", null) }
-            if (preferRecentDDU.value && recentDDU == null) {
-                val exampleDDUFile = File(File(context.filesDir, "ddu"), "290305_z1_erot2.ddu")
-                this.ddu = DDU.readFile(exampleDDUFile)
-            } else {
-                val dduFile = File(File(context.filesDir, "ddu"), recentDDU)
-                this.ddu = DDU.readFile(dduFile)
-            }
+            val filename = if (preferRecentDDU.value && recentDDU != null) recentDDU else "290305_z1_erot2.ddu"
+            val dduFile = File(File(context.filesDir, "ddu"), filename)
+            this.ddu = DDU.readFile(dduFile)
         } catch (e: Exception) {
             e.printStackTrace()
             this.ddu = exampleDDU
@@ -156,6 +147,17 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
+    private fun centerize(ddu: DDU? = null) {
+        // check rotation! or move checking to trace.translation
+        val targetDDU: DDU = ddu ?: this.ddu
+        if (width > 0) { // we know sizes
+            if (autocenterAlways.value)
+                autocenter()
+            else if (targetDDU.bestCenter != null)
+                centerize(targetDDU.bestCenter!!)
+        }
+    }
+
     private fun autocenter() {
         val center = ComplexFF(centerX, centerY)
         val shownCircles = circles.filter(CircleFigure::show)
@@ -165,17 +167,18 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun centerize(newCenter: Complex) {
+        val visibleNewCenter = visible(newCenter)
         val center = ComplexFF(centerX, centerY)
-        val (dx, dy) = (newCenter - center).asFF()
+        Log.i(TAG, "centering $visibleNewCenter -> $center")
+        val (dx, dy) = (visibleNewCenter - center).asFF()
         updateScroll(dx, dy)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
+        centerize()
         if (!trace.initialized)
             retrace()
-        if (autocenterAlways.value)
-            autocenter()
     }
 
     override fun onDraw(canvas: Canvas?) {

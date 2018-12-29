@@ -131,9 +131,8 @@ class MainActivity : AppCompatActivity() {
             APPLY_SETTINGS_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
                     val having =  { param: String, action: () -> Unit ->
-                        if (data?.getBooleanExtra(param, false) == true) {
+                        if (data?.getBooleanExtra(param, false) == true)
                             action()
-                        }
                     }
                     adjustStat()
                     having("autocenter") { DodecaView.autocenterOnce = true }
