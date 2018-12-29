@@ -1,10 +1,9 @@
 # Dodeca for Android
 Min version: 4.4 KitKat (28 >= API >= 19)
 If you are unable to install Dodeca due to Play Protect:
-Go to Play Store, left 3 h-bars, Play Protect, scan -- off
+Go to Play Store, left 3 h-bars (navigation drawer), Play Protect, scan -- off
 ...
 # TODO
-- [ ] Add preference: inactivity interval (slider?/plain text input?)
 - [ ] Best center: works improper
 - [ ] values/defaults.xml for preferences defaults
 - [ ] Do not retrace on language change
