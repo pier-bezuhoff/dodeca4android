@@ -37,21 +37,25 @@ internal fun Int.fromColor(): Int =
 // maybe: serialize DDU to json
 class DDU(
     var backgroundColor: Int = defaultBackgroundColor,
-    var trace: Boolean? = null,
     var restGlobals: List<Int> = emptyList(),
+    var drawTrace: Boolean? = null,
+    var bestCenter: Complex? = null, // cross-(screen size)
     var circles: List<CircleFigure> = emptyList(),
     var file: File? = null
 ) {
 
     // NOTE: copy(newRule = null) resolves overload ambiguity
-    fun copy() = DDU(backgroundColor, trace, restGlobals.toList(), circles.map { it.copy(newRule = null) }, file)
+    fun copy() =
+        DDU(backgroundColor, restGlobals.toList(), drawTrace, bestCenter, circles.map { it.copy(newRule = null) }, file)
 
     override fun toString(): String = """DDU(
-        |backgroundColor = ${backgroundColor.fromColor()}
-        |restGlobals = $restGlobals
-        |drawTrace = $trace
-        |file = $file
-        |circles = $circles
+        |  backgroundColor = ${backgroundColor.fromColor()}
+        |  restGlobals = $restGlobals
+        |  drawTrace = $drawTrace
+        |  bestCenter = $bestCenter
+        |  file = $file
+        |  circles = $circles
+        |)
     """.trimMargin()
 
     fun saveStream(stream: OutputStream) {
@@ -59,15 +63,18 @@ class DDU(
         stream.use {
             val writeln = { s: String -> it.write("$s\n".toByteArray()) }
             writeln("Dodeca for Android")
-            val globals = mutableListOf(
+            val globals: MutableList<String> = listOf(
                 backgroundColor.fromColor(),
                 *restGlobals.toTypedArray()
-            )
-            if (restGlobals.size == 2 && trace != null)
-                globals.add(if (trace!!) 1 else 0) // drawTrace cannot *become* null
+            ).map { it.toString() }.toMutableList()
+            if (restGlobals.size == 2)
+                drawTrace?.let {
+                    globals.add(if (it) "1" else "0")
+                    bestCenter?.let { globals.add("${it.real} ${it.imaginary}") }
+                }
             globals.forEach { param ->
                 writeln("global")
-                writeln(param.toString())
+                writeln(param)
             }
             circles.forEach { circle ->
                 writeln("\ncircle:")
@@ -95,8 +102,9 @@ class DDU(
 
         fun readStream(stream: InputStream): DDU {
             var backgroundColor: Int = defaultBackgroundColor
-            var trace: Boolean? = null
             val restGlobals: MutableList<Int> = mutableListOf()
+            var drawTrace: Boolean? = null
+            var bestCenter: Complex? = null
             val circles: MutableList<CircleFigure> = mutableListOf()
             var nGlobals = 0
             var mode: Mode = Mode.NO
@@ -115,7 +123,15 @@ class DDU(
                         when (nGlobals) {
                             0 -> backgroundColor = it.toInt().toColor()
                             1, 2 -> restGlobals.add(it.toInt()) // don't know, what this 2 means ("howInvers" and "howAnim")
-                            3 -> trace = it != "0" // mine
+                            3 -> drawTrace = it != "0" // mine
+                            4 -> it.split(" ").let {
+                                if (it.size == 2) {
+                                    val x = it[0].toDoubleOrNull()
+                                    val y = it[1].toDoubleOrNull()
+                                    if (x != null && y != null)
+                                        bestCenter = Complex(x, y)
+                                }
+                            }
                         }
                         nGlobals++
                         mode = Mode.NO
@@ -139,7 +155,7 @@ class DDU(
                 }
             }
             appendCircle()
-            return DDU(backgroundColor, trace, restGlobals, circles)
+            return DDU(backgroundColor, restGlobals, drawTrace, bestCenter, circles)
         }
     }
 }

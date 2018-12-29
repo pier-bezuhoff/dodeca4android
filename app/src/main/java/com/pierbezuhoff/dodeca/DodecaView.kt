@@ -26,7 +26,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         { _, _, value ->
             circles = value.circles.toMutableList()
             motion.value.reset()
-            drawTrace = value.trace ?: defaultDrawTrace
+            drawTrace = value.drawTrace ?: defaultDrawTrace
             redrawTraceOnce = drawTrace
             updating = defaultUpdating
             value.file?.let { file ->
@@ -37,8 +37,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             last20NUpdates = nUpdates
             lastUpdateTime = System.currentTimeMillis()
             last20UpdateTime = lastUpdateTime
-            if (autocenterAlways.value && width > 0) // we know sizes
-                autocenter()
+            if (width > 0) { // we know sizes
+                if (autocenterAlways.value)
+                    autocenter()
+                else if (value.bestCenter != null)
+                    centerize(value.bestCenter!!)
+            }
             invalidate()
         }
     private lateinit var circles: MutableList<CircleFigure>
@@ -160,6 +164,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         updateScroll(dx, dy)
     }
 
+    private fun centerize(newCenter: Complex) {
+        val center = ComplexFF(centerX, centerY)
+        val (dx, dy) = (newCenter - center).asFF()
+        updateScroll(dx, dy)
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (!trace.initialized)
@@ -178,7 +188,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     updateOnce = false
                 }
                 drawTrace -> drawTraceCanvas(it)
-                else -> onCanvas(it) { // pause and no trace
+                else -> onCanvas(it) { // pause and no drawTrace
                     drawBackground(it)
                     drawCircles(it)
                 }
@@ -206,13 +216,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    /* scroll/translate screen and trace */
+    /* scroll/translate screen and drawTrace */
     fun updateScroll(ddx: Float, ddy: Float) {
         motion.value.postTranslate(ddx, ddy)
         updatingTrace { trace.translate(ddx, ddy) }
     }
 
-    /* scale screen and trace */
+    /* scale screen and drawTrace */
     fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
         motion.value.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
         updatingTrace { trace.scale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
@@ -251,7 +261,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun onTraceCanvas(draw: (Canvas) -> Unit) =
         draw(trace.canvas)
 
-    /* draw trace canvas on DodecaView canvas */
+    /* draw drawTrace canvas on DodecaView canvas */
     private fun drawTraceCanvas(canvas: Canvas) =
         canvas.drawBitmap(trace.bitmap, trace.blitMatrix, trace.paint)
 
@@ -335,13 +345,15 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         return ddu.copy().apply {
             circles.forEach {
                 it.center = visible(it.center)
-                it.radius *= scale
+                it.radius *= scale // = visibleRadius(it.radius)
             }
-            trace = this@DodecaView.drawTrace
+            drawTrace = this@DodecaView.drawTrace
+            bestCenter = ComplexFF(centerX, centerY)
         }
     }
 
     private fun visible(z: Complex): Complex = motion.value.move(z)
+    private fun visibleRadius(r: Float): Float = motion.value.mapRadius(r)
 
     private fun editing(block: SharedPreferences.Editor.() -> Unit) {
         with (sharedPreferences.edit()) {
@@ -381,7 +393,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
         }
         var rotateShapes = Option("rotate_shapes", false)
-        var autocenterAlways = Option("autocenter_always", true)
+        var autocenterAlways = Option("autocenter_always", false)
         var autocenterOnce = false
         // maybe: add load random
         var canvasFactor = object : Option<Int>("canvas_factor", 2) {
