@@ -53,7 +53,7 @@
                 android:title="@string/autocenter_title"/>
         <SwitchPreference
                 android:key="autocenter_always"
-                android:defaultValue="true"
+                android:defaultValue="false"
                 android:title="@string/always_autocenter_title"
                 android:summary="@string/always_autocenter_summary" />
         <ListPreference
