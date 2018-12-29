@@ -2,7 +2,6 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] Help from raw opens rarely
 - [ ] Add preference: inactivity interval (slider?/plain text input?)
 - [ ] values/defaults.xml for preferences defaults
 - [ ] Do not retrace on language change
