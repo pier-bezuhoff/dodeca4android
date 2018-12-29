@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_help.*
+import java.util.Locale
 
 class HelpActivity : AppCompatActivity() {
 
@@ -10,6 +11,13 @@ class HelpActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         title = getString(R.string.help_title)
         setContentView(R.layout.activity_help)
-        help.loadUrl("file:///android_res/raw/help.html")
+        val htmls = mapOf(
+            "en" to "file:///android_asset/help/help.html",
+            "ru" to "file:///android_asset/help/help-ru.html"
+        )
+        var htmlPath: String = htmls["en"]!!
+        val locale = Locale.getDefault().toString()
+        htmls.keys.find { locale.contains(it, ignoreCase = true) }?.let { htmlPath = htmls[it]!! }
+        help.loadUrl(htmlPath)
     }
 }
