@@ -410,6 +410,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 }
 
+
 enum class Shapes {
     CIRCLE, POINTED_CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR;
 
@@ -423,13 +424,14 @@ enum class Shapes {
         val bottom by lazy { rotated(x, y + halfWidth) }
         val left by lazy { rotated(x - halfWidth, y) }
         val right by lazy { rotated(x + halfWidth, y) }
+        // TODO: compare performance when canvas.withRotation vs rotated
         when(this) {
             CIRCLE -> canvas.drawCircle(x, y, halfWidth, paint)
             POINTED_CIRCLE -> {
                 canvas.drawCircle(x, y, halfWidth, paint)
                 canvas.drawPoint(pointX, pointY, pointPaint)
             }
-            SQUARE -> canvas.drawRect( // how to rotate rect?
+            SQUARE -> canvas.drawRect( // how to rotate rect? try canvas.withRotation(<degrees>) { <draw> }
                 x - halfWidth, y - halfWidth,
                 x + halfWidth, y + halfWidth,
                 paint
