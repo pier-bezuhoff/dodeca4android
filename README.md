@@ -5,8 +5,9 @@ Go to Play Store, left 3 h-bars, Play Protect, scan -- off
 ...
 # TODO
 - [ ] Add preference: inactivity interval (slider?/plain text input?)
-- [ ] Best center: works improper
-- [ ] values/defaults.xml for preferences defaults
+- [ ] Best center: works improper (screen rotation)
+- [ ] values/defaults.xml for preferences default
+- [ ] Add speed preference: batch circle updates
 - [ ] Do not retrace on language change
 - [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
 - [ ] Bottom bar: on phone not all buttons are visible!
