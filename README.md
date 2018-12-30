@@ -5,7 +5,8 @@ Go to Play Store, left 3 h-bars (navigation drawer), Play Protect, scan -- off
 ...
 # TODO
 - [ ] Best center: works improper (screen rotation)
-- [ ] values/defaults.xml for preferences defaults
+- [ ] values/defaults.xml for preferences default
+- [ ] Add preference speed: batch circle update
 - [ ] Do not retrace on language change
 - [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
 - [ ] Bottom bar: on phone not all buttons are visible!
