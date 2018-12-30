@@ -4,7 +4,7 @@ If you are unable to install Dodeca due to Play Protect:
 Go to Play Store, left 3 h-bars (navigation drawer), Play Protect, scan -- off
 ...
 # TODO
-- [ ] Best center: works improper
+- [ ] Best center: works improper (screen rotation)
 - [ ] values/defaults.xml for preferences defaults
 - [ ] Do not retrace on language change
 - [ ] Separate folders for flavours (demo/full) and maybe build types (release/debug)
