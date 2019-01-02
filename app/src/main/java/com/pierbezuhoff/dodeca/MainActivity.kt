@@ -223,9 +223,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun adjustStat() {
         if (dodecaView.sharedPreferences.getBoolean("show_stat", false)) {
+            dodecaView.showStat = true
             stat.visibility = LinearLayout.VISIBLE
         } else {
             stat.visibility = LinearLayout.GONE
+            dodecaView.showStat = false
         }
     }
 
