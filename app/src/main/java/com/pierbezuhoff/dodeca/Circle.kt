@@ -89,6 +89,16 @@ class CircleFigure(center: Complex, radius: Double,
     val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
     val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
     val show: Boolean get() = dynamic && !dynamicHidden
+    private val _sequence: IntArray get() {
+        return rule?.let {
+            (if (it.startsWith("n")) it.drop(1) else it)
+                .map(Character::getNumericValue)
+                .toIntArray()
+        } ?: intArrayOf()
+    }
+    // TODO: more safe solution (e.g. val rule)
+    // sequence of numbers of circles with respect to which this circle should be inverted
+    val sequence: IntArray by lazy { _sequence } // rule should be assigned before getting sequence
 
     fun copy(
         newCenter: Complex? = null, newRadius: Double? = null,
