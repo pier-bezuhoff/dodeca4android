@@ -19,6 +19,7 @@ import java.io.File
 import kotlin.concurrent.fixedRateTimer
 import kotlin.properties.Delegates
 import kotlin.reflect.KMutableProperty0
+import kotlin.system.measureTimeMillis
 
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     // dummy default, actual from init(), because I cannot use lateinit here
@@ -182,24 +183,29 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     override fun onDraw(canvas: Canvas?) {
-        super.onDraw(canvas)
-        canvas?.let {
-            when {
-                updating -> updateCanvas(it)
-                updateOnce -> {
-                    updateCanvas(it)
-                    updateOnce = false
-                }
-                drawTrace -> drawTraceCanvas(it)
-                else -> onCanvas(it) { // pause and no drawTrace
-                    drawBackground(it)
-                    drawCircles(it)
+        logMeasureTimeMilis("onDraw") {
+            // max performance impact
+            super.onDraw(canvas)
+            canvas?.let {
+                when {
+                    updating -> updateCanvas(it)
+                    updateOnce -> {
+                        updateCanvas(it)
+                        updateOnce = false
+                    }
+                    drawTrace -> drawTraceCanvas(it)
+                    else -> onCanvas(it) {
+                        // pause and no drawTrace
+                        drawBackground(it)
+                        drawCircles(it)
+                    }
                 }
             }
         }
     }
 
-    private fun updateCanvas(canvas: Canvas) {
+    private fun updateCanvas(canvas: Canvas) = logMeasureTimeMilis("updateCanvas") { _updateCanvas(canvas) }
+    private fun _updateCanvas(canvas: Canvas) { // important performance impact
         val timeToUpdate by lazy { System.currentTimeMillis() - lastUpdateTime >= updateDt }
         if (updating && timeToUpdate) {
             updateCircles()
@@ -272,8 +278,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun drawBackground(canvas: Canvas) =
         canvas.drawColor(ddu.backgroundColor)
 
+    private fun drawCircles(canvas: Canvas) = logMeasureTimeMilis("drawCircles") { _drawCircles(canvas) }
     /* draw `circles` on [canvas] */
-    private fun drawCircles(canvas: Canvas) {
+    private fun _drawCircles(canvas: Canvas) { // maybe does performance impact
         circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
     }
 
@@ -316,7 +323,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         postInvalidate()
     }
 
-    private fun updateCircles() {
+    private fun updateCircles() = logMeasureTimeMilis("updateCircles") { _updateCircles() }
+    private fun _updateCircles() {
         nUpdates += if (reverseMotion.value) -1 else 1
         nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
         if (nUpdates - last20NUpdates >= 20) {
@@ -478,4 +486,9 @@ internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
         prop.set(false)
         action()
     }
+}
+
+internal fun logMeasureTimeMilis(name: String = "", block: () -> Unit) {
+    val time = measureTimeMillis(block)
+    Log.i("logMeasureTimeMilis/$name", "${time}ms")
 }
