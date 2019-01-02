@@ -57,6 +57,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private val trace: Trace = Trace(Paint(defaultPaint))
     private var nUpdates: Long = 0L
 
+    var showStat = true // MainActivity should set up this whenever SharedPreference/show_stat changes
     private var last20NUpdates: Long = 0L
     private var last20UpdateTime: Long = 0L
 
@@ -183,29 +184,26 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     override fun onDraw(canvas: Canvas?) {
-        logMeasureTimeMilis("onDraw") {
-            // max performance impact
-            super.onDraw(canvas)
-            canvas?.let {
-                when {
-                    updating -> updateCanvas(it)
-                    updateOnce -> {
-                        updateCanvas(it)
-                        updateOnce = false
-                    }
-                    drawTrace -> drawTraceCanvas(it)
-                    else -> onCanvas(it) {
-                        // pause and no drawTrace
-                        drawBackground(it)
-                        drawCircles(it)
-                    }
+        // max performance impact
+        super.onDraw(canvas)
+        canvas?.let {
+            when {
+                updating -> updateCanvas(it)
+                updateOnce -> {
+                    updateCanvas(it)
+                    updateOnce = false
+                }
+                drawTrace -> drawTraceCanvas(it)
+                else -> onCanvas(it) {
+                    // pause and no drawTrace
+                    drawBackground(it)
+                    drawCircles(it)
                 }
             }
         }
     }
 
-    private fun updateCanvas(canvas: Canvas) = logMeasureTimeMilis("updateCanvas") { _updateCanvas(canvas) }
-    private fun _updateCanvas(canvas: Canvas) { // important performance impact
+    private fun updateCanvas(canvas: Canvas) { // important performance impact
         val timeToUpdate by lazy { System.currentTimeMillis() - lastUpdateTime >= updateDt }
         if (updating && timeToUpdate) {
             updateCircles()
@@ -280,18 +278,35 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun drawCircles(canvas: Canvas) = logMeasureTimeMilis("drawCircles") { _drawCircles(canvas) }
     /* draw `circles` on [canvas] */
-    private fun _drawCircles(canvas: Canvas) { // maybe does performance impact
+    private fun _drawCircleShapes(canvas: Canvas) { // maybe does performance impact
         circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
     }
+    private fun _drawCircles(canvas: Canvas) {
+        if (showAllCircles.value)
+            circles.forEach { drawCircle(canvas, it) }
+        else
+            circles.filter { it.show }.forEach { drawCircle(canvas, it) }
+    }
 
+    // NOTE: draw ONLY circle
     /* draw shape from [circle] on [canvas] */
     private fun drawCircle(canvas: Canvas, circle: CircleFigure) {
         val (c, r) = circle
         paint.color = circle.borderColor
         paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
         val (x, y) = c.asFF()
+        canvas.drawCircle(x, y, r.toFloat(), paint)
+    }
+
+    /* draw shape from [circle] on [canvas] */
+    private fun drawCircleShape(canvas: Canvas, circle: CircleFigure) {
+        val (c, r) = circle
+        paint.color = circle.borderColor
+        paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
+        val (x, y) = c.asFF()
         val (pX, pY) = (c + r * circle.point).asFF()
         shape.value.draw(canvas, x, y, r.toFloat(), pX, pY, circle.point, showOutline.value, paint)
+        canvas.drawCircle(x, y, r.toFloat(), paint)
     }
 
     fun pickColor(x: Float, y: Float) {
@@ -326,29 +341,42 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun updateCircles() = logMeasureTimeMilis("updateCircles") { _updateCircles() }
     private fun _updateCircles() {
         nUpdates += if (reverseMotion.value) -1 else 1
-        nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
-        if (nUpdates - last20NUpdates >= 20) {
-            time20UpdatesView?.text = context.getString(R.string.stat_20_updates_per_text).format((lastUpdateTime - last20UpdateTime) / 1000f)
-            last20NUpdates = nUpdates
-            last20UpdateTime = lastUpdateTime
+        if (showStat) {
+            nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
+            if (nUpdates - last20NUpdates >= 20) {
+                time20UpdatesView?.text = context.getString(R.string.stat_20_updates_per_text)
+                    .format((lastUpdateTime - last20UpdateTime) / 1000f)
+                last20NUpdates = nUpdates
+                last20UpdateTime = lastUpdateTime
+            }
         }
         val oldCircles = circles.map { it.copy(newRule = null) }
-        val n = circles.size
-        oldCircles.forEachIndexed { i, circle ->
+        for (i in circles.indices) {
+            val circle = circles[i]
             circle.rule?.let { rule ->
-                val theRule = if (rule.startsWith("n")) rule.drop(1) else rule
-                val chars = if (reverseMotion.value) theRule.reversed() else theRule
-                chars.forEach { ch ->
-                    val j = Integer.parseInt(ch.toString())
-                    if (j >= n) {
-                        Log.e(TAG, "updateCircles: index $j >= $n out of `circles` bounds (from rule $rule for $circle)")
-                    }
-                    else {
-                        circles[i].invert(oldCircles[j])
-                    }
+                val rule = if (rule.startsWith("n")) rule.drop(1) else rule
+                val sequence = rule.map(Character::getNumericValue)
+                for (j in sequence) {
+                    circle.invert(oldCircles[j])
                 }
             }
         }
+//        val n = circles.size
+//        oldCircles.forEachIndexed { i, circle ->
+//            circle.rule?.let { rule ->
+//                val theRule = if (rule.startsWith("n")) rule.drop(1) else rule
+//                val chars = if (reverseMotion.value) theRule.reversed() else theRule
+//                chars.forEach { ch ->
+//                    val j = Integer.parseInt(ch.toString())
+//                    if (j >= n) {
+//                        Log.e(TAG, "updateCircles: index $j >= $n out of `circles` bounds (from rule $rule for $circle)")
+//                    }
+//                    else {
+//                        circles[i].invert(oldCircles[j])
+//                    }
+//                }
+//            }
+//        }
     }
 
     /* scale and translate all circles in ddu according to current view */
@@ -488,7 +516,17 @@ internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
     }
 }
 
+val times: MutableMap<String, Long> = mutableMapOf()
+val ns: MutableMap<String, Int> = mutableMapOf()
 internal fun logMeasureTimeMilis(name: String = "", block: () -> Unit) {
     val time = measureTimeMillis(block)
-    Log.i("logMeasureTimeMilis/$name", "${time}ms")
+    if (ns.contains(name)) {
+        ns[name] = ns[name]!! + 1
+        times[name] = times[name]!! + time
+    } else {
+        ns[name] = 1
+        times[name] = time
+    }
+    val overall = "%.2f".format(times[name]!!.toFloat()/ns[name]!!)
+    Log.i("logMeasureTimeMilis/$name", "overall: ${overall}ms, current: ${time}ms")
 }
