@@ -350,33 +350,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 last20UpdateTime = lastUpdateTime
             }
         }
+        // TRY: circles == 3 FloatArray, and invert along this lines...
         val oldCircles = circles.map { it.copy(newRule = null) }
-        for (i in circles.indices) {
-            val circle = circles[i]
-            circle.rule?.let { rule ->
-                val rule = if (rule.startsWith("n")) rule.drop(1) else rule
-                val sequence = rule.map(Character::getNumericValue)
-                for (j in sequence) {
-                    circle.invert(oldCircles[j])
-                }
-            }
-        }
-//        val n = circles.size
-//        oldCircles.forEachIndexed { i, circle ->
-//            circle.rule?.let { rule ->
-//                val theRule = if (rule.startsWith("n")) rule.drop(1) else rule
-//                val chars = if (reverseMotion.value) theRule.reversed() else theRule
-//                chars.forEach { ch ->
-//                    val j = Integer.parseInt(ch.toString())
-//                    if (j >= n) {
-//                        Log.e(TAG, "updateCircles: index $j >= $n out of `circles` bounds (from rule $rule for $circle)")
-//                    }
-//                    else {
-//                        circles[i].invert(oldCircles[j])
-//                    }
-//                }
-//            }
-//        }
+        for (circle in circles)
+            for (j in circle.sequence)
+                circle.invert(oldCircles[j])
     }
 
     /* scale and translate all circles in ddu according to current view */
