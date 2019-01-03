@@ -23,7 +23,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     // dummy default, actual from init(), because I cannot use lateinit here
     var ddu: DDU by Delegates.observable(DDU(circles = emptyList()))
         { _, _, value ->
-//            figures = value.figures.toMutableList()
             circleGroup = PrimitiveCircles(value.circles.toMutableList(), paint)
             motion.value.reset()
             drawTrace = value.drawTrace ?: defaultDrawTrace
@@ -40,7 +39,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             centerize(value)
             invalidate()
         }
-//    private lateinit var figures: MutableList<CircleFigure>
     private lateinit var circleGroup: CircleGroup
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var nUpdatesView: TextView? = null
@@ -115,7 +113,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         upon(::autocenterOnce) { autocenter() }
         with(sharedPreferences) {
             listOf(redrawTraceOnMove, reverseMotion).forEach { fetch(it) }
-            listOf(showAllCircles, showCenters, showOutline, /* rotateShapes,*/ shape).forEach {
+            listOf(showAllCircles, /*showCenters,*/ showOutline, /* rotateShapes,*/ shape).forEach {
                 fetch(it) { updateImmediately = true }
             }
             // load FPS/UPS
@@ -184,7 +182,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     override fun onDraw(canvas: Canvas?) {
-        // max performance impact
         super.onDraw(canvas)
         canvas?.let {
             when {
@@ -203,7 +200,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private fun updateCanvas(canvas: Canvas) { // important performance impact
+    private fun updateCanvas(canvas: Canvas) {
         val timeToUpdate by lazy { System.currentTimeMillis() - lastUpdateTime >= updateDt }
         if (updating && timeToUpdate) {
             updateCircles()
@@ -276,10 +273,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private inline fun drawBackground(canvas: Canvas) =
         canvas.drawColor(ddu.backgroundColor)
 
-    private inline fun drawCircles(canvas: Canvas) = logMeasureTimeMilis("drawCircles") { _drawCircles(canvas) }
     /* draw`figures` on [canvas] */
-    private inline fun _drawCircles(canvas: Canvas) {
-        circleGroup.draw(canvas, shape.value, showAllCircles.value)
+    private inline fun drawCircles(canvas: Canvas) {
+        circleGroup.draw(canvas, shape = shape.value, showAllCircles = showAllCircles.value, showOutline = showOutline.value)
     }
 
     fun oneStep() {
@@ -290,8 +286,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         postInvalidate()
     }
 
-    private inline fun updateCircles() = logMeasureTimeMilis("updateCircles") { _updateCircles() }
-    private inline fun _updateCircles() {
+    private inline fun updateCircles() {
         nUpdates += if (reverseMotion.value) -1 else 1
         if (showStat) {
             nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
@@ -347,7 +342,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE -> redrawTraceOnMove.value
         }
         private var showAllCircles = Option("show_all_circles", false)
-        var showCenters = Option("show_centers", false)
+//        var showCenters = Option("show_centers", false)
         private var showOutline = Option("show_outline", false)
         private var reverseMotion = Option("reverse_motion", false)
         private var shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
@@ -383,8 +378,9 @@ internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
     }
 }
 
-val times: MutableMap<String, Long> = mutableMapOf()
-val ns: MutableMap<String, Int> = mutableMapOf()
+// performance measurement
+internal val times: MutableMap<String, Long> = mutableMapOf()
+internal val ns: MutableMap<String, Int> = mutableMapOf()
 internal fun logMeasureTimeMilis(name: String = "", block: () -> Unit) {
     val time = measureTimeMillis(block)
     if (ns.contains(name)) {

@@ -18,11 +18,11 @@
                 android:summary="@string/show_all_circles_summary"
         />
         <!-- NOTE: advanced -->
-        <SwitchPreference
-                android:key="show_centers"
-                android:defaultValue="false"
-                android:title="@string/show_centers_title"
-        />
+        <!--<SwitchPreference-->
+                <!--android:key="show_centers"-->
+                <!--android:defaultValue="false"-->
+                <!--android:title="@string/show_centers_title"-->
+        <!--/>-->
         <ListPreference
                 android:key="shape"
                 android:title="@string/shape_title"
@@ -30,17 +30,19 @@
                 android:entryValues="@array/shapes_values"
                 android:defaultValue="circle"
                 android:summary="@string/shape_summary" />
+        <!-- NOTE: advanced -->
         <!--<SwitchPreference-->
                 <!--android:key="rotate_shapes"-->
                 <!--android:defaultValue="false"-->
                 <!--android:title="@string/rotate_shapes_title"-->
                 <!--android:summary="@string/rotate_shapes_summary"-->
         <!--/>-->
-        <!--<SwitchPreference-->
-                <!--android:key="show_outline"-->
-                <!--android:defaultValue="false"-->
-                <!--android:title="@string/show_outline_title"-->
-        <!--/>-->
+        <!-- NOTE: advanced -->
+        <SwitchPreference
+                android:key="show_outline"
+                android:defaultValue="false"
+                android:title="@string/show_outline_title"
+        />
         <SwitchPreference
                 android:key="reverse_motion"
                 android:defaultValue="false"
