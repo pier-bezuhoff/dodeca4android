@@ -26,7 +26,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     var ddu: DDU by Delegates.observable(DDU(circles = emptyList()))
         { _, _, value ->
 //            circles = value.circles.toMutableList()
-            circleGroup = PrimitiveCircles(value.circles.toMutableList())
+            circleGroup = PrimitiveCircles(value.circles.toMutableList(), paint)
             motion.value.reset()
             drawTrace = value.drawTrace ?: defaultDrawTrace
             redrawTraceOnce = drawTrace
@@ -284,7 +284,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 //        circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
     }
     private fun _drawCircles(canvas: Canvas) {
-        circleGroup.draw(canvas, paint)
+        circleGroup.draw(canvas)
 //        if (showAllCircles.value)
 //            circles.forEach { drawCircle(canvas, it) }
 //        else

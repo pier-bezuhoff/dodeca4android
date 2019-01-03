@@ -14,13 +14,12 @@ internal data class Attributes(
     val fill: Boolean = CircleFigure.defaultFill,
     val rule: String? = CircleFigure.defaultRule
 ) {
-    val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
-    val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
+    private val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
+    private val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
     val show: Boolean get() = dynamic && !dynamicHidden
 }
 
-// ~100 times faster than Circles...
-class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
+internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     private var size: Int = cs.size
     private val xs: FloatArray = FloatArray(size) { cs[it].x.toFloat() }
     private val ys: FloatArray = FloatArray(size) { cs[it].y.toFloat() }
@@ -88,25 +87,3 @@ class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     }
 }
 
-class Circles(private val _circles: MutableList<CircleFigure>) : CircleGroup {
-    override val circles get() = _circles.toList()
-
-    override fun update() {
-        val oldCircles = circles.map { it.copy(newRule = null) }
-        for (circle in circles)
-            for (j in circle.sequence)
-                circle.invert(oldCircles[j])
-    }
-
-    override fun draw(canvas: Canvas) {
-        circles.filter { it.show }.forEach { drawCircle(it, canvas, paint) }
-    }
-
-    private inline fun drawCircle(circle: CircleFigure, canvas: Canvas, paint: Paint) {
-        val (c, r) = circle
-        paint.color = circle.borderColor
-        paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-        val (x, y) = c.asFF()
-        canvas.drawCircle(x, y, r.toFloat(), paint)
-    }
-}
