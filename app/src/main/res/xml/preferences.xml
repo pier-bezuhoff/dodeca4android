@@ -26,7 +26,7 @@
         <ListPreference
                 android:key="shape"
                 android:title="@string/shape_title"
-                android:entries="@array/shapes_declensions"
+                android:entries="@array/shapes"
                 android:entryValues="@array/shapes_values"
                 android:defaultValue="circle"
                 android:summary="@string/shape_summary" />

@@ -58,15 +58,15 @@
     <string name="restore_defaults_title">Restore default settings</string>
 
     <string name="settings_about_title">About</string>
-    <string name="description_summary">Android port for Dodeca</string>
+    <string name="description_summary">Android port for Dodeca Look</string>
     <string name="version_title">Version</string>
-    <string name="version_summary" translatable="false">Dodeca 1.0</string>
+    <string name="version_summary" translatable="false">Dodeca Look 1.0</string>
     <string name="copyright_title" translatable="false">Copyright</string>
     <string name="copyright_summary">© Revolt Pimenov (algorithms, esthetic geometry) and
         Ivan Nikitin (programming)
     </string>
     <string name="support_title">Feedback and support</string>
-    <string name="feedback_subject" translatable="false">Dodeca support</string>
+    <string name="feedback_subject" translatable="false">Dodeca Look support</string>
     <string name="developer_email" translatable="false">pierbezuhoff2016@gmail.com</string>
     <!-- Strings related to permissions -->
     <string name="permission_storage_message">Please, allow storage access to import this ddu</string>
