@@ -2,11 +2,12 @@ package com.pierbezuhoff.dodeca
 
 import android.graphics.Canvas
 import android.graphics.Paint
+import org.apache.commons.math3.complex.Complex
 
 interface CircleGroup {
-    val circles: List<CircleFigure>
-    fun update()
-    fun draw(canvas: Canvas)
+    val figures: List<CircleFigure>
+    fun update(reverse: Boolean = false)
+    fun draw(canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false)
 }
 
 internal data class Attributes(
@@ -33,26 +34,86 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
             style = if (it.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
         }
     }.toTypedArray()
-    override val circles: List<CircleFigure>
+    override val figures: List<CircleFigure>
         get() = (0 until size).map { i ->
             val (bc, f, r) = attrs[i]
             CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), bc, f, r)
         }
 
-    override fun update() {
+    override fun update(reverse: Boolean) {
         // TODO: save oldCircles
-        for (i in 0 until size)
-            for (j in rules[i])
-                invert(i, j)
+        if (reverse) // ~3x slower
+            for (i in 0 until size)
+                for (j in rules[i].reversed())
+                    invert(i, j)
+        else
+            for (i in 0 until size)
+                for (j in rules[i])
+                    invert(i, j)
     }
 
-    override fun draw(canvas: Canvas) {
-        for (i in shownIndices)
-            drawCircle(i, canvas)
+    override fun draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean) {
+        // TODO: rotation
+        when (shape) {
+            Shapes.CIRCLE -> drawHelper(canvas, showAllCircles, ::drawCircle)
+            Shapes.SQUARE -> drawHelper(canvas, showAllCircles, ::drawSquare)
+            Shapes.CROSS -> drawHelper(canvas, showAllCircles, ::drawCross)
+            Shapes.VERTICAL_BAR -> drawHelper(canvas, showAllCircles, ::drawVerticalBar)
+            Shapes.HORIZONTAL_BAR -> drawHelper(canvas, showAllCircles, ::drawHorizontalBar)
+        }
+        // TODO: draw outline for circle and square
+        // TODO: show centers
+    }
+
+    private inline fun drawHelper(canvas: Canvas, showAllCircles: Boolean, draw: (Int, Canvas) -> Unit) {
+        if (showAllCircles)
+            for (i in 0 until size)
+                draw(i, canvas)
+        else
+            for (i in shownIndices)
+                draw(i, canvas)
     }
 
     private inline fun drawCircle(i: Int, canvas: Canvas) {
         canvas.drawCircle(xs[i], ys[i], rs[i], paints[i])
+    }
+
+    private inline fun drawSquare(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        canvas.drawRect(
+            x - r, y - r,
+            x + r, y + r,
+            paints[i]
+        )
+    }
+
+    private inline fun drawCross(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        canvas.drawLines(
+            floatArrayOf(
+                x, y - r, x, y + r,
+                x - r, y, x + r, y
+            ),
+            paints[i]
+        )
+    }
+
+    private inline fun drawVerticalBar(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        canvas.drawLine(x, y - r, x, y + r, paints[i])
+    }
+
+    private inline fun drawHorizontalBar(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        canvas.drawLine(x - r, y, x + r, y, paints[i])
     }
 
     /* invert i-th circle with respect to j-th */

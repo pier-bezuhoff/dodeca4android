@@ -54,7 +54,7 @@ class DDU(
         |  drawTrace = $drawTrace
         |  bestCenter = $bestCenter
         |  file = $file
-        |  circles = $circles
+        |  figures = $circles
         |)
     """.trimMargin()
 

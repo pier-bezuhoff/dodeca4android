@@ -2,12 +2,10 @@ package com.pierbezuhoff.dodeca
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.graphics.PointF
 import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
@@ -25,7 +23,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     // dummy default, actual from init(), because I cannot use lateinit here
     var ddu: DDU by Delegates.observable(DDU(circles = emptyList()))
         { _, _, value ->
-//            circles = value.circles.toMutableList()
+//            figures = value.figures.toMutableList()
             circleGroup = PrimitiveCircles(value.circles.toMutableList(), paint)
             motion.value.reset()
             drawTrace = value.drawTrace ?: defaultDrawTrace
@@ -42,7 +40,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             centerize(value)
             invalidate()
         }
-//    private lateinit var circles: MutableList<CircleFigure>
+//    private lateinit var figures: MutableList<CircleFigure>
     private lateinit var circleGroup: CircleGroup
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var nUpdatesView: TextView? = null
@@ -117,7 +115,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         upon(::autocenterOnce) { autocenter() }
         with(sharedPreferences) {
             listOf(redrawTraceOnMove, reverseMotion).forEach { fetch(it) }
-            listOf(showAllCircles, showCenters, showOutline, rotateShapes, shape).forEach {
+            listOf(showAllCircles, showCenters, showOutline, /* rotateShapes,*/ shape).forEach {
                 fetch(it) { updateImmediately = true }
             }
             // load FPS/UPS
@@ -164,7 +162,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun autocenter() {
         val center = ComplexFF(centerX, centerY)
-        val shownCircles = circleGroup.circles.filter(CircleFigure::show)
+        val shownCircles = circleGroup.figures.filter(CircleFigure::show)
         val visibleCenter = mean(shownCircles.map { visible(it.center) })
         val (dx, dy) = (center - visibleCenter).asFF()
         updateScroll(dx, dy)
@@ -264,76 +262,25 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         invalidate()
     }
 
-    private fun onCanvas(canvas: Canvas, draw: (Canvas) -> Unit) =
+    private inline fun onCanvas(canvas: Canvas, draw: (Canvas) -> Unit) =
         canvas.withMatrix(motion.value) { draw(this) }
 
-    private fun onTraceCanvas(draw: (Canvas) -> Unit) =
+    private inline fun onTraceCanvas(draw: (Canvas) -> Unit) =
         draw(trace.canvas)
 
     /* draw drawTrace canvas on DodecaView canvas */
-    private fun drawTraceCanvas(canvas: Canvas) =
+    private inline fun drawTraceCanvas(canvas: Canvas) =
         canvas.drawBitmap(trace.bitmap, trace.blitMatrix, trace.paint)
 
     /* draw background color on [canvas] */
-    private fun drawBackground(canvas: Canvas) =
+    private inline fun drawBackground(canvas: Canvas) =
         canvas.drawColor(ddu.backgroundColor)
 
-    private fun drawCircles(canvas: Canvas) = logMeasureTimeMilis("drawCircles") { _drawCircles(canvas) }
-    /* draw `circles` on [canvas] */
-    private fun _drawCircleShapes(canvas: Canvas) { // maybe does performance impact
-//        circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
+    private inline fun drawCircles(canvas: Canvas) = logMeasureTimeMilis("drawCircles") { _drawCircles(canvas) }
+    /* draw`figures` on [canvas] */
+    private inline fun _drawCircles(canvas: Canvas) {
+        circleGroup.draw(canvas, shape.value, showAllCircles.value)
     }
-    private fun _drawCircles(canvas: Canvas) {
-        circleGroup.draw(canvas)
-//        if (showAllCircles.value)
-//            circles.forEach { drawCircle(canvas, it) }
-//        else
-//            circles.filter { it.show }.forEach { drawCircle(canvas, it) }
-    }
-
-    // NOTE: draw ONLY circle
-    /* draw shape from [circle] on [canvas] */
-    private fun drawCircle(canvas: Canvas, circle: CircleFigure) {
-        val (c, r) = circle
-        paint.color = circle.borderColor
-        paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-        val (x, y) = c.asFF()
-        canvas.drawCircle(x, y, r.toFloat(), paint)
-    }
-
-    /* draw shape from [circle] on [canvas] */
-    private fun drawCircleShape(canvas: Canvas, circle: CircleFigure) {
-        val (c, r) = circle
-        paint.color = circle.borderColor
-        paint.style = if (circle.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-        val (x, y) = c.asFF()
-        val (pX, pY) = (c + r * circle.point).asFF()
-        shape.value.draw(canvas, x, y, r.toFloat(), pX, pY, circle.point, showOutline.value, paint)
-        canvas.drawCircle(x, y, r.toFloat(), paint)
-    }
-
-    fun pickColor(x: Float, y: Float) {
-        // TODO: color picker/changer or discard
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        // layout(left, top, right, bottom)
-        draw(canvas)
-        // NOTE: sometimes traceBitmap can be used
-        pickedColor = bitmap.getPixel(x.toInt(), y.toInt())
-        Log.i(TAG, pickedColor.toString())
-    }
-
-    /* change all circles with `pickedColor` -> `newColor` */
-    /*
-    fun changeColor(newColor: Int) {
-        // maybe: also change DDU?
-        pickedColor?.let {
-            circles.filter { it.borderColor == pickedColor }.forEach { it.borderColor = newColor }
-        }
-        pickedColor = newColor
-        postInvalidate()
-    }
-    */
 
     fun oneStep() {
         updateCircles()
@@ -343,8 +290,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         postInvalidate()
     }
 
-    private fun updateCircles() = logMeasureTimeMilis("updateCircles") { _updateCircles() }
-    private fun _updateCircles() {
+    private inline fun updateCircles() = logMeasureTimeMilis("updateCircles") { _updateCircles() }
+    private inline fun _updateCircles() {
         nUpdates += if (reverseMotion.value) -1 else 1
         if (showStat) {
             nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
@@ -355,14 +302,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 last20UpdateTime = lastUpdateTime
             }
         }
-        circleGroup.update()
-//        val oldCircles = circles.map { it.copy(newRule = null) }
-//        for (circle in circles)
-//            for (j in circle.sequence)
-//                circle.invert(oldCircles[j])
+        circleGroup.update(reverseMotion.value)
     }
 
-    /* scale and translate all circles in ddu according to current view */
+    /* scale and translate all figures in ddu according to current view */
     fun prepareDDUToSave(): DDU {
         return ddu.copy().apply {
             circles.forEach {
@@ -414,7 +357,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 editor.putString(key, toString().capitalize())
             }
         }
-        var rotateShapes = Option("rotate_shapes", false)
+//        var rotateShapes = Option("rotate_shapes", false)
         var autocenterAlways = Option("autocenter_always", false)
         var autocenterOnce = false
         // maybe: add load random
@@ -432,65 +375,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 }
 
-
-enum class Shapes {
-    CIRCLE, POINTED_CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR;
-
-    fun draw(canvas: Canvas, x: Float, y: Float, halfWidth: Float, pointX: Float, pointY: Float, point: Complex, drawOutline: Boolean, paint: Paint) {
-        val center by lazy { ComplexFF(x, y) }
-        fun trueRotated(x: Float, y: Float): PointF =
-            (center + (ComplexFF(x, y) - center) * point).run { PointF(real.toFloat(), imaginary.toFloat()) }
-        val rotated: (Float, Float) -> PointF =
-            if (DodecaView.rotateShapes.value) { x, y -> trueRotated(x, y) } else { x, y -> PointF(x, y) }
-        val top by lazy { rotated(x, y - halfWidth) }
-        val bottom by lazy { rotated(x, y + halfWidth) }
-        val left by lazy { rotated(x - halfWidth, y) }
-        val right by lazy { rotated(x + halfWidth, y) }
-        // TODO: compare performance when canvas.withRotation vs rotated
-        when(this) {
-            CIRCLE -> canvas.drawCircle(x, y, halfWidth, paint)
-            POINTED_CIRCLE -> {
-                canvas.drawCircle(x, y, halfWidth, paint)
-                canvas.drawPoint(pointX, pointY, pointPaint)
-            }
-            SQUARE -> canvas.drawRect( // how to rotate rect? try canvas.withRotation(<degrees>) { <draw> }
-                x - halfWidth, y - halfWidth,
-                x + halfWidth, y + halfWidth,
-                paint
-            )
-            CROSS -> canvas.drawLines(
-                floatArrayOf(
-                    top.x, top.y, bottom.x, bottom.y,
-                    left.x, left.y, right.x, right.y
-                ), paint
-            )
-            VERTICAL_BAR -> canvas.drawLine(top.x, top.y, bottom.x, bottom.y, paint)
-            HORIZONTAL_BAR -> canvas.drawLine(left.x, left.y, right.x, right.y, paint)
-        }
-        if (drawOutline)
-            when(this) {
-                CIRCLE, POINTED_CIRCLE -> canvas.drawCircle(x, y, halfWidth, outlinePaint)
-                SQUARE -> canvas.drawRect( // how to rotate rect?
-                    x - halfWidth, y - halfWidth,
-                    x + halfWidth, y + halfWidth,
-                    outlinePaint
-                )
-            }
-        if (DodecaView.showCenters.value)
-            canvas.drawPoint(x, y, pointPaint)
-    }
-
-    companion object {
-        private val pointPaint = Paint(DodecaView.defaultPaint).apply {
-            color = Color.MAGENTA
-            strokeWidth = 3.0f
-        }
-        val outlinePaint = Paint(DodecaView.defaultPaint).apply {
-            style = Paint.Style.STROKE
-            color = Color.BLACK
-        }
-    }
-}
 
 internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
     if (prop.get()) {
