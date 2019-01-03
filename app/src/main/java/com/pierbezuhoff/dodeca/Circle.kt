@@ -80,9 +80,9 @@ open class Circle(var center: Complex, var radius: Double) {
 }
 
 class CircleFigure(center: Complex, radius: Double,
-    var borderColor: Int = defaultBorderColor,
-    var fill: Boolean = defaultFill,
-    var rule: String? = defaultRule
+    val borderColor: Int = defaultBorderColor,
+    val fill: Boolean = defaultFill,
+    val rule: String? = defaultRule
 ) : Circle(center, radius) {
     // point.abs() === 1
     var point: Complex = Complex.ONE // indicate direction when inverting
@@ -96,7 +96,6 @@ class CircleFigure(center: Complex, radius: Double,
                 .toIntArray()
         } ?: intArrayOf()
     }
-    // TODO: more safe solution (e.g. val rule)
     // sequence of numbers of circles with respect to which this circle should be inverted
     val sequence: IntArray by lazy { _sequence } // rule should be assigned before getting sequence
 
