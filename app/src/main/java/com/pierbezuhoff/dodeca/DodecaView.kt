@@ -203,10 +203,16 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun updateCanvas(canvas: Canvas) {
         val timeToUpdate by lazy { System.currentTimeMillis() - lastUpdateTime >= updateDt }
         if (updating && timeToUpdate) {
-            repeat(speed.value) {
+            val nTimes = speed.value
+            if (nTimes == 1) {
                 updateCircles()
                 lastUpdateTime = System.currentTimeMillis()
-                drawUpdatedCanvas(canvas)
+            } else {
+                repeat(speed.value) {
+                    updateCircles()
+                    lastUpdateTime = System.currentTimeMillis()
+                    drawUpdatedCanvas(canvas)
+                }
             }
         }
         drawUpdatedCanvas(canvas)

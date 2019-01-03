@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="shapes_declensions">
+        <item>Окружность</item>
+        <item>Окружность с фиксированной точкой</item>
+        <item>Квадрат</item>
+        <item>Крест</item>
+        <item>Вертикальную черту</item>
+        <item>Горизонтальную черту</item>
+    </string-array>
     <string-array name="shapes">
         <item>Окружность</item>
         <item>Окружность с фиксированной точкой</item>

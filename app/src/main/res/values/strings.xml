@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Dodeca</string>
+    <string name="app_name" translatable="false">Dodeca Look</string>
 
     <!-- Strings related to bottom bar -->
     <string name="help_button_title">Help</string>
@@ -44,6 +44,7 @@
     <string name="canvas_factor_title">Canvas factor</string>
     <string name="canvas_factor_summary">Canvas is %s times larger than visible screen</string>
     <string name="speed_title">Speed</string>
+    <string name="speed_summary">Make %s updates in a row</string>
     <!-- v ups and fps are unused now -->
     <string name="ups_title">Speed</string>
     <string name="ups_summary">%s updates per second (speed of circle motion)</string>
@@ -51,7 +52,7 @@
     <string name="fps_summary">Frames per second, redraw speed</string>
     <!-- ^ -->
     <string name="shape_title">Shape</string>
-    <string name="shape_summary">Show \'%s\' instead of circle</string>
+    <string name="shape_summary">Show %s instead of circle</string>
     <string name="restore_default_ddu_title">Restore default current ddu</string>
     <string name="restore_default_ddus_title">Restore default ddu-s</string>
     <string name="restore_defaults_title">Restore default settings</string>
