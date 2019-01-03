@@ -321,6 +321,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     /* change all circles with `pickedColor` -> `newColor` */
+    /*
     fun changeColor(newColor: Int) {
         // maybe: also change DDU?
         pickedColor?.let {
@@ -329,6 +330,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         pickedColor = newColor
         postInvalidate()
     }
+    */
 
     fun oneStep() {
         updateCircles()
