@@ -64,6 +64,14 @@
                 android:title="@string/canvas_factor_title"
                 android:summary="@string/canvas_factor_summary" />
         <!-- NOTE: advanced -->
+        <ListPreference
+                android:key="speed"
+                android:defaultValue="1"
+                android:entries="@array/speeds"
+                android:entryValues="@array/speeds"
+                android:title="@string/speed_title"
+        />
+        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_stat"
                 android:defaultValue="false"

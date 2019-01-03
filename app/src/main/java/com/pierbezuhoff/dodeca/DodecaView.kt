@@ -112,7 +112,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         var updateImmediately = false
         upon(::autocenterOnce) { autocenter() }
         with(sharedPreferences) {
-            listOf(redrawTraceOnMove, reverseMotion).forEach { fetch(it) }
+            listOf(redrawTraceOnMove, reverseMotion, speed).forEach { fetch(it) }
             listOf(showAllCircles, /*showCenters,*/ showOutline, /* rotateShapes,*/ shape).forEach {
                 fetch(it) { updateImmediately = true }
             }
@@ -185,13 +185,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         super.onDraw(canvas)
         canvas?.let {
             when {
-                updating -> updateCanvas(it)
+                updating -> updateCanvas(canvas)
                 updateOnce -> {
-                    updateCanvas(it)
+                    updateCanvas(canvas)
                     updateOnce = false
                 }
-                drawTrace -> drawTraceCanvas(it)
-                else -> onCanvas(it) {
+                drawTrace -> drawTraceCanvas(canvas)
+                else -> onCanvas(canvas) {
                     // pause and no drawTrace
                     drawBackground(it)
                     drawCircles(it)
@@ -203,9 +203,16 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun updateCanvas(canvas: Canvas) {
         val timeToUpdate by lazy { System.currentTimeMillis() - lastUpdateTime >= updateDt }
         if (updating && timeToUpdate) {
-            updateCircles()
-            lastUpdateTime = System.currentTimeMillis()
+            repeat(speed.value) {
+                updateCircles()
+                lastUpdateTime = System.currentTimeMillis()
+                drawUpdatedCanvas(canvas)
+            }
         }
+        drawUpdatedCanvas(canvas)
+    }
+
+    private inline fun drawUpdatedCanvas(canvas: Canvas) {
         if (drawTrace) {
             onTraceCanvas {
                 upon(::redrawTraceOnce) { drawBackground(it) }
@@ -355,14 +362,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 //        var rotateShapes = Option("rotate_shapes", false)
         var autocenterAlways = Option("autocenter_always", false)
         var autocenterOnce = false
+        var speed = ParsedIntOption("speed", 1)
         // maybe: add load random
-        var canvasFactor = object : Option<Int>("canvas_factor", 2) {
-            override fun peek(sharedPreferences: SharedPreferences): Int =
-                sharedPreferences.getString(key, default.toString())?.let { Integer.parseInt(it) } ?: default
-            override fun put(editor: SharedPreferences.Editor) {
-                editor.putString(key, toString())
-            }
-        }
+        var canvasFactor = ParsedIntOption("canvas_factor", 2)
         var preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences
         const val defaultDrawTrace = true
         const val defaultUpdating = true
