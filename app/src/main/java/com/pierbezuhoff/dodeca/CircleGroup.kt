@@ -26,6 +26,9 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
     private val xs: FloatArray = FloatArray(size) { cs[it].x.toFloat() }
     private val ys: FloatArray = FloatArray(size) { cs[it].y.toFloat() }
     private val rs: FloatArray = FloatArray(size) { cs[it].radius.toFloat() }
+    private lateinit var oldXs: FloatArray
+    private lateinit var oldYs: FloatArray
+    private lateinit var oldRs: FloatArray
     private val attrs: Array<Attributes> = Array(size) { Attributes(cs[it].borderColor, cs[it].fill, cs[it].rule) }
     private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
     private val shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
@@ -44,6 +47,9 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
 
     override fun update(reverse: Boolean) {
         // TODO: save oldCircles
+        oldXs = xs.clone()
+        oldYs = ys.clone()
+        oldRs = rs.clone()
         if (reverse) // ~3x slower
             for (i in 0 until size)
                 for (j in rules[i].reversed())
@@ -123,12 +129,12 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
 
     /* invert i-th circle with respect to j-th */
     private inline fun invert(i: Int, j: Int) {
-        val r = rs[j]
         val x0 = xs[i]
         val y0 = ys[i]
         val r0 = rs[i]
-        val x = xs[j]
-        val y = ys[j]
+        val x = oldXs[j]
+        val y = oldYs[j]
+        val r = oldRs[j]
         when {
             r == 0f -> {
                 xs[i] = x

@@ -286,7 +286,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         postInvalidate()
     }
 
-    private inline fun updateCircles() {
+    private inline fun updateCircles() = logMeasureTimeMilis("updateCircles") { _updateCircles() }
+    private inline fun _updateCircles() {
         nUpdates += if (reverseMotion.value) -1 else 1
         if (showStat) {
             nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
