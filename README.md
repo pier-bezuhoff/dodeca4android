@@ -4,7 +4,6 @@ If you are unable to install Dodeca due to Play Protect:
 Go to Play Store, left 3 h-bars (navigation drawer), Play Protect, scan -- off
 ...
 # TODO
-- [ ] Dodeca -> DodecaLook
 - [ ] Best center: works improper (screen rotation)
 - [ ] values/defaults.xml for preferences default
 - [ ] Add preference speed: batch circle update

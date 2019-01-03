@@ -13,7 +13,7 @@
     <string name="ups_title">Скорость</string>
     <string name="ups_summary">%s пересчётов окружностей в секунду (скорость движения окружностей)</string>
     <string name="shape_title">Форма</string>
-    <string name="shape_summary">Показывать \'%s\' вместо окружности</string>
+    <string name="shape_summary">Показывать %s вместо окружности</string>
     <string name="settings_display_title">Внешний вид</string>
     <string name="settings_about_title">Информация</string>
     <string name="description_summary">Порт Dodeca для Android</string>
@@ -59,4 +59,5 @@
     <string name="canvas_factor_summary">Холст превосходит видимый экран в %s раз</string>
     <string name="canvas_factor_title">Размер холста</string>
     <string name="speed_title">Скорость</string>
+    <string name="speed_summary">Делать %s пересчётов подряд</string>
 </resources>

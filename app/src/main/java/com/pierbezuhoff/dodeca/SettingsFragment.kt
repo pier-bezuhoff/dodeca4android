@@ -19,26 +19,16 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun setupPreferences(rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
-        if (MainActivity.LIMITED_VERSION) {
-            ADVANCED_PREFERENCES.forEach {
-                val removed = findPreference<Preference>(it)?.let { it.parent?.removePreference(it) }
-                if (removed != true)
-                    Log.w("Preferences", "Advanced preference $it was not removed")
-            }
-        }
         mapOf(
             "shape" to R.string.shape_summary,
-            "canvas_factor" to R.string.canvas_factor_summary
+            "canvas_factor" to R.string.canvas_factor_summary,
+            "speed" to R.string.speed_summary
         ).forEach { (key, summaryResource) ->
             findPreference<ListPreference>(key)?.summaryProvider =
                 Preference.SummaryProvider<ListPreference> { preference ->
                     getString(summaryResource).format(preference.entry)
                 }
         }
-        findPreference<ListPreference>("canvas_factor")?.summaryProvider =
-            Preference.SummaryProvider<ListPreference> { preference ->
-                getString(R.string.canvas_factor_summary).format(preference.entry)
-            }
         val hooking = { param: String, action: (String) -> Unit ->
             findPreference<Preference>(param)?.setOnPreferenceClickListener { action(param); true }
         }
@@ -53,6 +43,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
             setupPreferences(rootKey) // a bit recursive, update defaults
         }
         hooking("support") { sendFeedback(context) }
+        if (MainActivity.LIMITED_VERSION) {
+            ADVANCED_PREFERENCES.forEach {
+                val removed = findPreference<Preference>(it)?.let { it.parent?.removePreference(it) }
+                if (removed != true)
+                    Log.w("Preferences", "Advanced preference $it was not removed")
+            }
+        }
     }
 
     private fun sendFeedback(context: Context?) {
@@ -75,7 +72,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     companion object {
         private val ADVANCED_PREFERENCES = setOf(
-            "show_all_circles", "show_centers", /*"rotate_shapes",*/ "show_stat"
+            "show_all_circles", "show_centers", /*"rotate_shapes",*/ "speed", "show_stat"
         )
     }
 }
