@@ -27,9 +27,9 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
     private val xs: DoubleArray = DoubleArray(size) { cs[it].x }
     private val ys: DoubleArray = DoubleArray(size) { cs[it].y }
     private val rs: DoubleArray = DoubleArray(size) { cs[it].radius }
-    private lateinit var oldXs: DoubleArray
-    private lateinit var oldYs: DoubleArray
-    private lateinit var oldRs: DoubleArray
+    private var oldXs: DoubleArray = xs // old_s are used for draw and as oldCircles in update
+    private var oldYs: DoubleArray = ys
+    private var oldRs: DoubleArray = rs
     private val attrs: Array<Attributes> = Array(size) { Attributes(cs[it].borderColor, cs[it].fill, cs[it].rule) }
     private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
     private val shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
@@ -47,7 +47,6 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
         }
 
     override fun update(reverse: Boolean) {
-        // TODO: save oldCircles
         oldXs = xs.clone()
         oldYs = ys.clone()
         oldRs = rs.clone()
@@ -59,6 +58,9 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
             for (i in 0 until size)
                 for (j in rules[i])
                     invert(i, j)
+        oldXs = xs
+        oldYs = ys
+        oldRs = rs
     }
 
     override fun draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean) {
@@ -83,18 +85,18 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
     }
 
     private inline fun drawCircle(i: Int, canvas: Canvas, showOutline: Boolean = false) {
-        val x = xs[i].toFloat()
-        val y = ys[i].toFloat()
-        val r = rs[i].toFloat()
+        val x = oldXs[i].toFloat()
+        val y = oldYs[i].toFloat()
+        val r = oldRs[i].toFloat()
         canvas.drawCircle(x, y, r, paints[i])
         if (showOutline)
             canvas.drawCircle(x, y, r, outlinePaint)
     }
 
     private inline fun drawSquare(i: Int, canvas: Canvas, showOutline: Boolean = false) {
-        val x = xs[i].toFloat()
-        val y = ys[i].toFloat()
-        val r = rs[i].toFloat()
+        val x = oldXs[i].toFloat()
+        val y = oldYs[i].toFloat()
+        val r = oldRs[i].toFloat()
         canvas.drawRect(
             x - r, y - r,
             x + r, y + r,
@@ -105,9 +107,9 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
     }
 
     private inline fun drawCross(i: Int, canvas: Canvas) {
-        val x = xs[i].toFloat()
-        val y = ys[i].toFloat()
-        val r = rs[i].toFloat()
+        val x = oldXs[i].toFloat()
+        val y = oldYs[i].toFloat()
+        val r = oldRs[i].toFloat()
         canvas.drawLines(
             floatArrayOf(
                 x, y - r, x, y + r,
@@ -118,20 +120,20 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
     }
 
     private inline fun drawVerticalBar(i: Int, canvas: Canvas) {
-        val x = xs[i].toFloat()
-        val y = ys[i].toFloat()
-        val r = rs[i].toFloat()
+        val x = oldXs[i].toFloat()
+        val y = oldYs[i].toFloat()
+        val r = oldRs[i].toFloat()
         canvas.drawLine(x, y - r, x, y + r, paints[i])
     }
 
     private inline fun drawHorizontalBar(i: Int, canvas: Canvas) {
-        val x = xs[i].toFloat()
-        val y = ys[i].toFloat()
-        val r = rs[i].toFloat()
+        val x = oldXs[i].toFloat()
+        val y = oldYs[i].toFloat()
+        val r = oldRs[i].toFloat()
         canvas.drawLine(x - r, y, x + r, y, paints[i])
     }
 
-    /* invert i-th circle with respect to j-th */
+    /* invert i-th circle with respect to j-th old circle */
     private inline fun invert(i: Int, j: Int) {
         val x0 = xs[i]
         val y0 = ys[i]
