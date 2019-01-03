@@ -20,15 +20,16 @@ internal data class Attributes(
     val show: Boolean get() = dynamic && !dynamicHidden
 }
 
-/* List<Circle> is represented as 3 FloatArray */
+// NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times slower
+/* List<Circle> is represented as 3 DoubleArray */
 internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     private var size: Int = cs.size
-    private val xs: FloatArray = FloatArray(size) { cs[it].x.toFloat() }
-    private val ys: FloatArray = FloatArray(size) { cs[it].y.toFloat() }
-    private val rs: FloatArray = FloatArray(size) { cs[it].radius.toFloat() }
-    private lateinit var oldXs: FloatArray
-    private lateinit var oldYs: FloatArray
-    private lateinit var oldRs: FloatArray
+    private val xs: DoubleArray = DoubleArray(size) { cs[it].x }
+    private val ys: DoubleArray = DoubleArray(size) { cs[it].y }
+    private val rs: DoubleArray = DoubleArray(size) { cs[it].radius }
+    private lateinit var oldXs: DoubleArray
+    private lateinit var oldYs: DoubleArray
+    private lateinit var oldRs: DoubleArray
     private val attrs: Array<Attributes> = Array(size) { Attributes(cs[it].borderColor, cs[it].fill, cs[it].rule) }
     private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
     private val shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
@@ -42,7 +43,7 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
     override val figures: List<CircleFigure>
         get() = (0 until size).map { i ->
             val (bc, f, r) = attrs[i]
-            CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), bc, f, r)
+            CircleFigure(xs[i], ys[i], rs[i], bc, f, r)
         }
 
     override fun update(reverse: Boolean) {
@@ -82,15 +83,18 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
     }
 
     private inline fun drawCircle(i: Int, canvas: Canvas, showOutline: Boolean = false) {
-        canvas.drawCircle(xs[i], ys[i], rs[i], paints[i])
+        val x = xs[i].toFloat()
+        val y = ys[i].toFloat()
+        val r = rs[i].toFloat()
+        canvas.drawCircle(x, y, r, paints[i])
         if (showOutline)
-            canvas.drawCircle(xs[i], ys[i], rs[i], outlinePaint)
+            canvas.drawCircle(x, y, r, outlinePaint)
     }
 
     private inline fun drawSquare(i: Int, canvas: Canvas, showOutline: Boolean = false) {
-        val x = xs[i]
-        val y = ys[i]
-        val r = rs[i]
+        val x = xs[i].toFloat()
+        val y = ys[i].toFloat()
+        val r = rs[i].toFloat()
         canvas.drawRect(
             x - r, y - r,
             x + r, y + r,
@@ -101,9 +105,9 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
     }
 
     private inline fun drawCross(i: Int, canvas: Canvas) {
-        val x = xs[i]
-        val y = ys[i]
-        val r = rs[i]
+        val x = xs[i].toFloat()
+        val y = ys[i].toFloat()
+        val r = rs[i].toFloat()
         canvas.drawLines(
             floatArrayOf(
                 x, y - r, x, y + r,
@@ -114,16 +118,16 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
     }
 
     private inline fun drawVerticalBar(i: Int, canvas: Canvas) {
-        val x = xs[i]
-        val y = ys[i]
-        val r = rs[i]
+        val x = xs[i].toFloat()
+        val y = ys[i].toFloat()
+        val r = rs[i].toFloat()
         canvas.drawLine(x, y - r, x, y + r, paints[i])
     }
 
     private inline fun drawHorizontalBar(i: Int, canvas: Canvas) {
-        val x = xs[i]
-        val y = ys[i]
-        val r = rs[i]
+        val x = xs[i].toFloat()
+        val y = ys[i].toFloat()
+        val r = rs[i].toFloat()
         canvas.drawLine(x - r, y, x + r, y, paints[i])
     }
 
@@ -136,20 +140,21 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
         val y = oldYs[j]
         val r = oldRs[j]
         when {
-            r == 0f -> {
+            r == 0.0 -> {
                 xs[i] = x
                 ys[i] = y
-                rs[i] = 0f
+                rs[i] = 0.0
             }
             x0 == x && y0 == y ->
                 rs[i] = r * r / r0
             else -> {
                 val dx = x0 - x
                 val dy = y0 - y
-                val d2 = dx * dx + dy * dy
+                var d2 = dx * dx + dy * dy
                 val r2 = r * r
                 val r02 = r0 * r0
-                // if (d2 == r02) d2 += 1e-6f
+                 if (d2 == r02)
+                     d2 += 1e-6f
                 val scale = r2 / (d2 - r02)
                 xs[i] = x + dx * scale
                 ys[i] = y + dy * scale
