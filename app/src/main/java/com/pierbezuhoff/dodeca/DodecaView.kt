@@ -116,8 +116,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             listOf(showAllCircles, /*showCenters,*/ showOutline, /* rotateShapes,*/ shape).forEach {
                 fetch(it) { updateImmediately = true }
             }
-            // load FPS/UPS
-            // NOTE: restart/rotate screen to update FPS
             fetch(autocenterAlways) { if (it && width > 0) autocenter() }
             fetch(canvasFactor) { if (width > 0) retrace() }
         }
@@ -340,11 +338,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             color = Color.BLACK
             style = Paint.Style.STROKE
         }
-        // FIX: changing FPS and UPS does not work properly, not in preferences now
-        private var FPS = Option("fps", 100)
-        private var UPS = Option("ups", 100) // updates per second
-        val dt get() = 1000f / FPS.value
-        val updateDt get() = 1000f / UPS.value
+        private const val FPS = 100
+        private const val UPS = 100
+        const val dt = 1000f / FPS
+        const val updateDt = 1000f / UPS
         private var redrawTraceOnMove = Option("redraw_trace", false)
         enum class RedrawOnMoveWhenPaused { ALWAYS, NEVER, RESPECT_REDRAW_TRACE_ON_MOVE }
         private var redrawTraceOnMoveWhenPaused =
@@ -360,7 +357,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private var reverseMotion = Option("reverse_motion", false)
         private var shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
             override fun peek(sharedPreferences: SharedPreferences): Shapes =
-                sharedPreferences.getString(key, default.toString())?.toUpperCase()?.let { Shapes.valueOf(it) } ?: default
+                sharedPreferences.getString(key, default.toString())?.toUpperCase()?.let {
+                    if (Shapes.values().map { it.toString() }.contains(it))
+                        Shapes.valueOf(it)
+                    else default
+                } ?: default
             override fun put(editor: SharedPreferences.Editor) {
                 editor.putString(key, toString().capitalize())
             }
@@ -398,6 +399,6 @@ internal fun logMeasureTimeMilis(name: String = "", block: () -> Unit) {
         ns[name] = 1
         times[name] = time
     }
-    val overall = "%.2f".format(times[name]!!.toFloat()/ns[name]!!)
+    val overall = "%.3f".format(times[name]!!.toFloat()/ns[name]!!)
     Log.i("logMeasureTimeMilis/$name", "overall: ${overall}ms, current: ${time}ms")
 }

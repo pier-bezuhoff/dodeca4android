@@ -2,7 +2,6 @@
 <resources>
     <string-array name="shapes_declensions">
         <item>Circle</item>
-        <item>Pointed circle</item>
         <item>Square</item>
         <item>Cross</item>
         <item>Vertical bar</item>
@@ -10,7 +9,6 @@
     </string-array>
     <string-array name="shapes">
         <item>Circle</item>
-        <item>Pointed circle</item>
         <item>Square</item>
         <item>Cross</item>
         <item>Vertical bar</item>
@@ -18,7 +16,6 @@
     </string-array>
     <string-array name="shapes_values">
         <item>circle</item>
-        <item>pointed_circle</item>
         <item>square</item>
         <item>cross</item>
         <item>vertical_bar</item>

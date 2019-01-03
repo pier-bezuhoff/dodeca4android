@@ -20,7 +20,7 @@ internal data class Attributes(
     val show: Boolean get() = dynamic && !dynamicHidden
 }
 
-// NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times slower
+// NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times faster
 /* List<Circle> is represented as 3 DoubleArray */
 internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     private var size: Int = cs.size
