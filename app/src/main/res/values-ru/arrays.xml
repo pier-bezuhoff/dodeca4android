@@ -2,7 +2,6 @@
 <resources>
     <string-array name="shapes_declensions">
         <item>Окружность</item>
-        <item>Окружность с фиксированной точкой</item>
         <item>Квадрат</item>
         <item>Крест</item>
         <item>Вертикальную черту</item>
@@ -10,7 +9,6 @@
     </string-array>
     <string-array name="shapes">
         <item>Окружность</item>
-        <item>Окружность с фиксированной точкой</item>
         <item>Квадрат</item>
         <item>Крест</item>
         <item>Вертикальная черта</item>
