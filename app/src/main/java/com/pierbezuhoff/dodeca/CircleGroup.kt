@@ -6,7 +6,7 @@ import android.graphics.Paint
 interface CircleGroup {
     val circles: List<CircleFigure>
     fun update()
-    fun draw(canvas: Canvas, paint: Paint)
+    fun draw(canvas: Canvas)
 }
 
 internal data class Attributes(
@@ -19,7 +19,8 @@ internal data class Attributes(
     val show: Boolean get() = dynamic && !dynamicHidden
 }
 
-class PrimitiveCircles(cs: List<CircleFigure>) : CircleGroup {
+// ~100 times faster than Circles...
+class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     private var size: Int = cs.size
     private val xs: FloatArray = FloatArray(size) { cs[it].x.toFloat() }
     private val ys: FloatArray = FloatArray(size) { cs[it].y.toFloat() }
@@ -27,6 +28,12 @@ class PrimitiveCircles(cs: List<CircleFigure>) : CircleGroup {
     private val attrs: Array<Attributes> = Array(size) { Attributes(cs[it].borderColor, cs[it].fill, cs[it].rule) }
     private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
     private val shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
+    private val paints: Array<Paint> = attrs.map {
+        Paint(paint).apply {
+            color = it.borderColor
+            style = if (it.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
+        }
+    }.toTypedArray()
     override val circles: List<CircleFigure>
         get() = (0 until size).map { i ->
             val (bc, f, r) = attrs[i]
@@ -40,16 +47,13 @@ class PrimitiveCircles(cs: List<CircleFigure>) : CircleGroup {
                 invert(i, j)
     }
 
-    override fun draw(canvas: Canvas, paint: Paint) {
+    override fun draw(canvas: Canvas) {
         for (i in shownIndices)
-            drawCircle(i, canvas, paint)
+            drawCircle(i, canvas)
     }
 
-    private inline fun drawCircle(i: Int, canvas: Canvas, paint: Paint) {
-        val attr = attrs[i]
-        paint.color = attr.borderColor
-        paint.style = if (attr.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-        canvas.drawCircle(xs[i], ys[i], rs[i], paint)
+    private inline fun drawCircle(i: Int, canvas: Canvas) {
+        canvas.drawCircle(xs[i], ys[i], rs[i], paints[i])
     }
 
     /* invert i-th circle with respect to j-th */
@@ -94,7 +98,7 @@ class Circles(private val _circles: MutableList<CircleFigure>) : CircleGroup {
                 circle.invert(oldCircles[j])
     }
 
-    override fun draw(canvas: Canvas, paint: Paint) {
+    override fun draw(canvas: Canvas) {
         circles.filter { it.show }.forEach { drawCircle(it, canvas, paint) }
     }
 

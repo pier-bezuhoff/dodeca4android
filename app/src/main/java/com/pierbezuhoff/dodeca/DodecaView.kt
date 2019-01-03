@@ -25,7 +25,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     // dummy default, actual from init(), because I cannot use lateinit here
     var ddu: DDU by Delegates.observable(DDU(circles = emptyList()))
         { _, _, value ->
-            circles = value.circles.toMutableList()
+//            circles = value.circles.toMutableList()
+            circleGroup = PrimitiveCircles(value.circles.toMutableList())
             motion.value.reset()
             drawTrace = value.drawTrace ?: defaultDrawTrace
             redrawTraceOnce = drawTrace
@@ -41,7 +42,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             centerize(value)
             invalidate()
         }
-    private lateinit var circles: MutableList<CircleFigure>
+//    private lateinit var circles: MutableList<CircleFigure>
+    private lateinit var circleGroup: CircleGroup
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var nUpdatesView: TextView? = null
     var time20UpdatesView: TextView? = null
@@ -162,7 +164,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun autocenter() {
         val center = ComplexFF(centerX, centerY)
-        val shownCircles = circles.filter(CircleFigure::show)
+        val shownCircles = circleGroup.circles.filter(CircleFigure::show)
         val visibleCenter = mean(shownCircles.map { visible(it.center) })
         val (dx, dy) = (center - visibleCenter).asFF()
         updateScroll(dx, dy)
@@ -279,13 +281,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun drawCircles(canvas: Canvas) = logMeasureTimeMilis("drawCircles") { _drawCircles(canvas) }
     /* draw `circles` on [canvas] */
     private fun _drawCircleShapes(canvas: Canvas) { // maybe does performance impact
-        circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
+//        circles.filter { it.show || showAllCircles.value }.forEach { drawCircle(canvas, it) }
     }
     private fun _drawCircles(canvas: Canvas) {
-        if (showAllCircles.value)
-            circles.forEach { drawCircle(canvas, it) }
-        else
-            circles.filter { it.show }.forEach { drawCircle(canvas, it) }
+        circleGroup.draw(canvas, paint)
+//        if (showAllCircles.value)
+//            circles.forEach { drawCircle(canvas, it) }
+//        else
+//            circles.filter { it.show }.forEach { drawCircle(canvas, it) }
     }
 
     // NOTE: draw ONLY circle
@@ -352,11 +355,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 last20UpdateTime = lastUpdateTime
             }
         }
-        // TRY: circles == 3 FloatArray, and invert along this lines...
-        val oldCircles = circles.map { it.copy(newRule = null) }
-        for (circle in circles)
-            for (j in circle.sequence)
-                circle.invert(oldCircles[j])
+        circleGroup.update()
+//        val oldCircles = circles.map { it.copy(newRule = null) }
+//        for (circle in circles)
+//            for (j in circle.sequence)
+//                circle.invert(oldCircles[j])
     }
 
     /* scale and translate all circles in ddu according to current view */
