@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="shapes_declensions">
-        <item>Окружность</item>
-        <item>Квадрат</item>
-        <item>Крест</item>
-        <item>Вертикальную черту</item>
-        <item>Горизонтальную черту</item>
+        <item>окружность</item>
+        <item>квадрат</item>
+        <item>крест</item>
+        <item>вертикальную черту</item>
+        <item>горизонтальную черту</item>
     </string-array>
     <string-array name="shapes">
         <item>Окружность</item>

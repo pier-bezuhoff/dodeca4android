@@ -20,7 +20,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private fun setupPreferences(rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
         mapOf(
-            "shape" to R.string.shape_summary,
             "canvas_factor" to R.string.canvas_factor_summary,
             "speed" to R.string.speed_summary
         ).forEach { (key, summaryResource) ->
@@ -29,6 +28,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     getString(summaryResource).format(preference.entry)
                 }
         }
+        findPreference<ListPreference>("shape")?.summaryProvider =
+            Preference.SummaryProvider<ListPreference> { preference ->
+                getString(R.string.shape_summary).format(
+                    resources.getStringArray(R.array.shapes_declensions)[preference.findIndexOfValue(preference.value)])
+            }
         val hooking = { param: String, action: (String) -> Unit ->
             findPreference<Preference>(param)?.setOnPreferenceClickListener { action(param); true }
         }
