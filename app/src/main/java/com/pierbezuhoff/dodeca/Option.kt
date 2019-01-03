@@ -42,6 +42,14 @@ open class Option<T>(val key: String, default: T) : SharedPreference<T>(default)
     }
 }
 
+class ParsedIntOption(key: String, default: Int) : Option<Int>(key, default) {
+    override fun peek(sharedPreferences: SharedPreferences): Int =
+        sharedPreferences.getString(key, default.toString())?.toInt() ?: default
+    override fun put(editor: SharedPreferences.Editor) {
+        editor.putString(key, toString())
+    }
+}
+
 fun <T: Any> SharedPreferences.fetch(
     preference: SharedPreference<T>,
     onPreChange: (T) -> Unit = {}, onPostChange: (T) -> Unit = {}
