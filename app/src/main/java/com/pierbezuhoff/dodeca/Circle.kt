@@ -1,6 +1,9 @@
 package com.pierbezuhoff.dodeca
 
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PointF
 import org.apache.commons.math3.complex.Complex
 
 /* radius >= 0 */
@@ -96,7 +99,7 @@ class CircleFigure(center: Complex, radius: Double,
                 .toIntArray()
         } ?: intArrayOf()
     }
-    // sequence of numbers of circles with respect to which this circle should be inverted
+    // sequence of numbers of figures with respect to which this circle should be inverted
     val sequence: IntArray by lazy { _sequence } // rule should be assigned before getting sequence
 
     fun copy(
@@ -153,6 +156,10 @@ class CircleFigure(center: Complex, radius: Double,
         const val defaultFill = false
         val defaultRule: String? = null
     }
+}
+
+enum class Shapes {
+    CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR;
 }
 
 val List<CircleFigure>.centroid get() = mean(map { it.center })

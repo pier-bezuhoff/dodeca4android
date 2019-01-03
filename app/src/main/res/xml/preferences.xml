@@ -10,14 +10,14 @@
                 android:defaultValue="false"
                 android:title="@string/redraw_trace_title"
                 android:summary="@string/redraw_trace_summary"/>
-        <!-- NOTE: not in master branch -->
+        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_all_circles"
                 android:defaultValue="false"
                 android:title="@string/show_all_circles_title"
                 android:summary="@string/show_all_circles_summary"
         />
-        <!-- NOTE: not in master branch -->
+        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_centers"
                 android:defaultValue="false"
@@ -30,19 +30,17 @@
                 android:entryValues="@array/shapes_values"
                 android:defaultValue="circle"
                 android:summary="@string/shape_summary" />
-        <!-- NOTE: not in master branch -->
-        <SwitchPreference
-                android:key="rotate_shapes"
-                android:defaultValue="false"
-                android:title="@string/rotate_shapes_title"
-                android:summary="@string/rotate_shapes_summary"
-        />
-        <!-- NOTE: not in master branch -->
-        <SwitchPreference
-                android:key="show_outline"
-                android:defaultValue="false"
-                android:title="@string/show_outline_title"
-        />
+        <!--<SwitchPreference-->
+                <!--android:key="rotate_shapes"-->
+                <!--android:defaultValue="false"-->
+                <!--android:title="@string/rotate_shapes_title"-->
+                <!--android:summary="@string/rotate_shapes_summary"-->
+        <!--/>-->
+        <!--<SwitchPreference-->
+                <!--android:key="show_outline"-->
+                <!--android:defaultValue="false"-->
+                <!--android:title="@string/show_outline_title"-->
+        <!--/>-->
         <SwitchPreference
                 android:key="reverse_motion"
                 android:defaultValue="false"
@@ -63,7 +61,7 @@
                 android:entryValues="@array/canvas_factors"
                 android:title="@string/canvas_factor_title"
                 android:summary="@string/canvas_factor_summary" />
-        <!-- NOTE: not in master branch -->
+        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_stat"
                 android:defaultValue="false"

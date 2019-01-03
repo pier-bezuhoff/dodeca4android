@@ -63,9 +63,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
             |
             |
             |-----------------------------
+            | App version: $appVersion
             | Device OS: Android
             | Device OS version: ${Build.VERSION.RELEASE}
-            | App version: $appVersion
             | Device brand: ${Build.BRAND}
             | Device model: ${Build.MODEL}
             | Device manufacturer: ${Build.MANUFACTURER}
@@ -75,7 +75,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     companion object {
         private val ADVANCED_PREFERENCES = setOf(
-            "show_all_circles", "show_centers", "rotate_shapes", "show_stat"
+            "show_all_circles", "show_centers", /*"rotate_shapes",*/ "show_stat"
         )
     }
 }
