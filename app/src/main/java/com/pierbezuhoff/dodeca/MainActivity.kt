@@ -39,7 +39,6 @@ class MainActivity : AppCompatActivity() {
         // extracting assets
         if (!dduDir.exists()) {
             Log.i(TAG, "Extracting assets into $dduDir")
-            // maybe: also compare their content
             dduDir.mkdir()
             extractDDUFromAssets()
         } else {
