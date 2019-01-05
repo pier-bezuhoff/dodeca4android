@@ -2,9 +2,10 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] Bottom bar: on phone not all buttons are visible!
+- [ ] Bottom bar: on phone not all buttons are visible! Make 2 rows.
 - [ ] Best center: works improper (screen rotation)
 - [ ] Autorotate screen in settings (Note: when in settings/help screen rotation works well, maybe just write it in help), check rotation to tranlatate for best center
+- [ ] Google Play: squares, unknown, promotional video
 - [ ] values/defaults.xml for preferences default
 - [ ] Do not retrace on language change
 - [ ] Bottom bar descriptions don't work on Fedor's phone

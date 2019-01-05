@@ -57,7 +57,6 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.0.1'
     implementation "com.github.hotchemi:permissionsdispatcher:$permission_dispatcher_version"
     kapt "com.github.hotchemi:permissionsdispatcher-processor:$permission_dispatcher_version"
-    implementation 'com.pavelsikun:material-seekbar-preference:2.3.0'
     //     implementation 'com.google.android.material:material:1.0.0'
     //     implementation 'com.jaredrummler:colorpicker-compat:1.0.5'
 }

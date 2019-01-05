@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
+<androidx.preference.PreferenceScreen
         android:key="preference_screen"
-        xmlns:android="http://schemas.android.com/apk/res/android" >
+        xmlns:android="http://schemas.android.com/apk/res/android"
+>
+    <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
 
     <PreferenceCategory android:title="@string/settings_display_title">
 
@@ -73,6 +75,15 @@
                 android:summary="@string/speed_summary"
         />
         <!-- NOTE: advanced -->
+        <SeekBarPreference
+                android:key="speed_seekbar"
+                android:title="Speed"
+                android:summary="Make %d updates in a row"
+                android:defaultValue="1"
+                android:max="50"
+        />
+
+        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_stat"
                 android:defaultValue="false"
@@ -90,26 +101,6 @@
         <!--sample:msbp_interval="1"-->
         <!--sample:msbp_measurementUnit="UPS"-->
         <!--sample:msbp_dialogEnabled="false"/>-->
-        <!--<EditTextPreference-->
-        <!--android:key="old_ups"-->
-        <!--android:defaultValue="100"-->
-        <!--android:selectAllOnFocus="false"-->
-        <!--android:singleLine="true"-->
-        <!--android:title="@string/ups_title"-->
-        <!--android:summary="@string/ups_summary"-->
-        <!--android:inputType="numberDecimal"-->
-        <!--android:digits="0123456789"-->
-        <!--android:numeric="integer"/>-->
-        <!--<EditTextPreference-->
-        <!--android:key="fps"-->
-        <!--android:defaultValue="100"-->
-        <!--android:selectAllOnFocus="false"-->
-        <!--android:singleLine="true"-->
-        <!--android:title="@string/fps_title"-->
-        <!--android:summary="@string/fps_summary"-->
-        <!--android:inputType="numberDecimal"-->
-        <!--android:digits="0123456789"-->
-        <!--android:numeric="integer"/>-->
         <Preference
                 android:key="default_ddu"
                 android:title="@string/restore_default_ddu_title" />
@@ -140,4 +131,4 @@
         <!--android:summary="Report technical issues or suggest new features"-->
     </PreferenceCategory>
 
-</PreferenceScreen>
+</androidx.preference.PreferenceScreen>

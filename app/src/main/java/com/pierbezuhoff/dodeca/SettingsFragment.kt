@@ -8,6 +8,7 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import androidx.preference.SeekBarPreference
 import org.jetbrains.anko.support.v4.email
 
 class SettingsFragment : PreferenceFragmentCompat() {
@@ -47,6 +48,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             setupPreferences(rootKey) // a bit recursive, update defaults
         }
         hooking("support") { sendFeedback(context) }
+        SeekBarPreference(context)
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach {
                 val removed = findPreference<Preference>(it)?.let { it.parent?.removePreference(it) }
