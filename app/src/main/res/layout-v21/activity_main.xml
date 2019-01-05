@@ -51,7 +51,6 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:layout_gravity="start|bottom"
-                app:backgroundTint="?attr/colorPrimary"
                 android:backgroundTint="@color/colorPrimary"
                 android:theme="@style/AppTheme.AppBarOverlay">
         </com.google.android.material.bottomappbar.BottomAppBar>
