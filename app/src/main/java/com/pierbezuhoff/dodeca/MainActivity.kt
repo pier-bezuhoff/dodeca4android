@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         setContentView(R.layout.activity_main)
         setSupportActionBar(bar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
         // listen scroll, double tap and scale gestures
         DodecaGestureDetector(this, dodecaView, onSingleTap = { toggleBottomBar() })
         // handling launch from implicit intent

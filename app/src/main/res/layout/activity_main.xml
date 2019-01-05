@@ -46,15 +46,16 @@
             tools:context=".MainActivity"
             app:layout_constraintBottom_toBottomOf="parent">
 
-        <com.google.android.material.bottomappbar.BottomAppBar
+        <androidx.appcompat.widget.Toolbar
                 android:id="@+id/bar"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
-                android:layout_gravity="start|bottom"
-                app:backgroundTint="?attr/colorPrimary"
-                android:backgroundTint="@color/colorPrimary"
-                android:theme="@style/AppTheme.AppBarOverlay">
-        </com.google.android.material.bottomappbar.BottomAppBar>
+                android:layout_gravity="bottom"
+                app:buttonGravity="bottom"
+                android:background="@color/colorPrimaryTranslucent"
+        >
+            <!--android:theme="@style/AppTheme.AppBarOverlay"-->
+        </androidx.appcompat.widget.Toolbar>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

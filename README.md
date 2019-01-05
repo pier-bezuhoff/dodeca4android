@@ -2,7 +2,7 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] Bottom bar: on phone not all buttons are visible! Make 2 rows.
+- [ ] Bottom bar: on phone not all buttons are visible! Make 2 rows. Or custom layout in toolbar.
 - [ ] Best center: works improper (screen rotation)
 - [ ] Autorotate screen in settings (Note: when in settings/help screen rotation works well, maybe just write it in help), check rotation to tranlatate for best center
 - [ ] Google Play: squares, unknown, promotional video
