@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.core.graphics.withMatrix
 import org.apache.commons.math3.complex.Complex
+import org.jetbrains.anko.toast
 import java.io.File
 import kotlin.concurrent.fixedRateTimer
 import kotlin.properties.Delegates
@@ -258,7 +259,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* when drawTrace turns on or sizes change */
     fun retrace() {
-        trace.retrace(width, height)
+        tryRetrace()
         trace.canvas.concat(motion.value)
         redrawTraceOnce = drawTrace
         if (!updating) {
@@ -268,6 +269,25 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
         }
         invalidate()
+    }
+
+    private fun tryRetrace() {
+        var done = false
+        while (!done) {
+            try {
+                trace.retrace(width, height)
+                done = true
+            } catch (e: OutOfMemoryError) {
+                if (canvasFactor.value > 1) {
+                    val nextFactor = canvasFactor.value - 1
+                    context.toast("Canvas factor ${canvasFactor.value} is too large: it caused out of memory error!\nTrying smaller factor $nextFactor...")
+                    canvasFactor.value = nextFactor
+                    editing { put(canvasFactor) }
+                } else {
+                    context.toast("Minimal ")
+                }
+            }
+        }
     }
 
     private inline fun onCanvas(canvas: Canvas, draw: (Canvas) -> Unit) =
