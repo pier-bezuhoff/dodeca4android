@@ -60,4 +60,6 @@
     <string name="canvas_factor_title">Размер холста</string>
     <string name="speed_title">Скорость</string>
     <string name="speed_summary">Делать %s пересчётов подряд</string>
+    <string name="canvas_factor_oom_toast">Размер холста %d слишком большой: он вызвал переполнение памяти! Пробуем меньший размер %d …</string>
+    <string name="minimal_canvas_factor_oom_toast">Минимальный размер холста %d вызвал переполнение памяти! Пробуем снова…</string>
 </resources>
