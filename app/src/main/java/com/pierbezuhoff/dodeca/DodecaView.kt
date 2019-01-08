@@ -278,13 +278,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 trace.retrace(width, height)
                 done = true
             } catch (e: OutOfMemoryError) {
+                e.printStackTrace()
                 if (canvasFactor.value > 1) {
                     val nextFactor = canvasFactor.value - 1
-                    context.toast("Canvas factor ${canvasFactor.value} is too large: it caused out of memory error!\nTrying smaller factor $nextFactor...")
+                    context.toast(resources.getString(R.string.canvas_factor_oom_toast).format(canvasFactor.value, nextFactor))
                     canvasFactor.value = nextFactor
                     editing { put(canvasFactor) }
                 } else {
-                    context.toast("Minimal ")
+                    context.toast(resources.getString(R.string.minimal_canvas_factor_oom_toast).format(canvasFactor.value))
                 }
             }
         }

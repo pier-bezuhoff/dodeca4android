@@ -21,6 +21,8 @@
     <string name="ddu_saved_toast">ddu saved at</string>
     <string name="imported_ddu_overwrites_original_toast">Original ddu was overwritten by imported ddu</string>
     <string name="imported_ddu_toast">New ddu was imported:</string>
+    <string name="canvas_factor_oom_toast">Canvas factor %d is too large: it caused out of memory error! Trying smaller factor %d…</string>
+    <string name="minimal_canvas_factor_oom_toast">Minimal canvas factor %d caused out of memory error! Retrying…</string>
 
     <!-- Strings related to settings -->
     <string name="settings_display_title">Display</string>
@@ -78,4 +80,5 @@
 
     <!-- Help -->
     <string name="help_title">Help</string>
+
 </resources>
