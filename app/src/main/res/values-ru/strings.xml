@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resources [<!ENTITY % ents SYSTEM "../raw/entities.ent"> %ents;]>
 <resources>
     <!-- add translation here -->
     <string name="load_button_title">Загрузить файл ddu</string>
@@ -16,11 +17,9 @@
     <string name="shape_summary">Показывать %s вместо окружности</string>
     <string name="settings_display_title">Внешний вид</string>
     <string name="settings_about_title">Информация</string>
-    <string name="description_summary">Порт Dodeca Look для Android</string>
+    <string name="description_summary">Порт &app_name; для Android</string>
     <string name="version_title">Версия</string>
-    <string name="copyright_summary">© Револьт Пименов (алгоритмы, эстетическая геометрия),
-        Иван Никитин (программирование)
-    </string>
+    <string name="copyright_summary">© Револьт Пименов (алгоритмы, эстетическая геометрия), Иван Никитин (программирование)</string>
     <string name="support_title">Обратная связь и поддержка</string>
     <string name="fps_summary">Число перерисовок в секунду, скорость перерисовки</string>
     <string name="reverse_motion">Обратить движение</string>

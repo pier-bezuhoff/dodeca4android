@@ -3,19 +3,19 @@ package com.pierbezuhoff.dodeca
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_dduchooser.*
 import java.io.File
 
+// TODO: store in sharedPreferences last dir
+// TODO: preview for ddu
+// TODO: go to parent folder
+// MAYBE: link to external folder
 class DDUChooserActivity : AppCompatActivity() {
     private lateinit var dduDir: File
     private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
@@ -76,9 +76,7 @@ class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : 
         holder.view.setOnClickListener { onItemClick(file) }
     }
 
-    override fun getItemCount(): Int {
-        return files.size
-    }
+    override fun getItemCount(): Int = files.size
 
     private fun onItemClick(item: File) {
         if (item.isDirectory) {

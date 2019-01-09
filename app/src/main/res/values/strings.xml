@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resources [<!ENTITY % ents SYSTEM "../raw/entities.ent"> %ents;]>
 <resources>
     <string name="app_name" translatable="false">Dodeca Look</string>
 
@@ -60,19 +62,17 @@
     <string name="restore_defaults_title">Restore default settings</string>
 
     <string name="settings_about_title">About</string>
-    <string name="description_summary">Android port for Dodeca Look</string>
+    <string name="description_summary">Android port for &app_name;</string>
     <string name="version_title">Version</string>
-    <string name="version_summary" translatable="false">Dodeca Look 1.0</string>
+    <string name="version_summary" translatable="false">&app_name; &version_name;</string>
     <string name="copyright_title" translatable="false">Copyright</string>
-    <string name="copyright_summary">© Revolt Pimenov (algorithms, esthetic geometry) and
-        Ivan Nikitin (programming)
-    </string>
+    <string name="copyright_summary">© Revolt Pimenov (algorithms, esthetic geometry) and Ivan Nikitin (programming)</string>
     <string name="support_title">Feedback and support</string>
-    <string name="feedback_subject" translatable="false">Dodeca Look support</string>
-    <string name="developer_email" translatable="false">pierbezuhoff2016@gmail.com</string>
+    <string name="feedback_subject" translatable="false">&app_name; support</string>
+    <string name="developer_email" translatable="false">&feedback_email;</string>
     <!-- Strings related to permissions -->
     <string name="permission_storage_message">Please, allow storage access to import this ddu</string>
-    <string name="permission_storage_accusation">You denied storage access permission. Why? you cannot import ddu now!
+    <string name="permission_storage_accusation">You denied storage access permission. Why? you cannot import the ddu now!
     </string>
     <string name="permission_rationale_dialog_title">Permission request</string>
     <string name="permission_rationale_dialog_allow">Allow</string>
