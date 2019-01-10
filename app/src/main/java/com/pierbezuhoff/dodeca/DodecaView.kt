@@ -157,7 +157,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private fun autocenter() {
+    fun autocenter() {
         val center = ComplexFF(centerX, centerY)
         val shownCircles = circleGroup.figures.filter(CircleFigure::show)
         val visibleCenter = mean(shownCircles.map { visible(it.center) })
@@ -374,7 +374,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
         private val showAllCircles = Option("show_all_circles", false)
 //        var showCenters = Option("show_centers", false)
-        private val showOutline = Option("show_outline", false)
+        val showOutline = Option("show_outline", false)
         private val reverseMotion = Option("reverse_motion", false)
         private val shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
             override fun peek(sharedPreferences: SharedPreferences): Shapes =

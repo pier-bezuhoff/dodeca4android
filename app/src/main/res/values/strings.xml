@@ -14,11 +14,13 @@
     <string name="restart_button_title">Restart</string>
     <string name="play_button_title">Play/pause</string>
     <string name="one_step_button_title">Stepwise: one step</string>
+    <string name="outline_button_title">Toggle outline</string>
     <string name="trace_button_title">Toggle trace</string>
     <string name="shape_spinner_title">Choose shape</string>
     <string name="shape_spinner_prompt">Draw this shape instead of circle</string>
     <string name="shape_image_title">Shape</string>
     <string name="clear_button_title">Clear</string>
+    <string name="autocenter_button_title">Autocenter</string>
     <string name="settings_button_title">Settings</string>
     <!-- unused -->
     <string name="change_color_button_title">Change color</string>
@@ -43,14 +45,12 @@
     <string name="show_centers_title">Show circle centers</string>
     <string name="rotate_shapes_title">Rotate shapes</string>
     <string name="rotate_shapes_summary">Rotate s̶q̶u̶a̶r̶e̶, cross, bars when updating</string>
-    <string name="show_outline_title">Show outline</string>
     <string name="show_stat_title">Show statistics</string>
     <string name="stat_n_updates_text">%d updates</string>
     <string name="stat_20_updates_per_text">20 updates per %.3f seconds</string>
     <string name="stat_n_updates_initial"># of updates</string>
     <string name="stat_20_updates_per_initial">20 updates per #</string>
     <string name="reverse_motion">Reverse motion</string>
-    <string name="autocenter_title">Autocenter</string>
     <string name="always_autocenter_title">Always autocenter</string>
     <string name="always_autocenter_summary">Autocenter when loading new ddu</string>
     <string name="canvas_factor_title">Canvas factor</string>

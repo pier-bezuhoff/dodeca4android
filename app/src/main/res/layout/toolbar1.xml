@@ -8,9 +8,19 @@
         android:layout_height="wrap_content"
 >
     <ImageButton
+            android:id="@+id/outline_button"
+            android:contentDescription="@string/outline_button_title"
+            android:src="@drawable/ic_outline"
+            app:backgroundTint="@color/toolbarColor"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+    />
+    <ImageButton
             android:id="@+id/trace_button"
             android:contentDescription="@string/trace_button_title"
-            android:src="@drawable/icon_trace"
+            android:src="@drawable/ic_trace"
             app:backgroundTint="@color/toolbarColor"
             android:padding="8dp"
             android:layout_weight="1"
@@ -29,7 +39,17 @@
     <ImageButton
             android:id="@+id/clear_button"
             android:contentDescription="@string/clear_button_title"
-            android:src="@drawable/icon_erase"
+            android:src="@drawable/ic_clear"
+            app:backgroundTint="@color/toolbarColor"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+    />
+    <ImageButton
+            android:id="@+id/autocenter_button"
+            android:contentDescription="@string/autocenter_button_title"
+            android:src="@drawable/ic_autocenter"
             app:backgroundTint="@color/toolbarColor"
             android:padding="8dp"
             android:layout_weight="1"

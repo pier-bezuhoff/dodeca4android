@@ -33,7 +33,6 @@
     <string name="error_ddu_save_no_file_toast">Ошибка во время сохранения ddu: ddu не привязано к файлу</string>
     <string name="error_ddu_save_toast">Ошибка во время сохранения ddu: см. лог</string>
     <string name="restore_defaults_title">Восстановить настройки по умолчанию</string>
-    <string name="autocenter_title">Автоцентровка</string>
     <string name="restore_default_ddus_title">Восстановить исходные файлы ddu</string>
     <string name="restore_default_ddu_title">Восстановить исходную версию данного файла ddu</string>
     <string name="ddu_saved_toast">Файл ddu сохранён в</string>
@@ -52,7 +51,6 @@
     <string name="show_centers_title">Показывать центры окружностей</string>
     <string name="rotate_shapes_title">Поворачивать при инверсии</string>
     <string name="rotate_shapes_summary">Поворачивать к̶в̶а̶д̶р̶а̶т̶, крест, черту при инверсии</string>
-    <string name="show_outline_title">Показывать абрис</string>
     <string name="stat_n_updates_initial">\? пересчётов</string>
     <string name="stat_20_updates_per_initial">20 пересчётов за ?</string>
     <string name="help_button_title">Справка</string>
@@ -67,4 +65,6 @@
     <string name="shape_spinner_prompt">Отображать данную фигуру вместо окружности</string>
     <string name="shape_spinner_title">Выбрать форму</string>
     <string name="shape_image_title">Форма</string>
+    <string name="outline_button_title">Показывать абрис</string>
+    <string name="autocenter_button_title">Автоцентровка</string>
 </resources>
