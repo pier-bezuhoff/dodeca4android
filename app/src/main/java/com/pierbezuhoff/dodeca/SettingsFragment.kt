@@ -32,7 +32,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val hooking = { param: String, action: (String) -> Unit ->
             findPreference<Preference>(param)?.setOnPreferenceClickListener { action(param); true }
         }
-        setOf("autocenter", "default_ddu", "default_ddus").forEach {
+        setOf("default_ddu", "default_ddus").forEach {
             hooking(it) { settingsActivity?.resultIntent?.putExtra(it, true) }
         }
         hooking("default") {
@@ -47,7 +47,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach {
                 val removed = findPreference<Preference>(it)?.let { it.parent?.removePreference(it) }
-                if (removed != true)
+                if (removed == false)
                     Log.w("Preferences", "Advanced preference $it was not removed")
             }
         }

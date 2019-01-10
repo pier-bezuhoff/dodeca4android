@@ -144,8 +144,13 @@ class MainActivity : AppCompatActivity() {
             R.id.play_button -> toggle(dodecaView::updating)
             R.id.next_step_button -> dodecaView.oneStep()
             R.id.trace_button -> toggle(dodecaView::drawTrace)
+            R.id.outline_button -> with(DodecaView.showOutline) {
+                value = !value
+                defaultSharedPreferences.edit { put(this@with) }
+            }
             // R.id.change_color_button -> ...
             R.id.clear_button -> dodecaView.retrace()
+            R.id.autocenter_button -> dodecaView.autocenter()
             R.id.settings_button -> {
                 startActivityForResult(
                     Intent(this@MainActivity, SettingsActivity::class.java),

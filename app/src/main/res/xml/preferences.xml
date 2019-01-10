@@ -4,7 +4,6 @@
         android:key="preference_screen"
         xmlns:android="http://schemas.android.com/apk/res/android"
 >
-    <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
 
     <PreferenceCategory android:title="@string/settings_display_title">
 
@@ -35,18 +34,10 @@
         <!--/>-->
         <!-- NOTE: advanced -->
         <SwitchPreference
-                android:key="show_outline"
-                android:defaultValue="false"
-                android:title="@string/show_outline_title"
-        />
-        <SwitchPreference
                 android:key="reverse_motion"
                 android:defaultValue="false"
                 android:title="@string/reverse_motion"
         />
-        <Preference
-                android:key="autocenter"
-                android:title="@string/autocenter_title"/>
         <SwitchPreference
                 android:key="autocenter_always"
                 android:defaultValue="false"
