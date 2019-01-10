@@ -26,13 +26,6 @@
                 <!--android:defaultValue="false"-->
                 <!--android:title="@string/show_centers_title"-->
         <!--/>-->
-        <ListPreference
-                android:key="shape"
-                android:title="@string/shape_title"
-                android:entries="@array/shapes"
-                android:entryValues="@array/shapes_values"
-                android:defaultValue="circle"
-                android:summary="@string/shape_summary" />
         <!-- NOTE: advanced -->
         <!--<SwitchPreference-->
                 <!--android:key="rotate_shapes"-->

@@ -4,6 +4,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PointF
+import android.graphics.drawable.shapes.Shape
 import org.apache.commons.math3.complex.Complex
 
 /* radius >= 0 */
@@ -160,6 +161,11 @@ class CircleFigure(center: Complex, radius: Double,
 
 enum class Shapes {
     CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR;
+    companion object {
+        val strings get() = Shapes.values().map { it.toString() }
+        fun indexOrFirst(index: Int): Shapes =
+            if (index < Shapes.values().size) Shapes.values()[index] else Shapes.values()[0]
+    }
 }
 
 val List<CircleFigure>.centroid get() = mean(map { it.center })
