@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity() {
                     defaultSharedPreferences.edit {
                         putString("shape", Shapes.indexOrFirst(position).toString().toLowerCase())
                     }
-                    dodecaView.loadMajorSharedPreferences() // maybe too much
+                    dodecaView.loadMajorSharedPreferences() // maybe too much work
                     showBottomBar()
                 }
             }

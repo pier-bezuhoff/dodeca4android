@@ -62,13 +62,17 @@
                 android:layout_gravity="bottom"
                 app:buttonGravity="bottom"
                 android:background="@color/toolbarColor"
-        >
+                app:contentInsetLeft="0dp"
+                app:contentInsetRight="0dp"
+                app:contentInsetStart="0dp" app:contentInsetStartWithNavigation="0dp" app:contentInsetEnd="0dp"
+                app:contentInsetEndWithActions="0dp">
             <LinearLayout
                     android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
             >
                 <include layout="@layout/toolbar1"/>
+                <View style="@style/dividerHorizontal"/>
                 <include layout="@layout/toolbar2"/>
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>

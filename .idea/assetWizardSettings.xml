@@ -123,7 +123,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/editor/ic_title_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/image/ic_crop_free_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -133,7 +133,7 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="ic_vertical_bar" />
+                            <entry key="outputName" value="ic_outline" />
                             <entry key="sourceFile" value="$USER_HOME$" />
                           </map>
                         </option>
