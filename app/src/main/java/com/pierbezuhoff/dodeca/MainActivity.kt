@@ -2,20 +2,31 @@ package com.pierbezuhoff.dodeca
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.BaseAdapter
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
+import androidx.core.view.children
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.toolbar1.*
+import kotlinx.android.synthetic.main.toolbar2.*
 import org.jetbrains.anko.alert
+import org.jetbrains.anko.defaultSharedPreferences
+import org.jetbrains.anko.layoutInflater
 import org.jetbrains.anko.toast
 import permissions.dispatcher.NeedsPermission
 import permissions.dispatcher.OnPermissionDenied
@@ -41,8 +52,6 @@ class MainActivity : AppCompatActivity() {
             Log.i(TAG, "Extracting assets into $dduDir")
             dduDir.mkdir()
             extractDDUFromAssets()
-        } else {
-            Log.i(TAG, "$dduDir already exists")
         }
         window.decorView.apply {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
@@ -67,27 +76,53 @@ class MainActivity : AppCompatActivity() {
         adjustStat()
         dodecaView.nUpdatesView = n_updates
         dodecaView.time20UpdatesView = updates_20
+        setupToolbar()
         hideBottomBarAfterAWhile()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.bottomappbar_menu, menu)
-        return true
+    private fun setupToolbar() {
+        setOf(toolbar1, toolbar2).forEach { toolbar ->
+            toolbar.children.filterIsInstance(ImageButton::class.java).forEach { button ->
+                TooltipCompat.setTooltipText(button, button.contentDescription)
+                button.setOnClickListener { onToolbarItemClick(it.id) }
+            }
+        }
+        // ISSUE: on spinner dialog: stop bottom bar timer, pause dodecaView
+        // BUG: after BOTTOM_BAR_HIDE_DELAY selection does not work!
+        with(shape_spinner) {
+            adapter = ShapeSpinnerAdapter(context)
+            val default = Shapes.CIRCLE.toString().toUpperCase()
+            val shape = defaultSharedPreferences.getString("shape", default)?.toUpperCase() ?: default
+            val position: Int = if (shape in Shapes.strings) Shapes.strings.indexOf(shape) else 0
+            setSelection(position)
+            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    showBottomBar()
+                }
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    defaultSharedPreferences.edit {
+                        putString("shape", Shapes.indexOrFirst(position).toString().toLowerCase())
+                    }
+                    dodecaView.loadMajorSharedPreferences() // maybe too much
+                    showBottomBar()
+                }
+            }
+        }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    private fun onToolbarItemClick(id: Int) {
         showBottomBar()
-        when (item.itemId) {
-            R.id.app_bar_help -> {
+        when (id) {
+            R.id.help_button -> {
                 val intent = Intent(this, HelpActivity::class.java)
                 startActivityForResult(intent, HELP_CODE)
             }
-            R.id.app_bar_load -> {
+            R.id.load_button -> {
                 val intent = Intent(this, DDUChooserActivity::class.java)
                 intent.putExtra("dirPath", dduDir.absolutePath)
                 startActivityForResult(intent, DDU_CODE)
             }
-            R.id.app_bar_save -> {
+            R.id.save_button -> {
                 val ddu = dodecaView.prepareDDUToSave()
                 if (ddu.file == null) {
                     // then save as
@@ -106,18 +141,17 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            R.id.app_bar_go -> toggle(dodecaView::updating)
-            R.id.app_bar_next_step -> dodecaView.oneStep()
-            R.id.app_bar_trace -> toggle(dodecaView::drawTrace)
-            // R.id.app_bar_change_color -> openColorPicker()
-            R.id.app_bar_clear -> dodecaView.retrace()
-            R.id.app_bar_settings -> {
+            R.id.play_button -> toggle(dodecaView::updating)
+            R.id.next_step_button -> dodecaView.oneStep()
+            R.id.trace_button -> toggle(dodecaView::drawTrace)
+            // R.id.change_color_button -> ...
+            R.id.clear_button -> dodecaView.retrace()
+            R.id.settings_button -> {
                 startActivityForResult(
                     Intent(this@MainActivity, SettingsActivity::class.java),
                     APPLY_SETTINGS_CODE)
             }
         }
-        return true
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -285,6 +319,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {
+        val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shapes
+            R.drawable.ic_circle,
+            R.drawable.ic_square,
+            R.drawable.ic_cross,
+            R.drawable.ic_vertical_bar,
+            R.drawable.ic_horizontal_bar
+        )
+        private class SpinnerViewHolder(val imageView: ImageView)
+        override fun getItem(position: Int): Any = shapes[position]
+        override fun getItemId(position: Int): Long = position.toLong()
+        override fun getCount(): Int = shapes.size
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+            val itemView: View = convertView ?:
+            context.layoutInflater.inflate(R.layout.shape_spinner_row, parent, false).apply {
+                tag = SpinnerViewHolder(findViewById(R.id.shape_spinner_image))
+            }
+            (itemView.tag as SpinnerViewHolder).imageView.setImageDrawable(context.getDrawable(shapes[position]))
+            return itemView
+        }
+    }
+
     companion object {
         const val TAG = "MainActivity"
         const val LIMITED_VERSION = false
@@ -296,7 +353,7 @@ class MainActivity : AppCompatActivity() {
         const val FULLSCREEN_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_FULLSCREEN
         // distraction free
         const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        const val BOTTOM_BAR_HIDE_DELAY = 20 // seconds
+        const val BOTTOM_BAR_HIDE_DELAY = 30 // seconds
     }
 }
 

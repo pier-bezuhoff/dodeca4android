@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/toolbar2"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+>
+    <ImageButton
+            android:id="@+id/trace_button"
+            android:contentDescription="@string/trace_button_title"
+            android:src="@drawable/icon_trace"
+            app:backgroundTint="@color/toolbarColor"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+    />
+    <Spinner
+            android:id="@+id/shape_spinner"
+            android:prompt="@string/shape_spinner_prompt"
+            android:contentDescription="@string/shape_spinner_title"
+            android:spinnerMode="dialog"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+    />
+    <ImageButton
+            android:id="@+id/clear_button"
+            android:contentDescription="@string/clear_button_title"
+            android:src="@drawable/icon_erase"
+            app:backgroundTint="@color/toolbarColor"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+    />
+</LinearLayout>

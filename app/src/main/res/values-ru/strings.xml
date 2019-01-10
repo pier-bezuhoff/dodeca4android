@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE resources [<!ENTITY % ents SYSTEM "../raw/entities.ent"> %ents;]>
+<!DOCTYPE resources [
+        <!ENTITY app_name "Dodeca Look">
+        <!ENTITY version_name "1.1">
+        <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
+        ]>
 <resources>
     <!-- add translation here -->
     <string name="load_button_title">Загрузить файл ddu</string>
-    <string name="go_button_title">Запустить/приостановить</string>
+    <string name="play_button_title">Запустить/приостановить</string>
     <string name="trace_button_title">Включить/выключить след</string>
     <string name="save_button_title">Сохранить файл ddu</string>
     <string name="settings_button_title">Настройки</string>
@@ -13,8 +17,6 @@
     <string name="show_all_circles_summary">Показать скрытые и неподвижные окружности</string>
     <string name="ups_title">Скорость</string>
     <string name="ups_summary">%s пересчётов окружностей в секунду (скорость движения окружностей)</string>
-    <string name="shape_title">Форма</string>
-    <string name="shape_summary">Показывать %s вместо окружности</string>
     <string name="settings_display_title">Внешний вид</string>
     <string name="settings_about_title">Информация</string>
     <string name="description_summary">Порт &app_name; для Android</string>
@@ -61,4 +63,8 @@
     <string name="speed_summary">Делать %s пересчётов подряд</string>
     <string name="canvas_factor_oom_toast">Размер холста %d слишком большой: он вызвал переполнение памяти! Пробуем меньший размер %d …</string>
     <string name="minimal_canvas_factor_oom_toast">Минимальный размер холста %d вызвал переполнение памяти! Пробуем снова…</string>
+    <string name="restart_button_title">Перезапустить</string>
+    <string name="shape_spinner_prompt">Отображать данную фигуру вместо окружности</string>
+    <string name="shape_spinner_title">Выбрать форму</string>
+    <string name="shape_image_title">Форма</string>
 </resources>

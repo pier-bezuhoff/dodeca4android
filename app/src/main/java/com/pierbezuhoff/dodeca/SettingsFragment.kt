@@ -29,11 +29,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     getString(summaryResource).format(preference.entry)
                 }
         }
-        findPreference<ListPreference>("shape")?.summaryProvider =
-            Preference.SummaryProvider<ListPreference> { preference ->
-                getString(R.string.shape_summary).format(
-                    resources.getStringArray(R.array.shapes_declensions)[preference.findIndexOfValue(preference.value)])
-            }
         val hooking = { param: String, action: (String) -> Unit ->
             findPreference<Preference>(param)?.setOnPreferenceClickListener { action(param); true }
         }

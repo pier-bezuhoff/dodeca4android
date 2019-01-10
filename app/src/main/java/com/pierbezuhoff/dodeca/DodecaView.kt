@@ -363,7 +363,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private const val UPS = 100
         const val dt = 1000f / FPS
         const val updateDt = 1000f / UPS
-        private var redrawTraceOnMove = Option("redraw_trace", false)
+        private val redrawTraceOnMove = Option("redraw_trace", false)
         enum class RedrawOnMoveWhenPaused { ALWAYS, NEVER, RESPECT_REDRAW_TRACE_ON_MOVE }
         private var redrawTraceOnMoveWhenPaused =
             Option("redraw_trace_when_paused", RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE)
@@ -372,11 +372,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             RedrawOnMoveWhenPaused.NEVER -> false
             RedrawOnMoveWhenPaused.RESPECT_REDRAW_TRACE_ON_MOVE -> redrawTraceOnMove.value
         }
-        private var showAllCircles = Option("show_all_circles", false)
+        private val showAllCircles = Option("show_all_circles", false)
 //        var showCenters = Option("show_centers", false)
-        private var showOutline = Option("show_outline", false)
-        private var reverseMotion = Option("reverse_motion", false)
-        private var shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
+        private val showOutline = Option("show_outline", false)
+        private val reverseMotion = Option("reverse_motion", false)
+        private val shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
             override fun peek(sharedPreferences: SharedPreferences): Shapes =
                 sharedPreferences.getString(key, default.toString())?.toUpperCase()?.let {
                     if (Shapes.values().map { it.toString() }.contains(it))
@@ -388,12 +388,12 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
         }
 //        var rotateShapes = Option("rotate_shapes", false)
-        var autocenterAlways = Option("autocenter_always", false)
+        val autocenterAlways = Option("autocenter_always", false)
         var autocenterOnce = false
-        var speed = ParsedIntOption("speed", 1)
+        val speed = ParsedIntOption("speed", 1)
         // maybe: add load random
-        var canvasFactor = ParsedIntOption("canvas_factor", 2)
-        var preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences
+        val canvasFactor = ParsedIntOption("canvas_factor", 2)
+        val preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences
         const val defaultDrawTrace = true
         const val defaultUpdating = true
         private const val TAG = "DodecaView"

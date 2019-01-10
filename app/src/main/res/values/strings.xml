@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE resources [<!ENTITY % ents SYSTEM "../raw/entities.ent"> %ents;]>
+<!DOCTYPE resources [
+        <!ENTITY app_name "Dodeca Look">
+        <!ENTITY version_name "1.1">
+        <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
+        ]>
 <resources>
     <string name="app_name" translatable="false">Dodeca Look</string>
 
@@ -7,9 +11,13 @@
     <string name="help_button_title">Help</string>
     <string name="load_button_title">Load ddu</string>
     <string name="save_button_title">Save ddu</string>
-    <string name="go_button_title">Play/pause</string>
+    <string name="restart_button_title">Restart</string>
+    <string name="play_button_title">Play/pause</string>
     <string name="one_step_button_title">Stepwise: one step</string>
     <string name="trace_button_title">Toggle trace</string>
+    <string name="shape_spinner_title">Choose shape</string>
+    <string name="shape_spinner_prompt">Draw this shape instead of circle</string>
+    <string name="shape_image_title">Shape</string>
     <string name="clear_button_title">Clear</string>
     <string name="settings_button_title">Settings</string>
     <!-- unused -->
@@ -55,8 +63,6 @@
     <string name="fps_title" translatable="false">FPS</string>
     <string name="fps_summary">Frames per second, redraw speed</string>
     <!-- ^ -->
-    <string name="shape_title">Shape</string>
-    <string name="shape_summary">Show %s instead of circle</string>
     <string name="restore_default_ddu_title">Restore default current ddu</string>
     <string name="restore_default_ddus_title">Restore default ddu-s</string>
     <string name="restore_defaults_title">Restore default settings</string>
