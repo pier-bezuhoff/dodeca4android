@@ -19,7 +19,6 @@ import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import androidx.core.view.children
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
@@ -91,19 +90,14 @@ class MainActivity : AppCompatActivity() {
         // BUG: after BOTTOM_BAR_HIDE_DELAY selection does not work!
         with(shape_spinner) {
             adapter = ShapeSpinnerAdapter(context)
-            val default = Shapes.CIRCLE.toString().toUpperCase()
-            val shape = defaultSharedPreferences.getString("shape", default)?.toUpperCase() ?: default
-            val position: Int = if (shape in Shapes.strings) Shapes.strings.indexOf(shape) else 0
+            val default = Shapes.CIRCLE.toString()
+            val currentShape = defaultSharedPreferences.getString("shape", default)?.toUpperCase() ?: default
+            val position: Int = if (currentShape in Shapes.strings) Shapes.strings.indexOf(currentShape) else 0
             setSelection(position)
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onNothingSelected(parent: AdapterView<*>?) {
-                    showBottomBar()
-                }
+                override fun onNothingSelected(parent: AdapterView<*>?) { showBottomBar() }
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    defaultSharedPreferences.edit {
-                        putString("shape", Shapes.indexOrFirst(position).toString().toLowerCase())
-                    }
-                    dodecaView.loadMajorSharedPreferences() // maybe too much work
+                    dodecaView.change(shape, Shapes.indexOrFirst(id.toInt()))
                     showBottomBar()
                 }
             }
@@ -141,13 +135,10 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            R.id.play_button -> toggle(dodecaView::updating)
+            R.id.play_button -> dodecaView.toggle(updating)
             R.id.next_step_button -> dodecaView.oneStep()
-            R.id.trace_button -> toggle(dodecaView::drawTrace)
-            R.id.outline_button -> with(DodecaView.showOutline) {
-                value = !value
-                defaultSharedPreferences.edit { put(this@with) }
-            }
+            R.id.trace_button -> dodecaView.toggle(drawTrace)
+            R.id.outline_button -> dodecaView.toggle(showOutline)
             // R.id.change_color_button -> ...
             R.id.clear_button -> dodecaView.retrace()
             R.id.autocenter_button -> dodecaView.autocenter()
@@ -174,7 +165,6 @@ class MainActivity : AppCompatActivity() {
                             action()
                     }
                     adjustStat()
-                    having("autocenter") { DodecaView.autocenterOnce = true }
                     having("default_ddu") {
                         dodecaView.ddu.file?.let { file ->
                             extract1DDU(file.name)
@@ -362,6 +352,3 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-internal fun toggle(prop: KMutableProperty0<Boolean>) {
-    prop.set(!prop.get())
-}
