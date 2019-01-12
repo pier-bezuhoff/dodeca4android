@@ -59,6 +59,11 @@
                 android:title="@string/speed_title"
                 android:summary="@string/speed_summary"
         />
+        <SwitchPreference
+                android:key="autosave"
+                android:defaultValue="false"
+                android:title="@string/autosave_title"
+        />
         <!-- NOTE: advanced -->
         <!--<SeekBarPreference-->
                 <!--android:key="speed_seekbar"-->

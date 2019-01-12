@@ -45,6 +45,7 @@
     <string name="show_centers_title">Show circle centers</string>
     <string name="rotate_shapes_title">Rotate shapes</string>
     <string name="rotate_shapes_summary">Rotate s̶q̶u̶a̶r̶e̶, cross, bars when updating</string>
+    <string name="autosave_title">Autosave current ddu</string>
     <string name="show_stat_title">Show statistics</string>
     <string name="stat_n_updates_text">%d updates</string>
     <string name="stat_20_updates_per_text">20 updates per %.3f seconds</string>
