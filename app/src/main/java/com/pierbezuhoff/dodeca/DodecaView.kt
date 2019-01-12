@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.preference.PreferenceManager
 import android.util.AttributeSet
@@ -21,8 +22,9 @@ import kotlin.system.measureTimeMillis
 
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     // dummy default, actual from init(), because I cannot use lateinit here
+    var afterNewDDU: (DDU) -> Unit = {}
     var ddu: DDU by Delegates.observable(DDU(circles = emptyList()))
-        { _, _, value -> onNewDDU(value) }
+        { _, _, value -> onNewDDU(value); afterNewDDU(value) }
     private lateinit var circleGroup: CircleGroup
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var nUpdatesView: TextView? = null
@@ -104,6 +106,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        ddu.bestCenter = ComplexFF(x + oldw / 2, y + oldh / 2)
         super.onSizeChanged(w, h, oldw, oldh)
         centerize()
         if (!trace.initialized)
@@ -264,6 +267,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun onNewDDU(ddu: DDU) {
+        if (autosave.value && this.ddu.circles.isNotEmpty())
+            saveDDU()
         circleGroup = PrimitiveCircles(ddu.circles.toMutableList(), paint)
         editing {
             ddu.file?.let { file -> putString("recent_ddu", file.name) }
@@ -272,16 +277,18 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
         redrawTraceOnce = drawTrace.value
         nUpdates = 0
-        last20NUpdates = nUpdates
+        last20NUpdates = nUpdates // some bugs in stat when nUpdates < 0
         lastUpdateTime = System.currentTimeMillis()
         last20UpdateTime = lastUpdateTime
         centerize(ddu)
-        invalidate()
+        postInvalidate()
     }
 
     /* scale and translate all figures in ddu according to current view */
-    fun prepareDDUToSave(): DDU {
+    private fun prepareDDUToSave(): DDU {
         val _drawTrace = drawTrace.value
+        val _shape = shape.value
+        val _showOutline = showOutline.value
         return ddu.copy().apply {
             circles.forEach {
                 it.center = visible(it.center)
@@ -289,6 +296,28 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
             drawTrace = _drawTrace
             bestCenter = ComplexFF(centerX, centerY)
+            shape = _shape
+            showOutline = _showOutline
+        }
+    }
+
+    fun saveDDU() {
+        val ddu = prepareDDUToSave()
+        if (ddu.file == null) {
+            // then save as
+            context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
+        }
+        else { // maybe: run in background
+            try {
+                ddu.file?.let { file ->
+                    Log.i(TAG, "Saving ddu at at ${file.path}")
+                    ddu.saveStream(file.outputStream())
+                   context.toast(context.getString(R.string.ddu_saved_toast) + " ${file.name}")
+                }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                context.toast(context.getString(R.string.error_ddu_save_toast))
+            }
         }
     }
 
@@ -316,8 +345,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun <T: Any> SharedPreferences.Editor.setFromDDU(ddu: DDU, option: SharedPreference<T>) {
         when(option) {
             drawTrace -> set(drawTrace, ddu.drawTrace)
-            showOutline -> set(showOutline) // TODO: save to ddu
-            shape -> set(shape) // TODO: save to ddu
+            shape -> set(shape, ddu.shape)
+            showOutline -> set(showOutline, ddu.showOutline)
         }
     }
 

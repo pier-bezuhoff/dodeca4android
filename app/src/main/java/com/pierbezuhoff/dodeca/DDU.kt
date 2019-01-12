@@ -40,19 +40,25 @@ class DDU(
     var restGlobals: List<Int> = emptyList(),
     var drawTrace: Boolean? = null,
     var bestCenter: Complex? = null, // cross-(screen size)
+    var shape: Shapes = defaultShape,
+    var showOutline: Boolean = defaultShowOutline,
     var circles: List<CircleFigure> = emptyList(),
     var file: File? = null
 ) {
 
     // NOTE: copy(newRule = null) resolves overload ambiguity
     fun copy() =
-        DDU(backgroundColor, restGlobals.toList(), drawTrace, bestCenter, circles.map { it.copy(newRule = null) }, file)
+        DDU(
+            backgroundColor, restGlobals.toList(), drawTrace, bestCenter, shape, showOutline,
+            circles.map { it.copy(newRule = null) }, file)
 
     override fun toString(): String = """DDU(
         |  backgroundColor = ${backgroundColor.fromColor()}
         |  restGlobals = $restGlobals
         |  drawTrace = $drawTrace
         |  bestCenter = $bestCenter
+        |  shape = $shape
+        |  showOutline = $showOutline
         |  file = $file
         |  figures = $circles
         |)
@@ -70,7 +76,11 @@ class DDU(
             if (restGlobals.size == 2)
                 drawTrace?.let {
                     globals.add(if (it) "1" else "0")
-                    bestCenter?.let { globals.add("${it.real} ${it.imaginary}") }
+                    bestCenter?.let {
+                        globals.add("${it.real} ${it.imaginary}")
+                        globals.add(shape.toString())
+                        globals.add(if (showOutline) "1" else "0")
+                    }
                 }
             globals.forEach { param ->
                 writeln("global")
@@ -95,6 +105,8 @@ class DDU(
 
     companion object {
         const val defaultBackgroundColor: Int = Color.WHITE
+        val defaultShape: Shapes = Shapes.CIRCLE
+        const val defaultShowOutline = false
 
         fun readFile(file: File): DDU {
             return readStream(file.inputStream()).apply { this.file = file }
@@ -105,6 +117,8 @@ class DDU(
             val restGlobals: MutableList<Int> = mutableListOf()
             var drawTrace: Boolean? = null
             var bestCenter: Complex? = null
+            var shape: Shapes = defaultShape
+            var showOutline: Boolean = defaultShowOutline
             val circles: MutableList<CircleFigure> = mutableListOf()
             var nGlobals = 0
             var mode: Mode = Mode.NO
@@ -132,6 +146,8 @@ class DDU(
                                         bestCenter = Complex(x, y)
                                 }
                             }
+                            5 -> shape = Shapes.valueOf(it)
+                            6 -> showOutline = it != "0"
                         }
                         nGlobals++
                         mode = Mode.NO
@@ -155,7 +171,7 @@ class DDU(
                 }
             }
             appendCircle()
-            return DDU(backgroundColor, restGlobals, drawTrace, bestCenter, circles)
+            return DDU(backgroundColor, restGlobals, drawTrace, bestCenter, shape, showOutline, circles)
         }
     }
 }

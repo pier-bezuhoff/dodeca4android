@@ -10,10 +10,10 @@ class Trace(val paint: Paint) {
     lateinit var bitmap: Bitmap
     lateinit var canvas: Canvas
     // `bitmap` top-left corner - screen top-left corner
-    private val translation = Matrix() // factor => pre translation
+    val translation = Matrix() // factor => pre translation
     val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
     val blitMatrix get() = Matrix(translation).apply { postConcat(motion) }
-    private val factor: Int get() = DodecaView.canvasFactor.value // bitmap == (factor ^ 2) * screens
+    private val factor: Int get() = canvasFactor.value // bitmap == (factor ^ 2) * screens
 
     // visible
     fun translate(dx: Float, dy: Float) {

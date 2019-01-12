@@ -95,7 +95,7 @@ val reverseMotion = Option("reverse_motion", false)
 val shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
     override fun peek(sharedPreferences: SharedPreferences): Shapes =
         sharedPreferences.getString(key, default.toString())?.toUpperCase()?.let {
-            if (Shapes.values().map { it.toString() }.contains(it))
+            if (Shapes.strings.contains(it))
                 Shapes.valueOf(it)
             else default
         } ?: default
@@ -104,6 +104,7 @@ val shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
     }
 }
 //val rotateShapes = Option("rotate_shapes", false)
+val autosave = Option("autosave", false)
 val autocenterAlways = Option("autocenter_always", false)
 val speed = ParsedIntOption("speed", 1)
 val canvasFactor = ParsedIntOption("canvas_factor", 2)
