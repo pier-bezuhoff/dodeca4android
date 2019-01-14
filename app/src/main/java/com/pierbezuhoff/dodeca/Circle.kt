@@ -1,10 +1,6 @@
 package com.pierbezuhoff.dodeca
 
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.PointF
-import android.graphics.drawable.shapes.Shape
 import org.apache.commons.math3.complex.Complex
 
 /* radius >= 0 */
@@ -84,7 +80,7 @@ open class Circle(var center: Complex, var radius: Double) {
 }
 
 class CircleFigure(center: Complex, radius: Double,
-    val borderColor: Int = defaultBorderColor,
+    val borderColor: Int = defaultBorderColor, // de facto: boarder and fill color
     val fill: Boolean = defaultFill,
     val rule: String? = defaultRule
 ) : Circle(center, radius) {
@@ -163,6 +159,7 @@ enum class Shapes {
     CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR;
     companion object {
         val strings get() = Shapes.values().map { it.toString() }
+        fun valueOfOrNull(s: String): Shapes? = try { valueOf(s) } catch (e: IllegalArgumentException) { null }
         fun indexOrFirst(index: Int): Shapes =
             if (index < Shapes.values().size) Shapes.values()[index] else Shapes.values()[0]
     }

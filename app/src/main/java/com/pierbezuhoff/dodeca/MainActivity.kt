@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -24,7 +25,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
 import kotlinx.android.synthetic.main.toolbar2.*
 import org.jetbrains.anko.alert
-import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.layoutInflater
 import org.jetbrains.anko.toast
 import permissions.dispatcher.NeedsPermission
@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private var bottomBarShown = true
     private val dduDir by lazy { File(filesDir, "ddu") }
     private var bottomBarHideTimer: Timer? = null
+    private var updatingBeforePause: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,7 +86,6 @@ class MainActivity : AppCompatActivity() {
 //        val currentShape = defaultSharedPreferences.getString("shape", default)?.toUpperCase() ?: default
         val currentShape = ddu.shape.toString()
         val position: Int = if (currentShape in Shapes.strings) Shapes.strings.indexOf(currentShape) else 0
-        Log.i(TAG, "spinner -> $position <- ${ddu.shape} <- ddu")
         shape_spinner.setSelection(position)
     }
 
@@ -99,6 +99,7 @@ class MainActivity : AppCompatActivity() {
         // ISSUE: on spinner dialog: stop bottom bar timer, pause dodecaView
         // BUG: after BOTTOM_BAR_HIDE_DELAY selection does not work!
         with(shape_spinner) {
+            TooltipCompat.setTooltipText(this, this.contentDescription)
             adapter = ShapeSpinnerAdapter(context)
             afterNewDDU(dodecaView.ddu)
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -139,11 +140,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        updatingBeforePause?.let { dodecaView.change(updating, it) }
+    }
+
     override fun onPause() {
         super.onPause()
+        updatingBeforePause = updating.value
         dodecaView.change(updating, false)
         if (autosave.value)
-            dodecaView.saveDDU() // maybe also on dodecaView.hide/unfocused
+            dodecaView.saveDDU()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // orientation and screenSize
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -283,7 +295,7 @@ class MainActivity : AppCompatActivity() {
     private fun showBottomBar() {
         bottomBarHideTimer?.cancel()
         bar.visibility = View.VISIBLE
-        // dodecaView.systemUiVisibility = FULLSCREEN_UI_VISIBILITY
+        dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
         hideBottomBarAfterAWhile()
         bottomBarShown = true
     }
@@ -344,7 +356,7 @@ class MainActivity : AppCompatActivity() {
         const val FULLSCREEN_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_FULLSCREEN
         // distraction free
         const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        const val BOTTOM_BAR_HIDE_DELAY = 300 // seconds
+        const val BOTTOM_BAR_HIDE_DELAY = 30 // seconds
     }
 }
 

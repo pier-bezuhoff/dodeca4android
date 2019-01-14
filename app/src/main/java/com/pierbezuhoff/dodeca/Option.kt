@@ -10,11 +10,15 @@ abstract class SharedPreference<T>(val default: T) where T : Any {
 
     // NOTE: fetch(_) { * } == fetch(_, onPostChange = { * })
     fun fetch(sharedPreferences: SharedPreferences, onPreChange: (T) -> Unit = {}, onPostChange: (T) -> Unit = {}) {
-        val newValue = peek(sharedPreferences)
-        val changed = value != newValue
-        if (changed) onPreChange(newValue)
-        value = newValue
-        if (changed) onPostChange(value)
+        try {
+            val newValue = peek(sharedPreferences)
+            val changed = value != newValue
+            if (changed) onPreChange(newValue)
+            value = newValue
+            if (changed) onPostChange(value)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     abstract fun put(editor: SharedPreferences.Editor)
@@ -30,6 +34,7 @@ abstract class SharedPreference<T>(val default: T) where T : Any {
 open class Option<T>(val key: String, default: T) : SharedPreference<T>(default) where T : Any {
     override fun equals(other: Any?): Boolean = other is Option<*> && other.key == key
     override fun hashCode(): Int = key.hashCode()
+    override fun toString(): String = "Option '$key': $value (default $default)"
 
     override fun peek(sharedPreferences: SharedPreferences): T = when (default) {
         is Boolean -> sharedPreferences.getBoolean(key, default) as T
@@ -60,7 +65,7 @@ class ParsedIntOption(key: String, default: Int) : Option<Int>(key, default) {
     override fun peek(sharedPreferences: SharedPreferences): Int =
         sharedPreferences.getString(key, default.toString())?.toInt() ?: default
     override fun put(editor: SharedPreferences.Editor) {
-        editor.putString(key, toString())
+        editor.putString(key, value.toString())
     }
 }
 
@@ -94,13 +99,10 @@ val showOutline = Option("show_outline", false)
 val reverseMotion = Option("reverse_motion", false)
 val shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
     override fun peek(sharedPreferences: SharedPreferences): Shapes =
-        sharedPreferences.getString(key, default.toString())?.toUpperCase()?.let {
-            if (Shapes.strings.contains(it))
-                Shapes.valueOf(it)
-            else default
-        } ?: default
+        sharedPreferences.getString(key, default.toString())
+            ?.toUpperCase()?.let { Shapes.valueOfOrNull(it) ?: default } ?: default
     override fun put(editor: SharedPreferences.Editor) {
-        editor.putString(key, toString().toLowerCase())
+        editor.putString(key, value.toString().toLowerCase())
     }
 }
 //val rotateShapes = Option("rotate_shapes", false)

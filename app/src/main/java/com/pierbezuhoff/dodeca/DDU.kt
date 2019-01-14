@@ -1,6 +1,7 @@
 package com.pierbezuhoff.dodeca
 
 import android.graphics.Color
+import android.os.Build
 import android.util.Log
 import org.apache.commons.math3.complex.Complex
 import java.io.File
@@ -37,7 +38,7 @@ internal fun Int.fromColor(): Int =
 // maybe: serialize DDU to json
 class DDU(
     var backgroundColor: Int = defaultBackgroundColor,
-    var restGlobals: List<Int> = emptyList(),
+    private var restGlobals: List<Int> = emptyList(), // unused
     var drawTrace: Boolean? = null,
     var bestCenter: Complex? = null, // cross-(screen size)
     var shape: Shapes = defaultShape,
@@ -66,26 +67,21 @@ class DDU(
 
     fun saveStream(stream: OutputStream) {
         // maybe: use buffered stream
-        stream.use {
-            val writeln = { s: String -> it.write("$s\n".toByteArray()) }
-            writeln("Dodeca for Android")
+        stream.use { outputStream ->
+            val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
+            writeln("Dodeca Look ${Build.VERSION.RELEASE} for Android")
             val globals: MutableList<String> = listOf(
                 backgroundColor.fromColor(),
                 *restGlobals.toTypedArray()
             ).map { it.toString() }.toMutableList()
-            if (restGlobals.size == 2)
-                drawTrace?.let {
-                    globals.add(if (it) "1" else "0")
-                    bestCenter?.let {
-                        globals.add("${it.real} ${it.imaginary}")
-                        globals.add(shape.toString())
-                        globals.add(if (showOutline) "1" else "0")
-                    }
-                }
             globals.forEach { param ->
                 writeln("global")
                 writeln(param)
             }
+            drawTrace?.let { writeln("drawTrace: $it") }
+            bestCenter?.let { writeln("bestCenter: ${it.real} ${it.imaginary}") }
+            writeln("shape: $shape")
+            writeln("showOutline: $showOutline")
             circles.forEach { circle ->
                 writeln("\ncircle:")
                 listOf(
@@ -132,12 +128,11 @@ class DDU(
             }
             stream.reader().forEachLine {
                 when {
-                    it.startsWith("global") -> mode = Mode.GLOBAL
                     mode == Mode.GLOBAL && it.isNotBlank() -> {
                         when (nGlobals) {
                             0 -> backgroundColor = it.toInt().toColor()
                             1, 2 -> restGlobals.add(it.toInt()) // don't know, what this 2 means ("howInvers" and "howAnim")
-                            3 -> drawTrace = it != "0" // mine
+                            3 -> drawTrace = it != "0"
                             4 -> it.split(" ").let {
                                 if (it.size == 2) {
                                     val x = it[0].toDoubleOrNull()
@@ -146,8 +141,6 @@ class DDU(
                                         bestCenter = Complex(x, y)
                                 }
                             }
-                            5 -> shape = Shapes.valueOf(it)
-                            6 -> showOutline = it != "0"
                         }
                         nGlobals++
                         mode = Mode.NO
@@ -156,6 +149,28 @@ class DDU(
                         appendCircle()
                         params = CircleParams() // clear params
                         mode = Mode.RADIUS
+                    }
+                    mode == Mode.NO -> when {
+                        it.startsWith("global") -> mode = Mode.GLOBAL
+                        it.startsWith("drawTrace:") ->
+                            drawTrace = it.substringAfter("drawTrace:").trim().toBoolean()
+                        it.startsWith("bestCenter:") ->
+                            it.substringAfter("bestCenter:").trim().split(" ").let {
+                                if (it.size == 2) {
+                                    val x = it[0].toDoubleOrNull()
+                                    val y = it[1].toDoubleOrNull()
+                                    if (x != null && y != null)
+                                        bestCenter = Complex(x, y)
+                                }
+                            }
+                        it.startsWith("shape:") ->
+                            Shapes.valueOfOrNull(it.substringAfter("shape:").trim())?.let {
+                                shape = it
+                            }
+                        it.startsWith("showOutline:") ->
+                            it.substringAfter("showOutline:").trim().let {
+                                showOutline = it.toBoolean()
+                            }
                     }
                     mode >= Mode.RADIUS && it.isNotBlank() -> {
                         when (mode) {

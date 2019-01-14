@@ -12,6 +12,7 @@ class Trace(val paint: Paint) {
     // `bitmap` top-left corner - screen top-left corner
     val translation = Matrix() // factor => pre translation
     val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
+    // maybe: cache blitMatrix for performance
     val blitMatrix get() = Matrix(translation).apply { postConcat(motion) }
     private val factor: Int get() = canvasFactor.value // bitmap == (factor ^ 2) * screens
 
@@ -37,5 +38,10 @@ class Trace(val paint: Paint) {
         motion.reset()
         canvas.translate(-dx, -dy)
         initialized = true
+    }
+
+    fun clear() {
+        bitmap.recycle()
+        initialized = false
     }
 }
