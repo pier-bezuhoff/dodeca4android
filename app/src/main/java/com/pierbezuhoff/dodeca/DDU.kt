@@ -1,7 +1,6 @@
 package com.pierbezuhoff.dodeca
 
 import android.graphics.Color
-import android.os.Build
 import android.util.Log
 import org.apache.commons.math3.complex.Complex
 import java.io.File
@@ -69,7 +68,8 @@ class DDU(
         // maybe: use buffered stream
         stream.use { outputStream ->
             val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
-            writeln("Dodeca Look ${Build.VERSION.RELEASE} for Android")
+            val appVersion = "1.1" // TODO: fetch from somewhere
+            writeln("Dodeca Look $appVersion for Android")
             val globals: MutableList<String> = listOf(
                 backgroundColor.fromColor(),
                 *restGlobals.toTypedArray()

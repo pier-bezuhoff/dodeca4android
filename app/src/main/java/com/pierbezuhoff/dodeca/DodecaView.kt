@@ -22,8 +22,9 @@ import kotlin.system.measureTimeMillis
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     // dummy default, actual from init(), because I cannot use lateinit here
     var afterNewDDU: (DDU) -> Unit = {}
-    var ddu: DDU by Delegates.observable(DDU(circles = emptyList()))
-        { _, _, value -> onNewDDU(value); afterNewDDU(value) }
+    private var initialized = false
+    var ddu: DDU by Delegates.vetoable(DDU(circles = emptyList()))
+        { _, _, value -> onNewDDU(value); afterNewDDU(value); true } // before change
     private lateinit var circleGroup: CircleGroup
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var nUpdatesView: TextView? = null
@@ -49,8 +50,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     val centerY: Float get() = y + height / 2
     val center: Complex get() = ComplexFF(centerX, centerY)
 
-    init {
-        Log.i(TAG, "init")
+    private fun init() {
         loadSharedPreferences()
         try {
             val recentDDU by lazy { sharedPreferences.getString("recent_ddu", null) }
@@ -79,7 +79,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private fun centerize(ddu: DDU? = null) {
+    fun centerize(ddu: DDU? = null) {
         // check rotation! or move checking to trace.translation
         val targetDDU: DDU = ddu ?: this.ddu
         if (width > 0) { // we know sizes
@@ -91,7 +91,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun autocenter() {
-//        ddu.bestCenter?.let { centerize(it) }
         val shownCircles = circleGroup.figures.filter(CircleFigure::show)
         val visibleCenter = mean(shownCircles.map { visible(it.center) })
         val (dx, dy) = (center - visibleCenter).asFF()
@@ -108,9 +107,18 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        centerize()
-        if (!trace.initialized)
+        if (!initialized) {
+            initialized = true
+            init()
+        }
+        if (!trace.initialized) {
             retrace()
+        }
+        // when drawTrace off -- rotation is bad
+        else if (!drawTrace.value) {
+            trace.initTranslation(w, h)
+        }
+        centerize()
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -267,8 +275,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun onNewDDU(newDDU: DDU) {
-        if (autosave.value && ddu.file != null)
+        if (autosave.value && ddu.file != null) {
             saveDDU()
+        }
         circleGroup = PrimitiveCircles(newDDU.circles.toMutableList(), paint)
         editing {
             newDDU.file?.let { file -> putString("recent_ddu", file.name) }
@@ -281,7 +290,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         last20NUpdates = nUpdates // some bugs in stat when nUpdates < 0
         lastUpdateTime = System.currentTimeMillis()
         last20UpdateTime = lastUpdateTime
-        centerize(newDDU)
+        if (initialized)
+            centerize(newDDU)
         postInvalidate()
     }
 
@@ -305,6 +315,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     fun saveDDU() {
         val ddu = prepareDDUToSave()
         if (ddu.file == null) {
+            Log.i(TAG, "saveDDU: ddu has no file")
             // then save as
             context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
         }
@@ -320,7 +331,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 context.toast(context.getString(R.string.error_ddu_save_toast))
             }
         }
-        this.ddu.bestCenter = ddu.bestCenter
+        // maybe: set best center
     }
 
     private fun visible(z: Complex): Complex = motion.value.move(z)
@@ -384,7 +395,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         const val dt = 1000f / FPS
         const val updateDt = 1000f / UPS
         private val effectiveMajorPreferences: Set<SharedPreference<*>> = setOf(showAllCircles, autocenterAlways, canvasFactor)
-        private val secondaryMajorPreferences: Set<SharedPreference<*>> = setOf(redrawTraceOnMove, reverseMotion, speed)
+        private val secondaryMajorPreferences: Set<SharedPreference<*>> = setOf(redrawTraceOnMove, reverseMotion, speed, autosave)
         private val majorPreferences: Set<SharedPreference<*>> = effectiveMajorPreferences + secondaryMajorPreferences
         private val minorIndependentPreferences: Set<SharedPreference<*>> = setOf(motion, updating)
         private val minorDDUPreferences: Set<SharedPreference<*>> = setOf(drawTrace, showOutline, shape)

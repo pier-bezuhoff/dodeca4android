@@ -26,6 +26,13 @@ class Trace(val paint: Paint) {
         motion.postScale(sx, sy, x, y)
     }
 
+    fun initTranslation(width: Int, height: Int) {
+        val dx = (1f - factor) * width / 2
+        val dy = (1f - factor) * height / 2
+        translation.reset()
+        translation.preTranslate(dx, dy)
+    }
+
     fun retrace(width: Int, height: Int) {
         bitmap = Bitmap.createBitmap(
             factor * width, factor * height,

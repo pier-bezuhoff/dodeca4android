@@ -81,9 +81,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun afterNewDDU(ddu: DDU) {
-        // update spinner
-//        val default = Shapes.CIRCLE.toString()
-//        val currentShape = defaultSharedPreferences.getString("shape", default)?.toUpperCase() ?: default
         val currentShape = ddu.shape.toString()
         val position: Int = if (currentShape in Shapes.strings) Shapes.strings.indexOf(currentShape) else 0
         shape_spinner.setSelection(position)
@@ -149,7 +146,7 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         updatingBeforePause = updating.value
         dodecaView.change(updating, false)
-        if (autosave.value)
+        if (autosave.value && dodecaView.ddu.file != null)
             dodecaView.saveDDU()
     }
 
