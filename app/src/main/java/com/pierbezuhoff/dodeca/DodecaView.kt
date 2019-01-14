@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Matrix
 import android.graphics.Paint
 import android.preference.PreferenceManager
 import android.util.AttributeSet
@@ -48,8 +47,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     val centerX: Float get() = x + width / 2
     val centerY: Float get() = y + height / 2
+    val center: Complex get() = ComplexFF(centerX, centerY)
 
     init {
+        Log.i(TAG, "init")
         loadSharedPreferences()
         try {
             val recentDDU by lazy { sharedPreferences.getString("recent_ddu", null) }
@@ -90,7 +91,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun autocenter() {
-        val center = ComplexFF(centerX, centerY)
+//        ddu.bestCenter?.let { centerize(it) }
         val shownCircles = circleGroup.figures.filter(CircleFigure::show)
         val visibleCenter = mean(shownCircles.map { visible(it.center) })
         val (dx, dy) = (center - visibleCenter).asFF()
@@ -99,14 +100,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun centerize(newCenter: Complex) {
         val visibleNewCenter = visible(newCenter)
-        val center = ComplexFF(centerX, centerY)
+        val center = trace.translation.move(center)
         Log.i(TAG, "centering $visibleNewCenter -> $center")
-        val (dx, dy) = (visibleNewCenter - center).asFF()
+        val (dx, dy) = (center - visibleNewCenter).asFF()
         updateScroll(dx, dy)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        ddu.bestCenter = ComplexFF(x + oldw / 2, y + oldh / 2)
         super.onSizeChanged(w, h, oldw, oldh)
         centerize()
         if (!trace.initialized)
@@ -266,21 +266,22 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         circleGroup.update(reverseMotion.value)
     }
 
-    private fun onNewDDU(ddu: DDU) {
-        if (autosave.value && this.ddu.circles.isNotEmpty())
+    private fun onNewDDU(newDDU: DDU) {
+        if (autosave.value && ddu.file != null)
             saveDDU()
-        circleGroup = PrimitiveCircles(ddu.circles.toMutableList(), paint)
+        circleGroup = PrimitiveCircles(newDDU.circles.toMutableList(), paint)
         editing {
-            ddu.file?.let { file -> putString("recent_ddu", file.name) }
+            newDDU.file?.let { file -> putString("recent_ddu", file.name) }
             minorIndependentPreferences.forEach { set(it) }
-            minorDDUPreferences.forEach { setFromDDU(ddu, it) }
+            minorDDUPreferences.forEach { setFromDDU(newDDU, it) }
+            minorPreferences.forEach { onChange(it) }
         }
         redrawTraceOnce = drawTrace.value
         nUpdates = 0
         last20NUpdates = nUpdates // some bugs in stat when nUpdates < 0
         lastUpdateTime = System.currentTimeMillis()
         last20UpdateTime = lastUpdateTime
-        centerize(ddu)
+        centerize(newDDU)
         postInvalidate()
     }
 
@@ -295,7 +296,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 it.radius *= scale // = visibleRadius(it.radius)
             }
             drawTrace = _drawTrace
-            bestCenter = ComplexFF(centerX, centerY)
+            bestCenter = trace.translation.move(center)
             shape = _shape
             showOutline = _showOutline
         }
@@ -319,22 +320,34 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 context.toast(context.getString(R.string.error_ddu_save_toast))
             }
         }
+        this.ddu.bestCenter = ddu.bestCenter
     }
 
     private fun visible(z: Complex): Complex = motion.value.move(z)
     private fun visibleRadius(r: Float): Float = motion.value.mapRadius(r)
 
-    fun <T: Any> change(option: SharedPreference<T>, value: T) {
+    fun <T : Any> change(option: SharedPreference<T>, value: T) {
         editing { option.set(value, this) }
-        when(option) {
-            drawTrace -> if (value != drawTrace.value && value as Boolean && width > 0) retrace()
-            updating, showOutline -> postInvalidate()
-        }
-        onNew(option)
+        onChange(option, value)
     }
 
-    // after update of option.value
-    private fun <T: Any> onNew(option: SharedPreference<T>) {
+    // after update of option.value for minorPreferences
+    private fun <T : Any> onChange(option: SharedPreference<T>, value: T = option.value) {
+        when(option) {
+            drawTrace -> if (width > 0) {
+                if (value as Boolean) retrace()
+                else if (trace.initialized) {
+                    trace.clear()
+                    if (!updating.value) postInvalidate()
+                }
+            }
+            updating -> if (value as Boolean) postInvalidate()
+            showOutline -> postInvalidate()
+        }
+    }
+
+    // after update of option.value for effectiveMajorPreferences
+    private fun <T : Any> onNew(option: SharedPreference<T>) {
         when(option) {
             showAllCircles -> postInvalidate()
             autocenterAlways -> if (option.value as Boolean && width > 0) autocenter()
@@ -342,7 +355,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private fun <T: Any> SharedPreferences.Editor.setFromDDU(ddu: DDU, option: SharedPreference<T>) {
+    private fun <T : Any> SharedPreferences.Editor.setFromDDU(ddu: DDU, option: SharedPreference<T>) {
         when(option) {
             drawTrace -> set(drawTrace, ddu.drawTrace)
             shape -> set(shape, ddu.shape)

@@ -2,11 +2,9 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] Bottom bar: 2 rows, more controls from settings
 - [ ] Ddu preview, test new ddus
 - [ ] Best center: works improper (screen rotation)
 - [ ] Add slow speed.
-- [ ] Cyclic shape choosing to bottom bar
 - [ ] Google Play: squares, unknown, promotional video
 - [ ] Autorotate screen in settings (Note: when in settings/help screen rotation works well, maybe just write it in help), check rotation to tranlatate for best center
 - [ ] values/defaults.xml for preferences default
