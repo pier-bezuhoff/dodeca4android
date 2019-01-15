@@ -290,6 +290,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         last20NUpdates = nUpdates // some bugs in stat when nUpdates < 0
         lastUpdateTime = System.currentTimeMillis()
         last20UpdateTime = lastUpdateTime
+        if (newDDU.bestCenter == null)
+            newDDU.bestCenter = center
         if (initialized)
             centerize(newDDU)
         postInvalidate()
@@ -331,7 +333,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 context.toast(context.getString(R.string.error_ddu_save_toast))
             }
         }
-        // maybe: set best center
+        ddu.bestCenter = center
     }
 
     private fun visible(z: Complex): Complex = motion.value.move(z)
@@ -354,6 +356,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
             updating -> if (value as Boolean) postInvalidate()
             showOutline -> postInvalidate()
+            shape -> postInvalidate()
         }
     }
 

@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
@@ -81,9 +82,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun afterNewDDU(ddu: DDU) {
-        val currentShape = ddu.shape.toString()
-        val position: Int = if (currentShape in Shapes.strings) Shapes.strings.indexOf(currentShape) else 0
-        shape_spinner.setSelection(position)
+        shape_spinner.setSelection(ddu.shape.ordinal)
+        mapOf(
+            drawTrace to trace_button,
+            showOutline to outline_button
+        ).forEach { (preference, button) ->
+            setupToggleButtonTint(button, preference.value)
+        }
+        setupPlayButton()
     }
 
     private fun setupToolbar() {
@@ -98,7 +104,7 @@ class MainActivity : AppCompatActivity() {
         with(shape_spinner) {
             TooltipCompat.setTooltipText(this, this.contentDescription)
             adapter = ShapeSpinnerAdapter(context)
-            afterNewDDU(dodecaView.ddu)
+//            afterNewDDU(dodecaView.ddu)
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onNothingSelected(parent: AdapterView<*>?) { showBottomBar() }
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -107,6 +113,20 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private inline fun setupToggleButtonTint(button: ImageButton, value: Boolean) {
+        button.backgroundTintList = ColorStateList.valueOf(getColor(
+            if (value) R.color.darkerToolbarColor
+            else R.color.toolbarColor
+        ))
+    }
+
+    private inline fun setupPlayButton() {
+        play_button.setImageDrawable(getDrawable(
+            if (updating.value) R.drawable.ic_pause
+            else R.drawable.ic_play
+        ))
     }
 
     private fun onToolbarItemClick(id: Int) {
@@ -122,10 +142,10 @@ class MainActivity : AppCompatActivity() {
                 startActivityForResult(intent, DDU_CODE)
             }
             R.id.save_button -> dodecaView.saveDDU()
-            R.id.play_button -> dodecaView.toggle(updating)
+            R.id.play_button -> { dodecaView.toggle(updating); setupPlayButton() }
             R.id.next_step_button -> dodecaView.oneStep()
-            R.id.trace_button -> dodecaView.toggle(drawTrace)
-            R.id.outline_button -> dodecaView.toggle(showOutline)
+            R.id.trace_button -> { dodecaView.toggle(drawTrace); setupToggleButtonTint(trace_button, drawTrace.value) }
+            R.id.outline_button -> { dodecaView.toggle(showOutline); setupToggleButtonTint(outline_button, showOutline.value) }
             // R.id.change_color_button -> ...
             R.id.clear_button -> dodecaView.retrace()
             R.id.autocenter_button -> dodecaView.autocenter()

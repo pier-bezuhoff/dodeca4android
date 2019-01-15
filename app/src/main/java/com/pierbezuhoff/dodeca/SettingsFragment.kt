@@ -1,6 +1,5 @@
 package com.pierbezuhoff.dodeca
 
-import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -42,7 +41,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             editor.apply()
             setupPreferences(rootKey) // a bit recursive, update defaults
         }
-        hooking("support") { sendFeedback(context) }
+        hooking("support") { sendFeedback() }
         SeekBarPreference(context)
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach {
@@ -53,27 +52,27 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun sendFeedback(context: Context?) {
+    private fun sendFeedback() {
         val address = getString(R.string.developer_email) // mine
         val subject = getString(R.string.feedback_subject)
-        val appVersion = context?.packageManager?.getPackageInfo(context.packageName, 0)?.versionName ?: "-"
+        val appVersion = BuildConfig.VERSION_NAME
         val body = """
             |
             |
             |-----------------------------
-            | App version: $appVersion
-            | Device OS: Android
-            | Device OS version: ${Build.VERSION.RELEASE}
-            | Device brand: ${Build.BRAND}
-            | Device model: ${Build.MODEL}
-            | Device manufacturer: ${Build.MANUFACTURER}
+            |App version: $appVersion
+            |Device OS: Android
+            |Device OS version: ${Build.VERSION.RELEASE}
+            |Device brand: ${Build.BRAND}
+            |Device model: ${Build.MODEL}
+            |Device manufacturer: ${Build.MANUFACTURER}
         """.trimMargin()
         email(address, subject, body)
     }
 
     companion object {
         private val ADVANCED_PREFERENCES = setOf(
-            "show_all_circles", "show_centers", /*"rotate_shapes",*/ "speed", "show_stat"
+            "show_all_circles", "show_centers", /*"rotate_shapes",*/ /*"speed",*/ "show_stat"
         )
     }
 }
