@@ -68,8 +68,7 @@ class DDU(
         // maybe: use buffered stream
         stream.use { outputStream ->
             val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
-            val appVersion = "1.1" // TODO: fetch from somewhere
-            writeln("Dodeca Look $appVersion for Android")
+            writeln("Dodeca Look ${BuildConfig.VERSION_NAME} for Android")
             val globals: MutableList<String> = listOf(
                 backgroundColor.fromColor(),
                 *restGlobals.toTypedArray()
