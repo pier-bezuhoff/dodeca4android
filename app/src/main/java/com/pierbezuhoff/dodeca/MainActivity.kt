@@ -19,6 +19,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatImageButton
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
@@ -116,14 +117,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private inline fun setupToggleButtonTint(button: ImageButton, value: Boolean) {
-        button.backgroundTintList = ColorStateList.valueOf(getColor(
+        (button as AppCompatImageButton).supportBackgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
+            this,
             if (value) R.color.darkerToolbarColor
             else R.color.toolbarColor
         ))
     }
 
     private inline fun setupPlayButton() {
-        play_button.setImageDrawable(getDrawable(
+        play_button.setImageDrawable(ContextCompat.getDrawable(
+            this,
             if (updating.value) R.drawable.ic_pause
             else R.drawable.ic_play
         ))
@@ -362,7 +365,8 @@ class MainActivity : AppCompatActivity() {
             context.layoutInflater.inflate(R.layout.shape_spinner_row, parent, false).apply {
                 tag = SpinnerViewHolder(findViewById(R.id.shape_spinner_image))
             }
-            (itemView.tag as SpinnerViewHolder).imageView.setImageDrawable(context.getDrawable(shapes[position]))
+            (itemView.tag as SpinnerViewHolder).imageView.setImageDrawable(
+                ContextCompat.getDrawable(context, shapes[position]))
             return itemView
         }
     }
