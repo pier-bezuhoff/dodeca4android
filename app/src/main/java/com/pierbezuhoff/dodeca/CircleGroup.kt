@@ -4,6 +4,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 
+typealias CircleGroupImpl = PrimitiveCircles
+
 interface CircleGroup {
     val figures: List<CircleFigure>
     fun update(reverse: Boolean = false)
@@ -22,7 +24,7 @@ internal data class Attributes(
 
 // NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times faster
 /* List<Circle> is represented as 3 DoubleArray */
-internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
+class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     private var size: Int = cs.size
     private val xs: DoubleArray = DoubleArray(size) { cs[it].x }
     private val ys: DoubleArray = DoubleArray(size) { cs[it].y }
@@ -84,6 +86,7 @@ internal class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGr
                 draw(i)
     }
 
+    // maybe: for optimization somehow lift if(showOutline) higher
     private inline fun drawCircle(i: Int, canvas: Canvas, showOutline: Boolean = false) {
         val x = oldXs[i].toFloat()
         val y = oldYs[i].toFloat()
