@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.save_button -> dodecaView.saveDDU()
             R.id.play_button -> { dodecaView.toggle(updating); setupPlayButton() }
-            R.id.next_step_button -> dodecaView.oneStep()
+            R.id.next_step_button -> { dodecaView.oneStep(); setupPlayButton() }
             R.id.trace_button -> { dodecaView.toggle(drawTrace); setupToggleButtonTint(trace_button, drawTrace.value) }
             R.id.outline_button -> { dodecaView.toggle(showOutline); setupToggleButtonTint(outline_button, showOutline.value) }
             // R.id.change_color_button -> ...
