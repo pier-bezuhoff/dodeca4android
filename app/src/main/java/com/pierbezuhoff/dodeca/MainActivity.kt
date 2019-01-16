@@ -104,7 +104,7 @@ class MainActivity : AppCompatActivity() {
         with(shape_spinner) {
             TooltipCompat.setTooltipText(this, this.contentDescription)
             adapter = ShapeSpinnerAdapter(context)
-//            afterNewDDU(dodecaView.ddu)
+            setSelection(0)
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onNothingSelected(parent: AdapterView<*>?) { showBottomBar() }
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -159,7 +159,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        updatingBeforePause?.let { dodecaView.change(updating, it) }
+        updatingBeforePause?.let {
+            dodecaView.change(updating, it)
+            setupPlayButton()
+        }
     }
 
     override fun onPause() {
@@ -180,8 +183,10 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             DDU_CODE ->
                 if (resultCode == Activity.RESULT_OK) {
-                    data?.getStringExtra("path")?.let { readPath(it) }
-                    showBottomBar()
+                    data?.getStringExtra("path")?.let {
+                        updatingBeforePause = null
+                        readPath(it)
+                    }
                 }
             APPLY_SETTINGS_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
@@ -202,10 +207,10 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 dodecaView.loadMajorSharedPreferences()
-                showBottomBar()
             }
-            HELP_CODE -> showBottomBar()
+            HELP_CODE -> Unit
         }
+        showBottomBar()
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
     }
 
@@ -242,7 +247,7 @@ class MainActivity : AppCompatActivity() {
                 it.use { input ->
                     FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
                 }
-                if (overwrite) {
+                if (overwrite) {Unit
                     // maybe: show alert dialog
                     Log.i(TAG, "Original ddu was overwritten by imported ddu $name")
                     toast(getString(R.string.imported_ddu_overwrites_original_toast) + " $name")

@@ -69,6 +69,14 @@ class ParsedIntOption(key: String, default: Int) : Option<Int>(key, default) {
     }
 }
 
+class ParsedFloatOption(key: String, default: Float) : Option<Float>(key, default) {
+    override fun peek(sharedPreferences: SharedPreferences): Float =
+        sharedPreferences.getString(key, default.toString())?.toFloat() ?: default
+    override fun put(editor: SharedPreferences.Editor) {
+        editor.putString(key, value.toString())
+    }
+}
+
 // ddu:r -> motion -> visible:r
 val motion = object : SharedPreference<Matrix>(Matrix()) {
     override fun peek(sharedPreferences: SharedPreferences): Matrix {
@@ -108,7 +116,7 @@ val shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
 //val rotateShapes = Option("rotate_shapes", false)
 val autosave = Option("autosave", false)
 val autocenterAlways = Option("autocenter_always", false)
-val speed = ParsedIntOption("speed", 1)
+val speed = ParsedFloatOption("speed", 1f)
 val canvasFactor = ParsedIntOption("canvas_factor", 2)
 val preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences
 

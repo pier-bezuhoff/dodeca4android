@@ -1,6 +1,6 @@
 package com.pierbezuhoff.dodeca
 
-class Sleepy<out T>(val initializer: () -> T) {
+class Sleepy<out T>(private val initializer: () -> T) {
     private var _value: T? = null
     val value: T get() =
         if (_value != null) {

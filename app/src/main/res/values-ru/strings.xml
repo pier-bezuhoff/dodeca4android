@@ -67,5 +67,5 @@
     <string name="shape_image_title">Форма</string>
     <string name="outline_button_title">Показывать абрис</string>
     <string name="autocenter_button_title">Автоцентровка</string>
-    <string name="autosave_title">Автосохранение файла ddu</string>
+    <string name="autosave_title">Автосохранение</string>
 </resources>
