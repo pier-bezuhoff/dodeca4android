@@ -25,6 +25,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     // dummy default, actual from init(), because I cannot use lateinit here
     var afterNewDDU: (DDU) -> Unit = {}
     private var initialized = false
+    // NOTE: used Delegates.vetoable instead of Delegates.observable because the latter handle after-change
     var ddu: DDU by Delegates.vetoable(DDU(circles = emptyList()))
         { _, _, value -> onNewDDU(value); afterNewDDU(value); true } // before change
     private lateinit var circleGroup: CircleGroup
@@ -39,7 +40,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private val trace: Trace = Trace(Paint(defaultPaint))
     private var nUpdates: Long = 0L
 
-    var showStat = true // MainActivity should set up this whenever SharedPreference/show_stat changes
+    // MainActivity should set up this whenever SharedPreference/show_stat changes, maybe use Sleepy or smth
+    var showStat = true
     private var last20NUpdates: Long = 0L
     private var last20UpdateTime: Long = 0L
 
@@ -218,11 +220,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 if (canvasFactor.value > 1) {
                     val nextFactor = canvasFactor.value - 1
                     Log.w(TAG, "too large canvasFactor: ${canvasFactor.value} -> $nextFactor")
-                    context.toast(resources.getString(R.string.canvas_factor_oom_toast).format(canvasFactor.value, nextFactor))
+                    context.toast(context.getString(R.string.canvas_factor_oom_toast).format(canvasFactor.value, nextFactor))
                     editing { canvasFactor.set(nextFactor, this) }
                 } else {
                     Log.e(TAG, "min canvasFactor  ${canvasFactor.value} is too large! Retrying...")
-                    context.toast(resources.getString(R.string.minimal_canvas_factor_oom_toast).format(canvasFactor.value))
+                    context.toast(context.getString(R.string.minimal_canvas_factor_oom_toast).format(canvasFactor.value))
                 }
             }
         }
