@@ -4,6 +4,7 @@ Min version: 4.4 KitKat (28 >= API >= 19)
 # TODO
 - [ ] Ddu preview
 - [ ] Google Play: squares, unknown, promotional video
+- [ ] circle: borderColor, fillColor
 - [ ] Change color (choose from palette on ?double? tap) and save it for further changing
 - [ ] values/defaults.xml for preferences default
 - [ ] Maybe: use [ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel#kotlin) for Trace.Bitmap

@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_dduchooser.*
 import java.io.File
 
@@ -59,8 +60,8 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 }
 
-class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : androidx.recyclerview.widget.RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
-    class DDUViewHolder(val view: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view)
+class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
+    class DDUViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     private var files: Array<File> = dir.listFiles()
 

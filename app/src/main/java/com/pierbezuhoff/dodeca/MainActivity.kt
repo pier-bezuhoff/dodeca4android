@@ -43,7 +43,8 @@ import kotlin.concurrent.timerTask
 class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener {
     private var bottomBarShown = true
     private val dduDir by lazy { File(filesDir, "ddu") }
-    private var bottomBarHideTimer: Timer? = null
+    private var bottomBarHideTimer: FlexibleTimer =
+        FlexibleTimer(1000L * BOTTOM_BAR_HIDE_DELAY) { bar.post { hideBottomBar() } }
     private var updatingBeforePause: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,7 +80,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         dodecaView.time20UpdatesView = updates_20
         dodecaView.afterNewDDU = { afterNewDDU(it) }
         setupToolbar()
-        hideBottomBarAfterAWhile()
+        bottomBarHideTimer.start()
     }
 
     private fun afterNewDDU(ddu: DDU) {
@@ -153,9 +154,8 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                 updatingBeforePause = updating.value
                 if (updating.value)
                     dodecaView.change(updating, false)
-                val dialog = ChooseColorDialog()
-                dialog.dodecaView = dodecaView
-                dialog.show(supportFragmentManager, "ChooseColorDialog")
+                bottomBarHideTimer.stop() // will be restarted in onChooseColorClosed()
+                ChooseColorDialog(this, dodecaView).build().show()
             }
             R.id.clear_button -> dodecaView.retrace()
             R.id.autocenter_button -> dodecaView.autocenter()
@@ -169,6 +169,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
 
     override fun onChooseColorClosed() {
         updatingBeforePause?.let { dodecaView.change(updating, it) }
+        showBottomBar()
     }
 
     override fun onResume() {
@@ -313,26 +314,17 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         }
     }
 
-    private fun hideBottomBarAfterAWhile() {
-        bottomBarHideTimer = Timer("bottomBarHideTimer")
-        bottomBarHideTimer?.schedule(timerTask {
-            bar.post { hideBottomBar() }
-            bottomBarHideTimer = null
-        }, 1000L * BOTTOM_BAR_HIDE_DELAY)
-    }
-
     private fun hideBottomBar() {
         bar.visibility = View.GONE
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
         bottomBarShown = false
-        bottomBarHideTimer?.cancel()
+        bottomBarHideTimer.stop()
     }
 
     private fun showBottomBar() {
-        bottomBarHideTimer?.cancel()
         bar.visibility = View.VISIBLE
         dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
-        hideBottomBarAfterAWhile()
+        bottomBarHideTimer.start()
         bottomBarShown = true
     }
 
@@ -397,3 +389,18 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     }
 }
 
+class FlexibleTimer(val timeMilis: Long, val action: () -> Unit) {
+    private var timer: Timer? = null
+
+    fun start() {
+        timer?.cancel()
+        timer = Timer().apply {
+            schedule(timerTask { action() }, timeMilis)
+        }
+    }
+
+    fun stop() {
+        timer?.cancel()
+        timer = null
+    }
+}
