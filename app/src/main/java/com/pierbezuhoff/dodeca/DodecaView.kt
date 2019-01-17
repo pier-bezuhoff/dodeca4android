@@ -28,7 +28,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     // NOTE: used Delegates.vetoable instead of Delegates.observable because the latter handle after-change
     var ddu: DDU by Delegates.vetoable(DDU(circles = emptyList()))
         { _, _, value -> onNewDDU(value); afterNewDDU(value); true } // before change
-    private lateinit var circleGroup: CircleGroup
+    lateinit var circleGroup: CircleGroup
     val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
     var nUpdatesView: TextView? = null
     var time20UpdatesView: TextView? = null

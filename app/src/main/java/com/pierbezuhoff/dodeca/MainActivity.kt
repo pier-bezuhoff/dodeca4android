@@ -40,7 +40,7 @@ import java.util.Timer
 import kotlin.concurrent.timerTask
 
 @RuntimePermissions
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener {
     private var bottomBarShown = true
     private val dduDir by lazy { File(filesDir, "ddu") }
     private var bottomBarHideTimer: Timer? = null
@@ -149,7 +149,14 @@ class MainActivity : AppCompatActivity() {
             R.id.next_step_button -> { dodecaView.oneStep(); setupPlayButton() }
             R.id.trace_button -> { dodecaView.toggle(drawTrace); setupToggleButtonTint(trace_button, drawTrace.value) }
             R.id.outline_button -> { dodecaView.toggle(showOutline); setupToggleButtonTint(outline_button, showOutline.value) }
-            // R.id.change_color_button -> ...
+            R.id.choose_color_button -> {
+                updatingBeforePause = updating.value
+                if (updating.value)
+                    dodecaView.change(updating, false)
+                val dialog = ChooseColorDialog()
+                dialog.dodecaView = dodecaView
+                dialog.show(supportFragmentManager, "ChooseColorDialog")
+            }
             R.id.clear_button -> dodecaView.retrace()
             R.id.autocenter_button -> dodecaView.autocenter()
             R.id.settings_button -> {
@@ -158,6 +165,10 @@ class MainActivity : AppCompatActivity() {
                     APPLY_SETTINGS_CODE)
             }
         }
+    }
+
+    override fun onChooseColorClosed() {
+        updatingBeforePause?.let { dodecaView.change(updating, it) }
     }
 
     override fun onResume() {
