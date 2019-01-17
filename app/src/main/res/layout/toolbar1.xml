@@ -18,6 +18,16 @@
             android:layout_height="match_parent"
     />
     <ImageButton
+            android:id="@+id/choose_color_button"
+            android:contentDescription="Choose color"
+            android:src="@drawable/ic_choose_color"
+            app:backgroundTint="@color/toolbarColor"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+    />
+    <ImageButton
             android:id="@+id/trace_button"
             android:contentDescription="@string/trace_button_title"
             android:src="@drawable/ic_trace"
