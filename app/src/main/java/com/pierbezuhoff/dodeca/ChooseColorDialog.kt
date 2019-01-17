@@ -9,13 +9,15 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.choose_color_row.view.*
+import kotlinx.android.synthetic.main.color_circle_row.view.*
 
 class ChooseColorDialog(val activity: MainActivity, dodecaView: DodecaView)  {
     private val data: Array<ColorGroup> by lazy {
         dodecaView.circleGroup.figures
+            .filter { it.show }
             .groupBy { it.borderColor }
             .toSortedMap()
-            .map { (color, circle) -> ColorGroup(color, circle) }
+            .map { (color, circles) -> ColorGroup(color, circles) }
             .toTypedArray()
     }
     var listener: ChooseColorListener = activity
@@ -35,9 +37,9 @@ class ChooseColorDialog(val activity: MainActivity, dodecaView: DodecaView)  {
             adapter = colorGroupAdapter
         }
         val dialog = builder.apply {
-            setMessage("Choose circle(s) to change color of it (them)")
+            setMessage("Choose circle to change color of")
             setPositiveButton("Change") { _, _ -> onChooseColor() }
-            setNegativeButton("Cancel") { dialog, _ -> listener.onChooseColorClosed() }
+            setNegativeButton("Cancel") { _, _ -> listener.onChooseColorClosed() }
         }.create()
         dialog.setOnDismissListener { listener.onChooseColorClosed() }
         return dialog
@@ -70,3 +72,23 @@ class ColorGroupAdapter(
 }
 
 data class ColorGroup(val color: Int, val circles: List<CircleFigure>)
+
+class ColorCircleAdapter(
+    private val circles: List<CircleFigure>
+) : RecyclerView.Adapter<ColorCircleAdapter.ViewHolder>() {
+    class ViewHolder(val row: LinearLayout) : RecyclerView.ViewHolder(row)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val row = LayoutInflater.from(parent.context)
+            .inflate(R.layout.color_circle_row, parent, false) as LinearLayout
+        return ViewHolder(row)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val circle = circles[position]
+        holder.row.circle_color.setImageDrawable(ColorDrawable(circle.borderColor))
+        // setup circle
+    }
+
+    override fun getItemCount(): Int = circles.size
+}
