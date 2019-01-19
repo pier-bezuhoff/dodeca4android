@@ -14,5 +14,4 @@ Min version: 4.4 KitKat (28 >= API >= 19)
 - [ ] Google Play: promotional video
 - [ ] Focusing mode: following specific circle
 - [ ] 'Brush' (see C++)
-- [ ] 'Fill' (all?, see C++)
 - [ ] Knot?
