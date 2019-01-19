@@ -1,7 +1,12 @@
 package com.pierbezuhoff.dodeca
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
 import android.util.Log
+import androidx.core.graphics.withMatrix
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.io.InputStream
@@ -98,10 +103,40 @@ class DDU(
         }
     }
 
+    fun preview(width: Int, height: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        // scale?
+        val circleGroup = CircleGroupImpl(circles, paint)
+        val center = Complex((width / 2).toDouble(), (height / 2).toDouble())
+        val bestCenter = bestCenter ?: center
+        val (dx, dy) = (center - bestCenter).asFF()
+        val scale = 0.5f
+        val matrix = Matrix().apply { postTranslate(scale * dx, scale * dy); postScale(scale, scale) }
+        canvas.withMatrix(matrix) {
+            canvas.drawColor(backgroundColor)
+            // load preferences
+            if (drawTrace ?: true) {
+                repeat(previewUpdates) {
+                    circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
+                    circleGroup.update()
+                }
+                circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
+            } else {
+                circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
+            }
+        }
+        return bitmap
+    }
+
     companion object {
         const val defaultBackgroundColor: Int = Color.WHITE
         val defaultShape: Shapes = Shapes.CIRCLE
         const val defaultShowOutline = false
+        // TODO: add to settings
+        // maybe: depends on n of circles in ddu
+        const val previewUpdates = 100
 
         fun readFile(file: File): DDU {
             return readStream(file.inputStream()).apply { this.file = file }
