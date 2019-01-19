@@ -72,7 +72,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     companion object {
         private val ADVANCED_PREFERENCES = setOf(
-            "show_all_circles", "show_centers", /*"rotate_shapes",*/ /*"speed",*/ "show_stat"
+            "show_all_circles", "show_centers", /*"rotate_shapes",*/ "show_stat"
         )
     }
 }
