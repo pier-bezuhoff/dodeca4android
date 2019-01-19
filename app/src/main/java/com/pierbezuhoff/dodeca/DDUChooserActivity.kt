@@ -7,8 +7,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_dduchooser.*
 import java.io.File
 
@@ -29,19 +35,16 @@ class DDUChooserActivity : AppCompatActivity() {
             dduDir = File(it)
         }
         setContentView(R.layout.activity_dduchooser)
-
-        viewManager  = androidx.recyclerview.widget.LinearLayoutManager(this) // type mismatch?
+        val nColumns = 2
+        viewManager  = GridLayoutManager(this, nColumns)
         viewAdapter = DDUAdapter(dduDir, ::onChoose)
         recyclerView = ddu_recycler_view.apply {
             layoutManager = viewManager
             adapter = viewAdapter
-            addItemDecoration(
-                androidx.recyclerview.widget.DividerItemDecoration(
-                    context,
-                    androidx.recyclerview.widget.LinearLayoutManager.VERTICAL
-                )
-            )
-            itemAnimator = androidx.recyclerview.widget.DefaultItemAnimator()
+            // colors and thickness are set from styles.xml
+            addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
+            addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.HORIZONTAL))
+            itemAnimator = DefaultItemAnimator()
         }
     }
 
@@ -59,8 +62,8 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 }
 
-class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : androidx.recyclerview.widget.RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
-    class DDUViewHolder(val view: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view)
+class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
+    class DDUViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     private var files: Array<File> = dir.listFiles()
 
@@ -72,8 +75,15 @@ class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : 
 
     override fun onBindViewHolder(holder: DDUViewHolder, position: Int) {
         val file = files[position]
-        holder.view.findViewById<TextView>(R.id.ddu_entry).text = file.name
-        holder.view.setOnClickListener { onItemClick(file) }
+        with(holder.view) {
+            findViewById<TextView>(R.id.ddu_entry).text = file.name
+            setOnClickListener { onItemClick(file) }
+            val ddu = DDU.readFile(file)
+//            val size: Int = (0.4 * width).roundToInt() // width == height
+            val size = 300
+            findViewById<ImageView>(R.id.ddu_preview).setImageBitmap(ddu.preview(size, size))
+        }
+        // maybe: store preview in DB
     }
 
     override fun getItemCount(): Int = files.size
@@ -88,3 +98,4 @@ class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : 
         }
     }
 }
+

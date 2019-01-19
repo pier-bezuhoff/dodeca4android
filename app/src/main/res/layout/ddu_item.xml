@@ -3,11 +3,17 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="wrap_content">
+    <ImageView
+            android:id="@+id/ddu_preview"
+            android:contentDescription="ddu preview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+    />
     <TextView
             android:id="@+id/ddu_entry"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:padding="10dp"
+            android:textSize="14sp"
+            android:padding="8dp"
     />
 </LinearLayout>
