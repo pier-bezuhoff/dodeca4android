@@ -373,7 +373,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val TAG = "MainActivity"
-        const val LIMITED_VERSION = false
+        const val LIMITED_VERSION = true
         const val BUFFER_SIZE = DEFAULT_BUFFER_SIZE
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
