@@ -15,4 +15,8 @@ class Sleepy<out T>(private val initializer: () -> T) {
         return _value!!
     }
 
+    fun forget() {
+        _value = null
+    }
+
 }
