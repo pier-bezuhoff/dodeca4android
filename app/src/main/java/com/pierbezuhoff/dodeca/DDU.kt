@@ -136,7 +136,7 @@ class DDU(
         const val defaultShowOutline = false
         // TODO: add to settings
         // maybe: depends on n of circles in ddu
-        const val previewUpdates = 100
+        const val previewUpdates = 5 // 100
 
         fun readFile(file: File): DDU {
             return readStream(file.inputStream()).apply { this.file = file }

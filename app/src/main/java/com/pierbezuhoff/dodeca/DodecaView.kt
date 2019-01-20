@@ -140,15 +140,21 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun updateCanvas(canvas: Canvas) {
         val timeToUpdate by lazy { System.currentTimeMillis() - lastUpdateTime >= updateDt.value }
         if (updating.value && timeToUpdate) {
-            val nTimes = speed.value.roundToInt()
-            if (nTimes <= 1) {
+            val times = speed.value.roundToInt()
+            if (times <= 1) {
                 updateCircles()
                 lastUpdateTime = System.currentTimeMillis()
             } else {
-                repeat(nTimes) {
-                    updateCircles()
+                onTraceCanvas { traceCanvas ->
+                    drawCirclesTimes(times, traceCanvas)
+//                    repeat(times) {
+//                        drawCircles(traceCanvas)
+//                        updateCircles()
+//                        circleGroup.update(reverseMotion.value)
+//                    }
                     lastUpdateTime = System.currentTimeMillis()
-                    drawUpdatedCanvas(canvas)
+                    updateStat(times)
+                    // wrong behaviour
                 }
             }
         }
@@ -249,6 +255,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         circleGroup.draw(canvas, shape = shape.value, showAllCircles = showAllCircles.value, showOutline = showOutline.value)
     }
 
+    private inline fun drawCirclesTimes(times: Int, canvas: Canvas) {
+        circleGroup.drawTimes(times, reverseMotion.value, canvas, shape = shape.value, showAllCircles = showAllCircles.value, showOutline = showOutline.value)
+    }
+
     fun oneStep() {
         updateCircles()
         lastUpdateTime = System.currentTimeMillis()
@@ -258,17 +268,22 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private inline fun updateCircles() {
-        nUpdates += if (reverseMotion.value) -1 else 1
+        updateStat(1)
+        circleGroup.update(reverseMotion.value)
+    }
+
+    private inline fun updateStat(times: Int) {
+        nUpdates += times * (if (reverseMotion.value) -1 else 1)
         if (showStat) {
             nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
-            if (nUpdates - last20NUpdates >= 20) {
-                time20UpdatesView?.text = context.getString(R.string.stat_20_updates_per_text)
-                    .format((lastUpdateTime - last20UpdateTime) / 1000f)
+            val overhead = nUpdates - last20NUpdates
+            if (overhead >= 20) {
+                val delta20 = (lastUpdateTime - last20UpdateTime) / (overhead / 20f + 1) / 1000f
+                time20UpdatesView?.text = context.getString(R.string.stat_20_updates_per_text).format(delta20)
                 last20NUpdates = nUpdates
                 last20UpdateTime = lastUpdateTime
             }
         }
-        circleGroup.update(reverseMotion.value)
     }
 
     private fun onNewDDU(newDDU: DDU) {
