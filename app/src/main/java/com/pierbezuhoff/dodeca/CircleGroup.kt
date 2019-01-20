@@ -9,7 +9,12 @@ typealias CircleGroupImpl = PrimitiveCircles
 interface CircleGroup {
     val figures: List<CircleFigure>
     fun update(reverse: Boolean = false)
+    fun updateTimes(times: Int, reverse: Boolean = false)
     fun draw(canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false, showOutline: Boolean = false)
+    fun drawTimes(
+        times: Int,
+        reverse: Boolean,
+        canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false, showOutline: Boolean = false)
 }
 
 internal data class Attributes(
@@ -23,6 +28,7 @@ internal data class Attributes(
 }
 
 // NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times faster
+// maybe: have float old_s
 /* List<Circle> is represented as 3 DoubleArray */
 class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     private var size: Int = cs.size
@@ -48,24 +54,51 @@ class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
             CircleFigure(xs[i], ys[i], rs[i], bc, f, r)
         }
 
-    override fun update(reverse: Boolean) {
+    override fun update(reverse: Boolean) = _update(reverse)
+
+    private inline fun _update(reverse: Boolean) {
+        savingOld {
+            if (reverse) // ~3x slower
+                reversedUpdate()
+            else
+                straightUpdate()
+        }
+    }
+
+    override fun updateTimes(times: Int, reverse: Boolean) {
+        if (reverse) {
+            savingOld { repeat(times) { reversedUpdate() } }
+        } else {
+            savingOld { repeat(times) { straightUpdate() } }
+        }
+    }
+
+    private inline fun savingOld(action: () -> Unit) {
         oldXs = xs.clone()
         oldYs = ys.clone()
         oldRs = rs.clone()
-        if (reverse) // ~3x slower
-            for (i in 0 until size)
-                for (j in rules[i].reversed())
-                    invert(i, j)
-        else
-            for (i in 0 until size)
-                for (j in rules[i])
-                    invert(i, j)
+        action()
         oldXs = xs
         oldYs = ys
         oldRs = rs
     }
 
-    override fun draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean) {
+    private inline fun reversedUpdate() {
+        for (i in 0 until size)
+            for (j in rules[i].reversed())
+                invert(i, j)
+    }
+
+    private inline fun straightUpdate() {
+        for (i in 0 until size)
+            for (j in rules[i])
+                invert(i, j)
+    }
+
+    override fun draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean) =
+        _draw(canvas, shape, showAllCircles, showOutline)
+
+    private inline fun _draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean) {
         // TODO: rotation
         // TODO: show centers
         when (shape) {
@@ -84,6 +117,57 @@ class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
         else
             for (i in shownIndices)
                 draw(i)
+    }
+
+    /* draw; update; draw; update ...; draw
+    * (times + 1) x draw, times x update
+    * times >= 1
+    * some clever inline-magic used
+    * */
+    override fun drawTimes(
+        times: Int,
+        reverse: Boolean,
+        canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean
+    ) {
+        if (reverse)
+            drawTimesU(times, canvas, shape, showAllCircles, showOutline) { reversedUpdate() }
+        else
+            drawTimesU(times, canvas, shape, showAllCircles, showOutline) { straightUpdate() }
+    }
+
+    private inline fun drawTimesU(
+        times: Int,
+        canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean,
+        update: () -> Unit
+    ) {
+        when (shape) {
+            Shapes.CIRCLE -> drawTimesUS(times, showAllCircles, update) { drawCircle(it, canvas, showOutline) }
+            Shapes.SQUARE -> drawTimesUS(times, showAllCircles, update) { drawSquare(it, canvas, showOutline) }
+            Shapes.CROSS -> drawTimesUS(times, showAllCircles, update) { drawCross(it, canvas) }
+            Shapes.VERTICAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawVerticalBar(it, canvas) }
+            Shapes.HORIZONTAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawHorizontalBar(it, canvas) }
+        }
+    }
+
+    private inline fun drawTimesUS(times: Int, showAllCircles: Boolean, update: () -> Unit, draw: (Int) -> Unit) {
+        if (showAllCircles)
+            drawTimesUSA(times, update) {
+                for (i in 0 until size)
+                    draw(i)
+            }
+        else
+            drawTimesUSA(times, update) {
+                for (i in shownIndices)
+                    draw(i)
+            }
+    }
+
+    private inline fun drawTimesUSA(times: Int, update: () -> Unit, drawAll: () -> Unit) {
+        repeat(times) {
+            drawAll()
+            update()
+        }
+        drawAll()
     }
 
     // maybe: for optimization somehow lift if(showOutline) higher
