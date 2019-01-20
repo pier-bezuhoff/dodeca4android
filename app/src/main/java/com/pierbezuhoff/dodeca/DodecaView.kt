@@ -103,7 +103,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun centerize(newCenter: Complex) {
         val visibleNewCenter = visible(newCenter)
-        Log.i(TAG, "centering $visibleNewCenter -> $center")
         val (dx, dy) = (center - visibleNewCenter).asFF()
         updateScroll(dx, dy)
     }
@@ -338,7 +337,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 ddu.file?.let { file ->
                     Log.i(TAG, "Saving ddu at at ${file.path}")
                     ddu.saveStream(file.outputStream())
-                   context.toast(context.getString(R.string.ddu_saved_toast) + " ${file.name}")
+                    context.toast(context.getString(R.string.ddu_saved_toast) + " ${file.name}")
+                    val dduFileDao = DDUFileDatabase.INSTANCE!!.dduFileDao()
+                    val dduFile: DDUFile? = dduFileDao.findByFilename(file.name)
+                    if (dduFile == null)
+                        dduFileDao.insert(DDUFile(file.name, file.name))
+                    else // maybe: store current trace
+                        dduFileDao.update(dduFile.apply { preview = null })
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()
@@ -441,7 +446,7 @@ internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
 // performance measurement
 internal val times: MutableMap<String, Long> = mutableMapOf()
 internal val ns: MutableMap<String, Int> = mutableMapOf()
-internal fun logMeasureTimeMilis(name: String = "", block: () -> Unit) {
+internal inline fun logMeasureTimeMilis(name: String = "", block: () -> Unit) {
     val time = measureTimeMillis(block)
     if (ns.contains(name)) {
         ns[name] = ns[name]!! + 1

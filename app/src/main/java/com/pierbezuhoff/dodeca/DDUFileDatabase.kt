@@ -34,9 +34,9 @@ class BitmapConverter {
 
 @Entity(indices = [Index("filename")])
 data class DDUFile(
-    @ColumnInfo(name = "original_filename") var originalFilename: String,
     @ColumnInfo(name = "filename") var filename: String,
-    @ColumnInfo(name = "preview" /*, typeAffinity = ColumnInfo.BLOB*/) var preview: Bitmap
+    @ColumnInfo(name = "original_filename") var originalFilename: String,
+    @ColumnInfo(name = "preview" /*, typeAffinity = ColumnInfo.BLOB*/) var preview: Bitmap? = null
 ) {
     @PrimaryKey(autoGenerate = true) var uid: Int = 0
 }
