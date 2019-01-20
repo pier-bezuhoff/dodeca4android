@@ -13,7 +13,7 @@ interface CircleGroup {
     fun draw(canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false, showOutline: Boolean = false)
     fun drawTimes(
         times: Int,
-        reverse: Boolean,
+        reverse: Boolean = false,
         canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false, showOutline: Boolean = false)
 }
 
