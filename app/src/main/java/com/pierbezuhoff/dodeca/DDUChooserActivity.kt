@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -24,9 +25,9 @@ import java.io.File
 // MAYBE: link to external folder
 class DDUChooserActivity : AppCompatActivity() {
     private lateinit var dduDir: File
-    private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
-    private lateinit var viewAdapter: androidx.recyclerview.widget.RecyclerView.Adapter<*>
-    private lateinit var viewManager: androidx.recyclerview.widget.RecyclerView.LayoutManager
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var viewAdapter: RecyclerView.Adapter<*>
+    private lateinit var viewManager: RecyclerView.LayoutManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,10 +63,24 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 }
 
-class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
+class DDUAdapter(
+    private var dir: File,
+    private val onChoose: (File) -> Unit
+) : RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
     class DDUViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     private var files: Array<File> = dir.listFiles()
+        .filter { it.extension.toLowerCase() == "ddu" }
+        .toTypedArray()
+    private val dduFileDao: DDUFileDao by lazy { DDUFileDatabase.INSTANCE!!.dduFileDao() }
+    val previews: MutableMap<String, Bitmap?> = mutableMapOf()
+
+    init {
+        // in async task:
+        dduFileDao.getAll().forEach {
+            previews[it.filename] = it.preview
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DDUViewHolder {
         val textView = LayoutInflater.from(parent.context)
@@ -75,15 +90,23 @@ class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : 
 
     override fun onBindViewHolder(holder: DDUViewHolder, position: Int) {
         val file = files[position]
+        val bitmap: Bitmap = previews[file.name] ?: run {
+//            val size: Int = (0.4 * width).roundToInt() // width == height
+            val ddu = DDU.readFile(file)
+            val preview = ddu.preview(PREVIEW_SIZE, PREVIEW_SIZE)
+            previews[file.name] = preview
+            val dduFile: DDUFile? = dduFileDao.findByFilename(file.name)
+            if (dduFile == null)
+                dduFileDao.insert(DDUFile(file.name, file.name, preview))
+            else
+                dduFileDao.update(dduFile.apply { this.preview = preview })
+            preview
+        }
         with(holder.view) {
             findViewById<TextView>(R.id.ddu_entry).text = file.name
             setOnClickListener { onItemClick(file) }
-            val ddu = DDU.readFile(file)
-//            val size: Int = (0.4 * width).roundToInt() // width == height
-            val size = 300
-            findViewById<ImageView>(R.id.ddu_preview).setImageBitmap(ddu.preview(size, size))
+            findViewById<ImageView>(R.id.ddu_preview).setImageBitmap(bitmap)
         }
-        // maybe: store preview in DB
     }
 
     override fun getItemCount(): Int = files.size
@@ -96,6 +119,10 @@ class DDUAdapter(private var dir: File, private val onChoose: (File) -> Unit) : 
         } else {
             onChoose(item)
         }
+    }
+
+    companion object {
+        const val PREVIEW_SIZE = 300
     }
 }
 

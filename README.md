@@ -2,7 +2,7 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] Ddu preview
+- [ ] Generate (async?) ddu previews and store in db; progress dialog; save last bitmap as preview?
 - [ ] circle: borderColor, fillColor
 - [ ] Change color (choose from palette on ?double? tap) and save it for further changing
 - [ ] values/defaults.xml for preferences default

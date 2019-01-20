@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
             dduDir.mkdir()
             extractDDUFromAssets()
         }
+        DDUFileDatabase.init(this)
         window.decorView.apply {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
             setOnSystemUiVisibilityChangeListener {

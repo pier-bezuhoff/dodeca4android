@@ -57,6 +57,6 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.0.1'
     implementation "com.github.hotchemi:permissionsdispatcher:$permission_dispatcher_version"
     kapt "com.github.hotchemi:permissionsdispatcher-processor:$permission_dispatcher_version"
-    //     implementation 'com.google.android.material:material:1.0.0'
-    //     implementation 'com.jaredrummler:colorpicker-compat:1.0.5'
+    implementation "androidx.room:room-runtime:$room_version" // for abstraction over SQLite database
+    kapt "androidx.room:room-compiler:$room_version"
 }
