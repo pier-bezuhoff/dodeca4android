@@ -147,15 +147,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             } else {
                 onTraceCanvas { traceCanvas ->
                     drawCirclesTimes(times, traceCanvas)
-//                    repeat(times) {
-//                        drawCircles(traceCanvas)
-//                        updateCircles()
-//                        circleGroup.update(reverseMotion.value)
-//                    }
-                    lastUpdateTime = System.currentTimeMillis()
-                    updateStat(times)
-                    // wrong behaviour
                 }
+                lastUpdateTime = System.currentTimeMillis()
+                updateStat(times) // wrong behaviour
+                // FIX: wrong stat
             }
         }
         drawUpdatedCanvas(canvas)
@@ -268,17 +263,17 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private inline fun updateCircles() {
-        updateStat(1)
+        updateStat()
         circleGroup.update(reverseMotion.value)
     }
 
-    private inline fun updateStat(times: Int) {
+    private inline fun updateStat(times: Int = 1) {
         nUpdates += times * (if (reverseMotion.value) -1 else 1)
         if (showStat) {
             nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
             val overhead = nUpdates - last20NUpdates
             if (overhead >= 20) {
-                val delta20 = (lastUpdateTime - last20UpdateTime) / (overhead / 20f + 1) / 1000f
+                val delta20 = (lastUpdateTime - last20UpdateTime) / (overhead / 20f) / 1000f
                 time20UpdatesView?.text = context.getString(R.string.stat_20_updates_per_text).format(delta20)
                 last20NUpdates = nUpdates
                 last20UpdateTime = lastUpdateTime
