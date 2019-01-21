@@ -90,6 +90,9 @@
         <!--sample:msbp_interval="1"-->
         <!--sample:msbp_measurementUnit="UPS"-->
         <!--sample:msbp_dialogEnabled="false"/>-->
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="ddu files">
         <Preference
                 android:key="default_ddu"
                 android:title="@string/restore_default_ddu_title" />
