@@ -45,16 +45,17 @@ class MainActivity : AppCompatActivity() {
     private val dduDir by lazy { File(filesDir, "ddu") }
     private var bottomBarHideTimer: Timer? = null
     private var updatingBeforePause: Boolean? = null
+    private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        DDUFileDatabase.init(this)
         // extracting assets
         if (!dduDir.exists()) {
             Log.i(TAG, "Extracting assets into $dduDir")
             dduDir.mkdir()
             extractDDUFromAssets()
         }
-        DDUFileDatabase.init(this)
         window.decorView.apply {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
             setOnSystemUiVisibilityChangeListener {
@@ -346,6 +347,7 @@ class MainActivity : AppCompatActivity() {
         assets.open(source).use { input ->
             FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
         }
+        dduFileDao.insertOrUpdate(name) { it.preview = null; it }
     }
 
     class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {

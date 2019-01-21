@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -17,6 +18,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_dduchooser.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import java.io.File
 
 // TODO: store in sharedPreferences last dir
@@ -72,12 +75,11 @@ class DDUAdapter(
     private var files: Array<File> = dir.listFiles()
         .filter { it.extension.toLowerCase() == "ddu" }
         .toTypedArray()
-    private val dduFileDao: DDUFileDao by lazy { DDUFileDatabase.INSTANCE!!.dduFileDao() }
+    private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
     val previews: MutableMap<String, Bitmap?> = mutableMapOf()
 
     init {
-        // in async task:
-        // use ContentLoadingProgressBar
+        // maybe: in async task; show ContentLoadingProgressBar
         dduFileDao.getAll().forEach {
             previews[it.filename] = it.preview
         }
@@ -91,25 +93,33 @@ class DDUAdapter(
 
     override fun onBindViewHolder(holder: DDUViewHolder, position: Int) {
         val file = files[position]
-        val bitmap: Bitmap = previews[file.name] ?: run {
-            // show progress bar
-            // in async task:
-//            val size: Int = (0.4 * width).roundToInt() // width == height
-            val ddu = DDU.readFile(file)
-            val preview = ddu.preview(PREVIEW_SIZE, PREVIEW_SIZE)
-            previews[file.name] = preview
-            val dduFile: DDUFile? = dduFileDao.findByFilename(file.name)
-            if (dduFile == null)
-                dduFileDao.insert(DDUFile(file.name, file.name, preview))
-            else
-                dduFileDao.update(dduFile.apply { this.preview = preview })
-            preview
-            // hide progress bar
-        }
+        val bitmap: Bitmap? = previews[file.name]
+
+        var preview: ImageView? = null
+        var progressBar: ProgressBar? = null
+        val filename = file.name.removeSuffix(".ddu").removeSuffix(".DDU")
         with(holder.view) {
-            findViewById<TextView>(R.id.ddu_entry).text = file.name
+            findViewById<TextView>(R.id.ddu_entry).text = filename
             setOnClickListener { onItemClick(file) }
-            findViewById<ImageView>(R.id.ddu_preview).setImageBitmap(bitmap)
+            preview = findViewById(R.id.ddu_preview)
+            progressBar = findViewById(R.id.preview_progress)
+        }
+        if (bitmap != null) {
+            preview?.setImageBitmap(bitmap)
+            progressBar?.visibility = View.GONE
+        } else {
+            progressBar?.visibility = View.VISIBLE
+            doAsync {
+                val ddu = DDU.readFile(file)
+                // val size: Int = (0.4 * width).roundToInt() // width == height
+                val bitmap = ddu.preview(PREVIEW_SIZE, PREVIEW_SIZE)
+                previews[file.name] = bitmap
+                dduFileDao.insertOrUpdate(file.name) { it.preview = bitmap; it }
+                uiThread {
+                    preview?.setImageBitmap(bitmap)
+                    progressBar?.visibility = View.GONE
+                }
+            }
         }
     }
 

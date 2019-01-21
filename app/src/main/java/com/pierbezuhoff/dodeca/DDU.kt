@@ -118,16 +118,16 @@ class DDU(
             canvas.drawColor(backgroundColor)
             // load preferences
             if (drawTrace ?: true) {
-                logMeasureTimeMilis("drawTimes") {
-                    circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape, showOutline = showOutline)
-                }
-                logMeasureTimeMilis("raw-drawTimes") {
+//                logMeasureTimeMilis("drawTimes") {
+//                    circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape, showOutline = showOutline)
+//                }
+//                logMeasureTimeMilis("raw-drawTimes") {
                     repeat(previewUpdates) {
                         circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
                         circleGroup.update()
                     }
                     circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
-                }
+//                }
             } else {
                 circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
             }
