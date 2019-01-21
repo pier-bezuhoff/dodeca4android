@@ -22,6 +22,8 @@ import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import java.io.File
 
+typealias Filename = String
+
 // TODO: store in sharedPreferences last dir
 // TODO: preview for ddu
 // TODO: go to parent folder
@@ -76,7 +78,9 @@ class DDUAdapter(
         .filter { it.extension.toLowerCase() == "ddu" }
         .toTypedArray()
     private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
-    val previews: MutableMap<String, Bitmap?> = mutableMapOf()
+    private val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()
+    // when scrolling some views are re-utilized, which causes preview misplacing
+    private val views: MutableMap<Filename, Pair<ImageView?, ProgressBar?>> = mutableMapOf()
 
     init {
         // maybe: in async task; show ContentLoadingProgressBar
@@ -91,36 +95,69 @@ class DDUAdapter(
         return DDUViewHolder(textView)
     }
 
+    private fun getPreviewAndProgressBar(holder: DDUViewHolder): Pair<ImageView?, ProgressBar?> =
+        Pair(holder.view.findViewById(R.id.ddu_preview), holder.view.findViewById(R.id.preview_progress))
+
     override fun onBindViewHolder(holder: DDUViewHolder, position: Int) {
         val file = files[position]
-        val bitmap: Bitmap? = previews[file.name]
-
-        var preview: ImageView? = null
-        var progressBar: ProgressBar? = null
-        val filename = file.name.removeSuffix(".ddu").removeSuffix(".DDU")
+        val filename: Filename = file.name
+        val bitmap: Bitmap? = previews[filename]
         with(holder.view) {
+            val filename = file.name.removeSuffix(".ddu").removeSuffix(".DDU")
             findViewById<TextView>(R.id.ddu_entry).text = filename
             setOnClickListener { onItemClick(file) }
-            preview = findViewById(R.id.ddu_preview)
-            progressBar = findViewById(R.id.preview_progress)
         }
+        val (preview, progressBar) = getPreviewAndProgressBar(holder)
         if (bitmap != null) {
             preview?.setImageBitmap(bitmap)
             progressBar?.visibility = View.GONE
+            views[filename] = Pair(null, null)
         } else {
             progressBar?.visibility = View.VISIBLE
-            doAsync {
-                val ddu = DDU.readFile(file)
-                // val size: Int = (0.4 * width).roundToInt() // width == height
-                val bitmap = ddu.preview(PREVIEW_SIZE, PREVIEW_SIZE)
-                previews[file.name] = bitmap
-                dduFileDao.insertOrUpdate(file.name) { it.preview = bitmap; it }
+            preview?.visibility = View.GONE
+            views[filename] = Pair(preview, progressBar)
+            buildPreviewAsync(file)
+        }
+    }
+
+    private fun buildPreviewAsync(file: File) {
+        Log.i("DDUAdapter", "buildPreviewAsync($file)")
+        // BUG: after loading, wrong views are set
+        doAsync {
+            val ddu = DDU.readFile(file)
+            // val size: Int = (0.4 * width).roundToInt() // width == height
+            val bitmap = ddu.preview(PREVIEW_SIZE, PREVIEW_SIZE)
+            previews[file.name] = bitmap
+            dduFileDao.insertOrUpdate(file.name) { it.preview = bitmap; it }
+            val pair = views[file.name]
+            pair?.let { (preview, progressBar) ->
                 uiThread {
                     preview?.setImageBitmap(bitmap)
+                    preview?.visibility = View.VISIBLE
                     progressBar?.visibility = View.GONE
                 }
             }
         }
+    }
+
+    private fun detachHolder(holder: DDUViewHolder) {
+        val (preview, _) = getPreviewAndProgressBar(holder)
+        preview?.let {
+            val affected = views
+                .filter { (_, pair) -> pair.first == it }
+                .map { (filename, _) -> filename }
+            affected.forEach { views[it] = Pair(null, null) }
+        }
+    }
+
+    override fun onViewRecycled(holder: DDUViewHolder) {
+        detachHolder(holder)
+        super.onViewRecycled(holder)
+    }
+
+    override fun onViewDetachedFromWindow(holder: DDUViewHolder) {
+        detachHolder(holder)
+        super.onViewDetachedFromWindow(holder)
     }
 
     override fun getItemCount(): Int = files.size
