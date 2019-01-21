@@ -60,7 +60,7 @@ interface DDUFileDao {
     @Delete fun delete(dduFile: DDUFile)
 }
 
-@Database(entities = [DDUFile::class], version = 1)
+@Database(entities = [DDUFile::class], version = 2)
 @TypeConverters(BitmapConverter::class)
 abstract class DDUFileDatabase : RoomDatabase() {
     abstract fun dduFileDao(): DDUFileDao

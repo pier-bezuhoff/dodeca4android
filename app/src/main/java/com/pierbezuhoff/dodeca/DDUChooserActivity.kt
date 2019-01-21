@@ -77,6 +77,7 @@ class DDUAdapter(
 
     init {
         // in async task:
+        // use ContentLoadingProgressBar
         dduFileDao.getAll().forEach {
             previews[it.filename] = it.preview
         }
@@ -91,6 +92,8 @@ class DDUAdapter(
     override fun onBindViewHolder(holder: DDUViewHolder, position: Int) {
         val file = files[position]
         val bitmap: Bitmap = previews[file.name] ?: run {
+            // show progress bar
+            // in async task:
 //            val size: Int = (0.4 * width).roundToInt() // width == height
             val ddu = DDU.readFile(file)
             val preview = ddu.preview(PREVIEW_SIZE, PREVIEW_SIZE)
@@ -101,6 +104,7 @@ class DDUAdapter(
             else
                 dduFileDao.update(dduFile.apply { this.preview = preview })
             preview
+            // hide progress bar
         }
         with(holder.view) {
             findViewById<TextView>(R.id.ddu_entry).text = file.name
