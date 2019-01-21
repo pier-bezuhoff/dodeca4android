@@ -3,16 +3,27 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="wrap_content">
+    <ProgressBar
+            android:id="@+id/preview_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:progressDrawable="@drawable/circular_progress_bar"
+    />
+    <!--android:visibility="gone"-->
+    <!--style="?android:attr/progressBarStyleLarge"-->
     <ImageView
             android:id="@+id/ddu_preview"
             android:contentDescription="ddu preview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
     />
     <TextView
             android:id="@+id/ddu_entry"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:textSize="14sp"
             android:padding="8dp"
     />
