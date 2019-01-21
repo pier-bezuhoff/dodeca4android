@@ -60,6 +60,14 @@ interface DDUFileDao {
     @Delete fun delete(dduFile: DDUFile)
 }
 
+fun DDUFileDao.insertOrUpdate(filename: String, action: (DDUFile) -> DDUFile) {
+    val dduFile: DDUFile? = findByFilename(filename)
+    if (dduFile != null)
+        update(action(dduFile))
+    else
+        insert(action(DDUFile(filename = filename, originalFilename = filename)))
+}
+
 @Database(entities = [DDUFile::class], version = 2)
 @TypeConverters(BitmapConverter::class)
 abstract class DDUFileDatabase : RoomDatabase() {
@@ -71,11 +79,12 @@ abstract class DDUFileDatabase : RoomDatabase() {
             if (INSTANCE == null)
                 synchronized(DDUFileDatabase) {
                     if (INSTANCE == null)
-                        INSTANCE = Room.databaseBuilder(
-                            context, DDUFileDatabase::class.java, "ddu-files"
-                        ).allowMainThreadQueries().build()
+                        INSTANCE = Room.databaseBuilder(context, DDUFileDatabase::class.java, "ddu-files")
+                            .allowMainThreadQueries()
+                            .build()
                 }
         }
     }
 }
 
+val DB: DDUFileDatabase by lazy { DDUFileDatabase.INSTANCE!! }

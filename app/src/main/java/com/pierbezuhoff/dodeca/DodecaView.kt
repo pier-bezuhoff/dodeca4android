@@ -12,6 +12,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.core.graphics.withMatrix
 import org.apache.commons.math3.complex.Complex
+import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import java.io.File
 import kotlin.concurrent.fixedRateTimer
@@ -326,28 +327,25 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun saveDDU() {
-        val ddu = prepareDDUToSave()
-        if (ddu.file == null) {
-            Log.i(TAG, "saveDDU: ddu has no file")
-            // then save as
-            context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
-        }
-        else { // maybe: run in background
-            try {
-                ddu.file?.let { file ->
-                    Log.i(TAG, "Saving ddu at at ${file.path}")
-                    ddu.saveStream(file.outputStream())
-                    context.toast(context.getString(R.string.ddu_saved_toast) + " ${file.name}")
-                    val dduFileDao = DDUFileDatabase.INSTANCE!!.dduFileDao()
-                    val dduFile: DDUFile? = dduFileDao.findByFilename(file.name)
-                    if (dduFile == null)
-                        dduFileDao.insert(DDUFile(file.name, file.name))
-                    else // maybe: store current trace
-                        dduFileDao.update(dduFile.apply { preview = null })
+        doAsync {
+            val ddu = prepareDDUToSave()
+            if (ddu.file == null) {
+                Log.i(TAG, "saveDDU: ddu has no file")
+                // then save as
+                context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
+            } else { // maybe: run in background
+                try {
+                    ddu.file?.let { file ->
+                        Log.i(TAG, "Saving ddu at at ${file.path}")
+                        ddu.saveStream(file.outputStream())
+                        context.toast(context.getString(R.string.ddu_saved_toast) + " ${file.name}")
+                        // maybe: store current trace
+                        DB.dduFileDao().insertOrUpdate(file.name) { it.preview = null; it }
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    context.toast(context.getString(R.string.error_ddu_save_toast))
                 }
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                context.toast(context.getString(R.string.error_ddu_save_toast))
             }
         }
     }
