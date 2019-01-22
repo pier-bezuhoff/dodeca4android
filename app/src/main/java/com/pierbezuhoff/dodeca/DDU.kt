@@ -11,6 +11,8 @@ import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 internal enum class Mode { // for scanning .ddu, before <mode parameter>
     NO, GLOBAL, RADIUS, X, Y, BORDER_COLOR, FILL, RULE, CIRCLE_AUX;
@@ -50,6 +52,12 @@ class DDU(
     var circles: List<CircleFigure> = emptyList(),
     var file: File? = null
 ) {
+
+    val complexity: Int get() = circles.sumBy { it.rule?.length ?: 0 }
+    private val nSmartUpdates: Int
+        get() = (minPreviewUpdates + nPreviewUpdates.value * 20 / sqrt(1.0 + complexity)).roundToInt()
+    private val nUpdates: Int // for preview
+        get() = if (previewSmartUpdates.value) nSmartUpdates else nPreviewUpdates.value
 
     // NOTE: copy(newRule = null) resolves overload ambiguity
     fun copy() =
@@ -107,22 +115,22 @@ class DDU(
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        // scale?
         val circleGroup = CircleGroupImpl(circles, paint)
         val center = Complex((width / 2).toDouble(), (height / 2).toDouble())
         val bestCenter = bestCenter ?: center
         val (dx, dy) = (center - bestCenter).asFF()
-        val scale = 0.5f
-        val matrix = Matrix().apply { postTranslate(scale * dx, scale * dy); postScale(scale, scale) }
+        val (centerX, centerY) = center.asFF()
+        val matrix = Matrix().apply { postTranslate(dx, dy); postScale(previewScale, previewScale, centerX, centerY) }
         canvas.withMatrix(matrix) {
             canvas.drawColor(backgroundColor)
             // load preferences
             if (drawTrace ?: true) {
+                // TODO: understand, why drawTimes is slower and diverges
 //                logMeasureTimeMilis("drawTimes") {
 //                    circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape, showOutline = showOutline)
 //                }
 //                logMeasureTimeMilis("raw-drawTimes") {
-                    repeat(previewUpdates) {
+                    repeat(nUpdates) {
                         circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
                         circleGroup.update()
                     }
@@ -132,6 +140,7 @@ class DDU(
                 circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
             }
         }
+        Log.i("DDU", "(${file?.name}).preview, complexity = $complexity, nUpdates = $nUpdates")
         return bitmap
     }
 
@@ -139,9 +148,8 @@ class DDU(
         const val defaultBackgroundColor: Int = Color.WHITE
         val defaultShape: Shapes = Shapes.CIRCLE
         const val defaultShowOutline = false
-        // TODO: add to settings
-        // maybe: depends on n of circles in ddu
-        const val previewUpdates = 100
+        const val minPreviewUpdates = 10
+        const val previewScale = 0.5f
 
         fun readFile(file: File): DDU {
             return readStream(file.inputStream()).apply { this.file = file }

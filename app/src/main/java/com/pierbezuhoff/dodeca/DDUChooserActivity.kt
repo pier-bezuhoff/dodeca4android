@@ -78,6 +78,11 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     private var columnWidth: Int? = null
 
     init {
+        // maybe: customize for different screens in res/values/dimens.xml:
+        // <resources>
+        //    <dimen name="column_width">320dp</dimen>
+        // </resources>
+        // or better customize preview size
         context.withStyledAttributes(attrs, intArrayOf(android.R.attr.columnWidth), defStyleAttr) {
             getDimensionPixelSize(0, -1).let {
                 columnWidth = if (it == -1) null else it
@@ -87,15 +92,14 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthSpec: Int, heightSpec: Int) {
-        Log.i("AutofitGridRecyclerView", "onMeasure, columnWidth = $columnWidth")
         super.onMeasure(widthSpec, heightSpec)
-        val spanCount = Math.max(1, measuredWidth / (columnWidth ?: defaultColumnWidth))
-        Log.i("AutofitGridRecyclerView", "spanCount = $spanCount")
+        val spanCount = Math.max(minNColumns, measuredWidth / (columnWidth ?: defaultColumnWidth))
         manager.spanCount = spanCount
     }
 
     companion object {
         const val defaultNColumns = 2
+        const val minNColumns = 1 // I'd like at least 2, check on small phones
         const val defaultColumnWidth = 16 + DDUAdapter.PREVIEW_SIZE
     }
 }
@@ -149,7 +153,8 @@ class DDUAdapter(
     }
 
     private fun buildPreviewAsync(file: File, preview: ImageView, progressBar: ProgressBar) {
-        Log.i("DDUAdapter", "buildPreviewAsync($file)")
+        // ?BUG?: eternal loading
+        // maybe: use some sync primitives
         if (file.name !in building) {
             building.add(file.name)
             doAsync {
@@ -180,7 +185,7 @@ class DDUAdapter(
     }
 
     companion object {
-        const val PREVIEW_SIZE = 300
+        const val PREVIEW_SIZE = 300 // maybe: customize in res/values/dimens.xml
         const val TAG = "DDUAdapter"
     }
 }

@@ -1,7 +1,11 @@
 package com.pierbezuhoff.dodeca
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Matrix
+import androidx.core.content.res.ResourcesCompat
+
+lateinit var resourcesCompat: ResourcesCompat
 
 abstract class SharedPreference<T>(val default: T) where T : Any {
     var value = default
@@ -35,6 +39,8 @@ open class Option<T>(val key: String, default: T) : SharedPreference<T>(default)
     override fun equals(other: Any?): Boolean = other is Option<*> && other.key == key
     override fun hashCode(): Int = key.hashCode()
     override fun toString(): String = "Option '$key': $value (default $default)"
+
+    constructor(key: String, lazyDefault: ResourcesCompat.() -> T) : this(key, resourcesCompat.lazyDefault())
 
     override fun peek(sharedPreferences: SharedPreferences): T = when (default) {
         is Boolean -> sharedPreferences.getBoolean(key, default) as T
@@ -100,7 +106,7 @@ val motion = object : SharedPreference<Matrix>(Matrix()) {
 }
 val drawTrace = Option("draw_trace", true)
 val updating = Option("updating", true)
-val redrawTraceOnMove = Option("redraw_trace", false)
+val redrawTraceOnMove = Option("redraw_trace", { Context,a })
 val showAllCircles = Option("show_all_circles", false)
 //val showCenters = Option("show_centers", false)
 val showOutline = Option("show_outline", false)
@@ -119,6 +125,9 @@ val autocenterAlways = Option("autocenter_always", false)
 val speed = ParsedFloatOption("speed", 1f)
 val canvasFactor = ParsedIntOption("canvas_factor", 2)
 val preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences
+val previewSize = ParsedIntOption("preview_size", 300)
+val nPreviewUpdates = ParsedIntOption("n_preview_updates", 100)
+val previewSmartUpdates = Option("preview_smart_updates", true)
 
 fun <T: Any> SharedPreferences.fetch(
     preference: SharedPreference<T>,
