@@ -9,7 +9,7 @@
 
         <SwitchPreference
                 android:key="redraw_trace"
-                android:defaultValue="false"
+                android:defaultValue="@defaults/redraw_trace"
                 android:title="@string/redraw_trace_title"
                 android:summary="@string/redraw_trace_summary"/>
         <!-- NOTE: advanced -->
@@ -102,6 +102,18 @@
         <Preference
                 android:key="default"
                 android:title="@string/restore_defaults_title" />
+        <PreferenceCategory android:title="Preview">
+            <Preference
+                    android:key="discard_previews"
+                    android:title="Discard previews"
+                    android:summary="Forget all previews"
+            />
+            <SwitchPreference
+                    android:key="preview_smart_updates"
+                    android:title="Smart updates"
+                    android:summary="Number of updates will depend on ddu complexity"
+            />
+        </PreferenceCategory>
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_about_title">

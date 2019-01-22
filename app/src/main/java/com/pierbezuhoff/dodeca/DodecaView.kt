@@ -251,6 +251,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private inline fun drawCirclesTimes(times: Int, canvas: Canvas) {
         circleGroup.drawTimes(times, reverseMotion.value, canvas, shape = shape.value, showAllCircles = showAllCircles.value, showOutline = showOutline.value)
+//        repeat(times) {
+//            drawCircles(canvas)
+//            circleGroup.update(reverseMotion.value)
+//        }
+//        drawCircles(canvas)
     }
 
     fun oneStep() {
