@@ -22,6 +22,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         mapOf(
             "canvas_factor" to R.string.canvas_factor_summary,
             "speed" to R.string.speed_summary
+            // preview_size, n_preview_updates
         ).forEach { (key, summaryResource) ->
             findPreference<ListPreference>(key)?.summaryProvider =
                 Preference.SummaryProvider<ListPreference> { preference ->
@@ -31,7 +32,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val hooking = { param: String, action: (String) -> Unit ->
             findPreference<Preference>(param)?.setOnPreferenceClickListener { action(param); true }
         }
-        setOf("default_ddu", "default_ddus").forEach {
+        setOf("default_ddu", "default_ddus", "discard_previews").forEach {
             hooking(it) { settingsActivity?.resultIntent?.putExtra(it, true) }
         }
         hooking("default") {
@@ -72,7 +73,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     companion object {
         private val ADVANCED_PREFERENCES = setOf(
-            "show_all_circles", "show_centers", /*"rotate_shapes",*/ "show_stat"
+            "show_all_circles", /*"show_centers",*/ /*"rotate_shapes",*/ "show_stat"
         )
     }
 }

@@ -9,13 +9,13 @@
 
         <SwitchPreference
                 android:key="redraw_trace"
-                android:defaultValue="@defaults/redraw_trace"
+                android:defaultValue="@bool/redraw_trace"
                 android:title="@string/redraw_trace_title"
                 android:summary="@string/redraw_trace_summary"/>
         <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_all_circles"
-                android:defaultValue="false"
+                android:defaultValue="@bool/show_all_circles"
                 android:title="@string/show_all_circles_title"
                 android:summary="@string/show_all_circles_summary"
         />
@@ -35,17 +35,17 @@
         <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="reverse_motion"
-                android:defaultValue="false"
+                android:defaultValue="@bool/reverse_motion"
                 android:title="@string/reverse_motion"
         />
         <SwitchPreference
                 android:key="autocenter_always"
-                android:defaultValue="false"
+                android:defaultValue="@bool/autocenter_always"
                 android:title="@string/always_autocenter_title"
                 android:summary="@string/always_autocenter_summary" />
         <ListPreference
                 android:key="canvas_factor"
-                android:defaultValue="2"
+                android:defaultValue="@string/canvas_factor"
                 android:entries="@array/canvas_factors"
                 android:entryValues="@array/canvas_factors"
                 android:title="@string/canvas_factor_title"
@@ -53,7 +53,7 @@
         <!-- NOTE: advanced -->
         <ListPreference
                 android:key="speed"
-                android:defaultValue="1"
+                android:defaultValue="@string/speed"
                 android:entries="@array/speeds"
                 android:entryValues="@array/speeds"
                 android:title="@string/speed_title"
@@ -61,7 +61,7 @@
         />
         <SwitchPreference
                 android:key="autosave"
-                android:defaultValue="false"
+                android:defaultValue="@bool/autosave"
                 android:title="@string/autosave_title"
         />
         <!-- NOTE: advanced -->
@@ -75,7 +75,7 @@
         <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_stat"
-                android:defaultValue="false"
+                android:defaultValue="@bool/show_stat"
                 android:title="@string/show_stat_title"
         />
         <!-- MAYBE: delete -->
@@ -102,18 +102,33 @@
         <Preference
                 android:key="default"
                 android:title="@string/restore_defaults_title" />
-        <PreferenceCategory android:title="Preview">
-            <Preference
-                    android:key="discard_previews"
-                    android:title="Discard previews"
-                    android:summary="Forget all previews"
-            />
-            <SwitchPreference
-                    android:key="preview_smart_updates"
-                    android:title="Smart updates"
-                    android:summary="Number of updates will depend on ddu complexity"
-            />
-        </PreferenceCategory>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Preview">
+        <Preference
+                android:key="discard_previews"
+                android:title="Discard previews"
+        />
+        <ListPreference
+                android:key="preview_size"
+                android:defaultValue="@string/preview_size"
+                android:entries="@array/preview_sizes"
+                android:entryValues="@array/preview_sizes"
+                android:title="Preview size"
+        />
+        <ListPreference
+                android:key="n_preview_updates"
+                android:defaultValue="@string/n_preview_updates"
+                android:entries="@array/preview_updates"
+                android:entryValues="@array/preview_updates"
+                android:title="Preview updates"
+                android:summary="Number of updates to draw preview"
+        />
+        <SwitchPreference
+                android:key="preview_smart_updates"
+                android:title="Smart updates"
+                android:summary="Number of updates will depend on ddu complexity"
+        />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_about_title">

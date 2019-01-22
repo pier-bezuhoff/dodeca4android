@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Options(resources)
         DDUFileDatabase.init(this)
         // extracting assets
         if (!dduDir.exists()) {
@@ -87,8 +88,8 @@ class MainActivity : AppCompatActivity() {
     private fun afterNewDDU(ddu: DDU) {
         shape_spinner.setSelection(ddu.shape.ordinal)
         mapOf(
-            drawTrace to trace_button,
-            showOutline to outline_button
+            options.drawTrace to trace_button,
+            options.showOutline to outline_button
         ).forEach { (preference, button) ->
             setupToggleButtonTint(button, preference.value)
         }
@@ -111,7 +112,7 @@ class MainActivity : AppCompatActivity() {
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onNothingSelected(parent: AdapterView<*>?) { showBottomBar() }
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    dodecaView.change(shape, Shapes.indexOrFirst(id.toInt()))
+                    dodecaView.change(options.shape, Shapes.indexOrFirst(id.toInt()))
                     showBottomBar()
                 }
             }
@@ -129,7 +130,7 @@ class MainActivity : AppCompatActivity() {
     private inline fun setupPlayButton() {
         play_button.setImageDrawable(ContextCompat.getDrawable(
             this,
-            if (updating.value) R.drawable.ic_pause
+            if (options.updating.value) R.drawable.ic_pause
             else R.drawable.ic_play
         ))
     }
@@ -147,10 +148,10 @@ class MainActivity : AppCompatActivity() {
                 startActivityForResult(intent, DDU_CODE)
             }
             R.id.save_button -> dodecaView.saveDDU()
-            R.id.play_button -> { dodecaView.toggle(updating); setupPlayButton() }
+            R.id.play_button -> { dodecaView.toggle(options.updating); setupPlayButton() }
             R.id.next_step_button -> { dodecaView.oneStep(); setupPlayButton() }
-            R.id.trace_button -> { dodecaView.toggle(drawTrace); setupToggleButtonTint(trace_button, drawTrace.value) }
-            R.id.outline_button -> { dodecaView.toggle(showOutline); setupToggleButtonTint(outline_button, showOutline.value) }
+            R.id.trace_button -> { dodecaView.toggle(options.drawTrace); setupToggleButtonTint(trace_button, options.drawTrace.value) }
+            R.id.outline_button -> { dodecaView.toggle(options.showOutline); setupToggleButtonTint(outline_button, options.showOutline.value) }
             // R.id.change_color_button -> ...
             R.id.clear_button -> dodecaView.retrace()
             R.id.autocenter_button -> dodecaView.autocenter()
@@ -165,16 +166,16 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updatingBeforePause?.let {
-            dodecaView.change(updating, it)
+            dodecaView.change(options.updating, it)
             setupPlayButton()
         }
     }
 
     override fun onPause() {
         super.onPause()
-        updatingBeforePause = updating.value
-        dodecaView.change(updating, false)
-        if (autosave.value && dodecaView.ddu.file != null)
+        updatingBeforePause = options.updating.value
+        dodecaView.change(options.updating, false)
+        if (options.autosave.value && dodecaView.ddu.file != null)
             dodecaView.saveDDU()
     }
 
@@ -209,6 +210,9 @@ class MainActivity : AppCompatActivity() {
                     having("default_ddus") {
                         extractDDUFromAssets()
                         dodecaView.ddu.file?.let { file -> dodecaView.ddu = DDU.readFile(file) }
+                    }
+                    having("discard_previews") {
+                        dduFileDao.getAll().forEach { dduFileDao.update(it.apply { preview = null }) }
                     }
                 }
                 dodecaView.loadMajorSharedPreferences()
