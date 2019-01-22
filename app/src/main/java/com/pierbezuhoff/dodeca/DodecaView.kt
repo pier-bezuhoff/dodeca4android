@@ -33,7 +33,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     var nUpdatesView: TextView? = null
     var time20UpdatesView: TextView? = null
 
-    private var redrawTraceOnce: Boolean = drawTrace.default
+    private var redrawTraceOnce: Boolean = options.drawTrace.default
     private var lastUpdateTime: Long = 0L
     private var updateOnce = false
     private val paint = Paint(defaultPaint)
@@ -45,9 +45,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var last20NUpdates: Long = 0L
     private var last20UpdateTime: Long = 0L
 
-    val dx get() = motion.value.dx
-    val dy get() = motion.value.dy
-    val scale get() = motion.value.sx
+    val dx get() = options.motion.value.dx
+    val dy get() = options.motion.value.dy
+    val scale get() = options.motion.value.sx
     var pickedColor: Int? = null
 
     val centerX: Float get() = x + width / 2
@@ -58,7 +58,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         loadSharedPreferences()
         try {
             val recentDDU by lazy { sharedPreferences.getString("recent_ddu", null) }
-            val filename = if (preferRecentDDU.value && recentDDU != null) recentDDU else DEFAULT_DDU_FILENAME
+            val filename = if (options.preferRecentDDU.value && recentDDU != null) recentDDU else DEFAULT_DDU_FILENAME
             val dduFile = File(File(context.filesDir, "ddu"), filename)
             this.ddu = DDU.readFile(dduFile)
         } catch (e: Exception) {
@@ -66,7 +66,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             this.ddu = exampleDDU
         }
         fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
-            if (updating.value) // maybe: store in _updating field
+            if (options.updating.value) // maybe: store in _options.updating field
                 postInvalidate()
         }
     }
@@ -87,7 +87,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         // must occur BEFORE retrace
         val targetDDU: DDU = ddu ?: this.ddu
         if (width > 0) { // we know sizes
-            if (autocenterAlways.value)
+            if (options.autocenterAlways.value)
                 autocenter()
             else if (targetDDU.bestCenter != null)
                 centerize(targetDDU.bestCenter!!)
@@ -121,14 +121,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         super.onDraw(canvas)
         canvas?.let {
             when {
-                updating.value -> updateCanvas(canvas)
+                options.updating.value -> updateCanvas(canvas)
                 updateOnce -> {
                     updateCanvas(canvas)
                     updateOnce = false
                 }
-                drawTrace.value -> drawTraceCanvas(canvas)
+                options.drawTrace.value -> drawTraceCanvas(canvas)
                 else -> onCanvas(canvas) {
-                    // pause and no drawTrace
+                    // pause and no options.drawTrace
                     drawBackground(it)
                     drawCircles(it)
                 }
@@ -138,8 +138,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun updateCanvas(canvas: Canvas) {
         val timeToUpdate by lazy { System.currentTimeMillis() - lastUpdateTime >= updateDt.value }
-        if (updating.value && timeToUpdate) {
-            val times = speed.value.roundToInt()
+        if (options.updating.value && timeToUpdate) {
+            val times = options.speed.value.roundToInt()
             if (times <= 1) {
                 updateCircles()
                 lastUpdateTime = System.currentTimeMillis()
@@ -156,7 +156,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private inline fun drawUpdatedCanvas(canvas: Canvas) {
-        if (drawTrace.value) {
+        if (options.drawTrace.value) {
             onTraceCanvas {
                 upon(::redrawTraceOnce) { drawBackground(it) }
                 drawCircles(it)
@@ -170,37 +170,37 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    /* scroll/translate screen and drawTrace */
+    /* scroll/translate screen and options.drawTrace */
     fun updateScroll(ddx: Float, ddy: Float) {
-        motion.value.postTranslate(ddx, ddy)
+        options.motion.value.postTranslate(ddx, ddy)
         updatingTrace { trace.translate(ddx, ddy) }
     }
 
-    /* scale screen and drawTrace */
+    /* scale screen and options.drawTrace */
     fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
-        motion.value.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
+        options.motion.value.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
         updatingTrace { trace.scale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
     }
 
-    /* when drawTrace: retrace if should do it on move, else do [action] */
+    /* when options.drawTrace: retrace if should do it on move, else do [action] */
     private inline fun updatingTrace(action: () -> Unit) {
-        if (drawTrace.value) {
-            if (redrawTraceOnMove.value)
+        if (options.drawTrace.value) {
+            if (options.redrawTraceOnMove.value)
                 retrace()
             else {
                 action()
                 invalidate()
             }
-        } else if (!updating.value)
+        } else if (!options.updating.value)
             invalidate()
     }
 
-    /* when drawTrace turns on or sizes change */
+    /* when options.drawTrace turns on or sizes change */
     fun retrace() {
         tryRetrace()
-        trace.canvas.concat(motion.value)
-        redrawTraceOnce = drawTrace.value
-        if (!updating.value) {
+        trace.canvas.concat(options.motion.value)
+        redrawTraceOnce = options.drawTrace.value
+        if (!options.updating.value) {
             onTraceCanvas {
                 drawBackground(it)
                 drawCircles(it)
@@ -217,26 +217,27 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 done = true
             } catch (e: OutOfMemoryError) {
                 e.printStackTrace()
-                if (canvasFactor.value > 1) {
-                    val nextFactor = canvasFactor.value - 1
-                    Log.w(TAG, "too large canvasFactor: ${canvasFactor.value} -> $nextFactor")
-                    context.toast(context.getString(R.string.canvas_factor_oom_toast).format(canvasFactor.value, nextFactor))
-                    editing { canvasFactor.set(nextFactor, this) }
+                val canvasFactor = options.canvasFactor.value
+                if (canvasFactor > 1) {
+                    val nextFactor = canvasFactor - 1
+                    Log.w(TAG, "too large canvasFactor: $canvasFactor -> $nextFactor")
+                    context.toast(context.getString(R.string.canvas_factor_oom_toast).format(canvasFactor, nextFactor))
+                    editing { options.canvasFactor.set(nextFactor, this) }
                 } else {
-                    Log.e(TAG, "min canvasFactor  ${canvasFactor.value} is too large! Retrying...")
-                    context.toast(context.getString(R.string.minimal_canvas_factor_oom_toast).format(canvasFactor.value))
+                    Log.e(TAG, "min canvasFactor  $canvasFactor is too large! Retrying...")
+                    context.toast(context.getString(R.string.minimal_canvas_factor_oom_toast).format(canvasFactor))
                 }
             }
         }
     }
 
     private inline fun onCanvas(canvas: Canvas, draw: (Canvas) -> Unit) =
-        canvas.withMatrix(motion.value) { draw(this) }
+        canvas.withMatrix(options.motion.value) { draw(this) }
 
     private inline fun onTraceCanvas(draw: (Canvas) -> Unit) =
         draw(trace.canvas)
 
-    /* draw drawTrace canvas on DodecaView canvas */
+    /* draw options.drawTrace canvas on DodecaView canvas */
     private inline fun drawTraceCanvas(canvas: Canvas) =
         canvas.drawBitmap(trace.bitmap, trace.blitMatrix, trace.paint)
 
@@ -246,11 +247,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* draw`figures` on [canvas] */
     private inline fun drawCircles(canvas: Canvas) {
-        circleGroup.draw(canvas, shape = shape.value, showAllCircles = showAllCircles.value, showOutline = showOutline.value)
+        circleGroup.draw(canvas, shape = options.shape.value, showAllCircles = options.showAllCircles.value, showOutline = options.showOutline.value)
     }
 
     private inline fun drawCirclesTimes(times: Int, canvas: Canvas) {
-        circleGroup.drawTimes(times, reverseMotion.value, canvas, shape = shape.value, showAllCircles = showAllCircles.value, showOutline = showOutline.value)
+        circleGroup.drawTimes(times, options.reverseMotion.value, canvas, shape = options.shape.value, showAllCircles = options.showAllCircles.value, showOutline = options.showOutline.value)
 //        repeat(times) {
 //            drawCircles(canvas)
 //            circleGroup.update(reverseMotion.value)
@@ -262,17 +263,17 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         updateCircles()
         lastUpdateTime = System.currentTimeMillis()
         updateOnce = true
-        editing { set(updating, false) }
+        editing { set(options.updating, false) }
         postInvalidate()
     }
 
     private inline fun updateCircles() {
         updateStat()
-        circleGroup.update(reverseMotion.value)
+        circleGroup.update(options.reverseMotion.value)
     }
 
     private inline fun updateStat(times: Int = 1) {
-        nUpdates += times * (if (reverseMotion.value) -1 else 1)
+        nUpdates += times * (if (options.reverseMotion.value) -1 else 1)
         if (showStat) {
             nUpdatesView?.text = context.getString(R.string.stat_n_updates_text).format(nUpdates)
             val overhead = nUpdates - last20NUpdates
@@ -288,11 +289,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private fun onNewDDU(newDDU: DDU) {
         // NOTE: on first run: some bug may occur, because somewhere: retrace ... centerize ...
         // i.e. white border may appear
-        if (autosave.value && ddu.file != null) {
+        if (options.autosave.value && ddu.file != null) {
             saveDDU()
         }
         // defaulting
-        redrawTraceOnce = drawTrace.value
+        redrawTraceOnce = options.drawTrace.value
         nUpdates = 0
         last20NUpdates = nUpdates // some bugs in stat when nUpdates < 0
         lastUpdateTime = System.currentTimeMillis()
@@ -315,9 +316,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     /* scale and translate all figures in ddu according to current view */
     private fun prepareDDUToSave(): DDU {
         // avoiding name clashes
-        val _drawTrace = drawTrace.value
-        val _shape = shape.value
-        val _showOutline = showOutline.value
+        val _drawTrace = options.drawTrace.value
+        val _shape = options.shape.value
+        val _showOutline = options.showOutline.value
         return ddu.copy().apply {
             circles.forEach {
                 it.center = visible(it.center)
@@ -352,8 +353,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private inline fun visible(z: Complex): Complex = motion.value.move(z)
-    private inline fun visibleRadius(r: Float): Float = motion.value.mapRadius(r)
+    private inline fun visible(z: Complex): Complex = options.motion.value.move(z)
+    private inline fun visibleRadius(r: Float): Float = options.motion.value.mapRadius(r)
 
     fun <T : Any> change(option: SharedPreference<T>, value: T) {
         editing { option.set(value, this) }
@@ -363,28 +364,28 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     // after update of option.value for minorPreferences
     private fun <T : Any> onChange(option: SharedPreference<T>, value: T = option.value) {
         when(option) {
-            drawTrace -> if (width > 0) {
+            options.drawTrace -> if (width > 0) {
                 if (value as Boolean) retrace()
                 else if (trace.initialized) {
                     trace.clear()
-                    if (!updating.value) postInvalidate()
+                    if (!options.updating.value) postInvalidate()
                 }
             }
-            updating -> if (value as Boolean) postInvalidate()
-            showOutline -> postInvalidate()
-            shape -> postInvalidate()
+            options.updating -> if (value as Boolean) postInvalidate()
+            options.showOutline -> postInvalidate()
+            options.shape -> postInvalidate()
         }
     }
 
     // after update of option.value for effectiveMajorPreferences
     private fun <T : Any> onNew(option: SharedPreference<T>) {
         when(option) {
-            showAllCircles -> postInvalidate()
-            autocenterAlways -> if (option.value as Boolean && width > 0) autocenter()
-            canvasFactor -> if (width > 0) retrace()
-            speed -> UPS =
-                if (speed.value < 1)
-                    (speed.value * defaultUPS).roundToInt()
+            options.showAllCircles -> postInvalidate()
+            options.autocenterAlways -> if (option.value as Boolean && width > 0) autocenter()
+            options.canvasFactor -> if (width > 0) retrace()
+            options.speed -> UPS =
+                if (options.speed.value < 1)
+                    (options.speed.value * defaultUPS).roundToInt()
                 else
                     defaultUPS
         }
@@ -392,9 +393,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun <T : Any> SharedPreferences.Editor.setFromDDU(ddu: DDU, option: SharedPreference<T>) {
         when(option) {
-            drawTrace -> set(drawTrace, ddu.drawTrace)
-            shape -> set(shape, ddu.shape)
-            showOutline -> set(showOutline, ddu.showOutline)
+            options.drawTrace -> set(options.drawTrace, ddu.drawTrace)
+            options.shape -> set(options.shape, ddu.shape)
+            options.showOutline -> set(options.showOutline, ddu.showOutline)
         }
     }
 
@@ -421,14 +422,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         const val dt = 1000f / FPS
         val updateDt = Sleepy { 1000f / UPS }
         private val effectiveMajorPreferences: Set<SharedPreference<*>> =
-            setOf(showAllCircles, autocenterAlways, speed, canvasFactor)
+            setOf(options.showAllCircles, options.autocenterAlways, options.speed, options.canvasFactor)
         private val secondaryMajorPreferences: Set<SharedPreference<*>> =
-            setOf(redrawTraceOnMove, reverseMotion, autosave)
+            setOf(options.redrawTraceOnMove, options.reverseMotion, options.autosave, options.previewSize, options.previewSmartUpdates, options.nPreviewUpdates)
         private val majorPreferences: Set<SharedPreference<*>> = effectiveMajorPreferences + secondaryMajorPreferences
         private val minorIndependentPreferences: Set<SharedPreference<*>> =
-            setOf(motion, updating)
+            setOf(options.motion, options.updating)
         private val minorDDUPreferences: Set<SharedPreference<*>> =
-            setOf(drawTrace, showOutline, shape)
+            setOf(options.drawTrace, options.showOutline, options.shape)
         private val minorPreferences: Set<SharedPreference<*>> = minorIndependentPreferences + minorDDUPreferences
         private const val DEFAULT_DDU_FILENAME = "290305_z1_erot2.ddu"
         private const val TAG = "DodecaView"

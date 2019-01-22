@@ -14,7 +14,7 @@ class Trace(val paint: Paint) {
     val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
     // maybe: cache blitMatrix for performance (Sleepy)
     val blitMatrix get() = Matrix(translation).apply { postConcat(motion) }
-    private val factor: Int get() = canvasFactor.value // bitmap == (factor ^ 2) * screens
+    private val factor: Int get() = options.canvasFactor.value // bitmap == (factor ^ 2) * screens
 
     // visible
     fun translate(dx: Float, dy: Float) {

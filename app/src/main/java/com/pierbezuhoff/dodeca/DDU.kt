@@ -55,9 +55,9 @@ class DDU(
 
     val complexity: Int get() = circles.sumBy { it.rule?.length ?: 0 }
     private val nSmartUpdates: Int
-        get() = (minPreviewUpdates + nPreviewUpdates.value * 20 / sqrt(1.0 + complexity)).roundToInt()
+        get() = (minPreviewUpdates + options.nPreviewUpdates.value * 20 / sqrt(1.0 + complexity)).roundToInt()
     private val nUpdates: Int // for preview
-        get() = if (previewSmartUpdates.value) nSmartUpdates else nPreviewUpdates.value
+        get() = if (options.previewSmartUpdates.value) nSmartUpdates else options.nPreviewUpdates.value
 
     // NOTE: copy(newRule = null) resolves overload ambiguity
     fun copy() =
@@ -140,7 +140,7 @@ class DDU(
                 circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
             }
         }
-        Log.i("DDU", "(${file?.name}).preview, complexity = $complexity, nUpdates = $nUpdates")
+        Log.i("DDU", "(${file?.name}).preview, smart: ${options.previewSmartUpdates.value} complexity = $complexity, nUpdates = $nUpdates")
         return bitmap
     }
 

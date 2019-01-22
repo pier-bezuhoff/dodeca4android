@@ -100,7 +100,7 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     companion object {
         const val defaultNColumns = 2
         const val minNColumns = 1 // I'd like at least 2, check on small phones
-        const val defaultColumnWidth = 16 + DDUAdapter.PREVIEW_SIZE
+        val defaultColumnWidth: Int get() = 16 + options.previewSize.value
     }
 }
 
@@ -160,7 +160,8 @@ class DDUAdapter(
             doAsync {
                 val ddu = DDU.readFile(file)
                 // val size: Int = (0.4 * width).roundToInt() // width == height
-                val bitmap = ddu.preview(PREVIEW_SIZE, PREVIEW_SIZE)
+                val size = options.previewSize.value
+                val bitmap = ddu.preview(size, size)
                 previews[file.name] = bitmap
                 dduFileDao.insertOrUpdate(file.name) { it.preview = bitmap; it }
                 uiThread {
@@ -182,11 +183,6 @@ class DDUAdapter(
         } else {
             onChoose(item)
         }
-    }
-
-    companion object {
-        const val PREVIEW_SIZE = 300 // maybe: customize in res/values/dimens.xml
-        const val TAG = "DDUAdapter"
     }
 }
 
