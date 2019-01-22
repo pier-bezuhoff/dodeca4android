@@ -69,4 +69,13 @@
     <string name="autocenter_button_title">Автоцентровка</string>
     <string name="autosave_title">Автосохранение</string>
     <string name="ddu_preview_title">Предпросмотр файла ddu</string>
+    <string name="settings_ddu_files_title">Файлы ddu</string>
+    <string name="settings_preview_title">Предпросмотр</string>
+    <string name="discard_previews_title">Сбросить предпросмотры</string>
+    <string name="preview_size_title">Размер предпросмотра</string>
+    <string name="preview_size_summary">%s ⨯ %s</string>
+    <string name="n_preview_updates_title">Дальность предпросмотра</string>
+    <string name="n_preview_updates_summary">%s пересчётов для отрисовки предпросмотра</string>
+    <string name="preview_smart_updates_summary">Число пересчётов зависит от сложности ddu</string>
+    <string name="preview_smart_updates_title">Вычисление пересчётов</string>
 </resources>

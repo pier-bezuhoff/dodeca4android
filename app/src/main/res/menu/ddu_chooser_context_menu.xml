@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/ddu_rename" android:title="@string/ddu_rename"/>
+    <item android:id="@+id/ddu_delete" android:title="@string/ddu_delete"/>
+    <item android:id="@+id/ddu_restore" android:title="@string/ddu_restore"/>
+</menu>

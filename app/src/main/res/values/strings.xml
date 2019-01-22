@@ -64,9 +64,20 @@
     <string name="fps_title" translatable="false">FPS</string>
     <string name="fps_summary">Frames per second, redraw speed</string>
     <!-- ^ -->
+
+    <string name="settings_ddu_files_title">ddu files</string>
     <string name="restore_default_ddu_title">Restore default current ddu</string>
     <string name="restore_default_ddus_title">Restore default ddu-s</string>
     <string name="restore_defaults_title">Restore default settings</string>
+
+    <string name="settings_preview_title">Preview</string>
+    <string name="discard_previews_title">Discard previews</string>
+    <string name="preview_size_title">Preview size</string>
+    <string name="preview_size_summary">%s ⨯ %s</string>
+    <string name="n_preview_updates_title">Preview updates</string>
+    <string name="n_preview_updates_summary">%s updates to draw preview</string>
+    <string name="preview_smart_updates_title">Smart updates</string>
+    <string name="preview_smart_updates_summary">Number of updates depends on ddu complexity</string>
 
     <string name="settings_about_title">About</string>
     <string name="description_summary">Android port for &app_name;</string>
@@ -89,5 +100,8 @@
     <string name="help_title">Help</string>
 
     <string name="ddu_preview_title">ddu preview</string>
+    <string name="ddu_rename">Rename</string>
+    <string name="ddu_delete">Delete</string>
+    <string name="ddu_restore">Restore</string>
 
 </resources>
