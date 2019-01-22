@@ -5,7 +5,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
 >
-        <androidx.recyclerview.widget.RecyclerView
+        <com.pierbezuhoff.dodeca.AutofitGridRecyclerView
                 android:id="@+id/ddu_recycler_view"
                 android:scrollbars="vertical"
                 android:layout_width="match_parent"

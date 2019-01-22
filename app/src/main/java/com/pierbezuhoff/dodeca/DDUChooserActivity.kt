@@ -1,9 +1,11 @@
 package com.pierbezuhoff.dodeca
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +14,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.withStyledAttributes
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
@@ -41,16 +44,14 @@ class DDUChooserActivity : AppCompatActivity() {
             dduDir = File(it)
         }
         setContentView(R.layout.activity_dduchooser)
-        val nColumns = 2
-        viewManager  = GridLayoutManager(this, nColumns)
         viewAdapter = DDUAdapter(dduDir, ::onChoose)
         recyclerView = ddu_recycler_view.apply {
-            layoutManager = viewManager
             adapter = viewAdapter
             // colors and thickness are set from styles.xml
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.HORIZONTAL))
             itemAnimator = DefaultItemAnimator()
+            setHasFixedSize(true)
         }
     }
 
@@ -68,6 +69,37 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 }
 
+class AutofitGridRecyclerView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : RecyclerView(context, attrs, defStyleAttr) {
+    private val manager = GridLayoutManager(context, defaultNColumns)
+    private var columnWidth: Int? = null
+
+    init {
+        context.withStyledAttributes(attrs, intArrayOf(android.R.attr.columnWidth), defStyleAttr) {
+            getDimensionPixelSize(0, -1).let {
+                columnWidth = if (it == -1) null else it
+            }
+        }
+        layoutManager = manager
+    }
+
+    override fun onMeasure(widthSpec: Int, heightSpec: Int) {
+        Log.i("AutofitGridRecyclerView", "onMeasure, columnWidth = $columnWidth")
+        super.onMeasure(widthSpec, heightSpec)
+        val spanCount = Math.max(1, measuredWidth / (columnWidth ?: defaultColumnWidth))
+        Log.i("AutofitGridRecyclerView", "spanCount = $spanCount")
+        manager.spanCount = spanCount
+    }
+
+    companion object {
+        const val defaultNColumns = 2
+        const val defaultColumnWidth = 16 + DDUAdapter.PREVIEW_SIZE
+    }
+}
+
 class DDUAdapter(
     private var dir: File,
     private val onChoose: (File) -> Unit
@@ -79,8 +111,7 @@ class DDUAdapter(
         .toTypedArray()
     private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
     private val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()
-    // when scrolling some views are re-utilized, which causes preview misplacing
-    private val views: MutableMap<Filename, Pair<ImageView?, ProgressBar?>> = mutableMapOf()
+    private val building: MutableSet<Filename> = mutableSetOf()
 
     init {
         // maybe: in async task; show ContentLoadingProgressBar
@@ -95,71 +126,45 @@ class DDUAdapter(
         return DDUViewHolder(textView)
     }
 
-    private fun getPreviewAndProgressBar(holder: DDUViewHolder): Pair<ImageView?, ProgressBar?> =
-        Pair(holder.view.findViewById(R.id.ddu_preview), holder.view.findViewById(R.id.preview_progress))
-
     override fun onBindViewHolder(holder: DDUViewHolder, position: Int) {
         val file = files[position]
-        val filename: Filename = file.name
-        val bitmap: Bitmap? = previews[filename]
+        val fileName: Filename = file.name
+        val bitmap: Bitmap? = previews[fileName]
         with(holder.view) {
             val filename = file.name.removeSuffix(".ddu").removeSuffix(".DDU")
             findViewById<TextView>(R.id.ddu_entry).text = filename
             setOnClickListener { onItemClick(file) }
         }
-        val (preview, progressBar) = getPreviewAndProgressBar(holder)
+        holder.setIsRecyclable(false)
+        val preview: ImageView = holder.view.findViewById(R.id.ddu_preview)
+        val progressBar: ProgressBar = holder.view.findViewById(R.id.preview_progress)
         if (bitmap != null) {
-            preview?.setImageBitmap(bitmap)
-            progressBar?.visibility = View.GONE
-            views[filename] = Pair(null, null)
+            preview.setImageBitmap(bitmap)
+            progressBar.visibility = View.GONE
         } else {
-            progressBar?.visibility = View.VISIBLE
-            preview?.visibility = View.GONE
-            views[filename] = Pair(preview, progressBar)
-            buildPreviewAsync(file)
+            progressBar.visibility = View.VISIBLE
+            preview.visibility = View.GONE
+            buildPreviewAsync(file, preview, progressBar)
         }
     }
 
-    private fun buildPreviewAsync(file: File) {
+    private fun buildPreviewAsync(file: File, preview: ImageView, progressBar: ProgressBar) {
         Log.i("DDUAdapter", "buildPreviewAsync($file)")
-        // BUG: after loading, wrong views are set
-        doAsync {
-            val ddu = DDU.readFile(file)
-            // val size: Int = (0.4 * width).roundToInt() // width == height
-            val bitmap = ddu.preview(PREVIEW_SIZE, PREVIEW_SIZE)
-            previews[file.name] = bitmap
-            dduFileDao.insertOrUpdate(file.name) { it.preview = bitmap; it }
-            val pair = views[file.name]
-            pair?.let { (preview, progressBar) ->
+        if (file.name !in building) {
+            building.add(file.name)
+            doAsync {
+                val ddu = DDU.readFile(file)
+                // val size: Int = (0.4 * width).roundToInt() // width == height
+                val bitmap = ddu.preview(PREVIEW_SIZE, PREVIEW_SIZE)
+                previews[file.name] = bitmap
+                dduFileDao.insertOrUpdate(file.name) { it.preview = bitmap; it }
                 uiThread {
-                    preview?.setImageBitmap(bitmap)
-                    preview?.visibility = View.VISIBLE
-                    progressBar?.visibility = View.GONE
+                    preview.setImageBitmap(bitmap)
+                    preview.visibility = View.VISIBLE
+                    progressBar.visibility = View.GONE
                 }
             }
         }
-    }
-
-    private fun detachHolder(holder: DDUViewHolder) {
-        val (preview, _) = getPreviewAndProgressBar(holder)
-        preview?.let {
-            val affected = views
-                .filter { (_, pair) -> pair.first == it }
-                .map { (filename, _) -> filename }
-            affected.forEach { views[it] = Pair(null, null) }
-        }
-    }
-
-    override fun onViewRecycled(holder: DDUViewHolder) {
-        Log.i(TAG, "onViewRecycled")
-        detachHolder(holder)
-        super.onViewRecycled(holder)
-    }
-
-    override fun onViewDetachedFromWindow(holder: DDUViewHolder) {
-        Log.i(TAG, "onViewDetachedFromWindow")
-        detachHolder(holder)
-        super.onViewDetachedFromWindow(holder)
     }
 
     override fun getItemCount(): Int = files.size
