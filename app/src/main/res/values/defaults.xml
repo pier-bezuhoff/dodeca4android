@@ -9,7 +9,7 @@
     <string name="shape" translatable="false">circle</string>
     <bool name="autosave">false</bool>
     <bool name="autocenter_always">false</bool>
-    <string name="speed" translatable="false">1.0</string>
+    <string name="speed" translatable="false">1</string>
     <string name="canvas_factor" translatable="false">2</string>
     <bool name="show_stat">false</bool>
     <bool name="prefer_recent_ddu">true</bool>

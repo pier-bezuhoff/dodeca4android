@@ -32,7 +32,6 @@
                 <!--android:title="@string/rotate_shapes_title"-->
                 <!--android:summary="@string/rotate_shapes_summary"-->
         <!--/>-->
-        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="reverse_motion"
                 android:defaultValue="@bool/reverse_motion"
@@ -50,7 +49,13 @@
                 android:entryValues="@array/canvas_factors"
                 android:title="@string/canvas_factor_title"
                 android:summary="@string/canvas_factor_summary" />
-        <!-- NOTE: advanced -->
+        <!--<SeekBarPreference-->
+        <!--android:key="speed_seekbar"-->
+        <!--android:title="Speed"-->
+        <!--android:summary="Make %d updates in a row"-->
+        <!--android:defaultValue="1"-->
+        <!--android:max="50"-->
+        <!--/>-->
         <ListPreference
                 android:key="speed"
                 android:defaultValue="@string/speed"
@@ -65,34 +70,14 @@
                 android:title="@string/autosave_title"
         />
         <!-- NOTE: advanced -->
-        <!--<SeekBarPreference-->
-                <!--android:key="speed_seekbar"-->
-                <!--android:title="Speed"-->
-                <!--android:summary="Make %d updates in a row"-->
-                <!--android:defaultValue="1"-->
-                <!--android:max="50"-->
-        <!--/>-->
-        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_stat"
                 android:defaultValue="@bool/show_stat"
                 android:title="@string/show_stat_title"
         />
-        <!-- MAYBE: delete -->
-        <!-- QUESTION: UPS/FPS > 100 = 100? -->
-        <!--<com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat-->
-        <!--android:key="ups"-->
-        <!--android:title="@string/ups_title"-->
-        <!--android:summary="@string/ups_summary"-->
-        <!--android:defaultValue="100"-->
-        <!--sample:msbp_minValue="1"-->
-        <!--sample:msbp_maxValue="100"-->
-        <!--sample:msbp_interval="1"-->
-        <!--sample:msbp_measurementUnit="UPS"-->
-        <!--sample:msbp_dialogEnabled="false"/>-->
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="ddu files">
+    <PreferenceCategory android:title="@string/settings_ddu_files_title">
         <Preference
                 android:key="default_ddu"
                 android:title="@string/restore_default_ddu_title" />
@@ -104,30 +89,32 @@
                 android:title="@string/restore_defaults_title" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Preview">
+    <PreferenceCategory android:title="@string/settings_preview_title">
         <Preference
                 android:key="discard_previews"
-                android:title="Discard previews"
+                android:title="@string/discard_previews_title"
         />
         <ListPreference
                 android:key="preview_size"
                 android:defaultValue="@string/preview_size"
                 android:entries="@array/preview_sizes"
                 android:entryValues="@array/preview_sizes"
-                android:title="Preview size"
+                android:title="@string/preview_size_title"
+                android:summary="@string/preview_size_summary"
         />
         <ListPreference
                 android:key="n_preview_updates"
                 android:defaultValue="@string/n_preview_updates"
                 android:entries="@array/preview_updates"
                 android:entryValues="@array/preview_updates"
-                android:title="Preview updates"
-                android:summary="Number of updates to draw preview"
+                android:title="@string/n_preview_updates_title"
+                android:summary="@string/n_preview_updates_summary"
         />
         <SwitchPreference
                 android:key="preview_smart_updates"
-                android:title="Smart updates"
-                android:summary="Number of updates will depend on ddu complexity"
+                android:defaultValue="@bool/preview_smart_updates"
+                android:title="@string/preview_smart_updates_title"
+                android:summary="@string/preview_smart_updates_summary"
         />
     </PreferenceCategory>
 
@@ -140,6 +127,7 @@
                 android:title="@string/version_title"
                 android:summary="@string/version_summary" />
         <Preference
+                android:selectable="false"
                 android:title="@string/copyright_title"
                 android:summary="@string/copyright_summary" />
         <!-- MAYBE: add some links to websites -->
