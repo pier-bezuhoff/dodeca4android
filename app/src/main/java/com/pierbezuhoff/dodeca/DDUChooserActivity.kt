@@ -151,11 +151,13 @@ class DDUAdapter(
     }
 
     override fun onViewRecycled(holder: DDUViewHolder) {
+        Log.i(TAG, "onViewRecycled")
         detachHolder(holder)
         super.onViewRecycled(holder)
     }
 
     override fun onViewDetachedFromWindow(holder: DDUViewHolder) {
+        Log.i(TAG, "onViewDetachedFromWindow")
         detachHolder(holder)
         super.onViewDetachedFromWindow(holder)
     }
@@ -174,6 +176,7 @@ class DDUAdapter(
 
     companion object {
         const val PREVIEW_SIZE = 300
+        const val TAG = "DDUAdapter"
     }
 }
 
