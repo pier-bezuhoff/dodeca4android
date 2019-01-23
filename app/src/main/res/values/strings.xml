@@ -108,6 +108,6 @@
     <string name="ddu_delete">Delete</string>
     <string name="ddu_restore">Restore</string>
     <string name="rename_dialog_message">Rename ddu file \"%s\"%s</string>
-    <string name="rename_dialog_original_name">original name: \"%s\"</string>
+    <string name="rename_dialog_original_name">(original name: \"%s\")</string>
 
 </resources>

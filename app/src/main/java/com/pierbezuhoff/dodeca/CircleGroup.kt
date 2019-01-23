@@ -165,7 +165,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     private inline fun drawTimesUSA(times: Int, update: () -> Unit, drawAll: () -> Unit) {
         repeat(times) {
             drawAll()
-            update()
+            savingOld { update() }
         }
         drawAll()
     }

@@ -132,7 +132,7 @@ class MainActivity : AppCompatActivity() {
     private inline fun setupPlayButton() {
         play_button.setImageDrawable(ContextCompat.getDrawable(
             this,
-            if (options.updating.value) R.drawable.ic_pause
+            if (values.updating) R.drawable.ic_pause
             else R.drawable.ic_play
         ))
     }
@@ -152,8 +152,8 @@ class MainActivity : AppCompatActivity() {
             R.id.save_button -> dodecaView.saveDDU()
             R.id.play_button -> { dodecaView.toggle(options.updating); setupPlayButton() }
             R.id.next_step_button -> { dodecaView.oneStep(); setupPlayButton() }
-            R.id.trace_button -> { dodecaView.toggle(options.drawTrace); setupToggleButtonTint(trace_button, options.drawTrace.value) }
-            R.id.outline_button -> { dodecaView.toggle(options.showOutline); setupToggleButtonTint(outline_button, options.showOutline.value) }
+            R.id.trace_button -> { dodecaView.toggle(options.drawTrace); setupToggleButtonTint(trace_button, values.drawTrace) }
+            R.id.outline_button -> { dodecaView.toggle(options.showOutline); setupToggleButtonTint(outline_button, values.showOutline) }
             // R.id.change_color_button -> ...
             R.id.clear_button -> dodecaView.retrace()
             R.id.autocenter_button -> dodecaView.autocenter()
@@ -175,9 +175,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        updatingBeforePause = options.updating.value
+        updatingBeforePause = values.updating
         dodecaView.change(options.updating, false)
-        if (options.autosave.value && dodecaView.ddu.file != null)
+        if (values.autosave && dodecaView.ddu.file != null)
             dodecaView.saveDDU()
     }
 
@@ -337,12 +337,12 @@ class MainActivity : AppCompatActivity() {
         if (bottomBarShown) hideBottomBar()
         else showBottomBar()
 
-    fun extractDDUFromAssets() {
+    private fun extractDDUFromAssets() {
         val dir = dduDir
         assets.list("ddu")?.forEach { name -> extract1DDU(name, dir) }
     }
 
-    fun extract1DDU(filename: Filename, dir: File = dduDir) = extract1DDU(filename, dir, dduFileDao, TAG)
+    private fun extract1DDU(filename: Filename, dir: File = dduDir) = extract1DDU(filename, dir, dduFileDao, TAG)
 
     class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {
         val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shapes

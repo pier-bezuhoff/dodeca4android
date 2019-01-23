@@ -89,6 +89,7 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 
     private fun renameDDUFile(file: File, position: Int) {
+        // BUG: double appearance sometimes
         val name: FileName = file.nameWithoutExtension
         var input: EditText? = null
         val originalFilename: Filename? = DB.dduFileDao().findByFilename(file.name)?.originalFilename
@@ -118,8 +119,6 @@ class DDUChooserActivity : AppCompatActivity() {
                             previews[newFilename] = preview
                             notifyDataSetChanged()
                         }
-                        viewAdapter.files[position] = newFile
-                        viewAdapter.notifyDataSetChanged()
                     } else {
                         Log.w(TAG, "failed to rename $file to $newFile")
                     }
@@ -189,7 +188,7 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     companion object {
         const val defaultNColumns = 2
         const val minNColumns = 1 // I'd like at least 2, check on small phones
-        val defaultColumnWidth: Int get() = 16 + options.previewSize.value
+        val defaultColumnWidth: Int get() = 16 + values.previewSize
     }
 }
 
@@ -257,7 +256,7 @@ class DDUAdapter(
             doAsync {
                 val ddu = DDU.readFile(file)
                 // val size: Int = (0.4 * width).roundToInt() // width == height
-                val size = options.previewSize.value
+                val size = values.previewSize
                 val bitmap = ddu.preview(size, size)
                 previews[file.name] = bitmap
                 dduFileDao.insertOrUpdate(file.name) { this.preview = bitmap }
