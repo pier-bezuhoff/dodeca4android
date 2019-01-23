@@ -34,9 +34,10 @@ class Trace(val paint: Paint) {
     }
 
     fun retrace(width: Int, height: Int) {
+        // or use Bitmap.Config.ARGB_8888
         bitmap = Bitmap.createBitmap(
             factor * width, factor * height,
-            Bitmap.Config.ARGB_8888)
+            Bitmap.Config.RGB_565)
         val dx = (1f - factor) * width / 2
         val dy = (1f - factor) * height / 2
         canvas = Canvas(bitmap)

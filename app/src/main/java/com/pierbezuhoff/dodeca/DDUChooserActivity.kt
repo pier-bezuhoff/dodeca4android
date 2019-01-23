@@ -145,7 +145,7 @@ class DDUChooserActivity : AppCompatActivity() {
             toast(getString(R.string.ddu_restore_toast, file.nameWithoutExtension, original.stripDDU()))
             with(viewAdapter) {
                 previews[original] = null
-                building.remove(original)
+                buildings.remove(original)
                 sleepyFiles.awake()
                 notifyDataSetChanged()
             }
@@ -206,8 +206,7 @@ class DDUAdapter(
     val files: ArrayList<File> get() = sleepyFiles.value
     private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
     val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()
-    val buildings: MutableMap<Filename, ImageView?> = mutableMapOf()
-    val building: MutableSet<Filename> = mutableSetOf()
+    val buildings: MutableMap<Filename, DDUViewHolder?> = mutableMapOf()
 
     init {
         // maybe: in async task; show ContentLoadingProgressBar or ProgressDialog
@@ -245,30 +244,35 @@ class DDUAdapter(
         } else {
             progressBar.visibility = View.VISIBLE
             preview.visibility = View.GONE
-            buildPreviewAsync(file, preview, progressBar)
+            buildPreviewAsync(file, holder)
         }
     }
 
-    private fun buildPreviewAsync(file: File, preview: ImageView, progressBar: ProgressBar) {
+    private fun buildPreviewAsync(file: File, holder: DDUViewHolder) {
         // ?BUG?: eternal loading
         // maybe: use some sync primitives
-        if (file.name !in building) {
-            building.add(file.name)
+        val fileName = file.name
+        if (fileName !in buildings.keys) {
+            buildings[fileName] = holder
             doAsync {
                 val ddu = DDU.readFile(file)
                 // val size: Int = (0.4 * width).roundToInt() // width == height
                 val size = values.previewSize
                 val bitmap = ddu.preview(size, size)
-                previews[file.name] = bitmap
+                previews[fileName] = bitmap
                 dduFileDao.insertOrUpdate(file.name) { this.preview = bitmap }
-                uiThread {
-                    preview.setImageBitmap(bitmap)
-                    preview.visibility = View.VISIBLE
-                    progressBar.visibility = View.GONE
+                buildings[fileName]?.let { currentHolder ->
+                    uiThread {
+                        val preview: ImageView = currentHolder.view.findViewById(R.id.ddu_preview)
+                        val progressBar: ProgressBar = currentHolder.view.findViewById(R.id.preview_progress)
+                        preview.setImageBitmap(bitmap)
+                        preview.visibility = View.VISIBLE
+                        progressBar.visibility = View.GONE
+                    }
                 }
             }
         } else {
-            1
+            buildings[fileName] = holder
         }
     }
 
