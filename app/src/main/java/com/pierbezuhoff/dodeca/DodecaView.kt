@@ -251,12 +251,17 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private inline fun drawCirclesTimes(times: Int, canvas: Canvas) {
-        circleGroup.drawTimes(times, values.reverseMotion, canvas, shape = values.shape, showAllCircles = values.showAllCircles, showOutline = values.showOutline)
-//        repeat(times) {
-//            drawCircles(canvas)
-//            circleGroup.update(reverseMotion.value)
-//        }
-//        drawCircles(canvas)
+//        circleGroup.drawTimes(
+//            times,
+//            values.reverseMotion,
+//            canvas, shape = values.shape, showAllCircles = values.showAllCircles, showOutline = values.showOutline
+//        )
+        // for some mysterious reason this is a bit faster than circleGroup.drawTimes
+        repeat(times) {
+            drawCircles(canvas)
+            circleGroup.update(values.reverseMotion)
+        }
+        drawCircles(canvas)
     }
 
     fun oneStep() {

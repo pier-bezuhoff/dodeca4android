@@ -119,12 +119,25 @@ class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
                 draw(i)
     }
 
+    override fun drawTimes(
+        times: Int,
+        reverse: Boolean,
+        canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean
+    ) {
+//        repeat(times) {
+//            _draw(canvas, shape, showAllCircles, showOutline)
+//            _update(reverse)
+//        }
+//        _draw(canvas, shape, showAllCircles, showOutline)
+        _drawTimes(times, reverse, canvas, shape, showAllCircles, showOutline)
+    }
+
     /* draw; update; draw; update ...; draw
     * (times + 1) x draw, times x update
     * times >= 1
     * some clever inline-magic used
     * */
-    override fun drawTimes(
+    private inline fun _drawTimes(
         times: Int,
         reverse: Boolean,
         canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean

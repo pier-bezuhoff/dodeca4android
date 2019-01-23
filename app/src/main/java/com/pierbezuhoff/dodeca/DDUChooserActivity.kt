@@ -205,8 +205,9 @@ class DDUAdapter(
     }
     val files: ArrayList<File> get() = sleepyFiles.value
     private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
-    val previews: MutableMap<FileName, Bitmap?> = mutableMapOf()
-    val building: MutableSet<FileName> = mutableSetOf()
+    val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()
+    val buildings: MutableMap<Filename, ImageView?> = mutableMapOf()
+    val building: MutableSet<Filename> = mutableSetOf()
 
     init {
         // maybe: in async task; show ContentLoadingProgressBar or ProgressDialog
@@ -223,11 +224,11 @@ class DDUAdapter(
 
     override fun onBindViewHolder(holder: DDUViewHolder, position: Int) {
         val file = files[position]
-        val fileName: FileName = file.name
-        val bitmap: Bitmap? = previews[fileName]
+        val filename: Filename = file.name
+        val bitmap: Bitmap? = previews[filename]
         with(holder.view) {
-            val filename = file.name.removeSuffix(".ddu").removeSuffix(".DDU")
-            findViewById<TextView>(R.id.ddu_entry).text = filename
+            val fileName = file.nameWithoutExtension
+            findViewById<TextView>(R.id.ddu_entry).text = fileName
             setOnClickListener { onItemClick(file) }
             activity.registerForContextMenu(this)
             setOnCreateContextMenuListener { menu, _, _ ->
@@ -266,6 +267,8 @@ class DDUAdapter(
                     progressBar.visibility = View.GONE
                 }
             }
+        } else {
+            1
         }
     }
 
