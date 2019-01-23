@@ -36,6 +36,8 @@ import permissions.dispatcher.PermissionRequest
 import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
 import java.util.Timer
 import kotlin.concurrent.timerTask
 
@@ -335,24 +337,12 @@ class MainActivity : AppCompatActivity() {
         if (bottomBarShown) hideBottomBar()
         else showBottomBar()
 
-    private fun extractDDUFromAssets() {
+    fun extractDDUFromAssets() {
         val dir = dduDir
         assets.list("ddu")?.forEach { name -> extract1DDU(name, dir) }
     }
 
-    private fun extract1DDU(name: String, dir: File = dduDir) {
-        val source = "ddu/$name"
-        val targetFile = File(dir, name)
-        if (targetFile.createNewFile()) {
-            Log.i(TAG, "Copying asset $source to ${targetFile.path}")
-        } else {
-            Log.i(TAG, "Overwriting ${targetFile.path} by asset $source")
-        }
-        assets.open(source).use { input ->
-            FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
-        }
-        dduFileDao.insertOrUpdate(name) { it.preview = null; it }
-    }
+    fun extract1DDU(filename: Filename, dir: File = dduDir) = extract1DDU(filename, dir, dduFileDao, TAG)
 
     class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {
         val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shapes
@@ -390,6 +380,37 @@ class MainActivity : AppCompatActivity() {
         // distraction free
         const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         const val BOTTOM_BAR_HIDE_DELAY = 30 // seconds
+    }
+}
+
+fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, TAG: String = MainActivity.TAG): Filename? {
+    var source: Filename = filename
+    fun streamFromDDUAsset(filename: Filename): InputStream = assets.open("ddu/$filename")
+    val inputStream: InputStream? = try {
+        streamFromDDUAsset(source)
+    } catch (e: IOException) {
+        dduFileDao.findByFilename(filename)?.let {
+            source = it.originalFilename
+            try {
+                streamFromDDUAsset(source)
+            } catch (e: IOException) { null }
+        }
+    }
+    val success = inputStream?.let {
+        val targetFile = File(dir, source)
+        if (targetFile.createNewFile()) {
+            Log.i(TAG, "Copying asset $source to ${targetFile.path}")
+        } else {
+            Log.i(TAG, "Overwriting ${targetFile.path} by asset $source")
+        }
+        inputStream.use { input ->
+            FileOutputStream(targetFile).use { input.copyTo(it, MainActivity.BUFFER_SIZE) }
+        }
+        dduFileDao.insertOrUpdate(source) { preview = null }
+    }
+    return if (success != null) source
+    else null.also {
+        Log.w(TAG, "cannot find asset $filename ($source)")
     }
 }
 

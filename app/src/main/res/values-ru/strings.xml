@@ -78,4 +78,12 @@
     <string name="n_preview_updates_summary">%s пересчётов для отрисовки предпросмотра</string>
     <string name="preview_smart_updates_summary">Число пересчётов зависит от сложности ddu</string>
     <string name="preview_smart_updates_title">Вычисление пересчётов</string>
+    <string name="ddu_rename_toast">\"%s\" переименован в \"%s\"</string>
+    <string name="ddu_rename">Переименовать</string>
+    <string name="ddu_delete">Удалить</string>
+    <string name="ddu_restore">Восстановить</string>
+    <string name="rename_dialog_message">Переименовать \"%s\"%s</string>
+    <string name="rename_dialog_original_name">исходное имя: \"%s\"</string>
+    <string name="ddu_delete_toast">\"%s\" удалён</string>
+    <string name="ddu_restore_toast">\"%s\" восстановлен в \"%s\"</string>
 </resources>

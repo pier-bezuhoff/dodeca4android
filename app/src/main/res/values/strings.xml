@@ -35,6 +35,9 @@
     <string name="imported_ddu_toast">New ddu was imported:</string>
     <string name="canvas_factor_oom_toast">Canvas factor %d is too large: it caused out of memory error! Trying smaller factor %d…</string>
     <string name="minimal_canvas_factor_oom_toast">Minimal canvas factor %d caused out of memory error! Retrying…</string>
+    <string name="ddu_rename_toast">\"%s\" renamed to \"%s\"</string>
+    <string name="ddu_delete_toast">\"%s\" deleted</string>
+    <string name="ddu_restore_toast">\"%s\" restored to \"%s\"</string>
 
     <!-- Strings related to settings -->
     <string name="settings_display_title">Display</string>
@@ -99,9 +102,12 @@
     <!-- Help -->
     <string name="help_title">Help</string>
 
+    <!-- ddu chooser -->
     <string name="ddu_preview_title">ddu preview</string>
     <string name="ddu_rename">Rename</string>
     <string name="ddu_delete">Delete</string>
     <string name="ddu_restore">Restore</string>
+    <string name="rename_dialog_message">Rename ddu file \"%s\"%s</string>
+    <string name="rename_dialog_original_name">original name: \"%s\"</string>
 
 </resources>
