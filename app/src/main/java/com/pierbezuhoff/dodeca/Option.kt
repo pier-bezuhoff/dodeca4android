@@ -7,8 +7,8 @@ import androidx.annotation.BoolRes
 
 // cannot see better solution yet
 // MUST NOT be changed after set up from MainActivity
-lateinit var options: Options
-    private set
+lateinit var options: Options private set
+lateinit var values: Values private set
 
 abstract class SharedPreference<T>(val default: T) where T : Any {
     var value = default
@@ -138,11 +138,31 @@ class Options(val resources: Resources) {
     val previewSmartUpdates = BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)
 
     init {
-        if (!::options.isInitialized)
+        if (!::options.isInitialized) {
             options = this
+            values = Values(this)
+        }
     }
 }
 
+class Values(options: Options) {
+    val motion: Matrix get() = options.motion.value
+    val drawTrace: Boolean get() = options.drawTrace.value
+    val updating: Boolean get() = options.updating.value
+    val redrawTraceOnMove: Boolean get() = options.redrawTraceOnMove.value
+    val showAllCircles: Boolean get() = options.showAllCircles.value
+    val showOutline: Boolean get() = options.showOutline.value
+    val reverseMotion: Boolean get() = options.reverseMotion.value
+    val shape: Shapes get() = options.shape.value
+    val autosave: Boolean get() = options.autosave.value
+    val autocenterAlways: Boolean get() = options.autocenterAlways.value
+    val speed: Float get() = options.speed.value
+    val canvasFactor: Int get() = options.canvasFactor.value
+    val preferRecentDDU: Boolean get() = options.preferRecentDDU.value
+    val previewSize: Int get() = options.previewSize.value
+    val nPreviewUpdates: Int get() = options.nPreviewUpdates.value
+    val previewSmartUpdates: Boolean get() = options.previewSmartUpdates.value
+}
 fun <T: Any> SharedPreferences.fetch(
     preference: SharedPreference<T>,
     onPreChange: (T) -> Unit = {}, onPostChange: (T) -> Unit = {}
