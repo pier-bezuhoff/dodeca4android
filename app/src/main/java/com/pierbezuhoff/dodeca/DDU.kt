@@ -27,16 +27,17 @@ internal data class CircleParams(
         CircleFigure(x!!, y!!, radius!!, borderColor, fill, rule)
 }
 
-/* In C++ (with it ddu was created) color is BBGGRR, but in Java -- AARRGGBB */
+/* In C++ (with it ddu was created) color is RRGGBB, but in Java -- AABBGGRR
+* see Bitmap.Config.ARGB_8888 (https://developer.android.com/reference/android/graphics/Bitmap.Config.html#ARGB_8888) */
 internal val Int.red: Int get() = (this and 0xff0000) shr 16
 internal val Int.green: Int get() = (this and 0x00ff00) shr 8
 internal val Int.blue: Int get() = this and 0x0000ff
 
-/* BBGGRR -> AARRGGBB */
+/* RRGGBB -> AABBGGRR */
 internal fun Int.toColor(): Int = Color.rgb(blue, green, red)
 // = ((blue shl 16) + (green shl 8) + red).inv() xor 0xffffff
 
-/* AARRGGBB -> BBGGRR */
+/* AABBGGRR -> RRGGBB */
 internal fun Int.fromColor(): Int =
     (Color.blue(this) shl 16) + (Color.green(this) shl 8) + Color.red(this)
 
@@ -112,7 +113,8 @@ class DDU(
     }
 
     fun preview(width: Int, height: Int): Bitmap {
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        // used RGB_565 instead of ARGB_8888 for performance (visually indistinguishable)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
         val canvas = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         val circleGroup = CircleGroupImpl(circles, paint)
@@ -125,11 +127,8 @@ class DDU(
             canvas.drawColor(backgroundColor)
             // load preferences
             if (drawTrace ?: true) {
-                // TODO: understand, why drawTimes is slower and diverges
-//                logMeasureTimeMilis("drawTimes") {
+                // TODO: understand, why drawTimes is slower
 //                    circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape, showOutline = showOutline)
-//                }
-//                logMeasureTimeMilis("raw-drawTimes") {
                     repeat(nUpdates) {
                         circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
                         circleGroup.update()
