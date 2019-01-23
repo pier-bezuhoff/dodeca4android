@@ -32,11 +32,13 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.File
 
-typealias Filename = String
+typealias FileName = String // without extension
+typealias Filename = String // with extension
+fun Filename.stripDDU(): FileName = this.removeSuffix(".ddu").removeSuffix(".DDU")
 
 // TODO: action bar: import file/folder, export folder
-// TODO: store in sharedPreferences last dir
-// TODO: go to parent folder
+// MAYBE: store in sharedPreferences last dir
+// MAYBE: go to parent folder
 // MAYBE: link to external folder
 class DDUChooserActivity : AppCompatActivity() {
     private lateinit var dduDir: File
@@ -76,53 +78,79 @@ class DDUChooserActivity : AppCompatActivity() {
         var result = true
         viewAdapter.contextMenuCreatorPosition?.let { position ->
             val file = viewAdapter.files[position]
-            val filename: Filename = file.nameWithoutExtension
             when (item?.itemId) {
-                R.id.ddu_rename -> {
-                    var editText: EditText? = null
-                    // BUG: SpannableStringBuilder: SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
-                    alert("Rename ddu file $filename") {
-                        customView {
-                            editText = editText(filename)
-                        }
-                        positiveButton("Rename") {
-                            editText?.text?.toString()?.let { newFilename ->
-                                toast("rename $file to $newFilename")
-                                val newFile = File("${file.parentFile.absolutePath}/$newFilename.ddu")
-                                val success = file.renameTo(newFile)
-                                Log.i(TAG, "$file -> $newFile: $success")
-                                if (success) {
-                                    // BUG: should avoid calc of preview
-                                    with(DB.dduFileDao()) {
-                                        update(findByFilename(file.name).apply { this.filename = newFilename })
-                                    }
-                                    viewAdapter.files[position] = newFile
-                                    viewAdapter.notifyDataSetChanged()
-                                } else {
-                                    Log.w(TAG, "failed to rename $file to $newFile")
-                                }
-                            }
-                        }
-                        cancelButton { }
-                    }.show()
-                }
-                R.id.ddu_delete -> {
-                    toast("delete $file")
-                    with(DB.dduFileDao()) {
-                        delete(findByFilename(file.name))
-                    }
-                    file.delete()
-                    viewAdapter.files.removeAt(position)
-                    viewAdapter.notifyDataSetChanged()
-                }
-                R.id.ddu_restore -> {
-                    // MainActivity.extract it
-                    toast("restore $file")
-                }
+                R.id.ddu_rename -> renameDDUFile(file, position)
+                R.id.ddu_delete -> deleteDDUFile(file, position)
+                R.id.ddu_restore -> restoreDDUFile(file, position)
                 else -> result = false
             }
         }
         return result
+    }
+
+    private fun renameDDUFile(file: File, position: Int) {
+        val name: FileName = file.nameWithoutExtension
+        var input: EditText? = null
+        val originalFilename: Filename? = DB.dduFileDao().findByFilename(file.name)?.originalFilename
+        val appendix =
+            if (originalFilename != null && originalFilename != file.name)
+                " " + getString(R.string.rename_dialog_original_name, originalFilename.stripDDU())
+            else ""
+        alert(getString(R.string.rename_dialog_message, name, appendix)) {
+            customView {
+                input = editText(name)
+            }
+            positiveButton(getString(R.string.ddu_rename)) {
+                input?.text?.toString()?.trim()?.let { newName: FileName ->
+                    val newFilename = "$newName.ddu"
+                    val newFile = File(file.parentFile.absolutePath, newFilename)
+                    val success = file.renameTo(newFile)
+                    Log.i(TAG, "$file -> $newFile: $success")
+                    if (success) {
+                        toast(getString(R.string.ddu_rename_toast, name, newName))
+                        val preview: Bitmap? = with(DB.dduFileDao()) {
+                            insertOrUpdate(file.name) { this.filename = newFilename }
+                            findByFilename(newFilename)?.preview
+                        }
+                        with(viewAdapter) {
+                            files[position] = newFile
+                            sleepyFiles.awake()
+                            previews[newFilename] = preview
+                            notifyDataSetChanged()
+                        }
+                        viewAdapter.files[position] = newFile
+                        viewAdapter.notifyDataSetChanged()
+                    } else {
+                        Log.w(TAG, "failed to rename $file to $newFile")
+                    }
+                }
+            }
+            cancelButton { }
+        }.show()
+    }
+
+    private fun deleteDDUFile(file: File, position: Int) {
+        toast(getString(R.string.ddu_delete_toast, file.nameWithoutExtension))
+        with(DB.dduFileDao()) {
+            findByFilename(file.name)?.let { delete(it) }
+        }
+        file.delete()
+        viewAdapter.files.removeAt(position)
+        viewAdapter.notifyDataSetChanged()
+    }
+
+    private fun restoreDDUFile(file: File, position: Int) {
+        // TODO: restore imported files by original path
+        val original: Filename? = extract1DDU(file.name, dduDir, DB.dduFileDao(), TAG)
+        original?.let {
+            toast(getString(R.string.ddu_restore_toast, file.nameWithoutExtension, original.stripDDU()))
+            with(viewAdapter) {
+                previews[original] = null
+                building.remove(original)
+                sleepyFiles.awake()
+                notifyDataSetChanged()
+            }
+        }
     }
 
     companion object {
@@ -173,15 +201,16 @@ class DDUAdapter(
     class DDUViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     var contextMenuCreatorPosition: Int? = null // track VH to act on it
-    var files: ArrayList<File> = ArrayList(dir.listFiles()
-        .filter { it.extension.toLowerCase() == "ddu" }
-    )
+    val sleepyFiles: Sleepy<ArrayList<File>> = Sleepy {
+        ArrayList(dir.listFiles().filter { it.extension.toLowerCase() == "ddu" })
+    }
+    val files: ArrayList<File> get() = sleepyFiles.value
     private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
-    private val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()
-    private val building: MutableSet<Filename> = mutableSetOf()
+    val previews: MutableMap<FileName, Bitmap?> = mutableMapOf()
+    val building: MutableSet<FileName> = mutableSetOf()
 
     init {
-        // maybe: in async task; show ContentLoadingProgressBar
+        // maybe: in async task; show ContentLoadingProgressBar or ProgressDialog
         dduFileDao.getAll().forEach {
             previews[it.filename] = it.preview
         }
@@ -195,7 +224,7 @@ class DDUAdapter(
 
     override fun onBindViewHolder(holder: DDUViewHolder, position: Int) {
         val file = files[position]
-        val fileName: Filename = file.name
+        val fileName: FileName = file.name
         val bitmap: Bitmap? = previews[fileName]
         with(holder.view) {
             val filename = file.name.removeSuffix(".ddu").removeSuffix(".DDU")
@@ -231,7 +260,7 @@ class DDUAdapter(
                 val size = options.previewSize.value
                 val bitmap = ddu.preview(size, size)
                 previews[file.name] = bitmap
-                dduFileDao.insertOrUpdate(file.name) { it.preview = bitmap; it }
+                dduFileDao.insertOrUpdate(file.name) { this.preview = bitmap }
                 uiThread {
                     preview.setImageBitmap(bitmap)
                     preview.visibility = View.VISIBLE
@@ -245,8 +274,9 @@ class DDUAdapter(
 
     private fun onItemClick(item: File) {
         if (item.isDirectory) {
+            // impossible now
             dir = item
-            files = ArrayList(dir.listFiles().toList())
+            sleepyFiles.awake()
             notifyDataSetChanged()
         } else {
             onChoose(item)

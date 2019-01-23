@@ -50,7 +50,7 @@ interface DDUFileDao {
     fun loadAllByIds(dduFileIds: IntArray): List<DDUFile>
 
     @Query("SELECT * FROM ddufile WHERE filename LIKE :filename LIMIT 1")
-    fun findByFilename(filename: String): DDUFile
+    fun findByFilename(filename: String): DDUFile?
 
     @Update fun update(dduFile: DDUFile)
 
@@ -60,12 +60,12 @@ interface DDUFileDao {
     @Delete fun delete(dduFile: DDUFile)
 }
 
-fun DDUFileDao.insertOrUpdate(filename: String, action: (DDUFile) -> DDUFile) {
+fun DDUFileDao.insertOrUpdate(filename: String, action: DDUFile.() -> Unit) {
     val dduFile: DDUFile? = findByFilename(filename)
     if (dduFile != null)
-        update(action(dduFile))
+        update(dduFile.apply(action))
     else
-        insert(action(DDUFile(filename = filename, originalFilename = filename)))
+        insert(DDUFile(filename = filename, originalFilename = filename).apply(action))
 }
 
 @Database(entities = [DDUFile::class], version = 2)

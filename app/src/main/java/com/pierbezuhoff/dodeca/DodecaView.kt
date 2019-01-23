@@ -344,7 +344,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     ddu.saveStream(file.outputStream())
                     context.toast(context.getString(R.string.ddu_saved_toast) + " ${file.name}")
                     // maybe: store current trace
-                    DB.dduFileDao().insertOrUpdate(file.name) { it.preview = null; it }
+                    DB.dduFileDao().insertOrUpdate(file.name) { preview = null }
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()
