@@ -74,7 +74,7 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 
     override fun onContextItemSelected(item: MenuItem?): Boolean {
-        super.onContextItemSelected(item)
+        val superResult = super.onContextItemSelected(item)
         var result = true
         viewAdapter.contextMenuCreatorPosition?.let { position ->
             val file = viewAdapter.files[position]
@@ -85,11 +85,10 @@ class DDUChooserActivity : AppCompatActivity() {
                 else -> result = false
             }
         }
-        return result
+        return result || superResult
     }
 
     private fun renameDDUFile(file: File, position: Int) {
-        // BUG: double appearance sometimes
         val name: FileName = file.nameWithoutExtension
         var input: EditText? = null
         val originalFilename: Filename? = DB.dduFileDao().findByFilename(file.name)?.originalFilename
