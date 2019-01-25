@@ -6,7 +6,7 @@ import android.graphics.Matrix
 import androidx.annotation.BoolRes
 
 // cannot see better solution yet
-// MUST NOT be changed after set up from MainActivity
+// initialization (from MainActivity): `Options(resources: Resources)`
 lateinit var options: Options private set
 lateinit var values: Values private set
 
@@ -130,11 +130,11 @@ class Options(val resources: Resources) {
     // val rotateShapes = Option("rotate_shapes", false)
     val autosave = BooleanOption("autosave", R.bool.autosave)
     val autocenterAlways = BooleanOption("autocenter_always", R.bool.autocenter_always)
-    val speed = ParsedFloatOption("speed", resources.getString(R.string.speed).toFloatOrNull() ?: 1f)
-    val canvasFactor = ParsedIntOption("canvas_factor", resources.getString(R.string.canvas_factor).toIntOrNull() ?: 2)
+    val speed = ParsedFloatOption("speed", resources.getString(R.string.speed).toFloat())
+    val canvasFactor = ParsedIntOption("canvas_factor", resources.getString(R.string.canvas_factor).toInt())
     val preferRecentDDU = BooleanOption("prefer_recent_ddu", R.bool.prefer_recent_ddu) // TODO: add to preferences
-    val previewSize = ParsedIntOption("preview_size", resources.getString(R.string.preview_size).toIntOrNull() ?: 300)
-    val nPreviewUpdates = ParsedIntOption("n_preview_updates", resources.getString(R.string.n_preview_updates).toIntOrNull() ?: 100)
+    val previewSize = ParsedIntOption("preview_size", resources.getString(R.string.preview_size).toInt())
+    val nPreviewUpdates = ParsedIntOption("n_preview_updates", resources.getString(R.string.n_preview_updates).toInt())
     val previewSmartUpdates = BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)
 
     init {
@@ -145,7 +145,8 @@ class Options(val resources: Resources) {
     }
 }
 
-class Values(options: Options) {
+// NOTE: may be moved toplevel
+class Values(private val options: Options) {
     val motion: Matrix get() = options.motion.value
     val drawTrace: Boolean get() = options.drawTrace.value
     val updating: Boolean get() = options.updating.value
@@ -163,15 +164,16 @@ class Values(options: Options) {
     val nPreviewUpdates: Int get() = options.nPreviewUpdates.value
     val previewSmartUpdates: Boolean get() = options.previewSmartUpdates.value
 }
-fun <T: Any> SharedPreferences.fetch(
+
+fun <T : Any> SharedPreferences.fetch(
     preference: SharedPreference<T>,
     onPreChange: (T) -> Unit = {}, onPostChange: (T) -> Unit = {}
 ) = preference.fetch(this, onPreChange, onPostChange)
 
-fun <T: Any> SharedPreferences.Editor.put(preference: SharedPreference<T>) =
+fun <T : Any> SharedPreferences.Editor.put(preference: SharedPreference<T>) =
     preference.put(this)
-fun <T: Any> SharedPreferences.Editor.set(preference: SharedPreference<T>, value: T? = null) =
+fun <T : Any> SharedPreferences.Editor.set(preference: SharedPreference<T>, value: T? = null) =
     preference.set(value, this)
-fun <T: Any> SharedPreferences.Editor.remove(preference: SharedPreference<T>) {
+fun <T : Any> SharedPreferences.Editor.remove(preference: SharedPreference<T>) {
     preference.remove(this)
 }

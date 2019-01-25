@@ -362,7 +362,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private inline fun visibleRadius(r: Float): Float = values.motion.mapRadius(r)
 
     fun <T : Any> change(option: SharedPreference<T>, value: T) {
-        editing { option.set(value, this) }
+        editing { set(option, value) }
         onChange(option, value)
     }
 
@@ -405,7 +405,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private inline fun editing(block: SharedPreferences.Editor.() -> Unit) {
-        with (sharedPreferences.edit()) {
+        with(sharedPreferences.edit()) {
             this.block()
             apply()
         }
