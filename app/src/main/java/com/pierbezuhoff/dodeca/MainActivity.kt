@@ -339,7 +339,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun extractDDUFromAssets() {
         val dir = dduDir
-        assets.list("ddu")?.forEach { name -> extract1DDU(name, dir) }
+        assets.list(getString(R.string.ddu_asset_dir))?.forEach { name -> extract1DDU(name, dir) }
     }
 
     private fun extract1DDU(filename: Filename, dir: File = dduDir) = extract1DDU(filename, dir, dduFileDao, TAG)
@@ -385,7 +385,7 @@ class MainActivity : AppCompatActivity() {
 
 fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, TAG: String = MainActivity.TAG): Filename? {
     var source: Filename = filename
-    fun streamFromDDUAsset(filename: Filename): InputStream = assets.open("ddu/$filename")
+    fun streamFromDDUAsset(filename: Filename): InputStream = assets.open("${getString(R.string.ddu_asset_dir)}/$filename")
     val inputStream: InputStream? = try {
         streamFromDDUAsset(source)
     } catch (e: IOException) {
@@ -413,4 +413,3 @@ fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, T
         Log.w(TAG, "cannot find asset $filename ($source)")
     }
 }
-

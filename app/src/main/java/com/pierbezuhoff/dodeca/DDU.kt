@@ -122,7 +122,8 @@ class DDU(
         val bestCenter = bestCenter ?: center
         val (dx, dy) = (center - bestCenter).asFF()
         val (centerX, centerY) = center.asFF()
-        val matrix = Matrix().apply { postTranslate(dx, dy); postScale(previewScale, previewScale, centerX, centerY) }
+        val scale: Float = previewScale * width / options.previewSize.default
+        val matrix = Matrix().apply { postTranslate(dx, dy); postScale(scale, scale, centerX, centerY) }
         canvas.withMatrix(matrix) {
             canvas.drawColor(backgroundColor)
             // load preferences

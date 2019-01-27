@@ -6,6 +6,8 @@
         ]>
 <resources>
     <string name="app_name" translatable="false">Dodeca Look</string>
+    <string name="ddu_asset_dir">ddu</string>
+    <string name="first_ddu">Unknown lady.ddu</string>
 
     <!-- Strings related to bottom bar -->
     <string name="help_button_title">Help</string>
@@ -27,10 +29,10 @@
 
     <!-- Toasts -->
     <string name="please_pick_color_toast">Double tap to pick color</string>
-    <string name="bad_ddu_format_toast">bad ddu format:</string>
+    <string name="bad_ddu_format_toast">Bad ddu format:</string>
     <string name="error_ddu_save_no_file_toast">Error while saving ddu: ddu has no file</string>
     <string name="error_ddu_save_toast">Error while saving ddu, see log</string>
-    <string name="ddu_saved_toast">ddu saved at</string>
+    <string name="ddu_saved_toast">ddu file saved as \"%s\"</string>
     <string name="imported_ddu_overwrites_original_toast">Original ddu was overwritten by imported ddu</string>
     <string name="imported_ddu_toast">New ddu was imported:</string>
     <string name="canvas_factor_oom_toast">Canvas factor %d is too large: it caused out of memory error! Trying smaller factor %d…</string>
