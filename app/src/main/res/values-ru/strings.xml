@@ -35,7 +35,7 @@
     <string name="restore_defaults_title">Восстановить настройки по умолчанию</string>
     <string name="restore_default_ddus_title">Восстановить исходные файлы ddu</string>
     <string name="restore_default_ddu_title">Восстановить исходную версию данного файла ddu</string>
-    <string name="ddu_saved_toast">Файл ddu сохранён в</string>
+    <string name="ddu_saved_toast">Файл ddu сохранён как \"%s\"</string>
     <string name="imported_ddu_overwrites_original_toast">Исходный файл ddu был перезаписан импортом</string>
     <string name="imported_ddu_toast">Импортирован новый файл ddu:</string>
     <string name="permission_rationale_dialog_allow">Разрешить</string>
@@ -86,4 +86,6 @@
     <string name="rename_dialog_original_name">(исходное имя: \"%s\")</string>
     <string name="ddu_delete_toast">\"%s\" удалён</string>
     <string name="ddu_restore_toast">\"%s\" восстановлен в \"%s\"</string>
+    <string name="ddu_asset_dir">ddu-ru</string>
+    <string name="first_ddu">Незнакомка.ddu</string>
 </resources>

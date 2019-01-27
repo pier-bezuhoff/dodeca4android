@@ -12,7 +12,9 @@ import android.view.View
 import android.widget.TextView
 import androidx.core.graphics.withMatrix
 import org.apache.commons.math3.complex.Complex
+import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
+import org.jetbrains.anko.uiThread
 import java.io.File
 import kotlin.concurrent.fixedRateTimer
 import kotlin.math.roundToInt
@@ -58,7 +60,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         loadSharedPreferences()
         try {
             val recentDDU by lazy { sharedPreferences.getString("recent_ddu", null) }
-            val filename = if (values.preferRecentDDU && recentDDU != null) recentDDU else DEFAULT_DDU_FILENAME
+            val filename =
+                if (values.preferRecentDDU && recentDDU != null) recentDDU
+                else context.getString(R.string.first_ddu)
             val dduFile = File(File(context.filesDir, "ddu"), filename)
             this.ddu = DDU.readFile(dduFile)
         } catch (e: Exception) {
@@ -66,7 +70,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             this.ddu = exampleDDU
         }
         fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
-            if (values.updating) // maybe: store in _options.updating field
+            if (values.updating)
                 postInvalidate()
         }
     }
@@ -342,18 +346,23 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             Log.i(TAG, "saveDDU: ddu has no file")
             // then save as
             context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
-        } else { // maybe: run in background
-            try {
-                ddu.file?.let { file ->
-                    Log.i(TAG, "Saving ddu at at ${file.path}")
-                    ddu.saveStream(file.outputStream())
-                    context.toast(context.getString(R.string.ddu_saved_toast) + " ${file.name}")
-                    // maybe: store current trace
-                    DB.dduFileDao().insertOrUpdate(file.name) { preview = null }
+        } else {
+            doAsync {
+                try {
+                    ddu.file?.let { file ->
+                        Log.i(TAG, "Saving ddu at ${file.path}")
+                        ddu.saveStream(file.outputStream())
+                        uiThread {
+                            context.toast(context.getString(R.string.ddu_saved_toast, file.nameWithoutExtension))
+                        }
+                        DB.dduFileDao().insertOrUpdate(file.name) { preview = null }
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    uiThread {
+                        context.toast(context.getString(R.string.error_ddu_save_toast))
+                    }
                 }
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                context.toast(context.getString(R.string.error_ddu_save_toast))
             }
         }
     }
@@ -436,7 +445,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private val minorDDUPreferences: Set<SharedPreference<*>> =
             setOf(options.drawTrace, options.showOutline, options.shape)
         private val minorPreferences: Set<SharedPreference<*>> = minorIndependentPreferences + minorDDUPreferences
-        private const val DEFAULT_DDU_FILENAME = "290305_z1_erot2.ddu"
         private const val TAG = "DodecaView"
     }
 }
