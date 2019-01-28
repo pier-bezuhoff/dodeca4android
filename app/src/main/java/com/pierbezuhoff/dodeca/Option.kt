@@ -133,6 +133,7 @@ class Options(val resources: Resources) {
     val speed = ParsedFloatOption("speed", resources.getString(R.string.speed).toFloat())
     val canvasFactor = ParsedIntOption("canvas_factor", resources.getString(R.string.canvas_factor).toInt())
     val preferRecentDDU = BooleanOption("prefer_recent_ddu", R.bool.prefer_recent_ddu) // TODO: add to preferences
+    // check screen width customization (from values/default.xml)
     val previewSize = ParsedIntOption("preview_size", resources.getString(R.string.preview_size).toInt())
     val nPreviewUpdates = ParsedIntOption("n_preview_updates", resources.getString(R.string.n_preview_updates).toInt())
     val previewSmartUpdates = BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)

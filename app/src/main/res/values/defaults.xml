@@ -13,7 +13,6 @@
     <string name="canvas_factor" translatable="false">2</string>
     <bool name="show_stat">false</bool>
     <bool name="prefer_recent_ddu">true</bool>
-    <!-- maybe: customize in res/values/dimens.xml -->
     <string name="preview_size" translatable="false">300</string>
     <string name="n_preview_updates" translatable="false">100</string>
     <bool name="preview_smart_updates">true</bool>
