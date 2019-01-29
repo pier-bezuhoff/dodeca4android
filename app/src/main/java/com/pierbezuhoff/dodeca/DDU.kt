@@ -44,19 +44,19 @@ internal fun Int.fromColor(): Int =
 
 // maybe: serialize DDU to json
 class DDU(
-    var backgroundColor: Int = defaultBackgroundColor,
+    var backgroundColor: Int = DEFAULT_BACKGROUND_COLOR,
     private var restGlobals: List<Int> = emptyList(), // unused
     var drawTrace: Boolean? = null,
     var bestCenter: Complex? = null, // cross-(screen size)
-    var shape: Shapes = defaultShape,
-    var showOutline: Boolean = defaultShowOutline,
+    var shape: Shapes = DEFAULT_SHAPE,
+    var showOutline: Boolean = DEFAULT_SHOW_OUTLINE,
     var circles: List<CircleFigure> = emptyList(),
     var file: File? = null
 ) {
 
     val complexity: Int get() = circles.sumBy { it.rule?.length ?: 0 }
     private val nSmartUpdates: Int
-        get() = (minPreviewUpdates + values.nPreviewUpdates * 20 / sqrt(1.0 + complexity)).roundToInt()
+        get() = (MIN_PREVIEW_UPDATES + values.nPreviewUpdates * 20 / sqrt(1.0 + complexity)).roundToInt()
     private val nUpdates: Int // for preview
         get() = if (values.previewSmartUpdates) nSmartUpdates else values.nPreviewUpdates
 
@@ -82,7 +82,7 @@ class DDU(
         // maybe: use buffered stream
         stream.use { outputStream ->
             val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
-            writeln("Dodeca Look ${BuildConfig.VERSION_NAME} for Android")
+            writeln(header)
             val globals: MutableList<String> = listOf(
                 backgroundColor.fromColor(),
                 *restGlobals.toTypedArray()
@@ -122,7 +122,7 @@ class DDU(
         val bestCenter = bestCenter ?: center
         val (dx, dy) = (center - bestCenter).asFF()
         val (centerX, centerY) = center.asFF()
-        val scale: Float = previewScale * width / options.previewSize.default
+        val scale: Float = PREVIEW_SCALE * width / options.previewSize.default
         val matrix = Matrix().apply { postTranslate(dx, dy); postScale(scale, scale, centerX, centerY) }
         canvas.withMatrix(matrix) {
             canvas.drawColor(backgroundColor)
@@ -145,23 +145,24 @@ class DDU(
     }
 
     companion object {
-        const val defaultBackgroundColor: Int = Color.WHITE
-        val defaultShape: Shapes = Shapes.CIRCLE
-        const val defaultShowOutline = false
-        const val minPreviewUpdates = 10
-        const val previewScale = 0.5f
+        const val DEFAULT_BACKGROUND_COLOR: Int = Color.WHITE
+        val DEFAULT_SHAPE: Shapes = Shapes.CIRCLE
+        const val DEFAULT_SHOW_OUTLINE = false
+        const val MIN_PREVIEW_UPDATES = 10
+        const val PREVIEW_SCALE = 0.5f
+        private val header: String get() = "Dodeca Meditation ${BuildConfig.VERSION_NAME} for Android"
 
         fun readFile(file: File): DDU {
             return readStream(file.inputStream()).apply { this.file = file }
         }
 
         fun readStream(stream: InputStream): DDU {
-            var backgroundColor: Int = defaultBackgroundColor
+            var backgroundColor: Int = DEFAULT_BACKGROUND_COLOR
             val restGlobals: MutableList<Int> = mutableListOf()
             var drawTrace: Boolean? = null
             var bestCenter: Complex? = null
-            var shape: Shapes = defaultShape
-            var showOutline: Boolean = defaultShowOutline
+            var shape: Shapes = DEFAULT_SHAPE
+            var showOutline: Boolean = DEFAULT_SHOW_OUTLINE
             val circles: MutableList<CircleFigure> = mutableListOf()
             var nGlobals = 0
             var mode: Mode = Mode.NO

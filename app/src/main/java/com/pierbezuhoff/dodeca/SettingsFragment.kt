@@ -33,28 +33,44 @@ class SettingsFragment : PreferenceFragmentCompat() {
             Preference.SummaryProvider<ListPreference> { preference ->
                 getString(R.string.preview_size_summary).format(preference.entry, preference.entry)
             }
-        val hooking = { param: String, action: (String) -> Unit ->
-            findPreference<Preference>(param)?.setOnPreferenceClickListener { action(param); true }
-        }
         setOf("default_ddu", "default_ddus", "discard_previews").forEach { key ->
-            hooking(key) { settingsActivity?.resultIntent?.putExtra(it, true) }
+            hookClick(key) { addExtraResult(key) }
         }
-        hooking("default") {
+        hookClick("default") {
             val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
             editor.clear()
             PreferenceManager.setDefaultValues(context, R.xml.preferences, true)
             editor.apply()
             setupPreferences(rootKey) // a bit recursive, update defaults
         }
-        hooking("support") { sendFeedback() }
+        setOf("preview_size", "n_preview_updates", "preview_smart_updates").forEach { key ->
+            hookChange(key) { addExtraResult("discard_previews") }
+        }
+        hookClick("support") { sendFeedback() }
         SeekBarPreference(context)
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach { key ->
-                val removed = findPreference<Preference>(key)?.let { it.parent?.removePreference(it) }
+                val removed = findPreference<Preference>(key)?.let {
+                    it.parent?.removePreference(it)
+                }
                 if (removed == false)
-                    Log.w("Preferences", "Advanced preference $key was not removed")
+                    Log.w("Preferences", "Advanced preference $key was not removed!")
             }
         }
+    }
+
+    private fun hookClick(param: String, action: (String) -> Unit) {
+        findPreference<Preference>(param)
+            ?.setOnPreferenceClickListener { action(param); true }
+    }
+
+    private fun hookChange(param: String, action: (String) -> Unit) {
+        findPreference<Preference>(param)
+            ?.setOnPreferenceChangeListener { _, _ -> action(param); true }
+    }
+
+    private fun addExtraResult(key: String, value: Boolean = true) {
+        settingsActivity?.resultIntent?.putExtra(key, value)
     }
 
     private fun sendFeedback() {
