@@ -2,8 +2,7 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] preview size ~ screen width; check!
-- [ ] Discard previews on change of a preview preference
+- [ ] Look -> Meditation (app name)
 - [ ] action bar: import/export
 - [ ] circle: borderColor, fillColor (-> outline)
 - [ ] Change color (choose from palette on ?double? tap) and save it for further changing

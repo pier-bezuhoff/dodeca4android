@@ -8,7 +8,7 @@ global
 drawTrace: true
 bestCenter: 400.0 640.0
 shape: SQUARE
-showOutline: true
+showOutline: false
 
 circle:
 2854.66714138172
