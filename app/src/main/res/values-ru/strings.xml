@@ -21,8 +21,9 @@
     <string name="ups_summary">%s пересчётов окружностей в секунду (скорость движения окружностей)</string>
     <string name="settings_display_title">Внешний вид</string>
     <string name="settings_about_title">Информация</string>
-    <string name="description_summary">&app_name;Порт для Android</string>
+    <string name="description_summary">&app_name;: порт DodecaLook для Android</string>
     <string name="version_title">Версия</string>
+    <string name="version_summary">&app_name; &version_name;</string>
     <string name="copyright_summary">© Револьт Пименов (алгоритмы, эстетическая геометрия), Иван Никитин (программирование)</string>
     <string name="support_title">Обратная связь и поддержка</string>
     <string name="fps_summary">Число перерисовок в секунду, скорость перерисовки</string>

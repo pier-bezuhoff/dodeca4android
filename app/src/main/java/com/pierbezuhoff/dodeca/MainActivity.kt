@@ -370,7 +370,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val TAG = "MainActivity"
-        const val LIMITED_VERSION = false
+        const val LIMITED_VERSION = true
         const val BUFFER_SIZE = DEFAULT_BUFFER_SIZE
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
@@ -385,7 +385,8 @@ class MainActivity : AppCompatActivity() {
 
 fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, TAG: String = MainActivity.TAG): Filename? {
     var source: Filename = filename
-    fun streamFromDDUAsset(filename: Filename): InputStream = assets.open("${getString(R.string.ddu_asset_dir)}/$filename")
+    fun streamFromDDUAsset(filename: Filename): InputStream =
+        assets.open("${getString(R.string.ddu_asset_dir)}/$filename")
     val inputStream: InputStream? = try {
         streamFromDDUAsset(source)
     } catch (e: IOException) {
