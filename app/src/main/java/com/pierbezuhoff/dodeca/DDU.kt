@@ -101,7 +101,7 @@ class DDU(
                     circle.radius,
                     circle.x,
                     circle.y,
-                    circle.borderColor.fromColor(),
+                    circle.color.fromColor(),
                     if (circle.fill) 1 else 0
                 ).forEach { param ->
                     writeln(param.toString())

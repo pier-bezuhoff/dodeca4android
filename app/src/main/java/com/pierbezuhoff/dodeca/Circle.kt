@@ -80,7 +80,7 @@ open class Circle(var center: Complex, var radius: Double) {
 }
 
 class CircleFigure(center: Complex, radius: Double,
-    val borderColor: Int = defaultBorderColor, // de facto: boarder and fill color
+    val color: Int = defaultColor, // de facto: boarder and fill color
     val fill: Boolean = defaultFill,
     val rule: String? = defaultRule
 ) : Circle(center, radius) {
@@ -104,38 +104,38 @@ class CircleFigure(center: Complex, radius: Double,
         newBorderColor: Int? = null, newFill: Boolean? = null, newRule: String? = null
     ): CircleFigure = CircleFigure(
         newCenter ?: center, newRadius ?: radius,
-        newBorderColor ?: borderColor, newFill ?: fill, newRule ?: rule
+        newBorderColor ?: color, newFill ?: fill, newRule ?: rule
     ).apply {
         point = this@CircleFigure.point
     }
 
     constructor(
         circle: Circle,
-        borderColor: Int = defaultBorderColor, fill: Boolean = defaultFill, rule: String? = defaultRule
+        borderColor: Int = defaultColor, fill: Boolean = defaultFill, rule: String? = defaultRule
     ) : this(circle.center, circle.radius, borderColor, fill, rule)
 
     constructor(
         x: Double, y: Double, radius: Double,
-        borderColor: Int = defaultBorderColor, fill: Boolean = defaultFill, rule: String? = defaultRule
+        borderColor: Int = defaultColor, fill: Boolean = defaultFill, rule: String? = defaultRule
     ) : this(Circle(x, y, radius), borderColor, fill, rule)
 
     constructor(
         x: Double, y: Double, radius: Double,
         borderColor: Int? = null, fill: Boolean? = null, rule: String? = null
-    ) : this(Circle(x, y, radius), borderColor ?: defaultBorderColor, fill ?: defaultFill, rule ?: defaultRule)
+    ) : this(Circle(x, y, radius), borderColor ?: defaultColor, fill ?: defaultFill, rule ?: defaultRule)
 
     override fun toString(): String = """CircleFigure(
         |  center = ($x, $y)
         |  radius = $radius
         |  point = $point
-        |  borderColor = ${borderColor.fromColor()}
+        |  color = ${color.fromColor()}
         |  fill = $fill
         |  rule = $rule
         |)
     """.trimMargin()
 
     override fun inverted(circle: Circle): CircleFigure =
-        CircleFigure(super.inverted(circle), borderColor, fill, rule).apply {
+        CircleFigure(super.inverted(circle), color, fill, rule).apply {
             point = this@CircleFigure.invertedPoint(circle)
         }
 
@@ -149,7 +149,7 @@ class CircleFigure(center: Complex, radius: Double,
     }
 
     companion object {
-        const val defaultBorderColor: Int = Color.BLACK
+        const val defaultColor: Int = Color.BLACK
         const val defaultFill = false
         val defaultRule: String? = null
     }

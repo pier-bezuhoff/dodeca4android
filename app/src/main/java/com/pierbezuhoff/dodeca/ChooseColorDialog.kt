@@ -15,7 +15,7 @@ class ChooseColorDialog(val activity: MainActivity, dodecaView: DodecaView)  {
     private val data: Array<ColorGroup> by lazy {
         dodecaView.circleGroup.figures
             .filter { it.show }
-            .groupBy { it.borderColor }
+            .groupBy { it.color }
             .toSortedMap()
             .map { (color, circles) -> ColorGroup(color, circles) }
             .toTypedArray()
@@ -86,7 +86,7 @@ class ColorCircleAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val circle = circles[position]
-        holder.row.circle_color.setImageDrawable(ColorDrawable(circle.borderColor))
+        holder.row.circle_color.setImageDrawable(ColorDrawable(circle.color))
         // setup circle
     }
 

@@ -18,7 +18,7 @@ interface CircleGroup {
 }
 
 internal data class Attributes(
-    val borderColor: Int = CircleFigure.defaultBorderColor,
+    val borderColor: Int = CircleFigure.defaultColor,
     val fill: Boolean = CircleFigure.defaultFill,
     val rule: String? = CircleFigure.defaultRule
 ) {
@@ -38,7 +38,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     private var oldXs: DoubleArray = xs // old_s are used for draw and as oldCircles in update
     private var oldYs: DoubleArray = ys
     private var oldRs: DoubleArray = rs
-    private val attrs: Array<Attributes> = Array(size) { Attributes(cs[it].borderColor, cs[it].fill, cs[it].rule) }
+    private val attrs: Array<Attributes> = Array(size) { Attributes(cs[it].color, cs[it].fill, cs[it].rule) }
     private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
     private val shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
     private val paints: Array<Paint> = attrs.map {
