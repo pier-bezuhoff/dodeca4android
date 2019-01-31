@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="draw_trace">true</bool>
+    <bool name="updating">true</bool>
+    <bool name="redraw_trace">false</bool>
+    <bool name="show_all_circles">false</bool>
+    <bool name="show_outline">false</bool>
+    <bool name="reverse_motion">false</bool>
+    <string name="shape" translatable="false">circle</string>
+    <bool name="autosave">false</bool>
+    <bool name="autocenter_always">false</bool>
+    <string name="speed" translatable="false">1</string>
+    <string name="canvas_factor" translatable="false">2</string>
+    <bool name="show_stat">false</bool>
+    <bool name="prefer_recent_ddu">true</bool>
+    <string name="preview_size" translatable="false">300</string>
+    <string name="n_preview_updates" translatable="false">100</string>
+    <bool name="preview_smart_updates">true</bool>
+</resources>

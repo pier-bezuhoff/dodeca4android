@@ -21,35 +21,56 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences, rootKey)
         mapOf(
             "canvas_factor" to R.string.canvas_factor_summary,
-            "speed" to R.string.speed_summary
+            "speed" to R.string.speed_summary,
+            "n_preview_updates" to R.string.n_preview_updates_summary
         ).forEach { (key, summaryResource) ->
             findPreference<ListPreference>(key)?.summaryProvider =
                 Preference.SummaryProvider<ListPreference> { preference ->
                     getString(summaryResource).format(preference.entry)
                 }
         }
-        val hooking = { param: String, action: (String) -> Unit ->
-            findPreference<Preference>(param)?.setOnPreferenceClickListener { action(param); true }
+        findPreference<ListPreference>("preview_size")?.summaryProvider =
+            Preference.SummaryProvider<ListPreference> { preference ->
+                getString(R.string.preview_size_summary).format(preference.entry, preference.entry)
+            }
+        setOf("default_ddu", "default_ddus", "discard_previews").forEach { key ->
+            hookClick(key) { addExtraResult(key) }
         }
-        setOf("default_ddu", "default_ddus").forEach {
-            hooking(it) { settingsActivity?.resultIntent?.putExtra(it, true) }
-        }
-        hooking("default") {
+        hookClick("default") {
             val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
             editor.clear()
             PreferenceManager.setDefaultValues(context, R.xml.preferences, true)
             editor.apply()
             setupPreferences(rootKey) // a bit recursive, update defaults
         }
-        hooking("support") { sendFeedback() }
+        setOf("preview_size", "n_preview_updates", "preview_smart_updates").forEach { key ->
+            hookChange(key) { addExtraResult("discard_previews") }
+        }
+        hookClick("support") { sendFeedback() }
         SeekBarPreference(context)
         if (MainActivity.LIMITED_VERSION) {
-            ADVANCED_PREFERENCES.forEach {
-                val removed = findPreference<Preference>(it)?.let { it.parent?.removePreference(it) }
+            ADVANCED_PREFERENCES.forEach { key ->
+                val removed = findPreference<Preference>(key)?.let {
+                    it.parent?.removePreference(it)
+                }
                 if (removed == false)
-                    Log.w("Preferences", "Advanced preference $it was not removed")
+                    Log.w("Preferences", "Advanced preference $key was not removed!")
             }
         }
+    }
+
+    private fun hookClick(param: String, action: (String) -> Unit) {
+        findPreference<Preference>(param)
+            ?.setOnPreferenceClickListener { action(param); true }
+    }
+
+    private fun hookChange(param: String, action: (String) -> Unit) {
+        findPreference<Preference>(param)
+            ?.setOnPreferenceChangeListener { _, _ -> action(param); true }
+    }
+
+    private fun addExtraResult(key: String, value: Boolean = true) {
+        settingsActivity?.resultIntent?.putExtra(key, value)
     }
 
     private fun sendFeedback() {
@@ -72,7 +93,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     companion object {
         private val ADVANCED_PREFERENCES = setOf(
-            "show_all_circles", "show_centers", /*"rotate_shapes",*/ "show_stat"
+            "show_all_circles", /*"show_centers",*/ /*"rotate_shapes",*/ "show_stat"
         )
     }
 }

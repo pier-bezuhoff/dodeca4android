@@ -36,6 +36,8 @@ import permissions.dispatcher.PermissionRequest
 import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
 import java.util.Timer
 import kotlin.concurrent.timerTask
 
@@ -46,9 +48,12 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     private var bottomBarHideTimer: FlexibleTimer =
         FlexibleTimer(1000L * BOTTOM_BAR_HIDE_DELAY) { bar.post { hideBottomBar() } }
     private var updatingBeforePause: Boolean? = null
+    private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Options(resources)
+        DDUFileDatabase.init(this)
         // extracting assets
         if (!dduDir.exists()) {
             Log.i(TAG, "Extracting assets into $dduDir")
@@ -86,8 +91,8 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     private fun afterNewDDU(ddu: DDU) {
         shape_spinner.setSelection(ddu.shape.ordinal)
         mapOf(
-            drawTrace to trace_button,
-            showOutline to outline_button
+            options.drawTrace to trace_button,
+            options.showOutline to outline_button
         ).forEach { (preference, button) ->
             setupToggleButtonTint(button, preference.value)
         }
@@ -110,7 +115,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onNothingSelected(parent: AdapterView<*>?) { showBottomBar() }
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    dodecaView.change(shape, Shapes.indexOrFirst(id.toInt()))
+                    dodecaView.change(options.shape, Shapes.indexOrFirst(id.toInt()))
                     showBottomBar()
                 }
             }
@@ -128,7 +133,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     private inline fun setupPlayButton() {
         play_button.setImageDrawable(ContextCompat.getDrawable(
             this,
-            if (updating.value) R.drawable.ic_pause
+            if (values.updating) R.drawable.ic_pause
             else R.drawable.ic_play
         ))
     }
@@ -146,14 +151,14 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                 startActivityForResult(intent, DDU_CODE)
             }
             R.id.save_button -> dodecaView.saveDDU()
-            R.id.play_button -> { dodecaView.toggle(updating); setupPlayButton() }
+            R.id.play_button -> { dodecaView.toggle(options.updating); setupPlayButton() }
             R.id.next_step_button -> { dodecaView.oneStep(); setupPlayButton() }
-            R.id.trace_button -> { dodecaView.toggle(drawTrace); setupToggleButtonTint(trace_button, drawTrace.value) }
-            R.id.outline_button -> { dodecaView.toggle(showOutline); setupToggleButtonTint(outline_button, showOutline.value) }
+            R.id.trace_button -> { dodecaView.toggle(options.drawTrace); setupToggleButtonTint(trace_button, values.drawTrace) }
+            R.id.outline_button -> { dodecaView.toggle(options.showOutline); setupToggleButtonTint(outline_button, values.showOutline) }
             R.id.choose_color_button -> {
-                updatingBeforePause = updating.value
-                if (updating.value)
-                    dodecaView.change(updating, false)
+                updatingBeforePause = values.updating
+                if (values.updating)
+                    dodecaView.change(options.updating, false)
                 bottomBarHideTimer.stop() // will be restarted in onChooseColorClosed()
                 ChooseColorDialog(this, dodecaView).build().show()
             }
@@ -168,23 +173,23 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     }
 
     override fun onChooseColorClosed() {
-        updatingBeforePause?.let { dodecaView.change(updating, it) }
+        updatingBeforePause?.let { dodecaView.change(options.updating, it) }
         showBottomBar()
     }
 
     override fun onResume() {
         super.onResume()
         updatingBeforePause?.let {
-            dodecaView.change(updating, it)
+            dodecaView.change(options.updating, it)
             setupPlayButton()
         }
     }
 
     override fun onPause() {
         super.onPause()
-        updatingBeforePause = updating.value
-        dodecaView.change(updating, false)
-        if (autosave.value && dodecaView.ddu.file != null)
+        updatingBeforePause = values.updating
+        dodecaView.change(options.updating, false)
+        if (values.autosave && dodecaView.ddu.file != null)
             dodecaView.saveDDU()
     }
 
@@ -219,6 +224,9 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                     having("default_ddus") {
                         extractDDUFromAssets()
                         dodecaView.ddu.file?.let { file -> dodecaView.ddu = DDU.readFile(file) }
+                    }
+                    having("discard_previews") {
+                        dduFileDao.getAll().forEach { dduFileDao.update(it.apply { preview = null }) }
                     }
                 }
                 dodecaView.loadMajorSharedPreferences()
@@ -334,21 +342,10 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
 
     private fun extractDDUFromAssets() {
         val dir = dduDir
-        assets.list("ddu")?.forEach { name -> extract1DDU(name, dir) }
+        assets.list(getString(R.string.ddu_asset_dir))?.forEach { name -> extract1DDU(name, dir) }
     }
 
-    private fun extract1DDU(name: String, dir: File = dduDir) {
-        val source = "ddu/$name"
-        val targetFile = File(dir, name)
-        if (targetFile.createNewFile()) {
-            Log.i(TAG, "Copying asset $source to ${targetFile.path}")
-        } else {
-            Log.i(TAG, "Overwriting ${targetFile.path} by asset $source")
-        }
-        assets.open(source).use { input ->
-            FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
-        }
-    }
+    private fun extract1DDU(filename: Filename, dir: File = dduDir) = extract1DDU(filename, dir, dduFileDao, TAG)
 
     class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {
         val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shapes
@@ -402,5 +399,37 @@ class FlexibleTimer(val timeMilis: Long, val action: () -> Unit) {
     fun stop() {
         timer?.cancel()
         timer = null
+    }
+}
+
+fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, TAG: String = MainActivity.TAG): Filename? {
+    var source: Filename = filename
+    fun streamFromDDUAsset(filename: Filename): InputStream =
+        assets.open("${getString(R.string.ddu_asset_dir)}/$filename")
+    val inputStream: InputStream? = try {
+        streamFromDDUAsset(source)
+    } catch (e: IOException) {
+        dduFileDao.findByFilename(filename)?.let {
+            source = it.originalFilename
+            try {
+                streamFromDDUAsset(source)
+            } catch (e: IOException) { null }
+        }
+    }
+    val success = inputStream?.let {
+        val targetFile = File(dir, source)
+        if (targetFile.createNewFile()) {
+            Log.i(TAG, "Copying asset $source to ${targetFile.path}")
+        } else {
+            Log.i(TAG, "Overwriting ${targetFile.path} by asset $source")
+        }
+        inputStream.use { input ->
+            FileOutputStream(targetFile).use { input.copyTo(it, MainActivity.BUFFER_SIZE) }
+        }
+        dduFileDao.insertOrUpdate(source) { preview = null }
+    }
+    return if (success != null) source
+    else null.also {
+        Log.w(TAG, "cannot find asset $filename ($source)")
     }
 }

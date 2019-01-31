@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
-        <!ENTITY app_name "Dodeca Look">
-        <!ENTITY version_name "1.1">
+        <!ENTITY app_name "Додека Медитация">
+        <!ENTITY version_name "1.2">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
+    <string name="app_name">&app_name;</string>
+
     <!-- add translation here -->
-    <string name="load_button_title">Загрузить файл ddu</string>
+    <string name="load_button_title">Выбрать ddu-картину</string>
     <string name="play_button_title">Запустить/приостановить</string>
     <string name="trace_button_title">Включить/выключить след</string>
-    <string name="save_button_title">Сохранить файл ddu</string>
+    <string name="save_button_title">Сохранить ddu-картину</string>
     <string name="settings_button_title">Настройки</string>
     <string name="redraw_trace_title">Перерисовка следа</string>
     <string name="redraw_trace_summary">Убирать след при перемещении и масштабировании</string>
@@ -19,8 +21,9 @@
     <string name="ups_summary">%s пересчётов окружностей в секунду (скорость движения окружностей)</string>
     <string name="settings_display_title">Внешний вид</string>
     <string name="settings_about_title">Информация</string>
-    <string name="description_summary">Порт &app_name; для Android</string>
+    <string name="description_summary">&app_name;: порт DodecaLook для Android</string>
     <string name="version_title">Версия</string>
+    <string name="version_summary">&app_name; &version_name;</string>
     <string name="copyright_summary">© Револьт Пименов (алгоритмы, эстетическая геометрия), Иван Никитин (программирование)</string>
     <string name="support_title">Обратная связь и поддержка</string>
     <string name="fps_summary">Число перерисовок в секунду, скорость перерисовки</string>
@@ -33,18 +36,18 @@
     <string name="error_ddu_save_no_file_toast">Ошибка во время сохранения ddu: ddu не привязано к файлу</string>
     <string name="error_ddu_save_toast">Ошибка во время сохранения ddu: см. лог</string>
     <string name="restore_defaults_title">Восстановить настройки по умолчанию</string>
-    <string name="restore_default_ddus_title">Восстановить исходные файлы ddu</string>
-    <string name="restore_default_ddu_title">Восстановить исходную версию данного файла ddu</string>
-    <string name="ddu_saved_toast">Файл ddu сохранён в</string>
-    <string name="imported_ddu_overwrites_original_toast">Исходный файл ddu был перезаписан импортом</string>
-    <string name="imported_ddu_toast">Импортирован новый файл ddu:</string>
+    <string name="restore_default_ddus_title">Восстановить исходные ddu-картины</string>
+    <string name="restore_default_ddu_title">Восстановить исходную версию данной ddu-картины</string>
+    <string name="ddu_saved_toast">ddu-картина сохранена как \"%s\"</string>
+    <string name="imported_ddu_overwrites_original_toast">Исходная ddu-картина была перезаписана импортом</string>
+    <string name="imported_ddu_toast">Импортирована новая ddu-картина:</string>
     <string name="permission_rationale_dialog_allow">Разрешить</string>
     <string name="permission_rationale_dialog_deny">Отклонить</string>
-    <string name="permission_storage_message">Пожалуйста, разрешите доступ к файлам на устройстве, чтобы импортировать данный файл ddu</string>
-    <string name="permission_storage_accusation">Вы не разрешили доступ к файлам. Файл ddu не может быть импортирован!</string>
+    <string name="permission_storage_message">Пожалуйста, разрешите доступ к файлам на устройстве, чтобы импортировать данную ddu-картину</string>
+    <string name="permission_storage_accusation">Вы не разрешили доступ к файлам. ddu-картина не может быть импортирована!</string>
     <string name="permission_rationale_dialog_title">Запрос на разрешение доступа</string>
     <string name="always_autocenter_title">Всегда проводить автоцентровку</string>
-    <string name="always_autocenter_summary">Проводить автоцентровку при загрузке файла ddu</string>
+    <string name="always_autocenter_summary">Проводить автоцентровку при загрузке ddu-картины</string>
     <string name="show_stat_title">Показывать статистику</string>
     <string name="stat_n_updates_text">%d пересчётов</string>
     <string name="stat_20_updates_per_text">20 пересчётов за %.3f секунд</string>
@@ -59,7 +62,7 @@
     <string name="canvas_factor_title">Размер холста</string>
     <string name="speed_title">Скорость</string>
     <string name="speed_summary">Делать %s пересчётов подряд</string>
-    <string name="canvas_factor_oom_toast">Размер холста %d слишком большой: он вызвал переполнение памяти! Пробуем меньший размер %d …</string>
+    <string name="canvas_factor_oom_toast">Размер холста %d слишком большой: он вызвал переполнение памяти! Пробуем меньший размер %d…</string>
     <string name="minimal_canvas_factor_oom_toast">Минимальный размер холста %d вызвал переполнение памяти! Пробуем снова…</string>
     <string name="restart_button_title">Перезапустить</string>
     <string name="shape_spinner_prompt">Отображать данную фигуру вместо окружности</string>
@@ -68,4 +71,24 @@
     <string name="outline_button_title">Показывать абрис</string>
     <string name="autocenter_button_title">Автоцентровка</string>
     <string name="autosave_title">Автосохранение</string>
+    <string name="ddu_preview_title">Предпросмотр ddu-картин</string>
+    <string name="settings_ddu_files_title">ddu-картины</string>
+    <string name="settings_preview_title">Предпросмотр</string>
+    <string name="discard_previews_title">Сбросить предпросмотры</string>
+    <string name="preview_size_title">Размер предпросмотра</string>
+    <string name="preview_size_summary">%s ⨯ %s</string>
+    <string name="n_preview_updates_title">Дальность предпросмотра</string>
+    <string name="n_preview_updates_summary">%s пересчётов для отрисовки предпросмотра</string>
+    <string name="preview_smart_updates_summary">Число пересчётов зависит от сложности ddu</string>
+    <string name="preview_smart_updates_title">Вычисление пересчётов</string>
+    <string name="ddu_rename_toast">\"%s\" переименован в \"%s\"</string>
+    <string name="ddu_rename">Переименовать</string>
+    <string name="ddu_delete">Удалить</string>
+    <string name="ddu_restore">Восстановить</string>
+    <string name="rename_dialog_message">Переименовать ddu-картину \"%s\"%s</string>
+    <string name="rename_dialog_original_name">(исходное имя: \"%s\")</string>
+    <string name="ddu_delete_toast">\"%s\" удалён</string>
+    <string name="ddu_restore_toast">\"%s\" восстановлен в \"%s\"</string>
+    <string name="ddu_asset_dir">ddu-ru</string>
+    <string name="first_ddu">Незнакомка.ddu</string>
 </resources>

@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
-        <!ENTITY app_name "Dodeca Look">
-        <!ENTITY version_name "1.1">
+        <!ENTITY app_name "Dodeca Meditation">
+        <!ENTITY version_name "1.2">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
-    <string name="app_name" translatable="false">Dodeca Look</string>
+    <string name="app_name">&app_name;</string>
+    <string name="ddu_asset_dir">ddu</string>
+    <string name="first_ddu">Unknown lady.ddu</string>
 
     <!-- Strings related to bottom bar -->
     <string name="help_button_title">Help</string>
-    <string name="load_button_title">Load ddu</string>
-    <string name="save_button_title">Save ddu</string>
+    <string name="load_button_title">Choose ddu-picture</string>
+    <string name="save_button_title">Save ddu-picture</string>
     <string name="restart_button_title">Restart</string>
     <string name="play_button_title">Play/pause</string>
     <string name="one_step_button_title">Stepwise: one step</string>
@@ -27,14 +29,17 @@
 
     <!-- Toasts -->
     <string name="please_pick_color_toast">Double tap to pick color</string>
-    <string name="bad_ddu_format_toast">bad ddu format:</string>
+    <string name="bad_ddu_format_toast">Bad ddu format:</string>
     <string name="error_ddu_save_no_file_toast">Error while saving ddu: ddu has no file</string>
     <string name="error_ddu_save_toast">Error while saving ddu, see log</string>
-    <string name="ddu_saved_toast">ddu saved at</string>
-    <string name="imported_ddu_overwrites_original_toast">Original ddu was overwritten by imported ddu</string>
-    <string name="imported_ddu_toast">New ddu was imported:</string>
+    <string name="ddu_saved_toast">ddu-picture saved as \"%s\"</string>
+    <string name="imported_ddu_overwrites_original_toast">Original ddu-picture was overwritten by imported one</string>
+    <string name="imported_ddu_toast">New ddu-picture was imported:</string>
     <string name="canvas_factor_oom_toast">Canvas factor %d is too large: it caused out of memory error! Trying smaller factor %d…</string>
     <string name="minimal_canvas_factor_oom_toast">Minimal canvas factor %d caused out of memory error! Retrying…</string>
+    <string name="ddu_rename_toast">\"%s\" renamed to \"%s\"</string>
+    <string name="ddu_delete_toast">\"%s\" deleted</string>
+    <string name="ddu_restore_toast">\"%s\" restored to \"%s\"</string>
 
     <!-- Strings related to settings -->
     <string name="settings_display_title">Display</string>
@@ -64,21 +69,32 @@
     <string name="fps_title" translatable="false">FPS</string>
     <string name="fps_summary">Frames per second, redraw speed</string>
     <!-- ^ -->
-    <string name="restore_default_ddu_title">Restore default current ddu</string>
-    <string name="restore_default_ddus_title">Restore default ddu-s</string>
+
+    <string name="settings_ddu_files_title">ddu-pictures</string>
+    <string name="restore_default_ddu_title">Restore current ddu-picture</string>
+    <string name="restore_default_ddus_title">Restore all ddu-pictures</string>
     <string name="restore_defaults_title">Restore default settings</string>
+
+    <string name="settings_preview_title">Preview</string>
+    <string name="discard_previews_title">Discard previews</string>
+    <string name="preview_size_title">Preview size</string>
+    <string name="preview_size_summary">%s ⨯ %s</string>
+    <string name="n_preview_updates_title">Preview updates</string>
+    <string name="n_preview_updates_summary">%s updates to draw preview</string>
+    <string name="preview_smart_updates_title">Smart updates</string>
+    <string name="preview_smart_updates_summary">Number of updates depends on ddu complexity</string>
 
     <string name="settings_about_title">About</string>
     <string name="description_summary">Android port for &app_name;</string>
     <string name="version_title">Version</string>
-    <string name="version_summary" translatable="false">&app_name; &version_name;</string>
+    <string name="version_summary">&app_name; &version_name;</string>
     <string name="copyright_title" translatable="false">Copyright</string>
-    <string name="copyright_summary">© Revolt Pimenov (algorithms, esthetic geometry) and Ivan Nikitin (programming)</string>
+    <string name="copyright_summary">© Revolt Pimenov (algorithms, esthetic geometry), Ivan Nikitin (programming)</string>
     <string name="support_title">Feedback and support</string>
     <string name="feedback_subject" translatable="false">&app_name; support</string>
     <string name="developer_email" translatable="false">&feedback_email;</string>
     <!-- Strings related to permissions -->
-    <string name="permission_storage_message">Please, allow storage access to import this ddu</string>
+    <string name="permission_storage_message">Please, allow storage access to import this ddu-picture</string>
     <string name="permission_storage_accusation">You denied storage access permission. Why? you cannot import the ddu now!
     </string>
     <string name="permission_rationale_dialog_title">Permission request</string>
@@ -87,5 +103,13 @@
 
     <!-- Help -->
     <string name="help_title">Help</string>
+
+    <!-- ddu chooser -->
+    <string name="ddu_preview_title">ddu-picture preview</string>
+    <string name="ddu_rename">Rename</string>
+    <string name="ddu_delete">Delete</string>
+    <string name="ddu_restore">Restore</string>
+    <string name="rename_dialog_message">Rename ddu-picture \"%s\"%s</string>
+    <string name="rename_dialog_original_name">(original name: \"%s\")</string>
 
 </resources>

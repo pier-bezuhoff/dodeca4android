@@ -9,13 +9,13 @@
 
         <SwitchPreference
                 android:key="redraw_trace"
-                android:defaultValue="false"
+                android:defaultValue="@bool/redraw_trace"
                 android:title="@string/redraw_trace_title"
                 android:summary="@string/redraw_trace_summary"/>
         <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_all_circles"
-                android:defaultValue="false"
+                android:defaultValue="@bool/show_all_circles"
                 android:title="@string/show_all_circles_title"
                 android:summary="@string/show_all_circles_summary"
         />
@@ -32,28 +32,33 @@
                 <!--android:title="@string/rotate_shapes_title"-->
                 <!--android:summary="@string/rotate_shapes_summary"-->
         <!--/>-->
-        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="reverse_motion"
-                android:defaultValue="false"
+                android:defaultValue="@bool/reverse_motion"
                 android:title="@string/reverse_motion"
         />
         <SwitchPreference
                 android:key="autocenter_always"
-                android:defaultValue="false"
+                android:defaultValue="@bool/autocenter_always"
                 android:title="@string/always_autocenter_title"
                 android:summary="@string/always_autocenter_summary" />
         <ListPreference
                 android:key="canvas_factor"
-                android:defaultValue="2"
+                android:defaultValue="@string/canvas_factor"
                 android:entries="@array/canvas_factors"
                 android:entryValues="@array/canvas_factors"
                 android:title="@string/canvas_factor_title"
                 android:summary="@string/canvas_factor_summary" />
-        <!-- NOTE: advanced -->
+        <!--<SeekBarPreference-->
+        <!--android:key="speed_seekbar"-->
+        <!--android:title="Speed"-->
+        <!--android:summary="Make %d updates in a row"-->
+        <!--android:defaultValue="1"-->
+        <!--android:max="50"-->
+        <!--/>-->
         <ListPreference
                 android:key="speed"
-                android:defaultValue="1"
+                android:defaultValue="@string/speed"
                 android:entries="@array/speeds"
                 android:entryValues="@array/speeds"
                 android:title="@string/speed_title"
@@ -61,35 +66,18 @@
         />
         <SwitchPreference
                 android:key="autosave"
-                android:defaultValue="false"
+                android:defaultValue="@bool/autosave"
                 android:title="@string/autosave_title"
         />
         <!-- NOTE: advanced -->
-        <!--<SeekBarPreference-->
-                <!--android:key="speed_seekbar"-->
-                <!--android:title="Speed"-->
-                <!--android:summary="Make %d updates in a row"-->
-                <!--android:defaultValue="1"-->
-                <!--android:max="50"-->
-        <!--/>-->
-        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_stat"
-                android:defaultValue="false"
+                android:defaultValue="@bool/show_stat"
                 android:title="@string/show_stat_title"
         />
-        <!-- MAYBE: delete -->
-        <!-- QUESTION: UPS/FPS > 100 = 100? -->
-        <!--<com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat-->
-        <!--android:key="ups"-->
-        <!--android:title="@string/ups_title"-->
-        <!--android:summary="@string/ups_summary"-->
-        <!--android:defaultValue="100"-->
-        <!--sample:msbp_minValue="1"-->
-        <!--sample:msbp_maxValue="100"-->
-        <!--sample:msbp_interval="1"-->
-        <!--sample:msbp_measurementUnit="UPS"-->
-        <!--sample:msbp_dialogEnabled="false"/>-->
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/settings_ddu_files_title">
         <Preference
                 android:key="default_ddu"
                 android:title="@string/restore_default_ddu_title" />
@@ -101,6 +89,35 @@
                 android:title="@string/restore_defaults_title" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/settings_preview_title">
+        <Preference
+                android:key="discard_previews"
+                android:title="@string/discard_previews_title"
+        />
+        <ListPreference
+                android:key="preview_size"
+                android:defaultValue="@string/preview_size"
+                android:entries="@array/preview_sizes"
+                android:entryValues="@array/preview_sizes"
+                android:title="@string/preview_size_title"
+                android:summary="@string/preview_size_summary"
+        />
+        <ListPreference
+                android:key="n_preview_updates"
+                android:defaultValue="@string/n_preview_updates"
+                android:entries="@array/preview_updates"
+                android:entryValues="@array/preview_updates"
+                android:title="@string/n_preview_updates_title"
+                android:summary="@string/n_preview_updates_summary"
+        />
+        <SwitchPreference
+                android:key="preview_smart_updates"
+                android:defaultValue="@bool/preview_smart_updates"
+                android:title="@string/preview_smart_updates_title"
+                android:summary="@string/preview_smart_updates_summary"
+        />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/settings_about_title">
         <Preference
                 android:selectable="false"
@@ -110,6 +127,7 @@
                 android:title="@string/version_title"
                 android:summary="@string/version_summary" />
         <Preference
+                android:selectable="false"
                 android:title="@string/copyright_title"
                 android:summary="@string/copyright_summary" />
         <!-- MAYBE: add some links to websites -->
