@@ -1,7 +1,14 @@
 package com.pierbezuhoff.dodeca
 
 import android.content.SharedPreferences
+import android.content.res.Resources
 import android.graphics.Matrix
+import androidx.annotation.BoolRes
+
+// cannot see better solution yet
+// initialization (from MainActivity): `Options(resources: Resources)`
+lateinit var options: Options private set
+lateinit var values: Values private set
 
 abstract class SharedPreference<T>(val default: T) where T : Any {
     var value = default
@@ -77,58 +84,97 @@ class ParsedFloatOption(key: String, default: Float) : Option<Float>(key, defaul
     }
 }
 
-// ddu:r -> motion -> visible:r
-val motion = object : SharedPreference<Matrix>(Matrix()) {
-    override fun peek(sharedPreferences: SharedPreferences): Matrix {
-        with(sharedPreferences) {
-            val dx = getFloat("dx", 0f)
-            val dy = getFloat("dy", 0f)
-            val scale = getFloat("scale", 1f)
-            return Matrix().apply { postTranslate(dx, dy); postScale(scale, scale) }
-        }
-    }
-    override fun put(editor: SharedPreferences.Editor) {
-        with(editor) {
-            putFloat("dx", value.dx)
-            putFloat("dy", value.dy)
-            putFloat("scale", value.sx) // sx == sy
-        }
-    }
-    override fun remove(editor: SharedPreferences.Editor) {
-        setOf("dx", "dy", "scale").forEach { editor.remove(it) }
-    }
-}
-val drawTrace = Option("draw_trace", true)
-val updating = Option("updating", true)
-val redrawTraceOnMove = Option("redraw_trace", false)
-val showAllCircles = Option("show_all_circles", false)
-//val showCenters = Option("show_centers", false)
-val showOutline = Option("show_outline", false)
-val reverseMotion = Option("reverse_motion", false)
-val shape = object : Option<Shapes>("shape", Shapes.CIRCLE) {
-    override fun peek(sharedPreferences: SharedPreferences): Shapes =
-        sharedPreferences.getString(key, default.toString())
-            ?.toUpperCase()?.let { Shapes.valueOfOrNull(it) ?: default } ?: default
-    override fun put(editor: SharedPreferences.Editor) {
-        editor.putString(key, value.toString().toLowerCase())
-    }
-}
-//val rotateShapes = Option("rotate_shapes", false)
-val autosave = Option("autosave", false)
-val autocenterAlways = Option("autocenter_always", false)
-val speed = ParsedFloatOption("speed", 1f)
-val canvasFactor = ParsedIntOption("canvas_factor", 2)
-val preferRecentDDU = Option("prefer_recent_ddu", true) // TODO: add to preferences
 
-fun <T: Any> SharedPreferences.fetch(
+class Options(val resources: Resources) {
+    // ddu:r -> motion -> visible:r
+    val motion = object : SharedPreference<Matrix>(Matrix()) {
+        override fun peek(sharedPreferences: SharedPreferences): Matrix {
+            with(sharedPreferences) {
+                val dx = getFloat("dx", 0f)
+                val dy = getFloat("dy", 0f)
+                val scale = getFloat("scale", 1f)
+                return Matrix().apply { postTranslate(dx, dy); postScale(scale, scale) }
+            }
+        }
+        override fun put(editor: SharedPreferences.Editor) {
+            with(editor) {
+                putFloat("dx", value.dx)
+                putFloat("dy", value.dy)
+                putFloat("scale", value.sx) // sx == sy
+            }
+        }
+        override fun remove(editor: SharedPreferences.Editor) {
+            setOf("dx", "dy", "scale").forEach { editor.remove(it) }
+        }
+    }
+    private fun BooleanOption(key: String, @BoolRes id: Int): Option<Boolean> = Option(key, resources.getBoolean(id))
+    val drawTrace = BooleanOption("draw_trace", R.bool.draw_trace)
+    val updating = BooleanOption("updating", R.bool.updating)
+    val redrawTraceOnMove = BooleanOption("redraw_trace", R.bool.redraw_trace)
+    val showAllCircles = BooleanOption("show_all_circles", R.bool.show_all_circles)
+    // val showCenters = Option("show_centers", false)
+    val showOutline = BooleanOption("show_outline", R.bool.show_outline)
+    val reverseMotion = BooleanOption("reverse_motion", R.bool.reverse_motion)
+    val shape = object : Option<Shapes>(
+        "shape",
+        Shapes.valueOfOrNull(resources.getString(R.string.shape)) ?: Shapes.CIRCLE
+    ) {
+        override fun peek(sharedPreferences: SharedPreferences): Shapes =
+            sharedPreferences.getString(key, default.toString())
+                ?.toUpperCase()?.let { Shapes.valueOfOrNull(it) ?: default } ?: default
+
+        override fun put(editor: SharedPreferences.Editor) {
+            editor.putString(key, value.toString().toLowerCase())
+        }
+    }
+    // val rotateShapes = Option("rotate_shapes", false)
+    val autosave = BooleanOption("autosave", R.bool.autosave)
+    val autocenterAlways = BooleanOption("autocenter_always", R.bool.autocenter_always)
+    val speed = ParsedFloatOption("speed", resources.getString(R.string.speed).toFloat())
+    val canvasFactor = ParsedIntOption("canvas_factor", resources.getString(R.string.canvas_factor).toInt())
+    val preferRecentDDU = BooleanOption("prefer_recent_ddu", R.bool.prefer_recent_ddu) // TODO: add to preferences
+    // check screen width customization (from values/default.xml)
+    val previewSize = ParsedIntOption("preview_size", resources.getString(R.string.preview_size).toInt())
+    val nPreviewUpdates = ParsedIntOption("n_preview_updates", resources.getString(R.string.n_preview_updates).toInt())
+    val previewSmartUpdates = BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)
+
+    init {
+        if (!::options.isInitialized) {
+            options = this
+            values = Values(this)
+        }
+    }
+}
+
+// NOTE: may be moved toplevel
+class Values(private val options: Options) {
+    val motion: Matrix get() = options.motion.value
+    val drawTrace: Boolean get() = options.drawTrace.value
+    val updating: Boolean get() = options.updating.value
+    val redrawTraceOnMove: Boolean get() = options.redrawTraceOnMove.value
+    val showAllCircles: Boolean get() = options.showAllCircles.value
+    val showOutline: Boolean get() = options.showOutline.value
+    val reverseMotion: Boolean get() = options.reverseMotion.value
+    val shape: Shapes get() = options.shape.value
+    val autosave: Boolean get() = options.autosave.value
+    val autocenterAlways: Boolean get() = options.autocenterAlways.value
+    val speed: Float get() = options.speed.value
+    val canvasFactor: Int get() = options.canvasFactor.value
+    val preferRecentDDU: Boolean get() = options.preferRecentDDU.value
+    val previewSize: Int get() = options.previewSize.value
+    val nPreviewUpdates: Int get() = options.nPreviewUpdates.value
+    val previewSmartUpdates: Boolean get() = options.previewSmartUpdates.value
+}
+
+fun <T : Any> SharedPreferences.fetch(
     preference: SharedPreference<T>,
     onPreChange: (T) -> Unit = {}, onPostChange: (T) -> Unit = {}
 ) = preference.fetch(this, onPreChange, onPostChange)
 
-fun <T: Any> SharedPreferences.Editor.put(preference: SharedPreference<T>) =
+fun <T : Any> SharedPreferences.Editor.put(preference: SharedPreference<T>) =
     preference.put(this)
-fun <T: Any> SharedPreferences.Editor.set(preference: SharedPreference<T>, value: T? = null) =
+fun <T : Any> SharedPreferences.Editor.set(preference: SharedPreference<T>, value: T? = null) =
     preference.set(value, this)
-fun <T: Any> SharedPreferences.Editor.remove(preference: SharedPreference<T>) {
+fun <T : Any> SharedPreferences.Editor.remove(preference: SharedPreference<T>) {
     preference.remove(this)
 }

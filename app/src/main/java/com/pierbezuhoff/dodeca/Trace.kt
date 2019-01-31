@@ -14,7 +14,7 @@ class Trace(val paint: Paint) {
     val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
     // maybe: cache blitMatrix for performance (Sleepy)
     val blitMatrix get() = Matrix(translation).apply { postConcat(motion) }
-    private val factor: Int get() = canvasFactor.value // bitmap == (factor ^ 2) * screens
+    private val factor: Int get() = options.canvasFactor.value // bitmap == (factor ^ 2) * screens
 
     // visible
     fun translate(dx: Float, dy: Float) {
@@ -34,9 +34,10 @@ class Trace(val paint: Paint) {
     }
 
     fun retrace(width: Int, height: Int) {
+        // or use Bitmap.Config.ARGB_8888
         bitmap = Bitmap.createBitmap(
             factor * width, factor * height,
-            Bitmap.Config.ARGB_8888)
+            Bitmap.Config.RGB_565)
         val dx = (1f - factor) * width / 2
         val dy = (1f - factor) * height / 2
         canvas = Canvas(bitmap)
