@@ -3,6 +3,7 @@ Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
 - [ ] action bar: import/export
+- [ ] Change color: color list: circle: fill + outline of appropriate color
 - [ ] circle: borderColor, fillColor (-> outline)
 - [ ] Change color (choose from palette on ?double? tap) and save it for further changing
 - [ ] Also see com.android.support:palette-v7:28.0.0
