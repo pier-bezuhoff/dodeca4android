@@ -80,57 +80,67 @@ open class Circle(var center: Complex, var radius: Double) {
 }
 
 class CircleFigure(center: Complex, radius: Double,
-    val color: Int = defaultColor, // de facto: boarder and fill color
-    val fill: Boolean = defaultFill,
-    val rule: String? = defaultRule
+    val color: Int = DEFAULT_COLOR,
+    val fill: Boolean = DEFAULT_FILL,
+    val rule: String? = DEFAULT_RULE,
+    val borderColor: Int? = DEFAULT_BORDER_COLOR // used only when `fill`, otherwise `color` is used
 ) : Circle(center, radius) {
-    // point.abs() === 1
+    // point.abs() === 1 // maybe: store only angle
     var point: Complex = Complex.ONE // indicate direction when inverting
     val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
     val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
     val show: Boolean get() = dynamic && !dynamicHidden
-    private val _sequence: IntArray get() {
-        return rule?.let {
+    // sequence of numbers of figures with respect to which this circle should be inverted
+    val sequence: IntArray = rule?.let {
             (if (it.startsWith("n")) it.drop(1) else it)
                 .map(Character::getNumericValue)
                 .toIntArray()
         } ?: intArrayOf()
-    }
-    // sequence of numbers of figures with respect to which this circle should be inverted
-    val sequence: IntArray by lazy { _sequence } // rule should be assigned before getting sequence
 
     fun copy(
         newCenter: Complex? = null, newRadius: Double? = null,
-        newBorderColor: Int? = null, newFill: Boolean? = null, newRule: String? = null
+        newColor: Int? = null, newFill: Boolean? = null,
+        newRule: String? = null, newBorderColor: Int? = null
     ): CircleFigure = CircleFigure(
         newCenter ?: center, newRadius ?: radius,
-        newBorderColor ?: color, newFill ?: fill, newRule ?: rule
+        newColor ?: color, newFill ?: fill,
+        newRule ?: rule, newBorderColor ?: borderColor
     ).apply {
         point = this@CircleFigure.point
     }
 
     constructor(
         circle: Circle,
-        borderColor: Int = defaultColor, fill: Boolean = defaultFill, rule: String? = defaultRule
-    ) : this(circle.center, circle.radius, borderColor, fill, rule)
+        color: Int = DEFAULT_COLOR, fill: Boolean = DEFAULT_FILL,
+        rule: String? = DEFAULT_RULE, borderColor: Int? = DEFAULT_BORDER_COLOR
+    ) : this(circle.center, circle.radius, color, fill, rule, borderColor)
 
     constructor(
         x: Double, y: Double, radius: Double,
-        borderColor: Int = defaultColor, fill: Boolean = defaultFill, rule: String? = defaultRule
-    ) : this(Circle(x, y, radius), borderColor, fill, rule)
+        color: Int = DEFAULT_COLOR, fill: Boolean = DEFAULT_FILL,
+        rule: String? = DEFAULT_RULE, borderColor: Int? = DEFAULT_BORDER_COLOR
+    ) : this(Circle(x, y, radius), color, fill, rule, borderColor)
 
     constructor(
         x: Double, y: Double, radius: Double,
-        borderColor: Int? = null, fill: Boolean? = null, rule: String? = null
-    ) : this(Circle(x, y, radius), borderColor ?: defaultColor, fill ?: defaultFill, rule ?: defaultRule)
+        color: Int? = null, fill: Boolean? = null,
+        rule: String? = null, borderColor: Int? = null
+    ) : this(
+        Circle(x, y, radius),
+        color ?: DEFAULT_COLOR, fill ?: DEFAULT_FILL,
+        rule ?: DEFAULT_RULE, borderColor ?: DEFAULT_BORDER_COLOR
+    )
 
     override fun toString(): String = """CircleFigure(
         |  center = ($x, $y)
         |  radius = $radius
         |  point = $point
         |  color = ${color.fromColor()}
-        |  fill = $fill
-        |  rule = $rule
+        |  fill = $fill${
+    rule?.let { "\n  rule = $it" } ?: ""
+    }${
+    borderColor?.let { "\n  color = $it" } ?: ""
+    }
         |)
     """.trimMargin()
 
@@ -149,9 +159,10 @@ class CircleFigure(center: Complex, radius: Double,
     }
 
     companion object {
-        const val defaultColor: Int = Color.BLACK
-        const val defaultFill = false
-        val defaultRule: String? = null
+        const val DEFAULT_COLOR: Int = Color.BLACK
+        const val DEFAULT_FILL = false
+        val DEFAULT_RULE: String? = null
+        val DEFAULT_BORDER_COLOR: Int? = null
     }
 }
 

@@ -18,9 +18,9 @@ interface CircleGroup {
 }
 
 internal data class Attributes(
-    val borderColor: Int = CircleFigure.defaultColor,
-    val fill: Boolean = CircleFigure.defaultFill,
-    val rule: String? = CircleFigure.defaultRule
+    val borderColor: Int = CircleFigure.DEFAULT_COLOR,
+    val fill: Boolean = CircleFigure.DEFAULT_FILL,
+    val rule: String? = CircleFigure.DEFAULT_RULE
 ) {
     private val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
     private val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false

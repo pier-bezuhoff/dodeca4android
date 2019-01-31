@@ -15,16 +15,17 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 internal enum class Mode { // for scanning .ddu, before <mode parameter>
-    NO, GLOBAL, RADIUS, X, Y, BORDER_COLOR, FILL, RULE, CIRCLE_AUX;
+    NO, GLOBAL, RADIUS, X, Y, COLOR, FILL, RULE, CIRCLE_AUX;
     fun next(): Mode = Mode.values().elementAtOrElse(ordinal + 1) { Mode.CIRCLE_AUX }
 }
 
 internal data class CircleParams(
     var radius: Double? = null, var x: Double? = null, var y: Double? = null,
-    var borderColor: Int? = null, var fill: Boolean? = null, var rule: String? = null) {
+    var color: Int? = null, var fill: Boolean? = null,
+    var rule: String? = null, var borderColor: Int? = null) {
     /* CircleParams MUST have [radius], [x] and [y] */
     fun toCircleFigure(): CircleFigure =
-        CircleFigure(x!!, y!!, radius!!, borderColor, fill, rule)
+        CircleFigure(x!!, y!!, radius!!, color, fill, rule, borderColor)
 }
 
 /* In C++ (with it ddu was created) color is RRGGBB, but in Java -- AABBGGRR
@@ -108,6 +109,9 @@ class DDU(
                 }
                 if (circle.dynamic) // dynamic => rule != null
                     writeln(circle.rule!!)
+                circle.borderColor?.let {
+                    writeln("color: ${it.fromColor()}")
+                }
             }
         }
     }
@@ -225,10 +229,15 @@ class DDU(
                             Mode.RADIUS -> params.radius = it.replace(',', '.').toDouble()
                             Mode.X -> params.x = it.replace(',', '.').toDouble()
                             Mode.Y -> params.y = it.replace(',', '.').toDouble()
-                            Mode.BORDER_COLOR -> params.borderColor = it.toInt().toColor()
+                            Mode.COLOR -> params.color = it.toInt().toColor()
                             Mode.FILL -> params.fill = it != "0" // carefully
                             Mode.RULE -> params.rule = it
                         }
+                        // TODO: reconsider read/write for borderColor
+                        if (mode >= Mode.RULE && it.startsWith("borderColor:"))
+                            it.substringAfter("borderColor:").trim().let {
+                                params.borderColor = it.toIntOrNull()?.toColor()
+                            }
                         mode = mode.next()
                     }
                 }
