@@ -3,6 +3,8 @@ Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
 - [ ] action bar: import/export
+- [ ] On phone (mama's) 1 column
+- [ ] When theme: white text color (Fedor's phone)
 - [ ] Change color: color list: circle: fill + outline of appropriate color
 - [ ] circle: borderColor, fillColor (-> outline)
 - [ ] Change color (choose from palette on ?double? tap) and save it for further changing
