@@ -107,10 +107,9 @@ class DDU(
                 ).forEach { param ->
                     writeln(param.toString())
                 }
-                if (circle.dynamic) // dynamic => rule != null
-                    writeln(circle.rule!!)
+                circle.rule?.let(writeln)
                 circle.borderColor?.let {
-                    writeln("color: ${it.fromColor()}")
+                    writeln("borderColor: ${it.fromColor()}")
                 }
             }
         }
@@ -139,12 +138,14 @@ class DDU(
                         circleGroup.update()
                     }
                     circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
-//                }
             } else {
                 circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
             }
         }
-        Log.i("DDU", "(${file?.name}).preview, smart: ${values.previewSmartUpdates} complexity = $complexity, nUpdates = $nUpdates")
+        Log.i(
+            "DDU",
+            "preview \"${file?.nameWithoutExtension}\", smart: ${values.previewSmartUpdates} complexity = $complexity, nUpdates = $nUpdates"
+        )
         return bitmap
     }
 
@@ -178,14 +179,15 @@ class DDU(
                     Log.w("DDU.readStream", "Unexpected end of circle, discarding...")
                 }
             }
-            stream.reader().forEachLine {
+            stream.reader().forEachLine { line ->
+                val s = line.trim()
                 when {
-                    mode == Mode.GLOBAL && it.isNotBlank() -> {
+                    mode == Mode.GLOBAL && s.isNotBlank() -> {
                         when (nGlobals) {
-                            0 -> backgroundColor = it.toInt().toColor()
-                            1, 2 -> restGlobals.add(it.toInt()) // don't know, what this 2 means ("howInvers" and "howAnim")
-                            3 -> drawTrace = it != "0"
-                            4 -> it.split(" ").let {
+                            0 -> backgroundColor = s.toInt().toColor()
+                            1, 2 -> restGlobals.add(s.toInt()) // don't know, what this 2 means ("howInvers" and "howAnim")
+                            3 -> drawTrace = s != "0"
+                            4 -> s.split(" ").let {
                                 if (it.size == 2) {
                                     val x = it[0].toDoubleOrNull()
                                     val y = it[1].toDoubleOrNull()
@@ -197,17 +199,17 @@ class DDU(
                         nGlobals++
                         mode = Mode.NO
                     }
-                    it.startsWith("circle:") -> {
+                    s.startsWith("circle:") -> {
                         appendCircle()
                         params = CircleParams() // clear params
                         mode = Mode.RADIUS
                     }
                     mode == Mode.NO -> when {
-                        it.startsWith("global") -> mode = Mode.GLOBAL
-                        it.startsWith("drawTrace:") ->
-                            drawTrace = it.substringAfter("drawTrace:").trim().toBoolean()
-                        it.startsWith("bestCenter:") ->
-                            it.substringAfter("bestCenter:").trim().split(" ").let {
+                        s.startsWith("global") -> mode = Mode.GLOBAL
+                        s.startsWith("drawTrace:") ->
+                            drawTrace = s.substringAfter("drawTrace:").trim().toBoolean()
+                        s.startsWith("bestCenter:") ->
+                            s.substringAfter("bestCenter:").trim().split(" ").let {
                                 if (it.size == 2) {
                                     val x = it[0].toDoubleOrNull()
                                     val y = it[1].toDoubleOrNull()
@@ -215,27 +217,27 @@ class DDU(
                                         bestCenter = Complex(x, y)
                                 }
                             }
-                        it.startsWith("shape:") ->
-                            Shapes.valueOfOrNull(it.substringAfter("shape:").trim())?.let {
+                        s.startsWith("shape:") ->
+                            Shapes.valueOfOrNull(s.substringAfter("shape:").trim())?.let {
                                 shape = it
                             }
-                        it.startsWith("showOutline:") ->
-                            it.substringAfter("showOutline:").trim().let {
+                        s.startsWith("showOutline:") ->
+                            s.substringAfter("showOutline:").trim().let {
                                 showOutline = it.toBoolean()
                             }
                     }
-                    mode >= Mode.RADIUS && it.isNotBlank() -> {
+                    mode >= Mode.RADIUS && s.isNotBlank() -> {
                         when (mode) {
-                            Mode.RADIUS -> params.radius = it.replace(',', '.').toDouble()
-                            Mode.X -> params.x = it.replace(',', '.').toDouble()
-                            Mode.Y -> params.y = it.replace(',', '.').toDouble()
-                            Mode.COLOR -> params.color = it.toInt().toColor()
-                            Mode.FILL -> params.fill = it != "0" // carefully
-                            Mode.RULE -> params.rule = it
+                            Mode.RADIUS -> params.radius = s.replace(',', '.').toDouble()
+                            Mode.X -> params.x = s.replace(',', '.').toDouble()
+                            Mode.Y -> params.y = s.replace(',', '.').toDouble()
+                            Mode.COLOR -> params.color = s.toInt().toColor()
+                            Mode.FILL -> params.fill = s != "0" // carefully
+                            Mode.RULE -> if (Regex("n?\\d+").matches(s))
+                                params.rule = s // rule MAY be absent
                         }
-                        // TODO: reconsider read/write for borderColor
-                        if (mode >= Mode.RULE && it.startsWith("borderColor:"))
-                            it.substringAfter("borderColor:").trim().let {
+                        if (mode >= Mode.RULE && s.startsWith("borderColor:"))
+                            s.substringAfter("borderColor:").trim().let {
                                 params.borderColor = it.toIntOrNull()?.toColor()
                             }
                         mode = mode.next()
