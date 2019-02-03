@@ -125,7 +125,7 @@ class DDU(
         val bestCenter = bestCenter ?: center
         val (dx, dy) = (center - bestCenter).asFF()
         val (centerX, centerY) = center.asFF()
-        val scale: Float = PREVIEW_SCALE * width / options.previewSize.default
+        val scale: Float = PREVIEW_SCALE * width / NORMAL_PREVIEW_SIZE // or use options.preview_size.default
         val matrix = Matrix().apply { postTranslate(dx, dy); postScale(scale, scale, centerX, centerY) }
         canvas.withMatrix(matrix) {
             canvas.drawColor(backgroundColor)
@@ -154,6 +154,7 @@ class DDU(
         val DEFAULT_SHAPE: Shapes = Shapes.CIRCLE
         const val DEFAULT_SHOW_OUTLINE = false
         const val MIN_PREVIEW_UPDATES = 10
+        const val NORMAL_PREVIEW_SIZE = 300 // with this preview_size preview_scale was tuned
         const val PREVIEW_SCALE = 0.5f
         private val header: String get() = "Dodeca Meditation ${BuildConfig.VERSION_NAME} for Android"
 
