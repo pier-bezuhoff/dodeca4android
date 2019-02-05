@@ -341,6 +341,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun saveDDU() {
+        // TODO: get attrs from circleGroup because they might change from ChooseColorDialog
         val ddu = prepareDDUToSave()
         if (ddu.file == null) {
             Log.i(TAG, "saveDDU: ddu has no file")
@@ -348,6 +349,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
         } else {
             doAsync {
+                ddu.circles = ddu.circles.zip(circleGroup.figures) { figure, newFigure -> figure.copy(
+                    newColor = newFigure.color, newFill = newFigure.fill,
+                    newRule = newFigure.rule, newBorderColor = newFigure.borderColor
+                ) }
                 try {
                     ddu.file?.let { file ->
                         Log.i(TAG, "Saving ddu at ${file.path}")

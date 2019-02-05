@@ -8,6 +8,8 @@ typealias CircleGroupImpl = PrimitiveCircles
 
 interface CircleGroup {
     val figures: List<CircleFigure>
+    operator fun get(i: Int): CircleFigure
+    operator fun set(i: Int, figure: CircleFigure)
     fun update(reverse: Boolean = false)
     fun updateTimes(times: Int, reverse: Boolean = false)
     fun draw(canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false, showOutline: Boolean = false)
@@ -17,10 +19,11 @@ interface CircleGroup {
         canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false, showOutline: Boolean = false)
 }
 
-internal data class Attributes(
-    val borderColor: Int = CircleFigure.DEFAULT_COLOR,
+internal data class FigureAttributes(
+    val color: Int = CircleFigure.DEFAULT_COLOR,
     val fill: Boolean = CircleFigure.DEFAULT_FILL,
-    val rule: String? = CircleFigure.DEFAULT_RULE
+    val rule: String? = CircleFigure.DEFAULT_RULE,
+    val borderColor: Int? = null
 ) {
     private val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
     private val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
@@ -30,7 +33,7 @@ internal data class Attributes(
 // NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times faster
 // maybe: have float old_s
 /* List<Circle> is represented as 3 DoubleArray */
-class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
+class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : CircleGroup {
     private var size: Int = cs.size
     private val xs: DoubleArray = DoubleArray(size) { cs[it].x }
     private val ys: DoubleArray = DoubleArray(size) { cs[it].y }
@@ -38,21 +41,48 @@ class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
     private var oldXs: DoubleArray = xs // old_s are used for draw and as oldCircles in update
     private var oldYs: DoubleArray = ys
     private var oldRs: DoubleArray = rs
-    private val attrs: Array<Attributes> = Array(size) { Attributes(cs[it].color, cs[it].fill, cs[it].rule) }
+    private val attrs: Array<FigureAttributes> = Array(size) { FigureAttributes(cs[it].color, cs[it].fill, cs[it].rule) }
     private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
-    private val shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
+    private var shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
     private val paints: Array<Paint> = attrs.map {
         Paint(paint).apply {
-            color = it.borderColor
+            color = it.color
             style = if (it.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
         }
     }.toTypedArray()
     private val outlinePaint = paint.apply { color = Color.BLACK; style = Paint.Style.STROKE }
     override val figures: List<CircleFigure>
         get() = (0 until size).map { i ->
-            val (bc, f, r) = attrs[i]
-            CircleFigure(xs[i], ys[i], rs[i], bc, f, r)
+            val (color, fill, rule, borderColor) = attrs[i]
+            CircleFigure(xs[i], ys[i], rs[i], color, fill, rule, borderColor)
         }
+
+    override fun get(i: Int): CircleFigure {
+        val (color, fill, rule, borderColor) = attrs[i]
+        return CircleFigure(oldXs[i], oldYs[i], oldRs[i], color, fill, rule, borderColor)
+    }
+
+    override fun set(i: Int, figure: CircleFigure) {
+        val wasShown = attrs[i].show
+        with(figure) {
+            xs[i] = x
+            ys[i] = y
+            rs[i] = radius
+            oldXs[i] = x
+            oldYs[i] = y
+            oldRs[i] = radius
+            attrs[i] = FigureAttributes(color, fill, rule, borderColor)
+            rules[i] = sequence
+            paints[i] = Paint(paint).apply {
+                color = figure.color
+                style = if (fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
+            }
+            if (wasShown && !show)
+                shownIndices = shownIndices.toMutableSet().run { remove(i); toIntArray() }
+            else if (!wasShown && show)
+                shownIndices = shownIndices.toMutableSet().run { add(i); toIntArray() }
+        }
+    }
 
     override fun update(reverse: Boolean) = _update(reverse)
 
@@ -191,6 +221,13 @@ class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
         canvas.drawCircle(x, y, r, paints[i])
         if (showOutline)
             canvas.drawCircle(x, y, r, outlinePaint)
+        else // TODO: optimize
+            attrs[i].borderColor?.let { borderColor ->
+                canvas.drawCircle(
+                    x, y, r,
+                    Paint(outlinePaint).apply { color = borderColor }
+                )
+            }
     }
 
     private inline fun drawSquare(i: Int, canvas: Canvas, showOutline: Boolean = false) {
@@ -204,6 +241,13 @@ class PrimitiveCircles(cs: List<CircleFigure>, paint: Paint) : CircleGroup {
         )
         if (showOutline)
             canvas.drawRect(x - r, y - r, x + r, y + r, outlinePaint)
+        else
+            attrs[i].borderColor?.let { borderColor ->
+                canvas.drawRect(
+                    x - r, y - r, x + r, y + r,
+                    Paint(outlinePaint).apply { color = borderColor }
+                )
+            }
     }
 
     private inline fun drawCross(i: Int, canvas: Canvas) {

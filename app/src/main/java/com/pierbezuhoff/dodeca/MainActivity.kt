@@ -160,7 +160,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                 if (values.updating)
                     dodecaView.change(options.updating, false)
                 bottomBarHideTimer.stop() // will be restarted in onChooseColorClosed()
-                ChooseColorDialog(this, dodecaView).build().show()
+                ChooseColorDialog(this, dodecaView.circleGroup).build().show()
             }
             R.id.clear_button -> dodecaView.retrace()
             R.id.autocenter_button -> dodecaView.autocenter()

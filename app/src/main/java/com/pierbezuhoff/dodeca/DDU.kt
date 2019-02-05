@@ -109,7 +109,7 @@ class DDU(
                 }
                 circle.rule?.let(writeln)
                 circle.borderColor?.let {
-                    writeln("borderColor: ${it.fromColor()}")
+                    writeln("color: ${it.fromColor()}")
                 }
             }
         }
@@ -237,8 +237,8 @@ class DDU(
                             Mode.RULE -> if (Regex("n?\\d+").matches(s))
                                 params.rule = s // rule MAY be absent
                         }
-                        if (mode >= Mode.RULE && s.startsWith("borderColor:"))
-                            s.substringAfter("borderColor:").trim().let {
+                        if (mode >= Mode.RULE && s.startsWith("color:"))
+                            s.substringAfter("color:").trim().let {
                                 params.borderColor = it.toIntOrNull()?.toColor()
                             }
                         mode = mode.next()
