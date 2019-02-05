@@ -123,7 +123,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/content/ic_report_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/image/ic_brightness_1_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -133,8 +133,11 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="ic_error" />
+                            <entry key="height" value="16" />
+                            <entry key="outputName" value="ic_filled_circle" />
+                            <entry key="overrideSize" value="true" />
                             <entry key="sourceFile" value="$PROJECT_DIR$/app/src/main/res/drawable/ic_trace.svg" />
+                            <entry key="width" value="16" />
                           </map>
                         </option>
                       </PersistentState>
