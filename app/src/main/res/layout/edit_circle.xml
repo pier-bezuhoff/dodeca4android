@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+>
+    <ImageButton
+            android:id="@+id/circle_color"
+            android:src="@drawable/ic_filled_circle"
+            android:contentDescription="filled_circle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+    />
+    <Switch
+            android:id="@+id/circle_fill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+    />
+    <Switch
+            android:id="@+id/circle_has_border_color"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+    />
+    <ImageButton
+            android:id="@+id/circle_border_color"
+            android:src="@drawable/ic_circle"
+            android:contentDescription="thin_circle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+    />
+</LinearLayout>
