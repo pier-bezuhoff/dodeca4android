@@ -19,17 +19,18 @@
             app:layout_constraintBottom_toBottomOf="parent"
     />
     <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/circle_layout"
             android:orientation="horizontal"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             app:layout_constraintStart_toEndOf="@id/circle_checkbox"
             android:layout_marginStart="8dp"
-            android:id="@+id/circle_layout"
+            android:contentDescription="Edit circle"
     >
         <ImageView
                 android:id="@+id/circle_image"
                 android:src="@drawable/circle_image"
-                android:contentDescription="circle_image"
+                android:contentDescription="Circle image"
                 android:padding="8dp"
                 android:layout_width="50dp"
                 android:layout_height="50dp"

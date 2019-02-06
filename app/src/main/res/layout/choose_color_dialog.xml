@@ -18,6 +18,7 @@
                 android:padding="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="4dp"
+                android:contentDescription="Select all"
         />
         <ToggleButton
                 android:id="@+id/sort_by_color"
@@ -30,6 +31,7 @@
                 android:padding="8dp"
                 android:textOn=""
                 android:textOff=""
+                android:contentDescription="Sort by color"
         />
         <ToggleButton
                 android:id="@+id/sort_by_name"
@@ -40,11 +42,13 @@
                 android:padding="8dp"
                 android:textOn=""
                 android:textOff=""
+                android:contentDescription="Sort by name"
         />
     </LinearLayout>
+    <View style="@style/dividerHorizontal"/>
     <!-- TODO: remove magic height -->
     <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/color_groups"
+            android:id="@+id/circle_rows"
             android:scrollbars="vertical"
             android:layout_width="match_parent"
             android:layout_height="400dp"
