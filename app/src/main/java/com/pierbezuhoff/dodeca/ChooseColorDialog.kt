@@ -7,6 +7,7 @@ import android.graphics.drawable.LayerDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Switch
@@ -15,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rarepebble.colorpicker.ColorPickerView
+import kotlinx.android.synthetic.main.choose_color_dialog.view.*
 import kotlinx.android.synthetic.main.choose_color_row.view.*
 import kotlinx.android.synthetic.main.edit_circle.view.*
 import org.jetbrains.anko.AlertBuilder
@@ -38,10 +40,19 @@ class ChooseColorDialog(val activity: MainActivity, private val circleGroup: Cir
         builder.setView(layout)
         val manager = LinearLayoutManager(activity)
         rowAdapter = CircleAdapter(activity, circleGroup)
-        layout.findViewById<RecyclerView>(R.id.color_groups)!!.apply {
+        val recyclerView = layout.findViewById<RecyclerView>(R.id.color_groups)!!.apply {
             layoutManager = manager
             adapter = rowAdapter
         }
+        layout.all_circles_checkbox.setOnCheckedChangeListener { _, checked ->
+            rowAdapter.onCheckAll(checked,
+                (0 until recyclerView.childCount).map {
+                    recyclerView.getChildViewHolder(recyclerView.getChildAt(it))
+                        .itemView.findViewById<CheckBox>(R.id.circle_checkbox)
+                })
+        }
+        layout.sort_by_color.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByColor(checked) }
+        layout.sort_by_name.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByName(checked) }
         val dialog = builder.apply {
             setMessage("Choose circle to edit")
             setPositiveButton("Edit") { _, _ -> Unit } // will be set later
@@ -60,40 +71,44 @@ class ChooseColorDialog(val activity: MainActivity, private val circleGroup: Cir
     }
 }
 
+
 class CircleAdapter(
     private val context: Context,
     private val circleGroup: CircleGroup
 ) : RecyclerView.Adapter<CircleAdapter.ViewHolder>() {
     class ViewHolder(val row: View) : RecyclerView.ViewHolder(row)
 
-    private val rows: Array<CircleRow> =
+    private val rows: MutableList<CircleRow> =
         circleGroup.figures
+            .asSequence()
             .mapIndexed { i, figure -> CircleRow(figure, i) }
-            .filter { it.figure.show } // maybe: also show invisible circles in end + options.showAllCircles
+            .filter { it.figure.show } // maybe: also show invisible circles in the end + options.showAllCircles
             .sortedBy { it.figure.color }
-            .toTypedArray()
+            .mapIndexed { i, row -> row.apply { position = i } }
+            .toMutableList()
     val checkedRows: MutableSet<CircleRow> = mutableSetOf()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val row = LayoutInflater.from(parent.context)
             .inflate(R.layout.choose_color_row, parent, false)
-        return ViewHolder(row).apply { setIsRecyclable(false) }
+        return ViewHolder(row) // .apply { setIsRecyclable(false) }
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val row = rows[position]
-        row.position = position
         val figure = row.figure
         with(holder.row) {
             circle_name.text = "${row.id}"
             circle_image.setImageDrawable(circleImageFor(figure))
             circle_checkbox.setOnCheckedChangeListener { _, checked ->
+                row.checked = checked
                 if (checked) {
                     checkedRows.add(row)
                 } else {
                     checkedRows.remove(row)
                 }
             }
+            circle_checkbox.isChecked = row.checked
             circle_layout.setOnClickListener {
                 editCircle(row, position)
             }
@@ -230,13 +245,47 @@ class CircleAdapter(
     }
 
     override fun getItemCount(): Int = rows.size
+
+    fun onCheckAll(checked: Boolean, checkboxes: List<CheckBox>) {
+        if (checked) {
+            checkedRows.addAll(rows)
+            rows.forEach { it.checked = true }
+            checkboxes.forEach {
+                it.isChecked = true
+            }
+        } else {
+            checkedRows.clear()
+            rows.forEach { it.checked = false }
+            checkboxes.forEach {
+                it.isChecked = false
+            }
+        }
+    }
+
+    fun onSortByColor(ascending: Boolean) {
+        if (ascending)
+            rows.sortBy { it.figure.color }
+        else
+            rows.sortByDescending { it.figure.color }
+        notifyDataSetChanged()
+    }
+
+    fun onSortByName(ascending: Boolean) {
+        if (ascending)
+            rows.sortBy { it.id }
+        else
+            rows.sortByDescending { it.id }
+        notifyDataSetChanged()
+    }
 }
 
-data class CircleRow(val figure: CircleFigure, val id: Int, var position: Int? = null) {
+data class CircleRow(val figure: CircleFigure, val id: Int, var position: Int? = null, var checked: Boolean = false) {
     private val equivalence: List<Any?> get() = listOf(figure.color, figure.fill, figure.borderColor)
     fun equivalent(other: CircleRow): Boolean = equivalence == other.equivalence
-    fun copy(newColor: Int?, newFill: Boolean?, newBorderColor: Int?): CircleRow =
-        CircleRow(figure.copy(newColor = newColor, newFill = newFill, newBorderColor = newBorderColor), id)
+    fun copy(newColor: Int?, newFill: Boolean?, newBorderColor: Int?, newChecked: Boolean? = null): CircleRow =
+        CircleRow(
+            figure.copy(newColor = newColor, newFill = newFill, newBorderColor = newBorderColor),
+            id, position, newChecked ?: checked)
 }
 
 class CircleGroupRow(val circles: Array<CircleRow>)
