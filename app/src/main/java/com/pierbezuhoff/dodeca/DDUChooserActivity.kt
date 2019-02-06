@@ -248,7 +248,6 @@ class DDUAdapter(
     }
 
     private fun buildPreviewAsync(file: File, holder: DDUViewHolder) {
-        // ?BUG?: eternal loading
         // maybe: use some sync primitives
         val fileName = file.name
         if (fileName !in buildings.keys) {

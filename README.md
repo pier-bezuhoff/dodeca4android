@@ -2,10 +2,10 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] Change color (choose from palette on ?double? tap) and save it for further changing
 - [ ] Group circles by color
 - [ ] Sort by #
-- [ ] Apply on checked
+- [ ] Select all
+- [ ] Change color (choose from palette on ?double? tap) and save it for further changing
 - [ ] action bar: import/export
 - [ ] Also see com.android.support:palette-v7:28.0.0
 - [ ] On small screen: chosen shape is either *very* small or not shown at all (pre-launch reports)

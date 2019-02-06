@@ -18,31 +18,39 @@
             android:layout_marginBottom="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
     />
-    <ImageView
-            android:id="@+id/circle_image"
-            android:src="@drawable/circle_image"
-            android:contentDescription="circle_image"
-            android:padding="8dp"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_marginBottom="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/circle_checkbox"
-            android:layout_marginStart="16dp"
-    />
-    <TextView
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:orientation="horizontal"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/circle_name"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_marginBottom="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/circle_image"
-            android:layout_marginStart="24dp"
-            android:text="#"
-    />
+            android:layout_height="match_parent"
+            app:layout_constraintStart_toEndOf="@id/circle_checkbox"
+            android:layout_marginStart="8dp"
+            android:id="@+id/circle_layout"
+    >
+        <ImageView
+                android:id="@+id/circle_image"
+                android:src="@drawable/circle_image"
+                android:contentDescription="circle_image"
+                android:padding="8dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginBottom="8dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginStart="16dp"
+        />
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/circle_name"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginBottom="8dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/circle_image"
+                android:layout_marginStart="24dp"
+                android:text="#"
+        />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

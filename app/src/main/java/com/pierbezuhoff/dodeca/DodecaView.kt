@@ -341,7 +341,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun saveDDU() {
-        // TODO: get attrs from circleGroup because they might change from ChooseColorDialog
         val ddu = prepareDDUToSave()
         if (ddu.file == null) {
             Log.i(TAG, "saveDDU: ddu has no file")
