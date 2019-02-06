@@ -4,6 +4,7 @@ Min version: 4.4 KitKat (28 >= API >= 19)
 # TODO
 - [ ] Group circles by color
 - [ ] Select all bug: 1-3 upper and lower invisible checkboxes don't update
+- [ ] Check apply to selected (maybe bug)
 - [ ] Change color (choose from palette on ?double? tap) and save it for further changing
 - [ ] action bar: import/export
 - [ ] Also see com.android.support:palette-v7:28.0.0

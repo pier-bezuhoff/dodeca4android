@@ -139,7 +139,7 @@ class CircleFigure(center: Complex, radius: Double,
         |  fill = $fill${
     rule?.let { "\n  rule = $it" } ?: ""
     }${
-    borderColor?.let { "\n  color = $it" } ?: ""
+    borderColor?.let { "\n  borderColor = $it" } ?: ""
     }
         |)
     """.trimMargin()

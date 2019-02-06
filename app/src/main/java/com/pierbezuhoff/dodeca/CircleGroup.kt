@@ -23,7 +23,7 @@ internal data class FigureAttributes(
     val color: Int = CircleFigure.DEFAULT_COLOR,
     val fill: Boolean = CircleFigure.DEFAULT_FILL,
     val rule: String? = CircleFigure.DEFAULT_RULE,
-    val borderColor: Int? = null
+    val borderColor: Int? = CircleFigure.DEFAULT_BORDER_COLOR
 ) {
     private val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
     private val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
@@ -41,7 +41,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
     private var oldXs: DoubleArray = xs // old_s are used for draw and as oldCircles in update
     private var oldYs: DoubleArray = ys
     private var oldRs: DoubleArray = rs
-    private val attrs: Array<FigureAttributes> = Array(size) { FigureAttributes(cs[it].color, cs[it].fill, cs[it].rule) }
+    private val attrs: Array<FigureAttributes> = Array(size) { FigureAttributes(cs[it].color, cs[it].fill, cs[it].rule, cs[it].borderColor) }
     private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
     private var shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
     private val paints: Array<Paint> = attrs.map {
@@ -221,7 +221,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
         canvas.drawCircle(x, y, r, paints[i])
         if (showOutline)
             canvas.drawCircle(x, y, r, outlinePaint)
-        else if (!attrs[i].fill) // TODO: optimize
+        else if (attrs[i].fill) // TODO: optimize
             attrs[i].borderColor?.let { borderColor ->
                 canvas.drawCircle(
                     x, y, r,
@@ -241,7 +241,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
         )
         if (showOutline)
             canvas.drawRect(x - r, y - r, x + r, y + r, outlinePaint)
-        else if (!attrs[i].fill)
+        else if (attrs[i].fill)
             attrs[i].borderColor?.let { borderColor ->
                 canvas.drawRect(
                     x - r, y - r, x + r, y + r,
