@@ -123,7 +123,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/toggle/ic_radio_button_unchecked_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/hardware/ic_keyboard_arrow_up_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -133,11 +133,9 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="height" value="40" />
-                            <entry key="outputName" value="ic_circle_40dp" />
+                            <entry key="outputName" value="ic_up" />
                             <entry key="overrideSize" value="true" />
                             <entry key="sourceFile" value="$PROJECT_DIR$/app/src/main/res/drawable/ic_trace.svg" />
-                            <entry key="width" value="40" />
                           </map>
                         </option>
                       </PersistentState>

@@ -221,7 +221,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
         canvas.drawCircle(x, y, r, paints[i])
         if (showOutline)
             canvas.drawCircle(x, y, r, outlinePaint)
-        else // TODO: optimize
+        else if (!attrs[i].fill) // TODO: optimize
             attrs[i].borderColor?.let { borderColor ->
                 canvas.drawCircle(
                     x, y, r,
@@ -241,7 +241,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
         )
         if (showOutline)
             canvas.drawRect(x - r, y - r, x + r, y + r, outlinePaint)
-        else
+        else if (!attrs[i].fill)
             attrs[i].borderColor?.let { borderColor ->
                 canvas.drawRect(
                     x - r, y - r, x + r, y + r,
