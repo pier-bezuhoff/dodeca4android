@@ -2,16 +2,17 @@ package com.pierbezuhoff.dodeca
 
 import android.app.Dialog
 import android.content.Context
+import android.content.DialogInterface
 import android.graphics.PorterDuff
 import android.graphics.drawable.LayerDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Switch
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -40,19 +41,16 @@ class ChooseColorDialog(val activity: MainActivity, private val circleGroup: Cir
         builder.setView(layout)
         val manager = LinearLayoutManager(activity)
         rowAdapter = CircleAdapter(activity, circleGroup)
-        val recyclerView = layout.findViewById<RecyclerView>(R.id.color_groups)!!.apply {
+        val recyclerView = layout.findViewById<RecyclerView>(R.id.circle_rows)!!.apply {
             layoutManager = manager
             adapter = rowAdapter
         }
-        layout.all_circles_checkbox.setOnCheckedChangeListener { _, checked ->
-            rowAdapter.onCheckAll(checked,
-                (0 until recyclerView.childCount).map {
-                    recyclerView.getChildViewHolder(recyclerView.getChildAt(it))
-                        .itemView.findViewById<CheckBox>(R.id.circle_checkbox)
-                })
-        }
+        layout.all_circles_checkbox.setOnCheckedChangeListener { _, checked -> rowAdapter.onCheckAll(checked) }
         layout.sort_by_color.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByColor(checked) }
         layout.sort_by_name.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByName(checked) }
+        setOf(layout.all_circles_checkbox, layout.sort_by_color, layout.sort_by_name).forEach {
+            TooltipCompat.setTooltipText(it, it.contentDescription)
+        }
         val dialog = builder.apply {
             setMessage("Choose circle to edit")
             setPositiveButton("Edit") { _, _ -> Unit } // will be set later
@@ -86,7 +84,7 @@ class CircleAdapter(
             .sortedBy { it.figure.color }
             .mapIndexed { i, row -> row.apply { position = i } }
             .toMutableList()
-    val checkedRows: MutableSet<CircleRow> = mutableSetOf()
+    val checkedRows: MutableSet<CircleRow> = mutableSetOf() // store rows with checked checkboxes
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val row = LayoutInflater.from(parent.context)
@@ -226,40 +224,42 @@ class CircleAdapter(
             cancelButton { }
         }
 
-    fun editCheckedCircles() {
-        val blueprint = checkedRows.toList()[0]
-        val message = when(checkedRows.size) {
+    private inline fun editCirclesDialog(
+        circles: List<CircleRow>, crossinline onEdited: () -> Unit = {}
+    ): AlertBuilder<DialogInterface> {
+        val blueprint = circles[0]
+        val message = when(circles.size) {
             1 -> "Edit circle ${blueprint.id}"
-            2, 3 -> "Edit circles " + checkedRows.take(3).joinToString { it.id.toString() }
-            else -> "Edit circles " + checkedRows.take(3).joinToString { it.id.toString() } + "..."
+            2, 3 -> "Edit circles " + circles.take(3).joinToString { it.id.toString() }
+            else -> "Edit circles " + circles.take(3).joinToString { it.id.toString() } + "..."
         }
-        editCircleDialog(blueprint.figure, message) { color, fill, borderColor ->
-            checkedRows.forEach { row ->
+        val dialog = editCircleDialog(blueprint.figure, message) { color, fill, borderColor ->
+            circles.forEach { row ->
                 val newRow = row.copy(newColor = color, newFill = fill, newBorderColor = borderColor)
                 rows[row.position!!] = newRow
                 circleGroup[row.id] = newRow.figure
             }
             notifyDataSetChanged()
-            checkedRows.clear()
-        }.show()
+            onEdited()
+        }
+        return dialog
+    }
+
+    fun editCheckedCircles() {
+        editCirclesDialog(checkedRows.toList()).show()
     }
 
     override fun getItemCount(): Int = rows.size
 
-    fun onCheckAll(checked: Boolean, checkboxes: List<CheckBox>) {
+    fun onCheckAll(checked: Boolean) {
         if (checked) {
             checkedRows.addAll(rows)
             rows.forEach { it.checked = true }
-            checkboxes.forEach {
-                it.isChecked = true
-            }
         } else {
             checkedRows.clear()
             rows.forEach { it.checked = false }
-            checkboxes.forEach {
-                it.isChecked = false
-            }
         }
+        notifyDataSetChanged()
     }
 
     fun onSortByColor(ascending: Boolean) {
