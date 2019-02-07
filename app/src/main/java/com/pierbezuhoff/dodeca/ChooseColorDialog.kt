@@ -89,7 +89,7 @@ class CircleAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val row = LayoutInflater.from(parent.context)
             .inflate(R.layout.choose_color_row, parent, false)
-        return ViewHolder(row) // .apply { setIsRecyclable(false) }
+        return ViewHolder(row)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -279,7 +279,13 @@ class CircleAdapter(
     }
 }
 
-data class CircleRow(val figure: CircleFigure, val id: Int, var position: Int? = null, var checked: Boolean = false) {
+sealed class Row(var position: Int? = null, var checked: Boolean = false)
+
+class CircleRow(
+    val figure: CircleFigure,
+    val id: Int,
+    position: Int? = null, checked: Boolean = false
+) : Row(position, checked) {
     private val equivalence: List<Any?> get() = listOf(figure.color, figure.fill, figure.borderColor)
     fun equivalent(other: CircleRow): Boolean = equivalence == other.equivalence
     fun copy(newColor: Int?, newFill: Boolean?, newBorderColor: Int?, newChecked: Boolean? = null): CircleRow =
@@ -288,4 +294,10 @@ data class CircleRow(val figure: CircleFigure, val id: Int, var position: Int? =
             id, position, newChecked ?: checked)
 }
 
-class CircleGroupRow(val circles: Array<CircleRow>)
+class CircleGroupRow(
+    val circles: MutableList<CircleRow>,
+    var expanded: Boolean = false,
+    position: Int? = null, checked: Boolean = false
+) : Row(position, checked) {
+    val childPositions: List<Int>? get() = position?.let { (it + 1 .. it + circles.size).toList() }
+}
