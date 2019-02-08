@@ -16,7 +16,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="0dp"
                 android:layout_marginEnd="4dp"
                 android:contentDescription="@string/all_circles_checkbox_description"
         />
@@ -51,7 +51,7 @@
             android:id="@+id/circle_rows"
             android:scrollbars="vertical"
             android:layout_width="match_parent"
-            android:layout_height="400dp"
+            android:layout_height="wrap_content"
             android:layout_margin="8dp"
     />
     <View style="@style/dividerHorizontal"/>

@@ -16,6 +16,7 @@
     <Switch
             android:id="@+id/circle_fill"
             android:text="@string/edit_circle_fill_description"
+            android:textSize="@dimen/small_text_size"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_margin="8dp"
@@ -31,6 +32,7 @@
     <Switch
             android:id="@+id/circle_has_border_color"
             android:text="@string/edit_circle_has_border_color_text"
+            android:textSize="@dimen/small_text_size"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_margin="8dp"

@@ -39,6 +39,7 @@
             android:layout_height="wrap_content"
             android:textAlignment="center"
             android:textSize="14sp"
+            android:textColor="@android:color/black"
             android:padding="8dp"
             android:layout_marginBottom="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
