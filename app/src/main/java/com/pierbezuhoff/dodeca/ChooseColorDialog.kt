@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.graphics.PorterDuff
 import android.graphics.drawable.LayerDrawable
+import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,6 +25,7 @@ import org.jetbrains.anko.AlertBuilder
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.customView
 import org.jetbrains.anko.include
+import kotlin.math.roundToInt
 
 class ChooseColorDialog(val activity: MainActivity, private val circleGroup: CircleGroup) {
     private var listener: ChooseColorListener = activity
@@ -40,9 +42,16 @@ class ChooseColorDialog(val activity: MainActivity, private val circleGroup: Cir
         builder.setView(layout)
         val manager = LinearLayoutManager(activity)
         rowAdapter = CircleAdapter(activity, circleGroup)
+        val height: Int = DisplayMetrics().apply {
+            activity.windowManager.defaultDisplay.getMetrics(this)
+        }.heightPixels
         val recyclerView = layout.circle_rows.apply {
             layoutManager = manager
             adapter = rowAdapter
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                (height * 0.5).roundToInt()
+            )
         }
         layout.all_circles_checkbox.setOnCheckedChangeListener { _, checked -> rowAdapter.onCheckAll(checked) }
         layout.sort_by_color.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByColor(checked) }
