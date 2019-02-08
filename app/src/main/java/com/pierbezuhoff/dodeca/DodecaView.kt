@@ -251,7 +251,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     /* draw`figures` on [canvas] */
     private inline fun drawCircles(canvas: Canvas) {
-        circleGroup.draw(canvas, shape = values.shape, showAllCircles = values.showAllCircles, showOutline = values.showOutline)
+        circleGroup.draw(canvas, shape = values.shape, showAllCircles = values.showAllCircles)
     }
 
     private inline fun drawCirclesTimes(times: Int, canvas: Canvas) {
@@ -327,7 +327,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         // avoiding name clashes
         val _drawTrace = values.drawTrace
         val _shape = values.shape
-        val _showOutline = values.showOutline
         return ddu.copy().apply {
             circles.forEach {
                 it.center = visible(it.center)
@@ -336,7 +335,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             drawTrace = _drawTrace
             bestCenter = center
             shape = _shape
-            showOutline = _showOutline
         }
     }
 
@@ -390,7 +388,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 }
             }
             options.updating -> if (value as Boolean) postInvalidate()
-            options.showOutline -> postInvalidate()
             options.shape -> postInvalidate()
         }
     }
@@ -413,7 +410,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         when(option) {
             options.drawTrace -> set(options.drawTrace, ddu.drawTrace)
             options.shape -> set(options.shape, ddu.shape)
-            options.showOutline -> set(options.showOutline, ddu.showOutline)
         }
     }
 
@@ -447,7 +443,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private val minorIndependentPreferences: Set<SharedPreference<*>> =
             setOf(options.motion, options.updating)
         private val minorDDUPreferences: Set<SharedPreference<*>> =
-            setOf(options.drawTrace, options.showOutline, options.shape)
+            setOf(options.drawTrace, options.shape)
         private val minorPreferences: Set<SharedPreference<*>> = minorIndependentPreferences + minorDDUPreferences
         private const val TAG = "DodecaView"
     }

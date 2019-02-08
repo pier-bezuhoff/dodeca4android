@@ -8,4 +8,5 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
     <color name="translucentLightBackground">#a0ffffff</color>
+    <color name="lightGray">#00AFADAD</color>
 </resources>

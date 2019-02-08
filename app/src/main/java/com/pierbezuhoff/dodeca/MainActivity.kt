@@ -19,9 +19,9 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AppCompatImageButton
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.children
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
@@ -91,8 +91,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     private fun afterNewDDU(ddu: DDU) {
         shape_spinner.setSelection(ddu.shape.ordinal)
         mapOf(
-            options.drawTrace to trace_button,
-            options.showOutline to outline_button
+            options.drawTrace to trace_button
         ).forEach { (preference, button) ->
             setupToggleButtonTint(button, preference.value)
         }
@@ -123,11 +122,16 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     }
 
     private inline fun setupToggleButtonTint(button: ImageButton, value: Boolean) {
-        (button as AppCompatImageButton).supportBackgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
-            this,
-            if (value) R.color.darkerToolbarColor
-            else R.color.toolbarColor
-        ))
+//        (button as AppCompatImageButton).supportBackgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
+        ViewCompat.setBackgroundTintList(
+            button,
+            ColorStateList.valueOf(
+                ContextCompat.getColor(this,
+                    if (value) R.color.darkerToolbarColor
+                    else R.color.toolbarColor
+                )
+            )
+        )
     }
 
     private inline fun setupPlayButton() {
@@ -154,7 +158,6 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
             R.id.play_button -> { dodecaView.toggle(options.updating); setupPlayButton() }
             R.id.next_step_button -> { dodecaView.oneStep(); setupPlayButton() }
             R.id.trace_button -> { dodecaView.toggle(options.drawTrace); setupToggleButtonTint(trace_button, values.drawTrace) }
-            R.id.outline_button -> { dodecaView.toggle(options.showOutline); setupToggleButtonTint(outline_button, values.showOutline) }
             R.id.choose_color_button -> {
                 updatingBeforePause = values.updating
                 if (values.updating)

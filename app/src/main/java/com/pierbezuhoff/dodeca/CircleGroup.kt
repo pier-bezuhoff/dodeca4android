@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.SparseArray
 
 typealias CircleGroupImpl = PrimitiveCircles
 
@@ -12,11 +13,11 @@ interface CircleGroup {
     operator fun set(i: Int, figure: CircleFigure)
     fun update(reverse: Boolean = false)
     fun updateTimes(times: Int, reverse: Boolean = false)
-    fun draw(canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false, showOutline: Boolean = false)
+    fun draw(canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false)
     fun drawTimes(
         times: Int,
         reverse: Boolean = false,
-        canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false, showOutline: Boolean = false)
+        canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false)
 }
 
 internal data class FigureAttributes(
@@ -50,7 +51,13 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
             style = if (it.fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
         }
     }.toTypedArray()
-    private val outlinePaint = paint.apply { color = Color.BLACK; style = Paint.Style.STROKE }
+    private val defaultBorderPaint = Paint(paint).apply { color = Color.BLACK; style = Paint.Style.STROKE }
+    private val borderPaints: SparseArray<Paint> = SparseArray<Paint>().apply {
+        attrs.forEachIndexed { i, attr ->
+            if (attr.borderColor != null && attr.fill && attr.show)
+                append(i, Paint(defaultBorderPaint).apply { color = attr.borderColor })
+        }
+    }
     override val figures: List<CircleFigure>
         get() = (0 until size).map { i ->
             val (color, fill, rule, borderColor) = attrs[i]
@@ -77,6 +84,10 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
                 color = figure.color
                 style = if (fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
             }
+            if (show && borderColor != null && fill)
+                borderPaints.append(i, Paint(defaultBorderPaint).apply { color = borderColor })
+            else
+                borderPaints.delete(i)
             if (wasShown && !show)
                 shownIndices = shownIndices.toMutableSet().run { remove(i); toIntArray() }
             else if (!wasShown && show)
@@ -125,15 +136,15 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
                 invert(i, j)
     }
 
-    override fun draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean) =
-        _draw(canvas, shape, showAllCircles, showOutline)
+    override fun draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean) =
+        _draw(canvas, shape, showAllCircles)
 
-    private inline fun _draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean) {
+    private inline fun _draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean) {
         // TODO: rotation
         // TODO: show centers
         when (shape) {
-            Shapes.CIRCLE -> drawHelper(showAllCircles) { drawCircle(it, canvas, showOutline) }
-            Shapes.SQUARE -> drawHelper(showAllCircles) { drawSquare(it, canvas, showOutline) }
+            Shapes.CIRCLE -> drawHelper(showAllCircles) { drawCircle(it, canvas) }
+            Shapes.SQUARE -> drawHelper(showAllCircles) { drawSquare(it, canvas) }
             Shapes.CROSS -> drawHelper(showAllCircles) { drawCross(it, canvas) }
             Shapes.VERTICAL_BAR -> drawHelper(showAllCircles) { drawVerticalBar(it, canvas) }
             Shapes.HORIZONTAL_BAR -> drawHelper(showAllCircles) { drawHorizontalBar(it, canvas) }
@@ -152,14 +163,14 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
     override fun drawTimes(
         times: Int,
         reverse: Boolean,
-        canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean
+        canvas: Canvas, shape: Shapes, showAllCircles: Boolean
     ) {
 //        repeat(times) {
-//            _draw(canvas, shape, showAllCircles, showOutline)
+//            _draw(canvas, shape, showAllCircles)
 //            _update(reverse)
 //        }
-//        _draw(canvas, shape, showAllCircles, showOutline)
-        _drawTimes(times, reverse, canvas, shape, showAllCircles, showOutline)
+//        _draw(canvas, shape, showAllCircles)
+        _drawTimes(times, reverse, canvas, shape, showAllCircles)
     }
 
     /* draw; update; draw; update ...; draw
@@ -170,22 +181,22 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
     private inline fun _drawTimes(
         times: Int,
         reverse: Boolean,
-        canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean
+        canvas: Canvas, shape: Shapes, showAllCircles: Boolean
     ) {
         if (reverse)
-            drawTimesU(times, canvas, shape, showAllCircles, showOutline) { reversedUpdate() }
+            drawTimesU(times, canvas, shape, showAllCircles) { reversedUpdate() }
         else
-            drawTimesU(times, canvas, shape, showAllCircles, showOutline) { straightUpdate() }
+            drawTimesU(times, canvas, shape, showAllCircles) { straightUpdate() }
     }
 
     private inline fun drawTimesU(
         times: Int,
-        canvas: Canvas, shape: Shapes, showAllCircles: Boolean, showOutline: Boolean,
+        canvas: Canvas, shape: Shapes, showAllCircles: Boolean,
         update: () -> Unit
     ) {
         when (shape) {
-            Shapes.CIRCLE -> drawTimesUS(times, showAllCircles, update) { drawCircle(it, canvas, showOutline) }
-            Shapes.SQUARE -> drawTimesUS(times, showAllCircles, update) { drawSquare(it, canvas, showOutline) }
+            Shapes.CIRCLE -> drawTimesUS(times, showAllCircles, update) { drawCircle(it, canvas) }
+            Shapes.SQUARE -> drawTimesUS(times, showAllCircles, update) { drawSquare(it, canvas) }
             Shapes.CROSS -> drawTimesUS(times, showAllCircles, update) { drawCross(it, canvas) }
             Shapes.VERTICAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawVerticalBar(it, canvas) }
             Shapes.HORIZONTAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawHorizontalBar(it, canvas) }
@@ -213,21 +224,15 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
         drawAll()
     }
 
-    // maybe: for optimization somehow lift if(showOutline) higher
-    private inline fun drawCircle(i: Int, canvas: Canvas, showOutline: Boolean = false) {
+    private inline fun drawCircle(i: Int, canvas: Canvas) {
         val x = oldXs[i].toFloat()
         val y = oldYs[i].toFloat()
         val r = oldRs[i].toFloat()
         canvas.drawCircle(x, y, r, paints[i])
-        if (showOutline)
-            canvas.drawCircle(x, y, r, outlinePaint)
-        else if (attrs[i].fill) // TODO: optimize
-            attrs[i].borderColor?.let { borderColor ->
-                canvas.drawCircle(
-                    x, y, r,
-                    Paint(outlinePaint).apply { color = borderColor }
-                )
-            }
+        // maybe: store Boolean flag
+        borderPaints.get(i)?.let { borderPaint ->
+            canvas.drawCircle(x, y, r, borderPaint)
+        }
     }
 
     private inline fun drawSquare(i: Int, canvas: Canvas, showOutline: Boolean = false) {
@@ -239,15 +244,12 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
             x + r, y + r,
             paints[i]
         )
-        if (showOutline)
-            canvas.drawRect(x - r, y - r, x + r, y + r, outlinePaint)
-        else if (attrs[i].fill)
-            attrs[i].borderColor?.let { borderColor ->
-                canvas.drawRect(
-                    x - r, y - r, x + r, y + r,
-                    Paint(outlinePaint).apply { color = borderColor }
-                )
-            }
+        borderPaints.get(i)?.let { borderPaint ->
+            canvas.drawRect(
+                x - r, y - r, x + r, y + r,
+                borderPaint
+            )
+        }
     }
 
     private inline fun drawCross(i: Int, canvas: Canvas) {
