@@ -91,4 +91,26 @@
     <string name="ddu_restore_toast">\"%s\" восстановлен в \"%s\"</string>
     <string name="ddu_asset_dir">ddu-ru</string>
     <string name="first_ddu">Незнакомка.ddu</string>
+    <string name="all_circles_checkbox_description">Выбрать все</string>
+    <string name="sort_by_color_description">Сортировать по цвету</string>
+    <string name="sort_by_name_description">Сортировать по имени</string>
+    <string name="circle_layout_description">Редактировать окружность</string>
+    <string name="circle_image_description">Изображение окружности</string>
+    <string name="circle_name_initial_text">№</string>
+    <string name="expand_group_description">Развернуть/свернуть группу</string>
+    <string name="choose_circle_dialog_message">Выбрать окружность для редактирования</string>
+    <string name="choose_circle_dialog_edit">Редактировать</string>
+    <string name="choose_circle_dialog_cancel">Отмена</string>
+    <string name="edit_circle_dialog_message_single">Редактировать окружность %s</string>
+    <string name="edit_circle_dialog_apply">Применить</string>
+    <string name="edit_circle_dialog_cancel">Отмена</string>
+    <string name="color_picker_dialog_message">Выбор цвета</string>
+    <string name="color_picker_dialog_ok">Выбрать</string>
+    <string name="color_picker_dialog_cancel">Отмена</string>
+    <string name="edit_circle_dialog_message_plural">Редактировать окружности %s</string>
+    <string name="edit_circle_color_description">Круг</string>
+    <string name="edit_circle_fill_description">Заливка</string>
+    <string name="edit_circle_border_color_description">Окружность</string>
+    <string name="edit_circle_has_border_color_text">Другой цвет границы</string>
+    <string name="choose_color_button_title">Редактор окружностей</string>
 </resources>

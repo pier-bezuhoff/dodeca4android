@@ -22,7 +22,6 @@ import kotlinx.android.synthetic.main.choose_color_row.view.*
 import kotlinx.android.synthetic.main.edit_circle.view.*
 import org.jetbrains.anko.AlertBuilder
 import org.jetbrains.anko.alert
-import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
 import org.jetbrains.anko.include
 
@@ -52,9 +51,9 @@ class ChooseColorDialog(val activity: MainActivity, private val circleGroup: Cir
             TooltipCompat.setTooltipText(it, it.contentDescription)
         }
         val dialog = builder.apply {
-            setMessage("Choose circle to edit")
-            setPositiveButton("Edit") { _, _ -> Unit } // will be set later
-            setNegativeButton("Cancel") { _, _ -> listener.onChooseColorClosed() }
+            setMessage(R.string.choose_circle_dialog_message)
+            setPositiveButton(R.string.choose_circle_dialog_edit) { _, _ -> Unit } // will be set later
+            setNegativeButton(R.string.choose_circle_dialog_cancel) { _, _ -> listener.onChooseColorClosed() }
         }.create()
         dialog.setOnDismissListener { listener.onChooseColorClosed() }
         dialog.setOnShowListener {
@@ -249,7 +248,10 @@ class CircleAdapter(
     }
 
     private fun editCircle(row: CircleRow, position: Int) {
-        editCircleDialog(row.figure, "Edit circle ${row.id}") { color, fill, borderColor ->
+        editCircleDialog(
+            row.figure,
+            context.getString(R.string.edit_circle_dialog_message_single, row.id.toString())
+        ) { color, fill, borderColor ->
             row.figure = row.figure.copy(newColor = color, newFill = fill, newBorderColor = borderColor)
             row.persist()
             notifyDataSetChanged()
@@ -319,12 +321,12 @@ class CircleAdapter(
                     }
                 }
             }
-            positiveButton("Apply") { onApply(
+            positiveButton(R.string.edit_circle_dialog_apply) { onApply(
                 if (colorChanged) color else null,
                 if (fillChanged) fill else null,
                 if (borderColorChanged) borderColor else null
             ) }
-            negativeButton("Cancel") { }
+            negativeButton(R.string.edit_circle_dialog_cancel) { }
         }
         return builder
     }
@@ -333,15 +335,15 @@ class CircleAdapter(
         color: Int,
         crossinline onChosen: (newColor: Int) -> Unit
     ): AlertBuilder<DialogInterface> =
-        context.alert("Choose color") {
+        context.alert(R.string.color_picker_dialog_message) {
             val colorPicker = ColorPickerView(context)
             colorPicker.color = color
             colorPicker.showAlpha(false)
             customView {
                 addView(colorPicker, ViewGroup.LayoutParams.MATCH_PARENT.let { ViewGroup.LayoutParams(it, it) })
             }
-            positiveButton("Ok") { onChosen(colorPicker.color) }
-            cancelButton { }
+            positiveButton(R.string.color_picker_dialog_ok) { onChosen(colorPicker.color) }
+            negativeButton(R.string.color_picker_dialog_cancel) { }
         }
 
     private inline fun editCirclesDialog(
@@ -350,8 +352,8 @@ class CircleAdapter(
     ): AlertBuilder<DialogInterface> {
         val blueprint = circles[0]
         val message = when(circles.size) {
-            1 -> "Edit circle ${blueprint.id}"
-            else -> "Edit circles " + circlesNumbers(circles)
+            1 -> context.getString(R.string.edit_circle_dialog_message_single, blueprint.id.toString())
+            else -> context.getString(R.string.edit_circle_dialog_message_plural, circlesNumbers(circles))
         }
         return editCircleDialog(blueprint.figure, message, onApply)
     }

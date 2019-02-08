@@ -9,7 +9,7 @@
 >
     <ImageButton
             android:id="@+id/choose_color_button"
-            android:contentDescription="Choose color"
+            android:contentDescription="@string/choose_color_button_title"
             android:src="@drawable/ic_choose_color"
             app:backgroundTint="@color/toolbarColor"
             android:padding="8dp"

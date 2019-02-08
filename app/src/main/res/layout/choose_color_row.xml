@@ -25,12 +25,12 @@
             android:layout_height="match_parent"
             app:layout_constraintStart_toEndOf="@id/circle_checkbox"
             android:layout_marginStart="8dp"
-            android:contentDescription="Edit circle"
+            android:contentDescription="@string/circle_layout_description"
     >
         <ImageView
                 android:id="@+id/circle_image"
                 android:src="@drawable/circle_image"
-                android:contentDescription="Circle image"
+                android:contentDescription="@string/circle_image_description"
                 android:padding="8dp"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
@@ -52,7 +52,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/circle_image"
                 android:layout_marginStart="24dp"
-                android:text="#"
+                android:text="@string/circle_name_initial_text"
         />
     </androidx.constraintlayout.widget.ConstraintLayout>
     <ToggleButton
@@ -68,7 +68,7 @@
             android:paddingEnd="24dp"
             android:textOn=""
             android:textOff=""
-            android:contentDescription="Expand/collapse group"
+            android:contentDescription="@string/expand_group_description"
             android:layout_marginStart="24dp"
             app:layout_constraintStart_toEndOf="@+id/circle_layout"
             android:layout_marginBottom="8dp"

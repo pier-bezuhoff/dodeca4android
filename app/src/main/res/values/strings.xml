@@ -112,4 +112,28 @@
     <string name="rename_dialog_message">Rename ddu-picture \"%s\"%s</string>
     <string name="rename_dialog_original_name">(original name: \"%s\")</string>
 
+    <!-- Color chooser dialog -->
+    <string name="all_circles_checkbox_description">Select all</string>
+    <string name="sort_by_color_description">Sort by color</string>
+    <string name="sort_by_name_description">Sort by name</string>
+    <string name="circle_layout_description">Edit circle</string>
+    <string name="circle_image_description">Circle image</string>
+    <string name="circle_name_initial_text">#</string>
+    <string name="expand_group_description">Expand/collapse group</string>
+    <string name="choose_circle_dialog_message">Choose circle to edit</string>
+    <string name="choose_circle_dialog_edit">Edit</string>
+    <string name="choose_circle_dialog_cancel">Cancel</string>
+    <string name="edit_circle_dialog_message_single">Edit circle %s</string>
+    <string name="edit_circle_dialog_message_plural">Edit circles %s</string>
+    <string name="edit_circle_dialog_apply">Apply</string>
+    <string name="edit_circle_dialog_cancel">Cancel</string>
+    <string name="color_picker_dialog_message">Choose color</string>
+    <string name="color_picker_dialog_ok">OK</string>
+    <string name="color_picker_dialog_cancel">Cancel</string>
+    <string name="edit_circle_color_description">Filled circle</string>
+    <string name="edit_circle_fill_description">Fill</string>
+    <string name="edit_circle_border_color_description">Thin circle</string>
+    <string name="edit_circle_has_border_color_text">Different border color</string>
+    <string name="choose_color_button_title">Edit circles</string>
+
 </resources>
