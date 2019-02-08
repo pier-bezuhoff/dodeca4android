@@ -113,7 +113,6 @@ class Options(val resources: Resources) {
     val redrawTraceOnMove = BooleanOption("redraw_trace", R.bool.redraw_trace)
     val showAllCircles = BooleanOption("show_all_circles", R.bool.show_all_circles)
     // val showCenters = Option("show_centers", false)
-    val showOutline = BooleanOption("show_outline", R.bool.show_outline)
     val reverseMotion = BooleanOption("reverse_motion", R.bool.reverse_motion)
     val shape = object : Option<Shapes>(
         "shape",
@@ -153,7 +152,6 @@ class Values(private val options: Options) {
     val updating: Boolean get() = options.updating.value
     val redrawTraceOnMove: Boolean get() = options.redrawTraceOnMove.value
     val showAllCircles: Boolean get() = options.showAllCircles.value
-    val showOutline: Boolean get() = options.showOutline.value
     val reverseMotion: Boolean get() = options.reverseMotion.value
     val shape: Shapes get() = options.shape.value
     val autosave: Boolean get() = options.autosave.value

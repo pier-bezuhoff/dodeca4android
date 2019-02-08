@@ -54,5 +54,6 @@
             android:layout_height="400dp"
             android:layout_margin="8dp"
     />
+    <View style="@style/dividerHorizontal"/>
 
 </LinearLayout>

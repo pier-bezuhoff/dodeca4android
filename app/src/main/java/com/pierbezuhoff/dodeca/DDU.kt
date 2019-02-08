@@ -50,7 +50,6 @@ class DDU(
     var drawTrace: Boolean? = null,
     var bestCenter: Complex? = null, // cross-(screen size)
     var shape: Shapes = DEFAULT_SHAPE,
-    var showOutline: Boolean = DEFAULT_SHOW_OUTLINE,
     var circles: List<CircleFigure> = emptyList(),
     var file: File? = null
 ) {
@@ -64,7 +63,7 @@ class DDU(
     // NOTE: copy(newRule = null) resolves overload ambiguity
     fun copy() =
         DDU(
-            backgroundColor, restGlobals.toList(), drawTrace, bestCenter, shape, showOutline,
+            backgroundColor, restGlobals.toList(), drawTrace, bestCenter, shape,
             circles.map { it.copy(newRule = null) }, file)
 
     override fun toString(): String = """DDU(
@@ -73,7 +72,6 @@ class DDU(
         |  drawTrace = $drawTrace
         |  bestCenter = $bestCenter
         |  shape = $shape
-        |  showOutline = $showOutline
         |  file = $file
         |  figures = $circles
         |)
@@ -95,7 +93,6 @@ class DDU(
             drawTrace?.let { writeln("drawTrace: $it") }
             bestCenter?.let { writeln("bestCenter: ${it.real} ${it.imaginary}") }
             writeln("shape: $shape")
-            writeln("showOutline: $showOutline")
             circles.forEach { circle ->
                 writeln("\ncircle:")
                 listOf(
@@ -134,12 +131,12 @@ class DDU(
                 // TODO: understand, why drawTimes is slower
 //                    circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape, showOutline = showOutline)
                     repeat(nUpdates) {
-                        circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
+                        circleGroup.draw(canvas, shape = shape)
                         circleGroup.update()
                     }
-                    circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
+                    circleGroup.draw(canvas, shape = shape)
             } else {
-                circleGroup.draw(canvas, shape = shape, showOutline = showOutline)
+                circleGroup.draw(canvas, shape = shape)
             }
         }
         Log.i(
@@ -152,7 +149,6 @@ class DDU(
     companion object {
         const val DEFAULT_BACKGROUND_COLOR: Int = Color.WHITE
         val DEFAULT_SHAPE: Shapes = Shapes.CIRCLE
-        const val DEFAULT_SHOW_OUTLINE = false
         const val MIN_PREVIEW_UPDATES = 10
         const val NORMAL_PREVIEW_SIZE = 300 // with this preview_size preview_scale was tuned
         const val PREVIEW_SCALE = 0.5f
@@ -168,7 +164,6 @@ class DDU(
             var drawTrace: Boolean? = null
             var bestCenter: Complex? = null
             var shape: Shapes = DEFAULT_SHAPE
-            var showOutline: Boolean = DEFAULT_SHOW_OUTLINE
             val circles: MutableList<CircleFigure> = mutableListOf()
             var nGlobals = 0
             var mode: Mode = Mode.NO
@@ -222,10 +217,7 @@ class DDU(
                             Shapes.valueOfOrNull(s.substringAfter("shape:").trim())?.let {
                                 shape = it
                             }
-                        s.startsWith("showOutline:") ->
-                            s.substringAfter("showOutline:").trim().let {
-                                showOutline = it.toBoolean()
-                            }
+                        s.startsWith("showOutline:") -> "ignore it"
                     }
                     mode >= Mode.RADIUS && s.isNotBlank() -> {
                         when (mode) {
@@ -246,7 +238,7 @@ class DDU(
                 }
             }
             appendCircle()
-            return DDU(backgroundColor, restGlobals, drawTrace, bestCenter, shape, showOutline, circles)
+            return DDU(backgroundColor, restGlobals, drawTrace, bestCenter, shape, circles)
         }
     }
 }
