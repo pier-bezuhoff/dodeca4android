@@ -81,15 +81,8 @@ class CircleAdapter(
             .mapIndexed { i, figure -> CircleRow(figure, i) }
             .filter { it.figure.show } // maybe: also show invisible circles in the end + options.showAllCircles
             .sortedBy { it.figure.color }
-            .toMutableList()
+    private var rows: MutableList<Row> = factorByEquivalence(circleRows).toMutableList()
 
-    private val rows: MutableList<Row> =
-        circleRows
-            .groupBy { it.equivalence } // hope we don't lose CircleRow::id order
-            .values
-            .mapIndexed { i, list -> CircleGroupRow(list.toMutableList(), position = i) }
-            .map { if (it.size == 1) it.blueprint else it } // drop singletons
-            .toMutableList()
     // store rows with checked checkboxes, they may be collapsed though
     val checkedRows: MutableSet<Row> = mutableSetOf()
     private var binding: Boolean = false
@@ -114,6 +107,18 @@ class CircleAdapter(
         checkedRows.remove(this)
         circles.forEach { it.uncheck() }
     }
+
+    private fun factorByEquivalence(circles: List<CircleRow>): List<Row> =
+        circles.groupBy { it.equivalence } // hope we don't lose CircleRow::id order
+            .values
+            .mapIndexed { i, list ->
+                CircleGroupRow(
+                    list.toMutableList().apply { forEach { it.position = null } },
+                    position = i,
+                    checked = list.all { it.checked }
+                )
+            }
+            .map { if (it.size == 1) it.blueprint.apply { position = it.position } else it } // drop singletons
 
     private fun reassignPositions() {
         rows.forEachIndexed { i, row -> row.position = i }
@@ -189,30 +194,41 @@ class CircleAdapter(
     }
 
     private fun expandOrCollapseGroup(expand: Boolean, row: CircleGroupRow) {
-        // NOTE: can be called only when !binding
+        // NOTE: should be called only when !binding
         row.expanded = expand
-        if (expand) { // expand
-            rows.addAll(1 + row.position!!, row.circles)
-        } else { // collapse
-            val newCircles = circleRows.filter { it.equivalence == row.equivalence }
-            when(newCircles.size) {
-                0 -> row.remove()
-                1 -> {
-                    val singleRow = newCircles[0]
-                    if (!singleRow.shown)
-                        rows.add(row.position!! + 1, singleRow)
-                    row.remove()
-                }
-                else -> {
-                    row.circles.clear()
-                    row.circles.addAll(newCircles)
-                    rows.removeAll(newCircles)
-                    newCircles.forEach { it.position = null }
-                }
+        if (expand) {
+            expandGroup(row)
+        } else {
+            collapseGroup(row)
+        }
+        notifyDataSetChanged()
+    }
+
+    private fun expandGroup(row: CircleGroupRow) {
+        rows.addAll(1 + row.position!!, row.circles)
+        reassignPositions()
+        // notifyDataSetChanged() should be called afterwards
+    }
+
+    private fun collapseGroup(row: CircleGroupRow) {
+        val newCircles = circleRows.filter { it.equivalence == row.equivalence }
+        when(newCircles.size) {
+            0 -> row.remove()
+            1 -> {
+                val singleRow = newCircles[0]
+                if (!singleRow.shown)
+                    rows.add(row.position!! + 1, singleRow)
+                row.remove()
+            }
+            else -> {
+                row.circles.clear()
+                row.circles.addAll(newCircles)
+                rows.removeAll(newCircles)
+                newCircles.forEach { it.position = null }
             }
         }
         reassignPositions()
-        notifyDataSetChanged()
+        // notifyDataSetChanged() should be called afterwards
     }
 
     private fun circleImageFor(equivalence: Equivalence): LayerDrawable {
@@ -374,21 +390,44 @@ class CircleAdapter(
     }
 
     fun onSortByColor(ascending: Boolean) {
-        // what a shame
-        // I cannot lift function application
-//        if (ascending)
-//            rows.sortBy { it.figure.color }
-//        else
-//            rows.sortByDescending { it.figure.color }
-//        notifyDataSetChanged()
+        val unexpandedGroupRows = rows.filterIsInstance<CircleGroupRow>().filter { !it.expanded }
+        // deliberately not lazy stream: collapseGroup mutate rows
+        unexpandedGroupRows.forEach { expandGroup(it) }
+        val _rows: MutableList<CircleRow> = rows.filterIsInstance<CircleRow>().toMutableList()
+        if (ascending)
+            _rows.sortBy { it.figure.color }
+        else
+            _rows.sortByDescending { it.figure.color }
+        rows = factorByEquivalence(_rows).toMutableList()
+        reassignPositions()
+        notifyDataSetChanged()
     }
 
     fun onSortByName(ascending: Boolean) {
-//        if (ascending)
-//            rows.sortBy { it.id }
-//        else
-//            rows.sortByDescending { it.id }
-//        notifyDataSetChanged()
+        val unexpandedGroupRows = rows.filterIsInstance<CircleGroupRow>().filter { !it.expanded }
+        // deliberately not lazy stream: expandGroup mutate rows
+        unexpandedGroupRows.forEach { expandGroup(it) }
+        val _rows = rows.filterIsInstance<CircleRow>().toMutableList()
+        if (ascending)
+            _rows.sortBy { it.id }
+        else
+            _rows.sortByDescending { it.id }
+        // now we have right order, but without groups
+        // we will group consequential with same equivalence
+        rows = _rows
+            .consecutiveGroupBy { it.equivalence }
+            .map { (_, list) ->
+                if (list.size == 1)
+                    list[0]
+                else
+                    CircleGroupRow(
+                        list.toMutableList().apply { forEach { it.position = null } },
+                        checked = list.all { it.checked }
+                    )
+            }
+            .toMutableList()
+        reassignPositions()
+        notifyDataSetChanged()
     }
 
     companion object {
@@ -397,6 +436,7 @@ class CircleAdapter(
 }
 
 data class Equivalence(val color: Int, val fill: Boolean, val borderColor: Int?)
+
 val CircleFigure.equivalence get() = Equivalence(color, fill, borderColor)
 
 sealed class Row(
@@ -414,6 +454,7 @@ class CircleRow(
 ) : Row(position, checked) {
     val equivalence: Equivalence get() = Equivalence(figure.color, figure.fill, figure.borderColor)
     fun equivalent(other: CircleRow): Boolean = equivalence == other.equivalence
+    override fun toString(): String = "row \"$id\" at $position (checked: $checked)"
 }
 
 class CircleGroupRow(
@@ -428,6 +469,7 @@ class CircleGroupRow(
     val childPositions: List<Int>? get() = position?.let { (it + 1 .. it + circles.size).toList() }
     val lastChildPosition: Int? get() = position?.let { it + circles.size + 1 }
     val name: String get() = circlesNumbers(circles)
+    override fun toString(): String = "group row \"$name\" at $position (expanded: $expanded, checked: $checked)"
 }
 
 fun circlesNumbers(circles: List<CircleRow>): String = when(circles.size) {
@@ -436,3 +478,22 @@ fun circlesNumbers(circles: List<CircleRow>): String = when(circles.size) {
         else -> circles.take(2).joinToString { it.id.toString() } + ", ..., " +
             circles.last().id.toString() + " [${circles.size}]"
     }
+
+inline fun <E, K> List<E>.consecutiveGroupBy(selector: (E) -> K): List<Pair<K, List<E>>> {
+    val lists: MutableList<Pair<K, List<E>>> = mutableListOf()
+    var k: K? = null
+    var list: MutableList<E> = mutableListOf()
+    for (e in this) {
+        val newK = selector(e)
+        if (k == newK) {
+            list.add(e)
+        } else {
+            k?.let { lists.add(it to list) }
+            k = newK
+            list = mutableListOf(e)
+        }
+    }
+    if (list.isNotEmpty())
+        lists.add(k!! to list)
+    return lists
+}
