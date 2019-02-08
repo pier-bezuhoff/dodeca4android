@@ -2,6 +2,7 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
+- [ ] Proper customize preview size for different screens
 - [ ] Pick color from picture and select appropriate circle group (on double tap)
 - [ ] Also see com.android.support:palette-v7:28.0.0
 - [ ] action bar: import/export
