@@ -76,15 +76,21 @@ class CircleAdapter(
 ) : RecyclerView.Adapter<CircleAdapter.ViewHolder>() {
     class ViewHolder(val row: View) : RecyclerView.ViewHolder(row)
 
-    private val rows: MutableList<CircleRow> =
+    private val rows: MutableList<Row> =
         circleGroup.figures
-            .asSequence()
             .mapIndexed { i, figure -> CircleRow(figure, i) }
             .filter { it.figure.show } // maybe: also show invisible circles in the end + options.showAllCircles
             .sortedBy { it.figure.color }
-            .mapIndexed { i, row -> row.apply { position = i } }
+            .groupBy { it.equivalence } // hope we don't lose CircleRow::id order
+            .values
+            .mapIndexed { i, list -> CircleGroupRow(list.toMutableList(), position = i) }
             .toMutableList()
-    val checkedRows: MutableSet<CircleRow> = mutableSetOf() // store rows with checked checkboxes
+    // store rows with checked checkboxes, they may be collapsed though
+    val checkedRows: MutableSet<Row> = mutableSetOf()
+
+    private inline fun CircleRow.persist() {
+        circleGroup[id] = this.figure
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val row = LayoutInflater.from(parent.context)
@@ -94,6 +100,13 @@ class CircleAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val row = rows[position]
+        when(row) {
+            is CircleRow -> onBindCircleVH(holder, row, position)
+            is CircleGroupRow -> onBindCircleGroupVH(holder, row, position)
+        }
+    }
+
+    private fun onBindCircleVH(holder: ViewHolder, row: CircleRow, position: Int) {
         val figure = row.figure
         with(holder.row) {
             circle_name.text = "${row.id}"
@@ -113,9 +126,63 @@ class CircleAdapter(
         }
     }
 
+    private fun onBindCircleGroupVH(holder: ViewHolder, row: CircleGroupRow, position: Int) {
+        val blueprint = row.circles[0]
+        with(holder.row) {
+            circle_name.text = row.name
+            circle_name.setOnClickListener {
+                row.expanded = !row.expanded
+                if (row.expanded) { // expand
+                    rows.addAll(1 + row.position!!, row.circles)
+                    rows.slice(1 + row.position!! .. row.lastChildPosition!!).forEachIndexed { i, circleRow ->
+                        circleRow.position = i
+                    }
+                } else { // collapse
+                    // Q: but what if some has changed?
+                    repeat(row.circles.size) {
+                        rows[row.position!! + 1].position = null
+                        rows.removeAt(row.position!! + 1)
+                    }
+                }
+                notifyDataSetChanged()
+            }
+            circle_image.setImageDrawable(circleImageFor(blueprint.figure))
+            circle_checkbox.setOnCheckedChangeListener { _, checked ->
+                if (row.expanded) {
+                    row.circles.forEach { circleRow -> circleRow.checked = checked }
+                    // use position or row.position!! in notify?
+                    notifyItemRangeChanged(position, 1 + row.circles.size)
+                }
+                if (checked)
+                    checkedRows.addAll(row.circles)
+                else
+                    checkedRows.removeAll(row.circles)
+            }
+            circle_checkbox.isChecked = row.checked
+            circle_image.setOnClickListener {
+                editCirclesDialog(row.circles) { color, fill, borderColor ->
+                    row.circles.forEachIndexed { i, circleRow ->
+                        val newRow =
+                            circleRow.copy(newColor = color, newFill = fill, newBorderColor = borderColor)
+                        row.circles[i] = newRow
+                        if (row.expanded)
+                            rows[row.position!! + 1 + i] = newRow
+                        newRow.persist()
+                    }
+                    if (row.expanded) {
+                        notifyItemRangeChanged(position, 1 + row.circles.size)
+                    } else {
+                        notifyItemChanged(position)
+                    }
+                }
+            }
+        }
+    }
+
     private fun circleImageFor(figure: CircleFigure): LayerDrawable {
-        val circleImage = ContextCompat.getDrawable(context, R.drawable.circle_image) as LayerDrawable
-        circleImage.mutate()
+        val circleImage = ContextCompat.getDrawable(context, R.drawable.circle_image)
+            as LayerDrawable
+        circleImage.mutate() // without it ALL circleImage layers will change
         val border = circleImage.getDrawable(0)
         val inner = circleImage.getDrawable(1)
         if (figure.fill) {
@@ -132,7 +199,7 @@ class CircleAdapter(
         editCircleDialog(row.figure, "Edit circle ${row.id}") { color, fill, borderColor ->
             val newRow = row.copy(newColor = color, newFill = fill, newBorderColor = borderColor)
             rows[position] = newRow
-            circleGroup[row.id] = newRow.figure
+            newRow.persist()
             notifyDataSetChanged()
         }.show()
     }
@@ -148,7 +215,7 @@ class CircleAdapter(
         var colorChanged = false
         var fillChanged = false
         var borderColorChanged = false
-        val dialog = context.alert(message) {
+        val builder = context.alert(message) {
             customView {
                 include<LinearLayout>(R.layout.edit_circle).also { layout ->
                     val colorButton: ImageButton = layout.circle_color
@@ -207,46 +274,47 @@ class CircleAdapter(
             ) }
             negativeButton("Cancel") { }
         }
-        return dialog
+        return builder
     }
 
-    private inline fun colorPickerDialog(color: Int, crossinline onChosen: (newColor: Int) -> Unit) =
+    private inline fun colorPickerDialog(
+        color: Int,
+        crossinline onChosen: (newColor: Int) -> Unit
+    ): AlertBuilder<DialogInterface> =
         context.alert("Choose color") {
             val colorPicker = ColorPickerView(context)
             colorPicker.color = color
             colorPicker.showAlpha(false)
             customView {
-                addView(colorPicker, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+                addView(colorPicker, ViewGroup.LayoutParams.MATCH_PARENT.let { ViewGroup.LayoutParams(it, it) })
             }
-            positiveButton("Ok") {
-                onChosen(colorPicker.color)
-            }
+            positiveButton("Ok") { onChosen(colorPicker.color) }
             cancelButton { }
         }
 
     private inline fun editCirclesDialog(
-        circles: List<CircleRow>, crossinline onEdited: () -> Unit = {}
+        circles: List<CircleRow>,
+        crossinline onApply: (color: Int?, fill: Boolean?, borderColor: Int?) -> Unit = {_, _, _ -> }
     ): AlertBuilder<DialogInterface> {
         val blueprint = circles[0]
         val message = when(circles.size) {
             1 -> "Edit circle ${blueprint.id}"
             2, 3 -> "Edit circles " + circles.take(3).joinToString { it.id.toString() }
-            else -> "Edit circles " + circles.take(3).joinToString { it.id.toString() } + "..."
+            else -> "Edit circles " + circles.take(2).joinToString { it.id.toString() } + ", ..., " + circles.last().id.toString()
         }
-        val dialog = editCircleDialog(blueprint.figure, message) { color, fill, borderColor ->
-            circles.forEach { row ->
-                val newRow = row.copy(newColor = color, newFill = fill, newBorderColor = borderColor)
-                rows[row.position!!] = newRow
-                circleGroup[row.id] = newRow.figure
-            }
-            notifyDataSetChanged()
-            onEdited()
-        }
-        return dialog
+        return editCircleDialog(blueprint.figure, message, onApply)
     }
 
     fun editCheckedCircles() {
-        editCirclesDialog(checkedRows.toList()).show()
+        val circles = checkedRows.filterIsInstance<CircleRow>()
+        editCirclesDialog(circles) { color, fill, borderColor ->
+            circles.forEach { row ->
+                val newRow = row.copy(newColor = color, newFill = fill, newBorderColor = borderColor)
+                newRow.persist()
+                row.position?.let { rows[it] = newRow }
+            }
+            notifyDataSetChanged()
+        }.show()
     }
 
     override fun getItemCount(): Int = rows.size
@@ -263,30 +331,36 @@ class CircleAdapter(
     }
 
     fun onSortByColor(ascending: Boolean) {
-        if (ascending)
-            rows.sortBy { it.figure.color }
-        else
-            rows.sortByDescending { it.figure.color }
-        notifyDataSetChanged()
+        // what a shame
+        // I cannot lift function application
+//        if (ascending)
+//            rows.sortBy { it.figure.color }
+//        else
+//            rows.sortByDescending { it.figure.color }
+//        notifyDataSetChanged()
     }
 
     fun onSortByName(ascending: Boolean) {
-        if (ascending)
-            rows.sortBy { it.id }
-        else
-            rows.sortByDescending { it.id }
-        notifyDataSetChanged()
+//        if (ascending)
+//            rows.sortBy { it.id }
+//        else
+//            rows.sortByDescending { it.id }
+//        notifyDataSetChanged()
     }
 }
 
-sealed class Row(var position: Int? = null, var checked: Boolean = false)
+sealed class Row(
+    var position: Int? = null,
+    var checked: Boolean = false
+)
 
 class CircleRow(
     val figure: CircleFigure,
     val id: Int,
-    position: Int? = null, checked: Boolean = false
+    position: Int? = null,
+    checked: Boolean = false
 ) : Row(position, checked) {
-    private val equivalence: List<Any?> get() = listOf(figure.color, figure.fill, figure.borderColor)
+    val equivalence: List<Any?> get() = listOf(figure.color, figure.fill, figure.borderColor)
     fun equivalent(other: CircleRow): Boolean = equivalence == other.equivalence
     fun copy(newColor: Int?, newFill: Boolean?, newBorderColor: Int?, newChecked: Boolean? = null): CircleRow =
         CircleRow(
@@ -295,9 +369,17 @@ class CircleRow(
 }
 
 class CircleGroupRow(
-    val circles: MutableList<CircleRow>,
+    val circles: MutableList<CircleRow>, // non-empty
     var expanded: Boolean = false,
-    position: Int? = null, checked: Boolean = false
+    position: Int? = null,
+    checked: Boolean = false
 ) : Row(position, checked) {
     val childPositions: List<Int>? get() = position?.let { (it + 1 .. it + circles.size).toList() }
+    val lastChildPosition: Int? get() = position?.let { it + circles.size + 1 }
+    val name: String get() = when(circles.size) {
+        1 -> "${circles[0].id}"
+        2, 3 -> circles.take(3).joinToString { it.id.toString() }
+        else -> circles.take(2).joinToString { it.id.toString() } + ", ..., " + circles.last().id.toString()
+    }
 }
+
