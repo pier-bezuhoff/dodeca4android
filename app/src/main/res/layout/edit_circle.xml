@@ -8,14 +8,14 @@
     <ImageButton
             android:id="@+id/circle_color"
             android:src="@drawable/ic_filled_circle_40dp"
-            android:contentDescription="filled_circle"
+            android:contentDescription="@string/edit_circle_color_description"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_margin="8dp"
     />
     <Switch
             android:id="@+id/circle_fill"
-            android:text="Fill"
+            android:text="@string/edit_circle_fill_description"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_margin="8dp"
@@ -23,14 +23,14 @@
     <ImageButton
             android:id="@+id/circle_border_color"
             android:src="@drawable/ic_circle_40dp"
-            android:contentDescription="thin_circle"
+            android:contentDescription="@string/edit_circle_border_color_description"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_margin="8dp"
     />
     <Switch
             android:id="@+id/circle_has_border_color"
-            android:text="Different border color"
+            android:text="@string/edit_circle_has_border_color_text"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_margin="8dp"

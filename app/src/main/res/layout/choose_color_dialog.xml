@@ -18,7 +18,7 @@
                 android:padding="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="4dp"
-                android:contentDescription="Select all"
+                android:contentDescription="@string/all_circles_checkbox_description"
         />
         <ToggleButton
                 android:id="@+id/sort_by_color"
@@ -31,7 +31,7 @@
                 android:padding="8dp"
                 android:textOn=""
                 android:textOff=""
-                android:contentDescription="Sort by color"
+                android:contentDescription="@string/sort_by_color_description"
         />
         <ToggleButton
                 android:id="@+id/sort_by_name"
@@ -42,7 +42,7 @@
                 android:padding="8dp"
                 android:textOn=""
                 android:textOff=""
-                android:contentDescription="Sort by name"
+                android:contentDescription="@string/sort_by_name_description"
         />
     </LinearLayout>
     <View style="@style/dividerHorizontal"/>
