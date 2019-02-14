@@ -2,7 +2,11 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
+- [ ] Edit circles layout for phones (see pre-launch reports for 13)
+- [ ] By hdpi, ...
 - [ ] Proper customize preview size for different screens
+- [ ] Edit circle: turn off border color (null!)
+- [ ] Double occurence of circle in groups! (13 plr: pixel 2 (9): 1:54)
 - [ ] Pick color from picture and select appropriate circle group (on double tap)
 - [ ] Also see com.android.support:palette-v7:28.0.0
 - [ ] action bar: import/export
