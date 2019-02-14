@@ -348,7 +348,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             doAsync {
                 ddu.circles = ddu.circles.zip(circleGroup.figures) { figure, newFigure -> figure.copy(
                     newColor = newFigure.color, newFill = newFigure.fill,
-                    newRule = newFigure.rule, newBorderColor = newFigure.borderColor
+                    newRule = newFigure.rule, newBorderColor = Just(newFigure.borderColor)
                 ) }
                 try {
                     ddu.file?.let { file ->

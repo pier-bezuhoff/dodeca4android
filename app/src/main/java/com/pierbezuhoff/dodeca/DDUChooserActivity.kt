@@ -114,7 +114,7 @@ class DDUChooserActivity : AppCompatActivity() {
                         }
                         with(viewAdapter) {
                             files[position] = newFile
-                            sleepyFiles.awake()
+                            sleepingFiles.awake()
                             previews[newFilename] = preview
                             notifyDataSetChanged()
                         }
@@ -145,7 +145,7 @@ class DDUChooserActivity : AppCompatActivity() {
             with(viewAdapter) {
                 previews[original] = null
                 buildings.remove(original)
-                sleepyFiles.awake()
+                sleepingFiles.awake()
                 notifyDataSetChanged()
             }
         }
@@ -187,7 +187,8 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     companion object {
         const val defaultNColumns = 2
         const val minNColumns = 1 // I'd like at least 2, check on small phones
-        val defaultColumnWidth: Int get() = 16 + values.previewSize
+        const val cellPadding = 8
+        val defaultColumnWidth: Int get() = 2 * cellPadding + values.previewSizePx
     }
 }
 
@@ -199,10 +200,10 @@ class DDUAdapter(
     class DDUViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     var contextMenuCreatorPosition: Int? = null // track VH to act on it
-    val sleepyFiles: Sleepy<ArrayList<File>> = Sleepy {
+    val sleepingFiles: Sleeping<ArrayList<File>> = Sleeping {
         ArrayList(dir.listFiles().filter { it.extension.toLowerCase() == "ddu" })
     }
-    val files: ArrayList<File> get() = sleepyFiles.value
+    val files: ArrayList<File> by sleepingFiles
     private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
     val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()
     val buildings: MutableMap<Filename, DDUViewHolder?> = mutableMapOf()
@@ -255,7 +256,7 @@ class DDUAdapter(
             doAsync {
                 val ddu = DDU.readFile(file)
                 // val size: Int = (0.4 * width).roundToInt() // width == height
-                val size = values.previewSize
+                val size = values.previewSizePx
                 val bitmap = ddu.preview(size, size)
                 previews[fileName] = bitmap
                 dduFileDao.insertOrUpdate(file.name) { this.preview = bitmap }
@@ -280,11 +281,10 @@ class DDUAdapter(
         if (item.isDirectory) {
             // impossible now
             dir = item
-            sleepyFiles.awake()
+            sleepingFiles.awake()
             notifyDataSetChanged()
         } else {
             onChoose(item)
         }
     }
 }
-

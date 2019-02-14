@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca
 import android.content.SharedPreferences
 import android.content.res.Resources
 import android.graphics.Matrix
+import android.util.DisplayMetrics
 import androidx.annotation.BoolRes
 
 // cannot see better solution yet
@@ -84,6 +85,19 @@ class ParsedFloatOption(key: String, default: Float) : Option<Float>(key, defaul
     }
 }
 
+class StringLikeOption<T>(
+    key: String, default: T,
+    val toString: (T) -> String = Any::toString,
+    val fromString: (String) -> T?
+) : Option<T>(key, default) where T : Any {
+    val valueString: String get() = toString(value)
+    override fun peek(sharedPreferences: SharedPreferences): T =
+        sharedPreferences.getString(key, toString(default))?.let { fromString(it) } ?: default
+    override fun put(editor: SharedPreferences.Editor) {
+        editor.putString(key, valueString)
+    }
+}
+
 
 class Options(val resources: Resources) {
     // ddu:r -> motion -> visible:r
@@ -133,6 +147,7 @@ class Options(val resources: Resources) {
     val canvasFactor = ParsedIntOption("canvas_factor", resources.getString(R.string.canvas_factor).toInt())
     val preferRecentDDU = BooleanOption("prefer_recent_ddu", R.bool.prefer_recent_ddu) // TODO: add to preferences
     // check screen width customization (from values/default.xml)
+    // preview size in pixels, yet to be converted to dp
     val previewSize = ParsedIntOption("preview_size", resources.getString(R.string.preview_size).toInt())
     val nPreviewUpdates = ParsedIntOption("n_preview_updates", resources.getString(R.string.n_preview_updates).toInt())
     val previewSmartUpdates = BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)
@@ -160,9 +175,13 @@ class Values(private val options: Options) {
     val canvasFactor: Int get() = options.canvasFactor.value
     val preferRecentDDU: Boolean get() = options.preferRecentDDU.value
     val previewSize: Int get() = options.previewSize.value
+    val previewSizePx: Int get() = options.resources.dp2px(options.previewSize.value)
     val nPreviewUpdates: Int get() = options.nPreviewUpdates.value
     val previewSmartUpdates: Boolean get() = options.previewSmartUpdates.value
 }
+
+internal fun Resources.dp2px(dp: Int): Int = dp * displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
+internal fun Resources.px2dp(px: Int): Int = px * DisplayMetrics.DENSITY_DEFAULT / displayMetrics.densityDpi
 
 fun <T : Any> SharedPreferences.fetch(
     preference: SharedPreference<T>,
