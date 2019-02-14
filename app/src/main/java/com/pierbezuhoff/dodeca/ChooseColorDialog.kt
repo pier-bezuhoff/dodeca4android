@@ -116,7 +116,7 @@ class CircleAdapter(
         circles.forEach { it.uncheck() }
     }
 
-    private fun factorByEquivalence(circles: List<CircleRow>): List<Row> =
+    private inline fun factorByEquivalence(circles: List<CircleRow>): List<Row> =
         circles.groupBy { it.equivalence } // hope we don't lose CircleRow::id order
             .values
             .mapIndexed { i, list ->
@@ -278,6 +278,7 @@ class CircleAdapter(
                     val fillSwitch: Switch = layout.circle_fill
                     val borderColorButton: ImageButton = layout.circle_border_color
                     val borderColorSwitch: Switch = layout.circle_has_border_color
+                    // maybe: disable borderColor if not fill
                     colorButton.apply {
                         setColorFilter(color)
                         setOnClickListener {
@@ -292,7 +293,10 @@ class CircleAdapter(
                     }
                     fillSwitch.apply {
                         isChecked = fill
-                        setOnCheckedChangeListener { _, checked -> fill = checked; fillChanged = true }
+                        setOnCheckedChangeListener { _, checked ->
+                            fill = checked
+                            fillChanged = true
+                        }
                     }
                     borderColorSwitch.apply {
                         isChecked = borderColor != null
