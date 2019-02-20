@@ -165,11 +165,13 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
         reverse: Boolean,
         canvas: Canvas, shape: Shapes, showAllCircles: Boolean
     ) {
-//        repeat(times) {
-//            _draw(canvas, shape, showAllCircles)
-//            _update(reverse)
-//        }
-//        _draw(canvas, shape, showAllCircles)
+        /* straightforward:
+        repeat(times) {
+            _draw(canvas, shape, showAllCircles)
+            _update(reverse)
+        }
+        _draw(canvas, shape, showAllCircles)
+        */
         _drawTimes(times, reverse, canvas, shape, showAllCircles)
     }
 
@@ -235,7 +237,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
         }
     }
 
-    private inline fun drawSquare(i: Int, canvas: Canvas, showOutline: Boolean = false) {
+    private inline fun drawSquare(i: Int, canvas: Canvas) {
         val x = oldXs[i].toFloat()
         val y = oldYs[i].toFloat()
         val r = oldRs[i].toFloat()

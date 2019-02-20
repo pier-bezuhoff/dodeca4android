@@ -2,19 +2,13 @@
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
-- [ ] Edit circles layout for phones (see pre-launch reports for 13)
-- [ ] By hdpi, ...
-- [ ] Proper customize preview size for different screens
-- [ ] Edit circle: turn off border color (null!)
-- [ ] Double occurence of circle in groups! (13 plr: pixel 2 (9): 1:54)
-- [ ] Pick color from picture and select appropriate circle group (on double tap)
-- [ ] Also see com.android.support:palette-v7:28.0.0
+- [ ] Show/hide toggle button in edit-circle dialog
+- [ ] Rotate shapes (sq, hb, vb; with canvas.withRotation(...))
+- [ ] Arcs (with rotation)
+- [ ] Pick color from picture and select appropriate circle group (on double tap) (com.android.support:palette-v7:28.0.0)
 - [ ] action bar: import/export
 - [ ] On small screen: chosen shape is either *very* small or not shown at all (pre-launch reports)
-- [ ] Strange bug on Android <= 5.1: 180605_1b (tunnel): lines instead of big-radius circles (?too big doubles?)
 - [ ] For release: disable Log.i-s?/
 - [ ] Knot (see C++)
-- [ ] Rotate shapes (sq, hb, vb; with canvas.withRotation(...))
 - [ ] Google Play: promotional video
-- [ ] Focusing mode: following specific circle center
 - [ ] 'Brush' (see C++)
