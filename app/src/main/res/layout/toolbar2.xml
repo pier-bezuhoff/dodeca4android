@@ -37,6 +37,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
     />
+    <!-- maybe: use ToggleButton -->
     <ImageButton
             android:id="@+id/play_button"
             android:contentDescription="@string/play_button_title"

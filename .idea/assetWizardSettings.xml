@@ -123,7 +123,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/hardware/ic_keyboard_arrow_left_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/action/ic_visibility_off_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -134,7 +134,7 @@
                         <option name="values">
                           <map>
                             <entry key="autoMirrored" value="true" />
-                            <entry key="outputName" value="ic_left" />
+                            <entry key="outputName" value="ic_visibility_off" />
                             <entry key="overrideSize" value="true" />
                             <entry key="sourceFile" value="$PROJECT_DIR$/app/src/main/res/drawable/ic_trace.svg" />
                           </map>

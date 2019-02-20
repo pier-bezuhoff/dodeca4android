@@ -26,6 +26,7 @@ import org.jetbrains.anko.alert
 import org.jetbrains.anko.customView
 import org.jetbrains.anko.include
 import kotlin.math.roundToInt
+import kotlin.properties.Delegates
 
 class ChooseColorDialog(val activity: MainActivity, private val circleGroup: CircleGroup) {
     private var listener: ChooseColorListener = activity
@@ -78,12 +79,21 @@ class ChooseColorDialog(val activity: MainActivity, private val circleGroup: Cir
 }
 
 
+internal typealias OnApply = (
+    shown: Maybe<Boolean>,
+    color: Maybe<Int>,
+    fill: Maybe<Boolean>,
+    borderColor: Maybe<Int?>
+) -> Unit
+
 class CircleAdapter(
     private val context: Context,
     private val circleGroup: CircleGroup
 ) : RecyclerView.Adapter<CircleAdapter.ViewHolder>() {
     class ViewHolder(val row: View) : RecyclerView.ViewHolder(row)
 
+    // TODO: show invisible at the end
+    // TODO: add figure.show to Equivalence
     private val circleRows: List<CircleRow> =
         circleGroup.figures
             .mapIndexed { i, figure -> CircleRow(figure, i) }
@@ -132,6 +142,18 @@ class CircleAdapter(
         rows.forEachIndexed { i, row -> row.position = i }
     }
 
+    private fun CircleRow.persistApply(
+        shown: Boolean? = null,
+        color: Int? = null,
+        fill: Boolean? = null,
+        borderColor: Maybe<Int?> = None
+    ) {
+        figure = figure.copy(
+            newShown = shown,
+            newColor = color, newFill = fill, newBorderColor = borderColor)
+        persist()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val row = LayoutInflater.from(parent.context)
             .inflate(R.layout.choose_color_row, parent, false)
@@ -157,12 +179,20 @@ class CircleAdapter(
             }
             circle_name.text = "${row.id}"
             circle_image.setImageDrawable(circleImageFor(figure.equivalence))
-            circle_checkbox.setOnCheckedChangeListener { _, checked -> if (checked) row.check() else row.uncheck() }
-            circle_checkbox.isChecked = row.checked
+            circle_checkbox.apply {
+                setOnCheckedChangeListener { _, checked -> if (checked) row.check() else row.uncheck() }
+                isChecked = row.checked
+            }
             circle_layout.setOnClickListener { editCircle(row) }
-            expand_group.visibility = View.GONE
-            expand_group.setOnCheckedChangeListener { _, _ -> }
-            expand_group.isChecked = false
+            circle_visibility.apply {
+                isChecked = row.figure.show
+                setOnCheckedChangeListener { _, checked -> row.persistApply(shown = checked) }
+            }
+            expand_group.apply {
+                visibility = View.GONE
+                setOnCheckedChangeListener { _, _ -> }
+                isChecked = false
+            }
         }
     }
 
@@ -173,23 +203,29 @@ class CircleAdapter(
             }
             circle_name.text = row.name // should change whenever .circles changes
             circle_image.setImageDrawable(circleImageFor(row.equivalence))
-            circle_checkbox.setOnCheckedChangeListener { _, checked -> if (!binding) checkGroup(row, checked) }
-            circle_checkbox.isChecked = row.checked
+            circle_checkbox.apply {
+                setOnCheckedChangeListener { _, checked -> if (!binding) checkGroup(row, checked) }
+                isChecked = row.checked
+            }
             circle_layout.setOnClickListener {
-                editCirclesDialog(row.circles) { (color), (fill), borderColor ->
-                    row.circles.forEach { circleRow ->
-                        circleRow.figure =
-                            circleRow.figure.copy(newColor = color, newFill = fill, newBorderColor = borderColor)
-                        circleRow.persist()
-                    }
+                editCirclesDialog(row.circles) { (shown), (color), (fill), borderColor ->
+                    row.circles.forEach { it.persistApply(shown, color, fill, borderColor) }
                     row.equivalence = row.blueprint.equivalence
                     notifyDataSetChanged()
                 }.show()
             }
-            expand_group.visibility = View.VISIBLE
-            expand_group.setOnCheckedChangeListener { _, checked -> if (!binding) expandOrCollapseGroup(checked, row) }
-            if (expand_group.isChecked != row.expanded)
-                expand_group.isChecked = row.expanded
+            circle_visibility.apply {
+                isChecked = row.blueprint.figure.show
+                setOnCheckedChangeListener { _, checked ->
+                    row.circles.forEach { it.persistApply(shown = checked) }
+                }
+            }
+            expand_group.apply {
+                visibility = View.VISIBLE
+                setOnCheckedChangeListener { _, checked -> if (!binding) expandOrCollapseGroup(checked, row) }
+                if (isChecked != row.expanded)
+                    isChecked = row.expanded
+            }
         }
     }
 
@@ -253,9 +289,8 @@ class CircleAdapter(
         editCircleDialog(
             row.figure,
             context.getString(R.string.edit_circle_dialog_message_single, row.id.toString())
-        ) { (color), (fill), borderColor ->
-            row.figure = row.figure.copy(newColor = color, newFill = fill, newBorderColor = borderColor)
-            row.persist()
+        ) { (shown), (color), (fill), borderColor ->
+            row.persistApply(shown, color, fill, borderColor)
             notifyDataSetChanged()
         }.show()
     }
@@ -263,28 +298,35 @@ class CircleAdapter(
     private inline fun editCircleDialog(
         figure: CircleFigure,
         message: String,
-        crossinline onApply: (color: Maybe<Int>, fill: Maybe<Boolean>, borderColor: Maybe<Int?>) -> Unit
+        crossinline onApply: OnApply
     ): AlertBuilder<*> {
-        var color: Int = figure.color
-        var fill: Boolean = figure.fill
-        var borderColor: Int? = figure.borderColor
+        var shownChanged = false
+        var shown: Boolean by Delegates.observable(figure.show) { _, _, _ -> shownChanged = true }
         var colorChanged = false
+        var color: Int by Delegates.observable(figure.color) { _, _, _ -> colorChanged = true }
         var fillChanged = false
+        var fill: Boolean by Delegates.observable(figure.fill) { _, _, _ -> fillChanged = true }
         var borderColorChanged = false
+        var borderColor: Int? by Delegates.observable(figure.borderColor) { _, _, _ -> borderColorChanged = true }
         val builder = context.alert(message) {
             customView {
                 include<LinearLayout>(R.layout.edit_circle).also { layout ->
+                    // TODO: add to all 3 layouts
+                    val shownButton: Switch = layout.circle_show
                     val colorButton: ImageButton = layout.circle_color
                     val fillSwitch: Switch = layout.circle_fill
                     val borderColorButton: ImageButton = layout.circle_border_color
                     val borderColorSwitch: Switch = layout.circle_has_border_color
+                    shownButton.apply {
+                        isChecked = shown
+                        setOnCheckedChangeListener { _, checked -> shown = checked }
+                    }
                     // maybe: disable borderColor if not fill
                     colorButton.apply {
                         setColorFilter(color)
                         setOnClickListener {
                             colorPickerDialog(color) { newColor ->
                                 color = newColor
-                                colorChanged = true
                                 colorButton.setColorFilter(newColor)
                                 if (borderColor == null)
                                     borderColorButton.setColorFilter(newColor)
@@ -293,10 +335,7 @@ class CircleAdapter(
                     }
                     fillSwitch.apply {
                         isChecked = fill
-                        setOnCheckedChangeListener { _, checked ->
-                            fill = checked
-                            fillChanged = true
-                        }
+                        setOnCheckedChangeListener { _, checked -> fill = checked }
                     }
                     borderColorSwitch.apply {
                         isChecked = borderColor != null
@@ -308,7 +347,6 @@ class CircleAdapter(
                                 borderColor = borderColor ?: color
                                 borderColorButton.setColorFilter(borderColor!!)
                             }
-                            borderColorChanged = true
                         }
                     }
                     borderColorButton.apply {
@@ -320,7 +358,6 @@ class CircleAdapter(
                                         isChecked = true // NOTE: may change borderColor
                                 }
                                 borderColor = newColor
-                                borderColorChanged = true
                                 borderColorButton.setColorFilter(newColor)
                             }.show()
                         }
@@ -328,9 +365,10 @@ class CircleAdapter(
                 }
             }
             positiveButton(R.string.edit_circle_dialog_apply) { onApply(
-                if (colorChanged) Just(color) else None,
-                if (fillChanged) Just(fill) else None,
-                if (borderColorChanged) Just(borderColor) else None
+                justIf(shown, shownChanged),
+                justIf(color, colorChanged),
+                justIf(fill, fillChanged),
+                justIf(borderColor, borderColorChanged)
             ) }
             negativeButton(R.string.edit_circle_dialog_cancel) { }
         }
@@ -354,7 +392,7 @@ class CircleAdapter(
 
     private inline fun editCirclesDialog(
         circles: Collection<CircleRow>,
-        crossinline onApply: (color: Maybe<Int>, fill: Maybe<Boolean>, borderColor: Maybe<Int?>) -> Unit = {_, _, _ -> }
+        crossinline onApply: OnApply = {_, _, _, _ -> }
     ): AlertBuilder<DialogInterface> {
         val blueprint = circles.take(1)[0]
         val message = when(circles.size) {
@@ -366,11 +404,8 @@ class CircleAdapter(
 
     fun editCheckedCircles() {
         val circles = checkedRows.filterIsInstance<CircleRow>()
-        editCirclesDialog(circles) { (color), (fill), borderColor ->
-            circles.forEach { row ->
-                row.figure = row.figure.copy(newColor = color, newFill = fill, newBorderColor = borderColor)
-                row.persist()
-            }
+        editCirclesDialog(circles) { (shown), (color), (fill), borderColor ->
+            circles.forEach { it.persistApply(shown, color, fill, borderColor) }
             // group cannot shrink
             checkedRows
                 .filterIsInstance<CircleGroupRow>()

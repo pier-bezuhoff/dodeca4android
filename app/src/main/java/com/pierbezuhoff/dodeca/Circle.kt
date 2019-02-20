@@ -99,15 +99,24 @@ class CircleFigure(center: Complex, radius: Double,
 
     fun copy(
         newCenter: Complex? = null, newRadius: Double? = null,
+        newShown: Boolean? = null,
         newColor: Int? = null, newFill: Boolean? = null,
         newRule: String? = null, newBorderColor: Maybe<Int?> = None
     ): CircleFigure = CircleFigure(
         newCenter ?: center, newRadius ?: radius,
         newColor ?: color, newFill ?: fill,
-        newRule ?: rule,
-        when(newBorderColor) { None -> borderColor; is Just -> newBorderColor.value }
+        (newRule ?: rule)?.let { r -> // rule-less circles cannot be shown yet
+            newShown?.let { shown ->
+                if (shown && r.startsWith('n'))
+                    r.drop(1)
+                else if (!shown && r.isNotBlank() && !r.startsWith('n'))
+                    "n$r"
+                else r
+            } ?: r
+        },
+        newBorderColor.orElse(borderColor)
     ).apply {
-        point = this@CircleFigure.point
+        point = this@CircleFigure.point // hope it refers to outer [this]
     }
 
 //    fun copy(
@@ -181,18 +190,6 @@ enum class Shapes {
         fun indexOrFirst(index: Int): Shapes =
             if (index < Shapes.values().size) Shapes.values()[index] else Shapes.values()[0]
     }
-}
-
-// Kotlin's A -> `A?` is not expressive enough
-sealed class Maybe<out A> {
-    abstract fun toNullable(): A?
-    operator fun component1(): A? = toNullable()
-}
-class Just<out A>(val value: A) : Maybe<A>() {
-    override fun toNullable(): A? = value
-}
-object None : Maybe<Nothing>() {
-    override fun toNullable(): Nothing? = null
 }
 
 val List<CircleFigure>.centroid get() = mean(map { it.center })

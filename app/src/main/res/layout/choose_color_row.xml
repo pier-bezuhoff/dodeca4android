@@ -56,6 +56,27 @@
         />
     </androidx.constraintlayout.widget.ConstraintLayout>
     <ToggleButton
+            android:id="@+id/circle_visibility"
+            android:background="@color/lightGray"
+            android:button="@drawable/circle_visibility"
+            android:checked="true"
+            android:layout_width="24dp"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:textOn=""
+            android:textOff=""
+            android:contentDescription="Hide/show circle"
+            app:layout_constraintStart_toEndOf="@+id/circle_layout"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+    />
+    <ToggleButton
             android:id="@+id/expand_group"
             android:background="@color/lightGray"
             android:button="@drawable/expand_group"
@@ -69,8 +90,6 @@
             android:textOn=""
             android:textOff=""
             android:contentDescription="@string/expand_group_description"
-            android:layout_marginStart="24dp"
-            app:layout_constraintStart_toEndOf="@+id/circle_layout"
             android:layout_marginBottom="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginTop="8dp"
