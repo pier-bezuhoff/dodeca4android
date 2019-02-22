@@ -99,10 +99,26 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun autocenter() {
-        val shownCircles = circleGroup.figures.filter(CircleFigure::show)
-        val visibleCenter = mean(shownCircles.map { visible(it.center) })
-        val (dx, dy) = (center - visibleCenter).asFF()
-        updateScroll(dx, dy)
+        val factor by lazy { scale * values.canvasFactor }
+        Log.i(TAG, "factor: $factor")
+        if (true || values.drawTrace && trace.initialized &&
+            1 - 1e-4 < factor && factor < 1 + 1e-1
+        ) {
+            Log.i(TAG, "autofit")
+            // fit screen in this case
+//            val dw = trace.translation.dx
+//            val dh = trace.translation.dy
+//            val dx = trace.motion.dx
+//            val dy = trace.motion.dy
+//            updateScroll(dw - dx, dh - dy)
+//            updateScroll(-dx, -dy)
+            updateScroll(-centerX + dx, -centerY + dy)
+        } else {
+            val shownCircles = circleGroup.figures.filter(CircleFigure::show)
+            val visibleCenter = mean(shownCircles.map { visible(it.center) })
+            val (dx, dy) = (center - visibleCenter).asFF()
+            updateScroll(dx, dy)
+        }
     }
 
     private fun centerize(newCenter: Complex) {
@@ -235,10 +251,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private inline fun onCanvas(canvas: Canvas, draw: (Canvas) -> Unit) =
+    private inline fun onCanvas(canvas: Canvas, crossinline draw: (Canvas) -> Unit) =
         canvas.withMatrix(values.motion) { draw(this) }
 
-    private inline fun onTraceCanvas(draw: (Canvas) -> Unit) =
+    private inline fun onTraceCanvas(crossinline draw: (Canvas) -> Unit) =
         draw(trace.canvas)
 
     /* draw options.drawTrace canvas on DodecaView canvas */

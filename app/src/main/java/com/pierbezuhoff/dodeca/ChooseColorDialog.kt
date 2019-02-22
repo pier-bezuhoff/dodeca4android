@@ -97,13 +97,14 @@ class CircleAdapter(
     private val circleRows: List<CircleRow> =
         circleGroup.figures
             .mapIndexed { i, figure -> CircleRow(figure, i) }
-            .filter { it.figure.show } // maybe: also show invisible circles in the end + options.showAllCircles
+//            .filter { it.figure.show } // maybe: also show invisible circles in the end + options.showAllCircles
             .sortedBy { it.figure.color }
     private var rows: MutableList<Row> = factorByEquivalence(circleRows).toMutableList()
 
     // store rows with checked checkboxes, they may be collapsed though
     val checkedRows: MutableSet<Row> = mutableSetOf()
     private var binding: Boolean = false
+    var showInvisible: Boolean = true
 
     private inline fun CircleRow.persist() { circleGroup[id] = this.figure }
     private inline fun Row.remove() {
@@ -175,7 +176,7 @@ class CircleAdapter(
         with(holder.row) {
             // increase left margin
             (circle_layout.layoutParams as ViewGroup.MarginLayoutParams).apply {
-                leftMargin = 40
+                leftMargin = 8 // 40
             }
             circle_name.text = "${row.id}"
             circle_image.setImageDrawable(circleImageFor(figure.equivalence))
@@ -269,7 +270,7 @@ class CircleAdapter(
     }
 
     private fun circleImageFor(equivalence: Equivalence): LayerDrawable {
-        val (color, fill, borderColor) = equivalence
+        val (shown, color, fill, borderColor) = equivalence
         val circleImage = ContextCompat.getDrawable(context, R.drawable.circle_image)
             as LayerDrawable
         circleImage.mutate() // without it ALL circleImage layers will change
@@ -478,9 +479,9 @@ class CircleAdapter(
     }
 }
 
-data class Equivalence(val color: Int, val fill: Boolean, val borderColor: Int?)
+data class Equivalence(val shown: Boolean, val color: Int, val fill: Boolean, val borderColor: Int?)
 
-val CircleFigure.equivalence get() = Equivalence(color, fill, borderColor)
+val CircleFigure.equivalence get() = Equivalence(show, color, fill, borderColor)
 
 sealed class Row(
     var position: Int? = null,
@@ -495,7 +496,7 @@ class CircleRow(
     position: Int? = null,
     checked: Boolean = false
 ) : Row(position, checked) {
-    val equivalence: Equivalence get() = Equivalence(figure.color, figure.fill, figure.borderColor)
+    val equivalence: Equivalence get() = figure.equivalence
     fun equivalent(other: CircleRow): Boolean = equivalence == other.equivalence
     override fun toString(): String = "row \"$id\" at $position (checked: $checked)"
 }
