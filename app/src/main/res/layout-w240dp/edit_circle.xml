@@ -10,7 +10,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:text="Show/hide"
+            android:text="@string/circle_show_description"
             android:layout_margin="8dp"
             android:padding="8dp"
     />
