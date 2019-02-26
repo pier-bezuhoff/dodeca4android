@@ -39,7 +39,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var lastUpdateTime: Long = 0L
     private var updateOnce = false
     private val paint = Paint(defaultPaint)
-    private val trace: Trace = Trace(Paint(defaultPaint))
+    private val trace: Trace = Trace(paint = Paint(defaultPaint))
     private var nUpdates: Long = 0L
 
     // MainActivity should set up this whenever SharedPreference/show_stat changes, maybe use Sleepy or smth
@@ -99,20 +99,13 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun autocenter() {
-        val factor by lazy { scale * values.canvasFactor }
-        Log.i(TAG, "factor: $factor")
-        if (true || values.drawTrace && trace.initialized &&
-            1 - 1e-4 < factor && factor < 1 + 1e-1
+        // maybe: when canvasFactor * scale ~ 1
+        // try to fit screen
+        if (values.drawTrace && trace.initialized &&
+            values.canvasFactor == 1 &&
+            1 - 1e-4 < scale && scale < 1 + 1e-1
         ) {
-            Log.i(TAG, "autofit")
-            // fit screen in this case
-//            val dw = trace.translation.dx
-//            val dh = trace.translation.dy
-//            val dx = trace.motion.dx
-//            val dy = trace.motion.dy
-//            updateScroll(dw - dx, dh - dy)
-//            updateScroll(-dx, -dy)
-            updateScroll(-centerX + dx, -centerY + dy)
+            updateScroll(-trace.motion.dx, -trace.motion.dy)
         } else {
             val shownCircles = circleGroup.figures.filter(CircleFigure::show)
             val visibleCenter = mean(shownCircles.map { visible(it.center) })
@@ -285,8 +278,18 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     fun oneStep() {
-        updateCircles()
-        lastUpdateTime = System.currentTimeMillis()
+        // 1 step = [speed] updates
+        if (values.speed.roundToInt() <= 1) {
+            updateCircles()
+            lastUpdateTime = System.currentTimeMillis()
+        } else {
+            val batch = values.speed.roundToInt()
+            onTraceCanvas { traceCanvas ->
+                drawCirclesTimes(batch, traceCanvas)
+            }
+            lastUpdateTime = System.currentTimeMillis()
+            updateStat(batch) // wrong behaviour
+        }
         updateOnce = true
         editing { set(options.updating, false) }
         postInvalidate()

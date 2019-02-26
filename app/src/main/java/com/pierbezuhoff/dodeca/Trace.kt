@@ -26,11 +26,12 @@ class Trace(val paint: Paint) {
         motion.postScale(sx, sy, x, y)
     }
 
-    fun initTranslation(width: Int, height: Int) {
+    private fun initTranslation(width: Int, height: Int): Pair<Float, Float> {
         val dx = (1f - factor) * width / 2
         val dy = (1f - factor) * height / 2
         translation.reset()
         translation.preTranslate(dx, dy)
+        return Pair(dx, dy)
     }
 
     fun retrace(width: Int, height: Int) {
@@ -38,11 +39,8 @@ class Trace(val paint: Paint) {
         bitmap = Bitmap.createBitmap(
             factor * width, factor * height,
             Bitmap.Config.RGB_565)
-        val dx = (1f - factor) * width / 2
-        val dy = (1f - factor) * height / 2
         canvas = Canvas(bitmap)
-        translation.reset()
-        translation.preTranslate(dx, dy)
+        val (dx, dy) = initTranslation(width, height)
         motion.reset()
         canvas.translate(-dx, -dy)
         initialized = true

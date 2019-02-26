@@ -93,11 +93,10 @@ class CircleAdapter(
     class ViewHolder(val row: View) : RecyclerView.ViewHolder(row)
 
     // TODO: show invisible at the end
-    // TODO: add figure.show to Equivalence
     private val circleRows: List<CircleRow> =
         circleGroup.figures
             .mapIndexed { i, figure -> CircleRow(figure, i) }
-//            .filter { it.figure.show } // maybe: also show invisible circles in the end + options.showAllCircles
+            .filter { it.figure.show } // maybe: also show invisible circles in the end + options.showAllCircles
             .sortedBy { it.figure.color }
     private var rows: MutableList<Row> = factorByEquivalence(circleRows).toMutableList()
 
@@ -128,16 +127,20 @@ class CircleAdapter(
     }
 
     private inline fun factorByEquivalence(circles: List<CircleRow>): List<Row> =
+        // BUG: when showing invisible circles
+        // collapse & expand works strangely bad
         circles.groupBy { it.equivalence } // hope we don't lose CircleRow::id order
             .values
             .mapIndexed { i, list ->
+                if (list.size == 1)
+                    list[0].apply { position = i }
+                else
                 CircleGroupRow(
                     list.toSet().apply { forEach { it.position = null } },
                     position = i,
                     checked = list.all { it.checked }
                 )
             }
-            .map { if (it.size == 1) it.blueprint.apply { position = it.position } else it } // drop singletons
 
     private fun reassignPositions() {
         rows.forEachIndexed { i, row -> row.position = i }
@@ -240,7 +243,6 @@ class CircleAdapter(
 
     private fun expandOrCollapseGroup(expand: Boolean, row: CircleGroupRow) {
         // NOTE: should be called only when !binding
-        row.expanded = expand
         if (expand) {
             expandGroup(row)
         } else {
@@ -251,12 +253,13 @@ class CircleAdapter(
 
     private fun expandGroup(row: CircleGroupRow) {
         rows.addAll(1 + row.position!!, row.circles)
+        row.expanded = true
         reassignPositions()
         // notifyDataSetChanged() should be called afterwards
     }
 
     private fun collapseGroup(row: CircleGroupRow) {
-        val newCircles = circleRows.filter { it.equivalence == row.equivalence && it.shown }
+        val newCircles = circleRows.filter { it.shown && row.equivalent(it) }
         when(newCircles.size) {
             0, 1 -> row.remove()
             else -> {
@@ -265,6 +268,7 @@ class CircleAdapter(
                 newCircles.forEach { it.position = null }
             }
         }
+        row.expanded = false
         reassignPositions()
         // notifyDataSetChanged() should be called afterwards
     }
@@ -511,6 +515,7 @@ class CircleGroupRow(
     var equivalence: Equivalence = blueprint.equivalence
     val size: Int get() = circles.size
     val blueprint: CircleRow get() = circles.take(1)[0]
+    fun equivalent(other: CircleRow): Boolean = equivalence == other.equivalence
     val childPositions: List<Int>? get() = position?.let { (it + 1 .. it + circles.size).toList() }
     val lastChildPosition: Int? get() = position?.let { it + circles.size + 1 }
     val name: String get() = circlesNumbers(circles)

@@ -135,5 +135,7 @@
     <string name="edit_circle_border_color_description">Thin circle</string>
     <string name="edit_circle_has_border_color_text">Different border color</string>
     <string name="choose_color_button_title">Edit circles</string>
+    <string name="circle_visibility_description">Show/hide circle</string>
+    <string name="circle_show_description">Visible</string>
 
 </resources>
