@@ -96,8 +96,9 @@ class CircleAdapter(
     private val circleRows: List<CircleRow> =
         circleGroup.figures
             .mapIndexed { i, figure -> CircleRow(figure, i) }
-            .filter { it.figure.show } // maybe: also show invisible circles in the end + options.showAllCircles
+            .filter { it.figure.dynamic } // show only circles with [rule]
             .sortedBy { it.figure.color }
+            .sortedByDescending { it.visible }
     private var rows: MutableList<Row> = factorByEquivalence(circleRows).toMutableList()
 
     // store rows with checked checkboxes, they may be collapsed though
@@ -127,8 +128,6 @@ class CircleAdapter(
     }
 
     private inline fun factorByEquivalence(circles: List<CircleRow>): List<Row> =
-        // BUG: when showing invisible circles
-        // collapse & expand works strangely bad
         circles.groupBy { it.equivalence } // hope we don't lose CircleRow::id order
             .values
             .mapIndexed { i, list ->
@@ -141,19 +140,20 @@ class CircleAdapter(
                     checked = list.all { it.checked }
                 )
             }
+            .sortedByDescending { it.visible }
 
     private fun reassignPositions() {
         rows.forEachIndexed { i, row -> row.position = i }
     }
 
     private fun CircleRow.persistApply(
-        shown: Boolean? = null,
+        visible: Boolean? = null,
         color: Int? = null,
         fill: Boolean? = null,
         borderColor: Maybe<Int?> = None
     ) {
         figure = figure.copy(
-            newShown = shown,
+            newShown = visible,
             newColor = color, newFill = fill, newBorderColor = borderColor)
         persist()
     }
@@ -189,8 +189,12 @@ class CircleAdapter(
             }
             circle_layout.setOnClickListener { editCircle(row) }
             circle_visibility.apply {
-                isChecked = row.figure.show
-                setOnCheckedChangeListener { _, checked -> row.persistApply(shown = checked) }
+                setOnCheckedChangeListener { _, _ -> }
+                isChecked = row.visible
+                // BUG: wrong set up after toggling collapsed, then expanding
+                setOnCheckedChangeListener { _, checked ->
+                    row.persistApply(visible = checked)
+                }
             }
             expand_group.apply {
                 visibility = View.GONE
@@ -219,9 +223,13 @@ class CircleAdapter(
                 }.show()
             }
             circle_visibility.apply {
-                isChecked = row.blueprint.figure.show
+                setOnCheckedChangeListener { _, _ -> }
+                isChecked = row.visible
                 setOnCheckedChangeListener { _, checked ->
-                    row.circles.forEach { it.persistApply(shown = checked) }
+                    row.equivalence = row.equivalence.copy(visible = checked)
+                    row.circles.forEach { it.persistApply(visible = checked) }
+                    if (row.expanded && !binding)
+                        notifyDataSetChanged()
                 }
             }
             expand_group.apply {
@@ -473,6 +481,7 @@ class CircleAdapter(
                         checked = list.all { it.checked }
                     )
             }
+            .sortedByDescending { it.visible }
             .toMutableList()
         reassignPositions()
         notifyDataSetChanged()
@@ -483,25 +492,27 @@ class CircleAdapter(
     }
 }
 
-data class Equivalence(val shown: Boolean, val color: Int, val fill: Boolean, val borderColor: Int?)
+internal data class Equivalence(val visible: Boolean, val color: Int, val fill: Boolean, val borderColor: Int?)
 
-val CircleFigure.equivalence get() = Equivalence(show, color, fill, borderColor)
+internal val CircleFigure.equivalence get() = Equivalence(show, color, fill, borderColor)
 
 sealed class Row(
-    var position: Int? = null,
+    var position: Int? = null, // position in adapter
     var checked: Boolean = false
 ) {
     val shown: Boolean get() = position != null
+    internal abstract val equivalence: Equivalence
+    val visible: Boolean get() = equivalence.visible
+    fun equivalent(other: Row): Boolean = equivalence == other.equivalence
 }
 
 class CircleRow(
     var figure: CircleFigure,
-    val id: Int,
+    val id: Int, // number in .ddu file
     position: Int? = null,
     checked: Boolean = false
 ) : Row(position, checked) {
-    val equivalence: Equivalence get() = figure.equivalence
-    fun equivalent(other: CircleRow): Boolean = equivalence == other.equivalence
+    override val equivalence: Equivalence get() = figure.equivalence
     override fun toString(): String = "row \"$id\" at $position (checked: $checked)"
 }
 
@@ -512,17 +523,14 @@ class CircleGroupRow(
     position: Int? = null,
     checked: Boolean = false
 ) : Row(position, checked) {
-    var equivalence: Equivalence = blueprint.equivalence
+    override var equivalence: Equivalence = blueprint.equivalence
     val size: Int get() = circles.size
     val blueprint: CircleRow get() = circles.take(1)[0]
-    fun equivalent(other: CircleRow): Boolean = equivalence == other.equivalence
-    val childPositions: List<Int>? get() = position?.let { (it + 1 .. it + circles.size).toList() }
-    val lastChildPosition: Int? get() = position?.let { it + circles.size + 1 }
     val name: String get() = circlesNumbers(circles)
     override fun toString(): String = "group row \"$name\" at $position (expanded: $expanded, checked: $checked)"
 }
 
-fun circlesNumbers(circles: Collection<CircleRow>): String = when(circles.size) {
+internal fun circlesNumbers(circles: Collection<CircleRow>): String = when(circles.size) {
         1 -> "${circles.take(1)[0].id}"
         2, 3 -> circles.take(3).joinToString { it.id.toString() }
         else -> circles.take(2).joinToString { it.id.toString() } + ", ..., " +

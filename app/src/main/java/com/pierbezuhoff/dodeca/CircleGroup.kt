@@ -42,7 +42,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
     private var oldXs: DoubleArray = xs // old_s are used for draw and as oldCircles in update
     private var oldYs: DoubleArray = ys
     private var oldRs: DoubleArray = rs
-    private val attrs: Array<FigureAttributes> = Array(size) { FigureAttributes(cs[it].color, cs[it].fill, cs[it].rule, cs[it].borderColor) }
+    private val attrs: Array<FigureAttributes> = Array(size) { cs[it].run { FigureAttributes(color, fill, rule, borderColor) } }
     private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
     private var shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
     private val paints: Array<Paint> = attrs.map {
@@ -303,7 +303,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
                 var d2 = dx * dx + dy * dy
                 val r2 = r * r
                 val r02 = r0 * r0
-                 if (d2 == r02)
+                 if (d2 == r02) // if result should be line
                      d2 += 1e-6f
                 val scale = r2 / (d2 - r02)
                 xs[i] = x + dx * scale

@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
@@ -37,6 +38,7 @@ typealias Filename = String // with extension
 fun Filename.stripDDU(): FileName = this.removeSuffix(".ddu").removeSuffix(".DDU")
 
 // TODO: action bar: import file/folder, export folder
+// MAYBE: action bar: search by name
 // MAYBE: store in sharedPreferences last dir
 // MAYBE: go to parent folder
 // MAYBE: link to external folder
@@ -71,6 +73,22 @@ class DDUChooserActivity : AppCompatActivity() {
         }
         setResult(Activity.RESULT_OK, data)
         finish()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.ddu_chooser_appbar, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        var isSet = true
+        when (item.itemId) {
+            R.id.to_parent_folder -> toast("to parent folder")
+            R.id.import_ddus -> toast("import")
+            R.id.export_ddus -> toast("export")
+            else -> isSet = false
+        }
+        return isSet || super.onOptionsItemSelected(item)
     }
 
     override fun onContextItemSelected(item: MenuItem?): Boolean {
@@ -165,11 +183,6 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     private var columnWidth: Int? = null
 
     init {
-        // maybe: customize for different screens in res/values/dimens.xml:
-        // <resources>
-        //    <dimen name="column_width">320dp</dimen>
-        // </resources>
-        // or better customize preview size
         context.withStyledAttributes(attrs, intArrayOf(android.R.attr.columnWidth), defStyleAttr) {
             getDimensionPixelSize(0, -1).let {
                 columnWidth = if (it == -1) null else it
@@ -192,8 +205,9 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     }
 }
 
+// TODO: show folders on the top
 class DDUAdapter(
-    val activity: AppCompatActivity,
+    private val activity: AppCompatActivity,
     private var dir: File,
     private val onChoose: (File) -> Unit
 ) : RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
