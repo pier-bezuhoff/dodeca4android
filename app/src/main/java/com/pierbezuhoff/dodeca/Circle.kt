@@ -105,7 +105,7 @@ class CircleFigure(center: Complex, radius: Double,
     ): CircleFigure = CircleFigure(
         newCenter ?: center, newRadius ?: radius,
         newColor ?: color, newFill ?: fill,
-        (newRule ?: rule)?.let { r -> // rule-less circles cannot be shown yet
+        (newRule ?: rule)?.let { r -> // rule-less circles cannot be visible yet
             newShown?.let { shown ->
                 if (shown && r.startsWith('n'))
                     r.drop(1)
