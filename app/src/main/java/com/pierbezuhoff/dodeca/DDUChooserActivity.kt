@@ -84,7 +84,7 @@ class DDUChooserActivity : AppCompatActivity() {
         var isSet = true
         when (item.itemId) {
             R.id.to_parent_folder -> toast("to parent folder")
-            R.id.import_ddus -> toast("import")
+            R.id.import_ddus -> importDDUFolder()
             R.id.export_ddus -> toast("export")
             else -> isSet = false
         }
@@ -92,18 +92,20 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 
     override fun onContextItemSelected(item: MenuItem?): Boolean {
-        val superResult = super.onContextItemSelected(item)
-        var result = true
+        var isSet = true
         viewAdapter.contextMenuCreatorPosition?.let { position ->
             val file = viewAdapter.files[position]
             when (item?.itemId) {
                 R.id.ddu_rename -> renameDDUFile(file, position)
                 R.id.ddu_delete -> deleteDDUFile(file, position)
-                R.id.ddu_restore -> restoreDDUFile(file, position)
-                else -> result = false
+                R.id.ddu_restore -> restoreDDUFile(file)
+                R.id.ddu_duplicate -> duplicateDDUFile(file)
+                R.id.ddu_export -> toast("export ${file.name}")
+                R.id.ddu_export_for_dodecalook -> toast("export ${file.name} for DodecaLook")
+                else -> isSet = false
             }
         }
-        return result || superResult
+        return isSet || super.onContextItemSelected(item)
     }
 
     private fun renameDDUFile(file: File, position: Int) {
@@ -155,7 +157,7 @@ class DDUChooserActivity : AppCompatActivity() {
         viewAdapter.notifyDataSetChanged()
     }
 
-    private fun restoreDDUFile(file: File, position: Int) {
+    private fun restoreDDUFile(file: File) {
         // TODO: restore imported files by original path
         val original: Filename? = extract1DDU(file.name, dduDir, DB.dduFileDao(), TAG)
         original?.let {
@@ -169,8 +171,57 @@ class DDUChooserActivity : AppCompatActivity() {
         }
     }
 
+    private fun duplicateDDUFile(file: File) {
+        val fileName = file.nameWithoutExtension
+        val part1 = Regex("^(.*)-(\\d*)$")
+        fun namePart1(s: String): String = part1.find(s)?.groupValues?.let { it[1] } ?: s
+        val name = namePart1(fileName)
+        val postfixes: Set<Int> = viewAdapter.files
+            .map {
+                it.nameWithoutExtension.let { name ->
+                    part1.find(name)?.groupValues
+                        ?.let { it[1] to it[2].toInt() }
+                        ?: name to null
+                }
+            }
+            .filter { (_name, postfix) -> _name == name && postfix != null }
+            .map { it.second!! }
+            .toSet()
+        val newPostfix = generateSequence(1, Int::inc)
+            .filter { it !in postfixes }
+            .first()
+        val newFileName = "$name-$newPostfix"
+        val newFile = File(viewAdapter.dir, "$newFileName.ddu").apply { createNewFile() }
+        newFile.createNewFile()
+        file.inputStream().use { input ->
+            newFile.outputStream().use { input.copyTo(it, MainActivity.BUFFER_SIZE) }
+        }
+        toast("Duplicate of \"$fileName\" saved as \"$newFileName\"")
+    }
+
+    private fun importDDUFolder() {
+        // maybe: choose file, than import its parent
+        // maybe: Intent.ACTION_OPEN_DOCUMENT_TREE instead of ACTION_GET_CONTENT
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "file/*"
+        }
+        startActivityForResult(intent, IMPORT_DIR_REQUEST_CODE)
+        toast("import ddus")
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when (requestCode) {
+            IMPORT_DIR_REQUEST_CODE -> data?.let{
+                val targetDir = File(data.dataString)
+                toast("dir \"$targetDir\"")
+            }
+            else -> super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
     companion object {
         private const val TAG: String = "DDUChooserActivity"
+        private const val IMPORT_DIR_REQUEST_CODE = 1
     }
 }
 
@@ -208,7 +259,7 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
 // TODO: show folders on the top
 class DDUAdapter(
     private val activity: AppCompatActivity,
-    private var dir: File,
+    var dir: File,
     private val onChoose: (File) -> Unit
 ) : RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
     class DDUViewHolder(val view: View) : RecyclerView.ViewHolder(view)
