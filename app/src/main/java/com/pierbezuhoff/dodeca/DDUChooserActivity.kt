@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
@@ -18,46 +20,49 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.withStyledAttributes
+import androidx.documentfile.provider.DocumentFile
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_dduchooser.*
+import kotlinx.android.synthetic.main.dir_row.view.*
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.editText
+import org.jetbrains.anko.longToast
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.File
 
-typealias FileName = String // without extension
-typealias Filename = String // with extension
-fun Filename.stripDDU(): FileName = this.removeSuffix(".ddu").removeSuffix(".DDU")
-
 // TODO: action bar: import file/folder, export folder
 // MAYBE: action bar: search by name
 // MAYBE: store in sharedPreferences last dir
-// MAYBE: go to parent folder
 // MAYBE: link to external folder
 class DDUChooserActivity : AppCompatActivity() {
-    private lateinit var dduDir: File
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var viewAdapter: DDUAdapter
-    private lateinit var viewManager: RecyclerView.LayoutManager
+    lateinit var dir: File // current
+    private lateinit var dduAdapter: DDUAdapter
+    private lateinit var dirAdapter: DirAdapter
+    private var requestedDDUFile: File? = null
+    private var requestedDDUDir: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        dduDir = File(filesDir, "ddu")
-        intent.getStringExtra("dirPath")?.let {
-            dduDir = File(it)
-        }
+        dir = dduDir
+        intent.getStringExtra("dirPath")?.let { dir = File(it) }
         setContentView(R.layout.activity_dduchooser)
-        viewAdapter = DDUAdapter(this, dduDir, ::onChoose)
-        recyclerView = ddu_recycler_view.apply {
-            adapter = viewAdapter
+        dirAdapter = DirAdapter(this, dduDir)
+        dir_recycler_view.apply {
+            adapter = dirAdapter
+            layoutManager = LinearLayoutManager(this@DDUChooserActivity)
+            itemAnimator = DefaultItemAnimator()
+        }
+        dduAdapter = DDUAdapter(this, ::onChoose)
+        ddu_recycler_view.apply {
+            adapter = dduAdapter
             // colors and thickness are set from styles.xml
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.HORIZONTAL))
@@ -69,6 +74,7 @@ class DDUChooserActivity : AppCompatActivity() {
     private fun onChoose(file: File) {
         Log.i(TAG, "File \"${file.absolutePath}\" chosen")
         val data = Intent().apply {
+            putExtra("dirPath", dir.absolutePath)
             putExtra("path", file.absolutePath)
         }
         setResult(Activity.RESULT_OK, data)
@@ -83,9 +89,9 @@ class DDUChooserActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var isSet = true
         when (item.itemId) {
-            R.id.to_parent_folder -> toast("to parent folder")
-            R.id.import_ddus -> importDDUFolder()
-            R.id.export_ddus -> toast("export")
+            R.id.to_parent_folder -> if (dir.absolutePath != dduDir.absolutePath) onDirChange(dir.parentFile)
+            R.id.import_ddus -> requestImportDDUDir()
+            R.id.export_ddus -> requestExportDDUDir()
             else -> isSet = false
         }
         return isSet || super.onOptionsItemSelected(item)
@@ -93,14 +99,14 @@ class DDUChooserActivity : AppCompatActivity() {
 
     override fun onContextItemSelected(item: MenuItem?): Boolean {
         var isSet = true
-        viewAdapter.contextMenuCreatorPosition?.let { position ->
-            val file = viewAdapter.files[position]
+        dduAdapter.contextMenuCreatorPosition?.let { position ->
+            val file = dduAdapter.files[position]
             when (item?.itemId) {
                 R.id.ddu_rename -> renameDDUFile(file, position)
                 R.id.ddu_delete -> deleteDDUFile(file, position)
                 R.id.ddu_restore -> restoreDDUFile(file)
                 R.id.ddu_duplicate -> duplicateDDUFile(file)
-                R.id.ddu_export -> toast("export ${file.name}")
+                R.id.ddu_export -> requestExportDDUFile(file)
                 R.id.ddu_export_for_dodecalook -> toast("export ${file.name} for DodecaLook")
                 else -> isSet = false
             }
@@ -132,11 +138,10 @@ class DDUChooserActivity : AppCompatActivity() {
                             insertOrUpdate(file.name) { this.filename = newFilename }
                             findByFilename(newFilename)?.preview
                         }
-                        with(viewAdapter) {
+                        with(dduAdapter) {
                             files[position] = newFile
-                            sleepingFiles.awake()
                             previews[newFilename] = preview
-                            notifyDataSetChanged()
+                            refreshDir()
                         }
                     } else {
                         Log.w(TAG, "failed to rename $file to $newFile")
@@ -153,8 +158,8 @@ class DDUChooserActivity : AppCompatActivity() {
             findByFilename(file.name)?.let { delete(it) }
         }
         file.delete()
-        viewAdapter.files.removeAt(position)
-        viewAdapter.notifyDataSetChanged()
+        dduAdapter.files.removeAt(position)
+        dduAdapter.notifyDataSetChanged()
     }
 
     private fun restoreDDUFile(file: File) {
@@ -162,11 +167,10 @@ class DDUChooserActivity : AppCompatActivity() {
         val original: Filename? = extract1DDU(file.name, dduDir, DB.dduFileDao(), TAG)
         original?.let {
             toast(getString(R.string.ddu_restore_toast, file.nameWithoutExtension, original.stripDDU()))
-            with(viewAdapter) {
+            with(dduAdapter) {
                 previews[original] = null
                 buildings.remove(original)
-                sleepingFiles.awake()
-                notifyDataSetChanged()
+                refreshDir()
             }
         }
     }
@@ -176,7 +180,7 @@ class DDUChooserActivity : AppCompatActivity() {
         val part1 = Regex("^(.*)-(\\d*)$")
         fun namePart1(s: String): String = part1.find(s)?.groupValues?.let { it[1] } ?: s
         val name = namePart1(fileName)
-        val postfixes: Set<Int> = viewAdapter.files
+        val postfixes: Set<Int> = dduAdapter.files
             .map {
                 it.nameWithoutExtension.let { name ->
                     part1.find(name)?.groupValues
@@ -191,37 +195,132 @@ class DDUChooserActivity : AppCompatActivity() {
             .filter { it !in postfixes }
             .first()
         val newFileName = "$name-$newPostfix"
-        val newFile = File(viewAdapter.dir, "$newFileName.ddu").apply { createNewFile() }
-        newFile.createNewFile()
-        file.inputStream().use { input ->
-            newFile.outputStream().use { input.copyTo(it, MainActivity.BUFFER_SIZE) }
-        }
+        val newFile = File(dduAdapter.dir, "$newFileName.ddu")
+        copyFile(file, newFile)
         toast("Duplicate of \"$fileName\" saved as \"$newFileName\"")
+        dduAdapter.refreshDir()
     }
 
-    private fun importDDUFolder() {
+    private fun requestImportDDUDir() {
         // maybe: choose file, than import its parent
-        // maybe: Intent.ACTION_OPEN_DOCUMENT_TREE instead of ACTION_GET_CONTENT
-        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-            type = "file/*"
+        // maybe: Intent.ACTION_OPEN_DOCUMENT_TREE or Intent.ACTION_GET_CONTENT
+        // note: EXTRA_ALLOW_MULTIPLE
+        val intent: Intent
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+//                putExtra("android.content.extra.SHOW_ADVANCED", true)
+//                putExtra("android.content.extra.FANCY", true)
+            }
+        } else { // ISSUE: parentFile always == null
+            TODO("VERSION.SDK_INT < LOLLIPOP")
+            intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"
+            }
+            longToast("Please select a file inside of desired folder")
         }
         startActivityForResult(intent, IMPORT_DIR_REQUEST_CODE)
-        toast("import ddus")
+    }
+
+    private fun importDDUDir(source: DocumentFile) {
+        Log.i(TAG, "importing dir \"${source.name}\"")
+        toast("importing dir \"${source.name}\"")
+        val target = File(dduAdapter.dir, source.name)
+        copyDirectory(contentResolver, source, target)
+        onDirChange(dir)
+    }
+
+    private fun requestExportDDUDir() {
+        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                // Documents.FLAG_DIR_SUPPORTS_CREATE
+            }
+        } else {
+            TODO("VERSION.SDK_INT < LOLLIPOP")
+        }
+        requestedDDUDir = dir
+        startActivityForResult(intent, EXPORT_DIR_REQUEST_CODE)
+    }
+
+    private fun exportDDUDir(uri: Uri) {
+        requestedDDUDir?.let { dir ->
+            Log.i(TAG, "exporting dir \"${dir.name}\"")
+            toast("exporting dir \"${dir.name}\"")
+            // maybe: use File.walkTopDown()
+            DocumentFile.fromTreeUri(this, uri)?.let { targetDir ->
+                exportDDUDocumentFile(dir, targetDir)
+            }
+            requestedDDUDir = null
+        }
+    }
+
+    private fun exportDDUDocumentFile(source: File, targetDir: DocumentFile) {
+        if (source.isDirectory) {
+            targetDir.createDirectory(source.name)?.let { newDir ->
+                source.listFiles().forEach { exportDDUDocumentFile(it, newDir) }
+            }
+        } else if (source.isDDU) {
+            targetDir.createFile("*/*", source.name)?.let { newFile ->
+                contentResolver.openOutputStream(newFile.uri)?.let { outputStream ->
+                    copyStream(source.inputStream(), outputStream)
+                }
+            }
+        }
+    }
+
+    private fun requestExportDDUFile(file: File) {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*" // maybe: "text/plain"
+            putExtra(Intent.EXTRA_TITLE, file.name)
+        }
+        requestedDDUFile = file
+        startActivityForResult(intent, EXPORT_DDU_REQUEST_CODE)
+    }
+
+    private fun exportDDUFile(uri: Uri) {
+        requestedDDUFile?.let { file ->
+            contentResolver.openOutputStream(uri)?.let { outputStream ->
+                Log.i(TAG, "exporting file \"${file.name}\"")
+                copyStream(file.inputStream(), outputStream)
+            }
+            requestedDDUFile = null
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        when (requestCode) {
-            IMPORT_DIR_REQUEST_CODE -> data?.let{
-                val targetDir = File(data.dataString)
-                toast("dir \"$targetDir\"")
+        if (resultCode == Activity.RESULT_OK)
+            when (requestCode) {
+                IMPORT_DIR_REQUEST_CODE -> data?.data?.let { uri ->
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        DocumentFile.fromTreeUri(this, uri)?.let { importDDUDir(it) }
+                    } else { // ISSUE: parentFile always == null
+                        DocumentFile.fromSingleUri(this, uri)?.parentFile?.let { importDDUDir(it) }
+                    }
+                }
+                EXPORT_DDU_REQUEST_CODE -> data?.data?.let { uri -> exportDDUFile(uri) }
+                EXPORT_DIR_REQUEST_CODE -> data?.data?.let { uri ->
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        exportDDUDir(uri)
+                    } else { // ISSUE: parentFile always == null
+                        DocumentFile.fromSingleUri(this, uri)?.parentFile?.uri?.let { exportDDUDir(it) }
+                    }
+                }
+                else -> super.onActivityResult(requestCode, resultCode, data)
             }
-            else -> super.onActivityResult(requestCode, resultCode, data)
-        }
+    }
+
+    fun onDirChange(newDir: File) {
+        dir = newDir
+        dduAdapter.refreshDir()
+        dirAdapter.refreshDir()
     }
 
     companion object {
         private const val TAG: String = "DDUChooserActivity"
         private const val IMPORT_DIR_REQUEST_CODE = 1
+        private const val EXPORT_DIR_REQUEST_CODE = 2
+        private const val EXPORT_DDU_REQUEST_CODE = 3
     }
 }
 
@@ -256,16 +355,50 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     }
 }
 
+class DirAdapter(
+    private val activity: DDUChooserActivity,
+    private val dduDir: File
+) : RecyclerView.Adapter<DirAdapter.DirViewHolder>() {
+    class DirViewHolder(val view: View) : RecyclerView.ViewHolder(view)
+
+    val dir: File get() = activity.dir
+    private val sleepingDirs: Sleeping<List<File>> = Sleeping { dir.listFiles { file -> file.isDirectory }.toList() }
+    private val dirs: List<File> by sleepingDirs
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DirViewHolder =
+        DirViewHolder(LayoutInflater.from(parent.context)
+            .inflate(R.layout.dir_row, parent, false))
+
+    override fun onBindViewHolder(holder: DirViewHolder, position: Int) {
+        val dir = dirs[position]
+        with(holder.view) {
+            dir_name.text = dir.name
+            setOnClickListener { downDir(dir) }
+        }
+    }
+
+    fun refreshDir() {
+        sleepingDirs.awake()
+        notifyDataSetChanged()
+    }
+
+    private fun downDir(newDir: File) {
+        activity.onDirChange(newDir)
+    }
+
+    override fun getItemCount(): Int = dirs.size
+}
+
 // TODO: show folders on the top
 class DDUAdapter(
-    private val activity: AppCompatActivity,
-    var dir: File,
+    private val activity: DDUChooserActivity,
     private val onChoose: (File) -> Unit
 ) : RecyclerView.Adapter<DDUAdapter.DDUViewHolder>() {
     class DDUViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
+    val dir: File get() = activity.dir
     var contextMenuCreatorPosition: Int? = null // track VH to act on it
-    val sleepingFiles: Sleeping<ArrayList<File>> = Sleeping {
+    private val sleepingFiles: Sleeping<ArrayList<File>> = Sleeping {
         ArrayList(dir.listFiles().filter { it.extension.toLowerCase() == "ddu" })
     }
     val files: ArrayList<File> by sleepingFiles
@@ -340,14 +473,25 @@ class DDUAdapter(
         }
     }
 
+    fun refreshDir() {
+        sleepingFiles.awake()
+        notifyDataSetChanged()
+    }
+
+    fun toParentDir() {
+//        if (dir.absolutePath != dduDir.absolutePath) {
+//            dir = dir.parentFile
+//            refreshDir()
+//        }
+    }
+
     override fun getItemCount(): Int = files.size
 
     private fun onItemClick(item: File) {
         if (item.isDirectory) {
             // impossible now
-            dir = item
-            sleepingFiles.awake()
-            notifyDataSetChanged()
+//            dir = item
+//            refreshDir()
         } else {
             onChoose(item)
         }

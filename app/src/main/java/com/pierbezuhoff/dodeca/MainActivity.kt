@@ -36,15 +36,11 @@ import permissions.dispatcher.PermissionRequest
 import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.util.Timer
-import kotlin.concurrent.timerTask
 
 @RuntimePermissions
 class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener {
     private var bottomBarShown = true
-    private val dduDir by lazy { File(filesDir, "ddu") }
+    private var dir: File? = null
     private var bottomBarHideTimer: FlexibleTimer =
         FlexibleTimer(1000L * BOTTOM_BAR_HIDE_DELAY) { bar.post { hideBottomBar() } }
     private var updatingBeforePause: Boolean? = null
@@ -151,7 +147,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
             }
             R.id.load_button -> {
                 val intent = Intent(this, DDUChooserActivity::class.java)
-                intent.putExtra("dirPath", dduDir.absolutePath)
+                intent.putExtra("dirPath", (dir ?: dduDir).absolutePath)
                 startActivityForResult(intent, DDU_CODE)
             }
             R.id.save_button -> dodecaView.saveDDU()
@@ -206,6 +202,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         when (requestCode) {
             DDU_CODE ->
                 if (resultCode == Activity.RESULT_OK) {
+                    data?.getStringExtra("dirPath")?.let { dir = File(it) }
                     data?.getStringExtra("path")?.let {
                         updatingBeforePause = null
                         readPath(it)
@@ -271,7 +268,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
             val inputStream = applicationContext.contentResolver.openInputStream(uri)
             inputStream?.let {
                 it.use { input ->
-                    FileOutputStream(targetFile).use { input.copyTo(it, BUFFER_SIZE) }
+                    FileOutputStream(targetFile).use { input.copyTo(it, DEFAULT_BUFFER_SIZE) }
                 }
                 if (overwrite) {Unit
                     // maybe: show alert dialog
@@ -377,7 +374,6 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     companion object {
         const val TAG = "MainActivity"
         const val LIMITED_VERSION = false
-        const val BUFFER_SIZE = DEFAULT_BUFFER_SIZE
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
         const val HELP_CODE = 3
@@ -389,50 +385,3 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     }
 }
 
-class FlexibleTimer(val timeMilis: Long, val action: () -> Unit) {
-    private var timer: Timer? = null
-
-    fun start() {
-        timer?.cancel()
-        timer = Timer().apply {
-            schedule(timerTask { action() }, timeMilis)
-        }
-    }
-
-    fun stop() {
-        timer?.cancel()
-        timer = null
-    }
-}
-
-fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, TAG: String = MainActivity.TAG): Filename? {
-    var source: Filename = filename
-    fun streamFromDDUAsset(filename: Filename): InputStream =
-        assets.open("${getString(R.string.ddu_asset_dir)}/$filename")
-    val inputStream: InputStream? = try {
-        streamFromDDUAsset(source)
-    } catch (e: IOException) {
-        dduFileDao.findByFilename(filename)?.let {
-            source = it.originalFilename
-            try {
-                streamFromDDUAsset(source)
-            } catch (e: IOException) { null }
-        }
-    }
-    val success = inputStream?.let {
-        val targetFile = File(dir, source)
-        if (targetFile.createNewFile()) {
-            Log.i(TAG, "Copying asset $source to ${targetFile.path}")
-        } else {
-            Log.i(TAG, "Overwriting ${targetFile.path} by asset $source")
-        }
-        inputStream.use { input ->
-            FileOutputStream(targetFile).use { input.copyTo(it, MainActivity.BUFFER_SIZE) }
-        }
-        dduFileDao.insertOrUpdate(source) { preview = null }
-    }
-    return if (success != null) source
-    else null.also {
-        Log.w(TAG, "cannot find asset $filename ($source)")
-    }
-}

@@ -8,12 +8,13 @@
     <bool name="reverse_motion">false</bool>
     <string name="shape" translatable="false">circle</string>
     <bool name="autosave">false</bool>
-    <bool name="autocenter_always">false</bool>
+    <bool name="autocenter_always">true</bool>
     <string name="speed" translatable="false">1</string>
     <string name="canvas_factor" translatable="false">2</string>
     <bool name="show_stat">false</bool>
     <bool name="prefer_recent_ddu">true</bool>
     <string name="preview_size" translatable="false">150</string>
+    <bool name="autocenter_preview">true</bool>
     <string name="n_preview_updates" translatable="false">100</string>
     <bool name="preview_smart_updates">true</bool>
 </resources>

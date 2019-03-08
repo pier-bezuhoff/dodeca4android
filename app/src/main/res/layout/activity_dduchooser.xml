@@ -5,6 +5,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
 >
+        <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/dir_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+        />
+        <View style="@style/dividerHorizontal"/>
         <com.pierbezuhoff.dodeca.AutofitGridRecyclerView
                 android:id="@+id/ddu_recycler_view"
                 android:scrollbars="vertical"

@@ -123,7 +123,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/navigation/ic_arrow_upward_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/file/ic_folder_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -134,7 +134,7 @@
                         <option name="values">
                           <map>
                             <entry key="autoMirrored" value="true" />
-                            <entry key="outputName" value="ic_arrow_upward" />
+                            <entry key="outputName" value="ic_folder" />
                             <entry key="overrideSize" value="true" />
                             <entry key="sourceFile" value="$PROJECT_DIR$/app/src/main/res/drawable/ic_trace.svg" />
                           </map>
