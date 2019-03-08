@@ -192,4 +192,4 @@ enum class Shapes {
     }
 }
 
-val List<CircleFigure>.centroid get() = mean(map { it.center })
+val List<CircleFigure>.centroid get() = map { it.center }.mean()

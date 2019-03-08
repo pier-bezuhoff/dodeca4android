@@ -32,6 +32,7 @@ class BitmapConverter {
     }
 }
 
+// TODO: store relative path instead of filename
 @Entity(indices = [Index("filename")])
 data class DDUFile(
     @ColumnInfo(name = "filename") var filename: String,

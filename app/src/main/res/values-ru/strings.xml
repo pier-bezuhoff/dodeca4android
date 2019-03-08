@@ -47,7 +47,9 @@
     <string name="permission_storage_accusation">Вы не разрешили доступ к файлам. ddu-картина не может быть импортирована!</string>
     <string name="permission_rationale_dialog_title">Запрос на разрешение доступа</string>
     <string name="always_autocenter_title">Всегда проводить автоцентровку</string>
-    <string name="always_autocenter_summary">Проводить автоцентровку при загрузке ddu-картины</string>
+    <string name="always_autocenter_summary">Проводить автоцентровку при загрузке ddu-картины, если наилучший центр не
+        сохранён
+    </string>
     <string name="show_stat_title">Показывать статистику</string>
     <string name="stat_n_updates_text">%d пересчётов</string>
     <string name="stat_20_updates_per_text">20 пересчётов за %.3f секунд</string>
@@ -115,4 +117,8 @@
     <string name="choose_color_button_title">Редактор окружностей</string>
     <string name="circle_visibility_description">Показать/скрыть окружность</string>
     <string name="circle_show_description">Видимость</string>
+    <string name="autocenter_preview_title">Автоцентровка предпросмотров</string>
+    <string name="autocenter_preview_summary">Проводить автоцентровку предпросмотров если наилучший центр не сохранён</string>
+    <string name="folder_icon_description">Иконка папки</string>
+    <string name="dir_name_initial_text">[имя папки]</string>
 </resources>

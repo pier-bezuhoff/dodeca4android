@@ -149,6 +149,7 @@ class Options(val resources: Resources) {
     // check screen width customization (from values/default.xml)
     // preview size in pixels, yet to be converted to dp
     val previewSize = ParsedIntOption("preview_size", resources.getString(R.string.preview_size).toInt())
+    val autocenterPreview = BooleanOption("autocenter_preview", R.bool.autocenter_preview)
     val nPreviewUpdates = ParsedIntOption("n_preview_updates", resources.getString(R.string.n_preview_updates).toInt())
     val previewSmartUpdates = BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)
 
@@ -175,6 +176,7 @@ class Values(private val options: Options) {
     val canvasFactor: Int get() = options.canvasFactor.value
     val preferRecentDDU: Boolean get() = options.preferRecentDDU.value
     val previewSize: Int get() = options.previewSize.value
+    val autocenterPreview: Boolean get() = options.autocenterPreview.value
     val previewSizePx: Int get() = options.resources.dp2px(options.previewSize.value)
     val nPreviewUpdates: Int get() = options.nPreviewUpdates.value
     val previewSmartUpdates: Boolean get() = options.previewSmartUpdates.value

@@ -1,7 +1,10 @@
 # Dodeca for Android
+Goggle Play: https://play.google.com/store/apps/details?id=com.pierbezuhoff.dodeca
 Min version: 4.4 KitKat (28 >= API >= 19)
 ...
 # TODO
+- [ ] ddu chooser -> `DocumentProvider` (https://developer.android.com/guide/topics/providers/document-provider)
+- [ ] file name -> relative path in db
 - [ ] On small phones: choose circle dialog: expand ToggleButton shadows long circle group names (PLR/screenshots)
 - [ ] factor * scale ~ 1 => fit screen ~~autocenter~~
 - [ ] action bar: import folder

@@ -54,6 +54,7 @@ class DDU(
     var file: File? = null
 ) {
 
+    val autoCenter get() = circles.filter { it.show }.map { it.center }.mean()
     val complexity: Int get() = circles.sumBy { it.rule?.length ?: 0 }
     private val nSmartUpdates: Int
         get() = (MIN_PREVIEW_UPDATES + values.nPreviewUpdates * 20 / sqrt(1.0 + complexity)).roundToInt()
@@ -119,7 +120,7 @@ class DDU(
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         val circleGroup = CircleGroupImpl(circles, paint)
         val center = Complex((width / 2).toDouble(), (height / 2).toDouble())
-        val bestCenter = bestCenter ?: center
+        val bestCenter = bestCenter ?: if (values.autocenterPreview) autoCenter else center
         val (dx, dy) = (center - bestCenter).asFF()
         val (centerX, centerY) = center.asFF()
         val scale: Float = PREVIEW_SCALE * width / NORMAL_PREVIEW_SIZE // or use options.preview_size.default

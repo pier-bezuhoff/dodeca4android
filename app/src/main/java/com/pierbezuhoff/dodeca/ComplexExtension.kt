@@ -35,9 +35,9 @@ fun Complex.inverted(circle: Circle): Complex {
     }
 }
 
-internal fun mean(zs: List<Complex>) : Complex {
-    val n = zs.size
-    val sum = zs.foldRight(Complex.ZERO, Complex::plus)
+fun List<Complex>.mean(): Complex {
+    val n = size
+    val sum = foldRight(Complex.ZERO, Complex::plus)
     return sum / n.toDouble()
 }
 
@@ -54,6 +54,6 @@ internal fun scrollToCentroid(center: Complex, zs: List<Complex>) : Complex {
 //    val dy = if (yAsymK.absoluteValue > threshold && !yAsymK.isNaN()) 0.0 else center.imaginary - mean.imaginary
 //    Log.i("scrollToCentroid", "xAsymK: $xAsymK, yAsymK: $yAsymK, threshold: $threshold\ndx: $dx, dy: $dy")
 //    return Complex(dx, dy)
-    return center - mean(zs)
+    return center - zs.mean()
 }
 

@@ -63,15 +63,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             val filename =
                 if (values.preferRecentDDU && recentDDU != null) recentDDU
                 else context.getString(R.string.first_ddu)
-            val dduFile = File(File(context.filesDir, "ddu"), filename)
+            val dduFile = File(context.dduDir, filename)
             this.ddu = DDU.readFile(dduFile)
         } catch (e: Exception) {
             e.printStackTrace()
             this.ddu = exampleDDU
         }
         fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
-            if (values.updating)
-                postInvalidate()
+            if (values.updating) postInvalidate()
         }
     }
 
@@ -91,10 +90,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         // must occur BEFORE retrace
         val targetDDU: DDU = ddu ?: this.ddu
         if (width > 0) { // we know sizes
-            if (values.autocenterAlways)
-                autocenter()
-            else if (targetDDU.bestCenter != null)
+            if (targetDDU.bestCenter != null)
                 centerize(targetDDU.bestCenter!!)
+            else if (values.autocenterAlways)
+                centerize(targetDDU.autoCenter)
         }
     }
 
@@ -108,7 +107,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             updateScroll(-trace.motion.dx, -trace.motion.dy)
         } else {
             val shownCircles = circleGroup.figures.filter(CircleFigure::show)
-            val visibleCenter = mean(shownCircles.map { visible(it.center) })
+            val visibleCenter = shownCircles.map { visible(it.center) }.mean()
             val (dx, dy) = (center - visibleCenter).asFF()
             updateScroll(dx, dy)
         }
@@ -329,11 +328,11 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
         circleGroup = CircleGroupImpl(newDDU.circles, paint)
         if (newDDU.bestCenter == null && width > 0)
-            newDDU.bestCenter = center
+            newDDU.bestCenter = if (values.autocenterAlways) newDDU.autoCenter else center
         if (initialized)
             centerize(newDDU)
         editing {
-            newDDU.file?.let { file -> putString("recent_ddu", file.name) }
+            newDDU.file?.let { file -> putString("recent_ddu", context.dduPath(file)) }
             minorIndependentPreferences.forEach { set(it) }
             minorDDUPreferences.forEach { setFromDDU(newDDU, it) }
             minorPreferences.forEach { onChange(it) }
@@ -371,10 +370,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 ) }
                 try {
                     ddu.file?.let { file ->
-                        Log.i(TAG, "Saving ddu at ${file.path}")
+                        Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
                         ddu.saveStream(file.outputStream())
                         uiThread {
-                            context.toast(context.getString(R.string.ddu_saved_toast, file.nameWithoutExtension))
+                            context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
                         }
                         DB.dduFileDao().insertOrUpdate(file.name) { preview = null }
                     }

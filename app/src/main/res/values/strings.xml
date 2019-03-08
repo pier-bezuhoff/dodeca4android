@@ -58,7 +58,7 @@
     <string name="stat_20_updates_per_initial">20 updates per #</string>
     <string name="reverse_motion">Reverse motion</string>
     <string name="always_autocenter_title">Always autocenter</string>
-    <string name="always_autocenter_summary">Autocenter when loading new ddu</string>
+    <string name="always_autocenter_summary">Autocenter when loading new ddu and best center is not specified</string>
     <string name="canvas_factor_title">Canvas factor</string>
     <string name="canvas_factor_summary">Canvas is %s times larger than visible screen</string>
     <string name="speed_title">Speed</string>
@@ -79,6 +79,8 @@
     <string name="discard_previews_title">Discard previews</string>
     <string name="preview_size_title">Preview size</string>
     <string name="preview_size_summary">%s ⨯ %s</string>
+    <string name="autocenter_preview_title">Autocenter preview</string>
+    <string name="autocenter_preview_summary">Autocenter preview if best center is not specified</string>
     <string name="n_preview_updates_title">Preview updates</string>
     <string name="n_preview_updates_summary">%s updates to draw preview</string>
     <string name="preview_smart_updates_title">Smart updates</string>
@@ -137,5 +139,7 @@
     <string name="choose_color_button_title">Edit circles</string>
     <string name="circle_visibility_description">Show/hide circle</string>
     <string name="circle_show_description">Visible</string>
+    <string name="folder_icon_description">Folder icon</string>
+    <string name="dir_name_initial_text">[directory name]</string>
 
 </resources>
