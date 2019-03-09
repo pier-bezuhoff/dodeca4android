@@ -404,7 +404,7 @@ class CircleAdapter(
         }
 
     private inline fun editCirclesDialog(
-        circles: Collection<CircleRow>,
+        circles: Collection<CircleRow>, // non-empty!
         crossinline onApply: OnApply = {_, _, _, _ -> }
     ): AlertBuilder<DialogInterface> {
         val blueprint = circles.take(1)[0]
@@ -417,16 +417,17 @@ class CircleAdapter(
 
     fun editCheckedCircles() {
         val circles = checkedRows.filterIsInstance<CircleRow>()
-        editCirclesDialog(circles) { (shown), (color), (fill), borderColor ->
-            circles.forEach { it.persistApply(shown, color, fill, borderColor) }
-            // group cannot shrink
-            checkedRows
-                .filterIsInstance<CircleGroupRow>()
-                .forEach {
-                    it.equivalence = it.blueprint.equivalence
-                }
-            notifyDataSetChanged()
-        }.show()
+        if (circles.isNotEmpty())
+            editCirclesDialog(circles) { (shown), (color), (fill), borderColor ->
+                circles.forEach { it.persistApply(shown, color, fill, borderColor) }
+                // group cannot shrink
+                checkedRows
+                    .filterIsInstance<CircleGroupRow>()
+                    .forEach {
+                        it.equivalence = it.blueprint.equivalence
+                    }
+                notifyDataSetChanged()
+            }.show()
     }
 
     override fun getItemCount(): Int = rows.size
