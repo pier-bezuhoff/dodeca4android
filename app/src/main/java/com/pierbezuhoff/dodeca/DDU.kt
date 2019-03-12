@@ -83,10 +83,10 @@ class DDU(
         stream.use { outputStream ->
             val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
             writeln(header)
-            val globals: MutableList<String> = listOf(
+            val globals: List<String> = listOf(
                 backgroundColor.fromColor(),
                 *restGlobals.toTypedArray()
-            ).map { it.toString() }.toMutableList()
+            ).map { it.toString() }
             globals.forEach { param ->
                 writeln("global")
                 writeln(param)
@@ -130,7 +130,7 @@ class DDU(
             // load preferences
             if (drawTrace ?: true) {
                 // TODO: understand, why drawTimes is slower
-//                    circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape, showOutline = showOutline)
+//                    circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape)
                     repeat(nUpdates) {
                         circleGroup.draw(canvas, shape = shape)
                         circleGroup.update()
@@ -141,13 +141,14 @@ class DDU(
             }
         }
         Log.i(
-            "DDU",
+            TAG,
             "preview \"${file?.nameWithoutExtension}\", smart: ${values.previewSmartUpdates} complexity = $complexity, nUpdates = $nUpdates"
         )
         return bitmap
     }
 
     companion object {
+        private const val TAG: String = "DDU"
         const val DEFAULT_BACKGROUND_COLOR: Int = Color.WHITE
         val DEFAULT_SHAPE: Shapes = Shapes.CIRCLE
         const val MIN_PREVIEW_UPDATES = 10
@@ -173,7 +174,7 @@ class DDU(
                 if (mode > Mode.Y) { // we have at least radius and center
                     circles.add(params.toCircleFigure())
                 } else if (mode >= Mode.RADIUS) {
-                    Log.w("DDU.readStream", "Unexpected end of circle, discarding...")
+                    Log.w(TAG, "readStream: Unexpected end of circle, discarding...")
                 }
             }
             stream.reader().forEachLine { line ->

@@ -303,8 +303,8 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
                 var d2 = dx * dx + dy * dy
                 val r2 = r * r
                 val r02 = r0 * r0
-                 if (d2 == r02) // if result should be line
-                     d2 += 1e-6f
+                if (d2 == r02) // if result should be line
+                    d2 += 1e-6f
                 val scale = r2 / (d2 - r02)
                 xs[i] = x + dx * scale
                 ys[i] = y + dy * scale

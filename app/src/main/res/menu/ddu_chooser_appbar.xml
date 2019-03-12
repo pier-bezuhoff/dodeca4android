@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+>
     <item
-            android:id="@+id/to_parent_folder"
-            android:title="Up"
+            android:id="@+id/to_parent_dir"
+            android:title="@string/to_parent_dir_title"
             android:icon="@drawable/ic_arrow_upward"
             app:showAsAction="ifRoom"
     />
     <item
             android:id="@+id/import_ddus"
-            android:title="Import"
+            android:title="@string/import_ddus_title"
             android:icon="@drawable/ic_import"
             app:showAsAction="ifRoom"
     />
     <item
             android:id="@+id/export_ddus"
-            android:title="Export"
+            android:title="@string/export_ddus_title"
             android:icon="@drawable/ic_export"
             app:showAsAction="ifRoom"
     />

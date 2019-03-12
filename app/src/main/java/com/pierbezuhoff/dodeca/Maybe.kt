@@ -1,13 +1,12 @@
 package com.pierbezuhoff.dodeca
 
-// Kotlin's `/\A -> A?` is not expressive enough (A??)
+// Kotlin's `/\A. A?` is not expressive enough (A?? = A?)
 sealed class Maybe<out A> {
     abstract fun toNullable(): A?
     operator fun component1(): A? = toNullable()
     fun orElse(a: @UnsafeVariance A): A = toNullable() ?: a
 }
 class Just<out A>(val value: A) : Maybe<A>() {
-    val x = listOf(1)
     override fun toNullable(): A? = value
 }
 object None : Maybe<Nothing>() {

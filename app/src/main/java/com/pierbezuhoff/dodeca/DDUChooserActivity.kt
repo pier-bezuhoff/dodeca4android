@@ -33,7 +33,6 @@ import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.editText
-import org.jetbrains.anko.longToast
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.File
@@ -89,7 +88,7 @@ class DDUChooserActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var isSet = true
         when (item.itemId) {
-            R.id.to_parent_folder -> if (dir.absolutePath != dduDir.absolutePath) onDirChange(dir.parentFile)
+            R.id.to_parent_dir -> if (dir.absolutePath != dduDir.absolutePath) onDirChange(dir.parentFile)
             R.id.import_ddus -> requestImportDDUDir()
             R.id.export_ddus -> requestExportDDUDir()
             else -> isSet = false
@@ -197,34 +196,31 @@ class DDUChooserActivity : AppCompatActivity() {
         val newFileName = "$name-$newPostfix"
         val newFile = File(dduAdapter.dir, "$newFileName.ddu")
         copyFile(file, newFile)
-        toast("Duplicate of \"$fileName\" saved as \"$newFileName\"")
+        toast(getString(R.string.ddu_duplicate_toast, fileName, newFileName))
         dduAdapter.refreshDir()
     }
 
     private fun requestImportDDUDir() {
-        // maybe: choose file, than import its parent
-        // maybe: Intent.ACTION_OPEN_DOCUMENT_TREE or Intent.ACTION_GET_CONTENT
         // note: EXTRA_ALLOW_MULTIPLE
-        val intent: Intent
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+/*        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
 //                putExtra("android.content.extra.SHOW_ADVANCED", true)
 //                putExtra("android.content.extra.FANCY", true)
             }
-        } else { // ISSUE: parentFile always == null
-            TODO("VERSION.SDK_INT < LOLLIPOP")
-            intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"
-            }
-            longToast("Please select a file inside of desired folder")
+            startActivityForResult(intent, IMPORT_DIR_REQUEST_CODE)
+        }*/
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         }
         startActivityForResult(intent, IMPORT_DIR_REQUEST_CODE)
+//        startActivityForResult(Intent.createChooser(intent, "Select ddu-files"), IMPORT_DIR_REQUEST_CODE)
     }
 
     private fun importDDUDir(source: DocumentFile) {
         Log.i(TAG, "importing dir \"${source.name}\"")
-        toast("importing dir \"${source.name}\"")
+        toast(getString(R.string.dir_importing_toast, source.name))
         val target = File(dduAdapter.dir, source.name)
         copyDirectory(contentResolver, source, target)
         onDirChange(dir)
@@ -245,7 +241,7 @@ class DDUChooserActivity : AppCompatActivity() {
     private fun exportDDUDir(uri: Uri) {
         requestedDDUDir?.let { dir ->
             Log.i(TAG, "exporting dir \"${dir.name}\"")
-            toast("exporting dir \"${dir.name}\"")
+            toast(getString(R.string.dir_exporting_toast, dir.name))
             // maybe: use File.walkTopDown()
             DocumentFile.fromTreeUri(this, uri)?.let { targetDir ->
                 exportDDUDocumentFile(dir, targetDir)
@@ -291,12 +287,17 @@ class DDUChooserActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK)
             when (requestCode) {
-                IMPORT_DIR_REQUEST_CODE -> data?.data?.let { uri ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        DocumentFile.fromTreeUri(this, uri)?.let { importDDUDir(it) }
-                    } else { // ISSUE: parentFile always == null
-                        DocumentFile.fromSingleUri(this, uri)?.parentFile?.let { importDDUDir(it) }
+                IMPORT_DIR_REQUEST_CODE -> {
+                    (data?.clipData?.let { clipData ->
+                        (0 until clipData.itemCount).map { clipData.getItemAt(it).uri }
+                    } ?: data?.data?.let { listOf(it) })?.let { uris ->
+                        importDDUDir()
                     }
+/*                    data?.data?.let { uri ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            DocumentFile.fromTreeUri(this, uri)?.let { importDDUDir(it) }
+                            EXPORT_DDU_REQUEST_CODE}
+                    }*/
                 }
                 EXPORT_DDU_REQUEST_CODE -> data?.data?.let { uri -> exportDDUFile(uri) }
                 EXPORT_DIR_REQUEST_CODE -> data?.data?.let { uri ->
