@@ -72,7 +72,7 @@ open class Circle(var center: Complex, var radius: Double) {
         center = Complex(x + dx, y + dy)
     }
 
-    /* scale by `scaleFactor` relative to `center` (or 0) */
+    /* scale by [scaleFactor] with respect to [center] (or 0) */
     fun scale(scaleFactor: Double, center: Complex = Complex.ZERO) {
         this.radius *= scaleFactor
         this.center = center + scaleFactor * (this.center - center)
@@ -83,7 +83,7 @@ class CircleFigure(center: Complex, radius: Double,
     val color: Int = DEFAULT_COLOR,
     val fill: Boolean = DEFAULT_FILL,
     val rule: String? = DEFAULT_RULE,
-    val borderColor: Int? = DEFAULT_BORDER_COLOR // used only when `fill`, otherwise `color` is used
+    val borderColor: Int? = DEFAULT_BORDER_COLOR // used only when [fill], otherwise [color] is used
 ) : Circle(center, radius) {
     // point.abs() === 1 // maybe: store only angle
     var point: Complex = Complex.ONE // indicate direction when inverting

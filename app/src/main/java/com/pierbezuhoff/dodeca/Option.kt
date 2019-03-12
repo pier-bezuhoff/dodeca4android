@@ -146,7 +146,6 @@ class Options(val resources: Resources) {
     val speed = ParsedFloatOption("speed", resources.getString(R.string.speed).toFloat())
     val canvasFactor = ParsedIntOption("canvas_factor", resources.getString(R.string.canvas_factor).toInt())
     val preferRecentDDU = BooleanOption("prefer_recent_ddu", R.bool.prefer_recent_ddu) // TODO: add to preferences
-    // check screen width customization (from values/default.xml)
     // preview size in pixels, yet to be converted to dp
     val previewSize = ParsedIntOption("preview_size", resources.getString(R.string.preview_size).toInt())
     val autocenterPreview = BooleanOption("autocenter_preview", R.bool.autocenter_preview)

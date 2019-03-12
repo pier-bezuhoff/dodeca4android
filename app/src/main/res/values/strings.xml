@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
         <!ENTITY app_name "Dodeca Meditation">
-        <!ENTITY version_name "1.3.2">
+        <!ENTITY version_name "1.3.3">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
@@ -40,6 +40,9 @@
     <string name="ddu_rename_toast">\"%s\" renamed to \"%s\"</string>
     <string name="ddu_delete_toast">\"%s\" deleted</string>
     <string name="ddu_restore_toast">\"%s\" restored to \"%s\"</string>
+    <string name="ddu_duplicate_toast">Duplicate of \"%s\" saved as \"%s\"</string>
+    <string name="dir_importing_toast">Importing directory \"%s\"…</string>
+    <string name="dir_exporting_toast">Exporting directory \"%s\"…</string>
 
     <!-- Strings related to settings -->
     <string name="settings_display_title">Display</string>
@@ -107,12 +110,19 @@
     <string name="help_title">Help</string>
 
     <!-- ddu chooser -->
+    <string name="import_ddus_title">Import directory</string>
+    <string name="export_ddus_title">Export all</string>
     <string name="ddu_preview_title">ddu-picture preview</string>
     <string name="ddu_rename">Rename</string>
     <string name="ddu_delete">Delete</string>
     <string name="ddu_restore">Restore</string>
+    <string name="ddu_duplicate">Duplicate</string>
+    <string name="ddu_export">Export</string>
+    <string name="ddu_export_for_dodecalook">Export for DodecaLook</string>
     <string name="rename_dialog_message">Rename ddu-picture \"%s\"%s</string>
     <string name="rename_dialog_original_name">(original name: \"%s\")</string>
+    <string name="folder_icon_description">Folder icon</string>
+    <string name="dir_name_initial_text">[directory name]</string>
 
     <!-- Color chooser dialog -->
     <string name="all_circles_checkbox_description">Select all</string>
@@ -139,7 +149,6 @@
     <string name="choose_color_button_title">Edit circles</string>
     <string name="circle_visibility_description">Show/hide circle</string>
     <string name="circle_show_description">Visible</string>
-    <string name="folder_icon_description">Folder icon</string>
-    <string name="dir_name_initial_text">[directory name]</string>
+    <string name="to_parent_dir_title">To parent folder</string>
 
 </resources>
