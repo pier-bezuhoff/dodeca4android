@@ -262,22 +262,15 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         Log.i(TAG, "reading ddu from uri $uri")
         try {
             val name = File(uri.path).name
-            val targetFile = File(dduDir, name)
-            val overwrite = targetFile.exists()
+            val targetFile = withUniquePostfix(File(dduDir, name))
             // NOTE: when 'file' scheme (namely from ZArchiver) WRITE_EXTERNAL_STORAGE permission is obligatory
-            val inputStream = applicationContext.contentResolver.openInputStream(uri)
+            val inputStream = contentResolver.openInputStream(uri)
             inputStream?.let {
                 it.use { input ->
                     FileOutputStream(targetFile).use { input.copyTo(it, DEFAULT_BUFFER_SIZE) }
                 }
-                if (overwrite) {Unit
-                    // maybe: show alert dialog
-                    Log.i(TAG, "Original ddu was overwritten by imported ddu $name")
-                    toast(getString(R.string.imported_ddu_overwrites_original_toast) + " $name")
-                } else {
-                    Log.i(TAG, "imported ddu $name")
-                    toast(getString(R.string.imported_ddu_toast) + " $name")
-                }
+                Log.i(TAG, "imported ddu \"$name\"")
+                toast(getString(R.string.imported_ddu_toast) + " $name")
                 dodecaView.ddu = DDU.readFile(targetFile)
             }
         } catch (e: Exception) {

@@ -26,7 +26,7 @@
                 android:button="@drawable/sort_order"
                 android:layout_width="24dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="30dp"
+                android:layout_marginEnd="24dp"
                 android:checked="true"
                 android:padding="8dp"
                 android:textOn=""

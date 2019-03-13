@@ -21,4 +21,16 @@
             android:icon="@drawable/ic_export"
             app:showAsAction="ifRoom"
     />
+    <item
+            android:id="@+id/import_dir"
+            android:title="@string/import_folder_title"
+            android:icon="@drawable/ic_add_folder"
+            app:showAsAction="ifRoom"
+    />
+    <item
+            android:id="@+id/delete_ddus"
+            android:title="@string/delete_ddus"
+            android:icon="@drawable/ic_delete"
+            app:showAsAction="ifRoom"
+    />
 </menu>

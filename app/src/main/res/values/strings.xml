@@ -41,8 +41,8 @@
     <string name="ddu_delete_toast">\"%s\" deleted</string>
     <string name="ddu_restore_toast">\"%s\" restored to \"%s\"</string>
     <string name="ddu_duplicate_toast">Duplicate of \"%s\" saved as \"%s\"</string>
-    <string name="dir_importing_toast">Importing directory \"%s\"…</string>
-    <string name="dir_exporting_toast">Exporting directory \"%s\"…</string>
+    <string name="dir_importing_toast">Importing folder \"%s\"…</string>
+    <string name="dir_exporting_toast">Exporting folder \"%s\"…</string>
 
     <!-- Strings related to settings -->
     <string name="settings_display_title">Display</string>
@@ -98,9 +98,10 @@
     <string name="support_title">Feedback and support</string>
     <string name="feedback_subject" translatable="false">&app_name; support</string>
     <string name="developer_email" translatable="false">&feedback_email;</string>
+
     <!-- Strings related to permissions -->
     <string name="permission_storage_message">Please, allow storage access to import this ddu-picture</string>
-    <string name="permission_storage_accusation">You denied storage access permission. Why? you cannot import the ddu now!
+    <string name="permission_storage_accusation">You denied storage access permission. Why? You cannot import the ddu now!
     </string>
     <string name="permission_rationale_dialog_title">Permission request</string>
     <string name="permission_rationale_dialog_allow">Allow</string>
@@ -110,8 +111,10 @@
     <string name="help_title">Help</string>
 
     <!-- ddu chooser -->
-    <string name="import_ddus_title">Import directory</string>
+    <string name="to_parent_dir_title">To parent folder</string>
+    <string name="import_ddus_title">Import ddu-pictures</string>
     <string name="export_ddus_title">Export all</string>
+    <string name="import_folder_title">Import folder with ddu-pictures</string>
     <string name="ddu_preview_title">ddu-picture preview</string>
     <string name="ddu_rename">Rename</string>
     <string name="ddu_delete">Delete</string>
@@ -119,10 +122,15 @@
     <string name="ddu_duplicate">Duplicate</string>
     <string name="ddu_export">Export</string>
     <string name="ddu_export_for_dodecalook">Export for DodecaLook</string>
+    <string name="dir_delete">Delete folder</string>
+    <string name="dir_export">Export folder</string>
     <string name="rename_dialog_message">Rename ddu-picture \"%s\"%s</string>
     <string name="rename_dialog_original_name">(original name: \"%s\")</string>
     <string name="folder_icon_description">Folder icon</string>
-    <string name="dir_name_initial_text">[directory name]</string>
+    <string name="dir_name_initial_text">[folder name]</string>
+    <string name="delete_ddus">Delete all ddu-pictures</string>
+    <string name="delete_all_alert_message">Do you want to permanently delete all ddu-pictures?</string>
+    <string name="delete_all_alert_title">Deletion confirmation</string>
 
     <!-- Color chooser dialog -->
     <string name="all_circles_checkbox_description">Select all</string>
@@ -149,6 +157,5 @@
     <string name="choose_color_button_title">Edit circles</string>
     <string name="circle_visibility_description">Show/hide circle</string>
     <string name="circle_show_description">Visible</string>
-    <string name="to_parent_dir_title">To parent folder</string>
 
 </resources>
