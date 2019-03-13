@@ -54,12 +54,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     it.parent?.removePreference(it)
                 }
                 if (removed == false)
-                    Log.w("Preferences", "Advanced preference $key was not removed!")
+                    Log.w(TAG, "Advanced preference $key was not removed!")
             }
         }
     }
 
-    private fun hookClick(param: String, action: (String) -> Unit) {
+    private inline fun hookClick(param: String, crossinline action: (String) -> Unit) {
         findPreference<Preference>(param)
             ?.setOnPreferenceClickListener { action(param); true }
     }
@@ -92,8 +92,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     companion object {
+        private const val TAG: String = "SettingsFragment"
         private val ADVANCED_PREFERENCES = setOf(
-            "show_all_circles", /*"show_centers",*/ /*"rotate_shapes",*/ "show_stat"
+            "show_all_circles",
+            /*"show_centers",*/
+            /*"rotate_shapes",*/
+            "show_stat"
         )
     }
 }

@@ -2,6 +2,9 @@ package com.pierbezuhoff.dodeca
 
 import android.content.ContentResolver
 import android.content.Context
+import android.database.Cursor
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import java.io.File
@@ -14,8 +17,10 @@ import kotlin.concurrent.timerTask
 
 typealias FileName = String // without extension
 typealias Filename = String // with extension
+val Filename.isDDU: Boolean get() = endsWith(".ddu", ignoreCase = true)
 fun Filename.stripDDU(): FileName = this.removeSuffix(".ddu").removeSuffix(".DDU")
 val File.isDDU: Boolean get() = extension.toLowerCase() == "ddu"
+val DocumentFile.isDDU: Boolean get() = name?.isDDU ?: false
 
 fun copyStream(inputStream: InputStream, outputStream: OutputStream) =
     inputStream.use { input -> outputStream.use { input.copyTo(it, DEFAULT_BUFFER_SIZE) } }
@@ -50,6 +55,48 @@ fun copyDirectory(contentResolver: ContentResolver, source: DocumentFile, target
     }
 }
 
+/* add digital postfix if [file] already exists */
+fun withUniquePostfix(file: File, allFiles: List<File> = file.siblings()): File {
+    val fileName = file.nameWithoutExtension
+    val part1 = Regex("^(.*)-(\\d*)$")
+    fun namePart1(s: String): String = part1.find(s)?.groupValues?.let { it[1] } ?: s
+    val name = namePart1(fileName)
+    val postfixes: Set<Int> = allFiles
+        .asSequence()
+        .filter { it.isDDU }
+        .map {
+            it.nameWithoutExtension.let { name ->
+                part1.find(name)?.groupValues
+                    ?.let { it[1] to it[2].toInt() }
+                    ?: name to null
+            }
+        }
+        .filter { (_name, postfix) -> _name == name && postfix != null }
+        .map { it.second!! }
+        .toSet()
+    val newPostfix = generateSequence(1, Int::inc)
+        .filter { it !in postfixes }
+        .first()
+    val newFileName = "$name-$newPostfix"
+    return File(file.parentFile, "$newFileName.ddu")
+}
+
+fun File.siblings(): List<File> = parentFile.listFiles().toList()
+
+// source: https://developer.android.com/guide/topics/providers/document-provider.html#metadata
+fun ContentResolver.getDisplayName(uri: Uri): Filename? {
+    var filename: Filename? = null
+    val cursor: Cursor? = query(uri, null, null, null, null, null)
+    cursor?.use {
+        if (it.moveToFirst()) {
+            val displayName: String? =
+                it.getString(it.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+            filename = displayName
+        }
+    }
+    return filename
+}
+
 val Context.dduDir get() =  File(filesDir, "ddu")
 fun Context.dduPath(file: File): String =
     file.absolutePath.substringAfter(dduDir.absolutePath).trim('/')
@@ -68,24 +115,23 @@ fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, T
             } catch (e: IOException) { null }
         }
     }
-    val success = inputStream?.let {
-        val targetFile = File(dir, source)
-        if (targetFile.createNewFile()) {
-            Log.i(TAG, "Copying asset $source to ${targetFile.path}")
-        } else {
-            Log.i(TAG, "Overwriting ${targetFile.path} by asset $source")
-        }
+    return inputStream?.let {
+        val targetFile0 = File(dir, source)
+        val targetFile =
+            if (targetFile0.exists()) withUniquePostfix(targetFile0)
+            else targetFile0
+        targetFile.createNewFile()
+        Log.i(TAG, "Copying asset $source to ${targetFile.path}")
         copyStream(inputStream, FileOutputStream(targetFile))
-        dduFileDao.insertOrUpdate(source) { preview = null }
-    }
-    return if (success != null) source
-    else null.also {
+        dduFileDao.insertOrUpdate(targetFile.name) { preview = null; originalFilename = source }
+        targetFile.name
+    } ?: null.also {
         Log.w(TAG, "cannot find asset $filename ($source)")
     }
 }
 
 
-class FlexibleTimer(val timeMilis: Long, val action: () -> Unit) {
+class FlexibleTimer(val timeMilis: Long, private val action: () -> Unit) {
     private var timer: Timer? = null
 
     fun start() {
