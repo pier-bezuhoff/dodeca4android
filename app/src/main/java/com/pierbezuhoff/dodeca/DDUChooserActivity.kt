@@ -98,6 +98,7 @@ class DDUChooserActivity : AppCompatActivity() {
             R.id.export_ddus -> requestExportDDUDir()
             R.id.import_dir -> requestImportDDUDir()
             R.id.delete_ddus -> deleteAll()
+            R.id.toggle_folders -> toggleFolders()
             else -> isSet = false
         }
         return isSet || super.onOptionsItemSelected(item)
@@ -199,10 +200,23 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 
     private fun deleteDir(dir: File) {
+        with(DB.dduFileDao()) {
+            dir.walkTopDown().iterator().forEach {
+                if (it.isDDU) findByFilename(it.name)?.let { delete(it) }
+            }
+        }
         val success = dir.deleteRecursively()
         if (!success)
             Log.w(TAG, "failed to delete directory \"$dir\"")
         dirAdapter.refreshDir()
+    }
+
+    private fun toggleFolders() {
+        dir_recycler_view.visibility = when(dir_recycler_view.visibility) {
+            View.GONE -> View.VISIBLE
+            View.VISIBLE -> View.GONE
+            else -> dir_recycler_view.visibility
+        }
     }
 
     private fun requestImportDDUDir() {
@@ -258,7 +272,7 @@ class DDUChooserActivity : AppCompatActivity() {
             }
             startActivityForResult(intent, EXPORT_DIR_REQUEST_CODE)
         } else {
-            toast("TODO: import directory $targetDir")
+            toast("TODO: import directory $targetDir (for now works on Android 5.0+)")
             // TODO: find other way around
 /*                Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 putExtra(Intent.EXTRA_TITLE, targetDir.name)
@@ -281,7 +295,14 @@ class DDUChooserActivity : AppCompatActivity() {
 
     private fun deleteAll() {
         alert(R.string.delete_all_alert_message, R.string.delete_all_alert_title) {
-            yesButton { FileUtils.cleanDirectory(dir) }
+            yesButton {
+                with(DB.dduFileDao()) {
+                    dir.walkTopDown().iterator().forEach {
+                        if (it.isDDU) findByFilename(it.name)?.let { delete(it) }
+                    }
+                }
+                FileUtils.cleanDirectory(dir)
+            }
             cancelButton { }
         }.show()
         onDirChange(dir)

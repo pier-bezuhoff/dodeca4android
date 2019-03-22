@@ -97,6 +97,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             "show_all_circles",
             /*"show_centers",*/
             /*"rotate_shapes",*/
+            "skip_n",
             "show_stat"
         )
     }
