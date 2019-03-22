@@ -33,4 +33,9 @@
             android:icon="@drawable/ic_delete"
             app:showAsAction="ifRoom"
     />
+    <item
+            android:id="@+id/toggle_folders"
+            android:title="@string/toggle_folders"
+            app:showAsAction="never"
+    />
 </menu>

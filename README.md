@@ -4,8 +4,8 @@ Min version: 4.4 KitKat
 Recommended version: >= 5.0 Lolipop
 ...
 # TODO
-- [ ] On small phones: expand/collapse for circle group often overlaps with its name (check PLR/screenshots)
-- [ ] export dir somehow (< 5.0 (KitKat))
+- [ ] On small phones: expand/collapse for circle group often overlaps with its name (check PLR: K3 2017)
+- [ ] import/export dir somehow (< 5.0 (KitKat))
 - [ ] Save -> save as
 - [ ] file name -> relative path in db
 - [ ] factor * scale ~ 1 => fit screen ~~autocenter~~

@@ -64,6 +64,13 @@
                 android:title="@string/speed_title"
                 android:summary="@string/speed_summary"
         />
+        <!-- NOTE: advanced -->
+        <EditTextPreference
+                android:key="skip_n"
+                android:defaultValue="0"
+                android:title="Skip n updates"
+                android:summary="Skip updates without drawing"
+        />
         <SwitchPreference
                 android:key="autosave"
                 android:defaultValue="@bool/autosave"

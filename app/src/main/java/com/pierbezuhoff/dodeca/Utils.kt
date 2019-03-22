@@ -126,7 +126,7 @@ fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, T
         dduFileDao.insertOrUpdate(targetFile.name) { preview = null; originalFilename = source }
         targetFile.name
     } ?: null.also {
-        Log.w(TAG, "cannot find asset $filename ($source)")
+        Log.w(TAG, "Cannot find asset $filename ($source)")
     }
 }
 
