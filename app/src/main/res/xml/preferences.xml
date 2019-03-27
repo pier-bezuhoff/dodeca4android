@@ -67,7 +67,7 @@
         <!-- NOTE: advanced -->
         <EditTextPreference
                 android:key="skip_n"
-                android:defaultValue="0"
+                android:defaultValue="@string/skip_n"
                 android:title="Skip n updates"
                 android:summary="Skip updates without drawing"
         />

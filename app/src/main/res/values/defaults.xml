@@ -10,6 +10,7 @@
     <bool name="autosave">false</bool>
     <bool name="autocenter_always">true</bool>
     <string name="speed" translatable="false">1</string>
+    <string name="skip_n" translatable="false">0</string>
     <string name="canvas_factor" translatable="false">2</string>
     <bool name="show_stat">false</bool>
     <bool name="prefer_recent_ddu">true</bool>

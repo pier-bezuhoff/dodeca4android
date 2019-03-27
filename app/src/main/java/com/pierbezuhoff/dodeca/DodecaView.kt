@@ -421,6 +421,10 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     (values.speed * defaultUPS).roundToInt()
                 else
                     defaultUPS
+            options.skipN -> if (values.skipN > 0) {
+                circleGroup.updateTimes(values.skipN, values.reverseMotion)
+                editing { set(options.skipN, 0) }
+            }
         }
     }
 
@@ -454,7 +458,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         const val dt = 1000f / FPS
         val updateDt = Sleepy { 1000f / UPS }
         private val effectiveMajorPreferences: Set<SharedPreference<*>> =
-            setOf(options.showAllCircles, options.autocenterAlways, options.speed, options.canvasFactor)
+            setOf(options.showAllCircles, options.autocenterAlways, options.speed, options.skipN, options.canvasFactor)
         private val secondaryMajorPreferences: Set<SharedPreference<*>> =
             setOf(options.redrawTraceOnMove, options.reverseMotion, options.autosave, options.previewSize, options.previewSmartUpdates, options.nPreviewUpdates)
         private val majorPreferences: Set<SharedPreference<*>> = effectiveMajorPreferences + secondaryMajorPreferences
