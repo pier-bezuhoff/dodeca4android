@@ -4,7 +4,10 @@ package com.pierbezuhoff.dodeca
 sealed class Maybe<out A> {
     abstract fun toNullable(): A?
     operator fun component1(): A? = toNullable()
-    fun orElse(a: @UnsafeVariance A): A = toNullable() ?: a
+    fun orElse(a: @UnsafeVariance A): A = when(this) {
+        None -> a
+        is Just -> this.value
+    }
 }
 class Just<out A>(val value: A) : Maybe<A>() {
     override fun toNullable(): A? = value

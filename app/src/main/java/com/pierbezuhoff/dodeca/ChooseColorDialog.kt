@@ -191,7 +191,6 @@ class CircleAdapter(
             circle_visibility.apply {
                 setOnCheckedChangeListener { _, _ -> }
                 isChecked = row.visible
-                // BUG: wrong set up after toggling collapsed, then expanding
                 setOnCheckedChangeListener { _, checked ->
                     row.persistApply(visible = checked)
                 }
@@ -324,7 +323,6 @@ class CircleAdapter(
         val builder = context.alert(message) {
             customView {
                 include<LinearLayout>(R.layout.edit_circle).also { layout ->
-                    // TODO: add to all 3 layouts
                     val shownButton: Switch = layout.circle_show
                     val colorButton: ImageButton = layout.circle_color
                     val fillSwitch: Switch = layout.circle_fill

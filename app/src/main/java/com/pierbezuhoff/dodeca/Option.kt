@@ -144,6 +144,7 @@ class Options(val resources: Resources) {
     val autosave = BooleanOption("autosave", R.bool.autosave)
     val autocenterAlways = BooleanOption("autocenter_always", R.bool.autocenter_always)
     val speed = ParsedFloatOption("speed", resources.getString(R.string.speed).toFloat())
+    val skipN = ParsedIntOption("skip_n", resources.getString(R.string.skip_n).toInt())
     val canvasFactor = ParsedIntOption("canvas_factor", resources.getString(R.string.canvas_factor).toInt())
     val preferRecentDDU = BooleanOption("prefer_recent_ddu", R.bool.prefer_recent_ddu) // TODO: add to preferences
     // preview size in pixels, yet to be converted to dp
@@ -172,6 +173,7 @@ class Values(private val options: Options) {
     val autosave: Boolean get() = options.autosave.value
     val autocenterAlways: Boolean get() = options.autocenterAlways.value
     val speed: Float get() = options.speed.value
+    val skipN: Int get() = options.skipN.value
     val canvasFactor: Int get() = options.canvasFactor.value
     val preferRecentDDU: Boolean get() = options.preferRecentDDU.value
     val previewSize: Int get() = options.previewSize.value
