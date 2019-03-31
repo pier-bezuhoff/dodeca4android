@@ -306,10 +306,10 @@ class DDUChooserActivity : AppCompatActivity() {
                     }
                 }
                 FileUtils.cleanDirectory(dir)
+                onDirChange(dir)
             }
             cancelButton { }
         }.show()
-        onDirChange(dir)
     }
 
     private fun exportDDUDocumentFile(source: File, targetDir: DocumentFile) {
