@@ -160,12 +160,12 @@ class DDU(
             // load preferences
             if (drawTrace ?: true) {
                 // TODO: understand, why drawTimes is slower
-//                    circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape)
-                    repeat(nUpdates) {
-                        circleGroup.draw(canvas, shape = shape)
-                        circleGroup.update()
-                    }
+                // circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape)
+                repeat(nUpdates) {
                     circleGroup.draw(canvas, shape = shape)
+                    circleGroup.update()
+                }
+                circleGroup.draw(canvas, shape = shape)
             } else {
                 circleGroup.draw(canvas, shape = shape)
             }
@@ -249,7 +249,7 @@ class DDU(
                             Shapes.valueOfOrNull(s.substringAfter("shape:").trim())?.let {
                                 shape = it
                             }
-                        s.startsWith("showOutline:") -> "ignore it"
+                        s.startsWith("showOutline:") -> "ignore it" // deprecated
                     }
                     mode >= Mode.RADIUS && s.isNotBlank() -> {
                         when (mode) {
