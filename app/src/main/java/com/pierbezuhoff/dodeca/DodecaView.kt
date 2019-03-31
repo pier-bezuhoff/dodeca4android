@@ -422,7 +422,14 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                 else
                     defaultUPS
             options.skipN -> if (values.skipN > 0) {
-                circleGroup.updateTimes(values.skipN, values.reverseMotion)
+                val toSkip: Int = values.skipN
+                Log.i(TAG, "skipping $toSkip updates")
+                // TODO: in separate thread
+                repeat(toSkip) {
+                    circleGroup.update()
+                }
+                // NOTE: slow and diverges
+                // circleGroup.updateTimes(values.skipN, values.reverseMotion)
                 editing { set(options.skipN, 0) }
             }
         }

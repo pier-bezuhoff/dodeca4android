@@ -60,7 +60,11 @@ class DDUChooserActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@DDUChooserActivity)
             itemAnimator = DefaultItemAnimator()
         }
+        // TODO: move to AsyncTask
+//        val progressBar = ContentLoadingProgressBar(this)
+//        progressBar.show()
         dduAdapter = DDUAdapter(this, ::onChoose)
+//        progressBar.hide()
         ddu_recycler_view.apply {
             adapter = dduAdapter
             // colors and thickness are set from styles.xml
@@ -343,8 +347,24 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 
     private fun requestExportDDUFileForDodecaLook(file: File) {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*" // maybe: "text/plain"
+            putExtra(Intent.EXTRA_TITLE, file.name)
+        }
+        requestedDDUFile = file
+        startActivityForResult(intent, EXPORT_DDU_FOR_DODECALOOK_REQUEST_CODE)
+    }
+
+    private fun exportDDUFileForDodecaLook(uri: Uri) {
         // TODO: convert to old ddu format
-        toast("TODO: export ${file.name} for DodecaLook")
+        requestedDDUFile?.let { file ->
+            contentResolver.openOutputStream(uri)?.let { outputStream ->
+                Log.i(TAG, "exporting file \"${file.name}\" in DodecaLook-compatible format")
+                DDU.readFile(file).saveStreamAsDodecaLookCompatible(outputStream)
+            }
+            requestedDDUFile = null
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -362,6 +382,7 @@ class DDUChooserActivity : AppCompatActivity() {
                         importDDUs(uris)
                     }
                 EXPORT_DDU_REQUEST_CODE -> data?.data?.let { uri -> exportDDUFile(uri) }
+                EXPORT_DDU_FOR_DODECALOOK_REQUEST_CODE -> data?.data?.let { uri -> exportDDUFileForDodecaLook(uri) }
                 EXPORT_DIR_REQUEST_CODE -> data?.data?.let { uri -> exportDDUDir(uri) }
                 else -> super.onActivityResult(requestCode, resultCode, data)
             }
@@ -379,6 +400,7 @@ class DDUChooserActivity : AppCompatActivity() {
         private const val IMPORT_DDUS_REQUEST_CODE = 2
         private const val EXPORT_DIR_REQUEST_CODE = 3
         private const val EXPORT_DDU_REQUEST_CODE = 5
+        private const val EXPORT_DDU_FOR_DODECALOOK_REQUEST_CODE = 6
     }
 }
 
@@ -472,6 +494,7 @@ class DDUAdapter(
 
     init {
         // maybe: in async task; show ContentLoadingProgressBar or ProgressDialog
+        // ISSUE: may lead to OutOfMemoryError (fast return to after opening a ddu)
         dduFileDao.getAll().forEach {
             previews[it.filename] = it.preview
         }

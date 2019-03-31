@@ -99,13 +99,14 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
 
     private inline fun _update(reverse: Boolean) {
         savingOld {
-            if (reverse) // ~3x slower
+            if (reverse) // ~3x slower (due to reversing each sequence)
                 reversedUpdate()
             else
                 straightUpdate()
         }
     }
 
+    // FIX: slow and diverges
     override fun updateTimes(times: Int, reverse: Boolean) {
         if (reverse) {
             savingOld { repeat(times) { reversedUpdate() } }
