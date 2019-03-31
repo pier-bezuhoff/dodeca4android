@@ -117,7 +117,8 @@ class DDU(
         // maybe: use buffered stream
         stream.use { outputStream ->
             val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
-            writeln(header)
+            val dodecaLookHeader = "DUDU C++v.1"
+            writeln(dodecaLookHeader)
             val globals: List<String> = listOf(
                 backgroundColor.fromColor(),
                 *restGlobals.toTypedArray()
