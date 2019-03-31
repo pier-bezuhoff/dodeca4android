@@ -4,8 +4,9 @@ Min version: 4.4 KitKat
 Recommended version: >= 5.0 Lolipop
 ...
 # TODO
-- [ ] upd CirclesGroup (what?)
+- [ ] ISSUE: DDUChooserActivity.kt/DDUAdapter/init may lead to OutOfMemoryError (fast return to after opening a ddu)
 - [ ] skip n: in separate thread + optimize
+- [ ] upd CirclesGroup (what?)
 - [ ] outer open folder implicit intent?
 - [ ] see ddu_files/ExampleSpirales: global 4, 4; no rules! but DodecaLook is playing them! knots?
 - [ ] On small phones: expand/collapse for circle group often overlaps with its name (check PLR: K3 2017)
