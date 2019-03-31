@@ -132,8 +132,9 @@
     <string name="to_parent_dir_title">В родительскую папку</string>
     <string name="import_folder_title">Импортировать папку с ddu-картинами</string>
     <string name="delete_ddus">Удалить все ddu-картины</string>
-    <string name="delete_all_alert_message">Вы хотите удалить все ddu-картины?</string>
+    <string name="delete_all_alert_message">Вы хотите удалить все ddu-картины в текущей папке?</string>
     <string name="delete_all_alert_title">Подтверждение удаления</string>
     <string name="dir_delete">Удалить папку</string>
     <string name="dir_export">Экспортировать папку</string>
+    <string name="toggle_folders">Показать/скрыть папки</string>
 </resources>

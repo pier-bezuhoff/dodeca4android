@@ -394,6 +394,7 @@ class CircleAdapter(
             val colorPicker = ColorPickerView(context)
             colorPicker.color = color
             colorPicker.showAlpha(false)
+            colorPicker.showHex(false) // focusing pop up keyboard
             customView {
                 addView(colorPicker, ViewGroup.LayoutParams.MATCH_PARENT.let { ViewGroup.LayoutParams(it, it) })
             }
@@ -403,7 +404,7 @@ class CircleAdapter(
 
     private inline fun editCirclesDialog(
         circles: Collection<CircleRow>, // non-empty!
-        crossinline onApply: OnApply = {_, _, _, _ -> }
+        crossinline onApply: OnApply = { _, _, _, _ -> }
     ): AlertBuilder<DialogInterface> {
         val blueprint = circles.take(1)[0]
         val message = when(circles.size) {

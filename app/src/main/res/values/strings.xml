@@ -50,9 +50,11 @@
     <string name="redraw_trace_summary">Clear trace on scroll and scale</string>
     <string name="show_all_circles_title">Show all circles</string>
     <string name="show_all_circles_summary">Show hidden and static circles</string>
+    <!-- v unused for now -->
     <string name="show_centers_title">Show circle centers</string>
     <string name="rotate_shapes_title">Rotate shapes</string>
     <string name="rotate_shapes_summary">Rotate s̶q̶u̶a̶r̶e̶, cross, bars when updating</string>
+    <!-- ^ -->
     <string name="autosave_title">Autosave current ddu</string>
     <string name="show_stat_title">Show statistics</string>
     <string name="stat_n_updates_text">%d updates</string>
@@ -129,7 +131,7 @@
     <string name="folder_icon_description">Folder icon</string>
     <string name="dir_name_initial_text">[folder name]</string>
     <string name="delete_ddus">Delete all ddu-pictures</string>
-    <string name="delete_all_alert_message">Do you want to permanently delete all ddu-pictures?</string>
+    <string name="delete_all_alert_message">Do you want to permanently delete all ddu-pictures in current folder?</string>
     <string name="delete_all_alert_title">Deletion confirmation</string>
 
     <!-- Color chooser dialog -->

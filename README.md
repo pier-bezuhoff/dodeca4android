@@ -4,9 +4,10 @@ Min version: 4.4 KitKat
 Recommended version: >= 5.0 Lolipop
 ...
 # TODO
-- [ ] upd CirclesGroup
-- [ ] skip n -- EditPreference
+- [ ] upd CirclesGroup (what?)
+- [ ] skip n: in separate thread + optimize
 - [ ] outer open folder implicit intent?
+- [ ] see ddu_files/ExampleSpirales: global 4, 4; no rules! but DodecaLook is playing them! knots?
 - [ ] On small phones: expand/collapse for circle group often overlaps with its name (check PLR: K3 2017)
 - [ ] import/export dir somehow (< 5.0 (KitKat))
 - [ ] Save -> save as

@@ -43,7 +43,7 @@ internal fun Int.fromColor(): Int =
     (Color.blue(this) shl 16) + (Color.green(this) shl 8) + Color.red(this)
 
 
-// maybe: serialize DDU to json
+// NOTE: when restGlobals = listOf(4, 4) some magic occurs (rule-less circles are moving in DodecaLook)
 class DDU(
     var backgroundColor: Int = DEFAULT_BACKGROUND_COLOR,
     private var restGlobals: List<Int> = emptyList(), // unused
@@ -109,6 +109,35 @@ class DDU(
                 circle.borderColor?.let {
                     writeln("borderColor: ${it.fromColor()}")
                 }
+            }
+        }
+    }
+
+    fun saveStreamAsDodecaLookCompatible(stream: OutputStream) {
+        // maybe: use buffered stream
+        stream.use { outputStream ->
+            val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
+            writeln(header)
+            val globals: List<String> = listOf(
+                backgroundColor.fromColor(),
+                *restGlobals.toTypedArray()
+            ).map { it.toString() }
+            globals.forEach { param ->
+                writeln("global")
+                writeln(param)
+            }
+            circles.forEach { circle ->
+                writeln("circle:")
+                listOf(
+                    circle.radius,
+                    circle.x,
+                    circle.y,
+                    circle.color.fromColor(),
+                    if (circle.fill) 1 else 0
+                ).forEach { param ->
+                    writeln(param.toString())
+                }
+                writeln(circle.rule ?: "")
             }
         }
     }

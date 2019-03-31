@@ -15,12 +15,14 @@
             android:icon="@drawable/ic_import"
             app:showAsAction="ifRoom"
     />
+    <!-- Android >= 5.0 -->
     <item
             android:id="@+id/export_ddus"
             android:title="@string/export_ddus_title"
             android:icon="@drawable/ic_export"
             app:showAsAction="ifRoom"
     />
+    <!-- Android >= 5.0 -->
     <item
             android:id="@+id/import_dir"
             android:title="@string/import_folder_title"
