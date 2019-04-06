@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.lifecycle.LiveData
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -45,13 +46,13 @@ data class DDUFile(
 @Dao
 interface DDUFileDao {
     @Query("SELECT * FROM ddufile")
-    fun getAll(): List<DDUFile>
+    fun getAll(): LiveData<List<DDUFile>>
 
     @Query("SELECT * FROM ddufile WHERE uid IN (:dduFileIds)")
-    fun loadAllByIds(dduFileIds: IntArray): List<DDUFile>
+    fun loadAllByIds(dduFileIds: IntArray): LiveData<List<DDUFile>>
 
     @Query("SELECT * FROM ddufile WHERE filename LIKE :filename LIMIT 1")
-    fun findByFilename(filename: String): DDUFile?
+    fun findByFilename(filename: String): LiveData<DDUFile?>
 
     @Update fun update(dduFile: DDUFile)
 
@@ -60,6 +61,8 @@ interface DDUFileDao {
 
     @Delete fun delete(dduFile: DDUFile)
 }
+
+fun
 
 fun DDUFileDao.insertOrUpdate(filename: String, action: DDUFile.() -> Unit) {
     val dduFile: DDUFile? = findByFilename(filename)
@@ -80,9 +83,7 @@ abstract class DDUFileDatabase : RoomDatabase() {
             if (INSTANCE == null)
                 synchronized(DDUFileDatabase) {
                     if (INSTANCE == null)
-                        INSTANCE = Room.databaseBuilder(context, DDUFileDatabase::class.java, "ddu-files")
-                            .allowMainThreadQueries()
-                            .build()
+                        INSTANCE = Room.databaseBuilder(context, DDUFileDatabase::class.java, "ddu-files").build()
                 }
         }
     }
