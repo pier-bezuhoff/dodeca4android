@@ -21,12 +21,14 @@ import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
 import kotlinx.android.synthetic.main.toolbar2.*
 import org.jetbrains.anko.alert
+import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.layoutInflater
 import org.jetbrains.anko.toast
 import permissions.dispatcher.NeedsPermission
@@ -36,6 +38,7 @@ import permissions.dispatcher.PermissionRequest
 import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 
 @RuntimePermissions
 class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener {
@@ -48,13 +51,14 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Options(resources)
-        DDUFileDatabase.init(this)
-        // extracting assets
-        if (!dduDir.exists()) {
-            Log.i(TAG, "Extracting assets into $dduDir")
-            dduDir.mkdir()
-            extractDDUFromAssets()
+        Options(resources).init() // init options.* and values.*
+        DDUFileDatabase.init(this) /// the faster the better
+        if (values.versionCode < BuildConfig.VERSION_CODE) {
+            Log.i(TAG, "Upgrading to ${BuildConfig.VERSION_NAME}")
+            defaultSharedPreferences.edit {
+                set(options.versionCode, BuildConfig.VERSION_CODE)
+            }
+            onUpgrade()
         }
         window.decorView.apply {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
@@ -82,6 +86,27 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         dodecaView.afterNewDDU = { afterNewDDU(it) }
         setupToolbar()
         bottomBarHideTimer.start()
+    }
+
+    private fun onUpgrade() {
+        // extracting assets
+        try {
+            if (!dduDir.exists()) {
+                Log.i(TAG, "Extracting all assets into $dduDir")
+                dduDir.mkdir()
+                extractDDUFromAssets()
+            } else {
+                // TODO: check it
+                // try to export new ddus
+                Log.i(TAG, "Adding new ddu assets into $dduDir")
+                val existedDdus = dduDir.listFiles().map { it.name }.toSet()
+                assets.list(getString(R.string.ddu_asset_dir))?.filter { it !in existedDdus }?.forEach { name ->
+                    extract1DDU(name, dduDir)
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
     }
 
     private fun afterNewDDU(ddu: DDU) {

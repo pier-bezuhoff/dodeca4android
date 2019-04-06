@@ -5,13 +5,13 @@ import android.content.SharedPreferences
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.core.graphics.withMatrix
 import org.apache.commons.math3.complex.Complex
+import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
@@ -31,7 +31,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     var ddu: DDU by Delegates.vetoable(DDU(circles = emptyList()))
         { _, _, value -> onNewDDU(value); afterNewDDU(value); true } // before change
     lateinit var circleGroup: CircleGroup
-    val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
+    val sharedPreferences: SharedPreferences by lazy { context.defaultSharedPreferences }
     var nUpdatesView: TextView? = null
     var time20UpdatesView: TextView? = null
 

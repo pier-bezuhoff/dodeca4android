@@ -74,7 +74,6 @@
     <string name="autocenter_button_title">Автоцентровка</string>
     <string name="autosave_title">Автосохранение</string>
     <string name="ddu_preview_title">Предпросмотр ddu-картин</string>
-    <string name="settings_ddu_files_title">ddu-картины</string>
     <string name="settings_preview_title">Предпросмотр</string>
     <string name="discard_previews_title">Сбросить предпросмотры</string>
     <string name="preview_size_title">Размер предпросмотра</string>
@@ -137,4 +136,8 @@
     <string name="dir_delete">Удалить папку</string>
     <string name="dir_export">Экспортировать папку</string>
     <string name="toggle_folders">Показать/скрыть папки</string>
+    <string name="settings_ddu_files_title">Восстановить</string>
+    <string name="settings_evolution_title">Эволюция</string>
+    <string name="skip_n_title">Пропустить n обновлений</string>
+    <string name="skip_n_summary">Пропустить обновления без перерисовки</string>
 </resources>

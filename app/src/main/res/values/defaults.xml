@@ -18,4 +18,5 @@
     <bool name="autocenter_preview">true</bool>
     <string name="n_preview_updates" translatable="false">100</string>
     <bool name="preview_smart_updates">true</bool>
+    <integer name="version_code">0</integer>
 </resources>

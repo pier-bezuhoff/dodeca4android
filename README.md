@@ -5,6 +5,7 @@ Recommended version: >= 5.0 Lolipop
 ...
 # TODO
 - [ ] ISSUE: DDUChooserActivity.kt/DDUAdapter/init may lead to OutOfMemoryError (fast return to after opening a ddu)
+- [ ] new ddus <= Version -> shared preference
 - [ ] skip n: in separate thread + optimize
 - [ ] upd CirclesGroup (what?)
 - [ ] outer open folder implicit intent?
