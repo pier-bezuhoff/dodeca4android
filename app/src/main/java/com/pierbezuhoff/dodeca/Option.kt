@@ -152,8 +152,9 @@ class Options(val resources: Resources) {
     val autocenterPreview = BooleanOption("autocenter_preview", R.bool.autocenter_preview)
     val nPreviewUpdates = ParsedIntOption("n_preview_updates", resources.getString(R.string.n_preview_updates).toInt())
     val previewSmartUpdates = BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)
+    val versionCode = Option("version_code", resources.getInteger(R.integer.version_code))
 
-    init {
+    fun init() {
         if (!::options.isInitialized) {
             options = this
             values = Values(this)
@@ -181,6 +182,7 @@ class Values(private val options: Options) {
     val previewSizePx: Int get() = options.resources.dp2px(options.previewSize.value)
     val nPreviewUpdates: Int get() = options.nPreviewUpdates.value
     val previewSmartUpdates: Boolean get() = options.previewSmartUpdates.value
+    val versionCode: Int get() = options.versionCode.value
 }
 
 internal fun Resources.dp2px(dp: Int): Int = dp * displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT

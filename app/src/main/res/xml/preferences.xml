@@ -1,12 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- NOTE autocompletion worked when here was no androidx.preference -->
+<!-- NOTE: autocompletion worked when here was no androidx.preference -->
 <androidx.preference.PreferenceScreen
         android:key="preference_screen"
         xmlns:android="http://schemas.android.com/apk/res/android"
 >
+    <PreferenceCategory android:title="@string/settings_evolution_title">
+        <ListPreference
+                android:key="speed"
+                android:defaultValue="@string/speed"
+                android:entries="@array/speeds"
+                android:entryValues="@array/speeds"
+                android:title="@string/speed_title"
+                android:summary="@string/speed_summary"
+        />
+        <SwitchPreference
+                android:key="reverse_motion"
+                android:defaultValue="@bool/reverse_motion"
+                android:title="@string/reverse_motion"
+        />
+        <!-- NOTE: advanced -->
+        <!-- TODO: add: rough primitive circles -->
+        <!-- MAYBE: optimal performance -->
+        <!-- NOTE: advanced -->
+        <EditTextPreference
+                android:key="skip_n"
+                android:defaultValue="@string/skip_n"
+                android:title="@string/skip_n_title"
+                android:summary="@string/skip_n_summary"
+        />
+    </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_display_title">
-
         <SwitchPreference
                 android:key="redraw_trace"
                 android:defaultValue="@bool/redraw_trace"
@@ -33,11 +57,6 @@
                 <!--android:summary="@string/rotate_shapes_summary"-->
         <!--/>-->
         <SwitchPreference
-                android:key="reverse_motion"
-                android:defaultValue="@bool/reverse_motion"
-                android:title="@string/reverse_motion"
-        />
-        <SwitchPreference
                 android:key="autocenter_always"
                 android:defaultValue="@bool/autocenter_always"
                 android:title="@string/always_autocenter_title"
@@ -48,33 +67,7 @@
                 android:entries="@array/canvas_factors"
                 android:entryValues="@array/canvas_factors"
                 android:title="@string/canvas_factor_title"
-                android:summary="@string/canvas_factor_summary" />
-        <!--<SeekBarPreference-->
-        <!--android:key="speed_seekbar"-->
-        <!--android:title="Speed"-->
-        <!--android:summary="Make %d updates in a row"-->
-        <!--android:defaultValue="1"-->
-        <!--android:max="50"-->
-        <!--/>-->
-        <ListPreference
-                android:key="speed"
-                android:defaultValue="@string/speed"
-                android:entries="@array/speeds"
-                android:entryValues="@array/speeds"
-                android:title="@string/speed_title"
-                android:summary="@string/speed_summary"
-        />
-        <!-- NOTE: advanced -->
-        <EditTextPreference
-                android:key="skip_n"
-                android:defaultValue="@string/skip_n"
-                android:title="Skip n updates"
-                android:summary="Skip updates without drawing"
-        />
-        <SwitchPreference
-                android:key="autosave"
-                android:defaultValue="@bool/autosave"
-                android:title="@string/autosave_title"
+                android:summary="@string/canvas_factor_summary"
         />
         <!-- NOTE: advanced -->
         <SwitchPreference
@@ -87,13 +80,21 @@
     <PreferenceCategory android:title="@string/settings_ddu_files_title">
         <Preference
                 android:key="default_ddu"
-                android:title="@string/restore_default_ddu_title" />
+                android:title="@string/restore_default_ddu_title"
+        />
         <Preference
                 android:key="default_ddus"
-                android:title="@string/restore_default_ddus_title" />
+                android:title="@string/restore_default_ddus_title"
+        />
         <Preference
                 android:key="default"
-                android:title="@string/restore_defaults_title" />
+                android:title="@string/restore_defaults_title"
+        />
+        <SwitchPreference
+                android:key="autosave"
+                android:defaultValue="@bool/autosave"
+                android:title="@string/autosave_title"
+        />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_preview_title">
