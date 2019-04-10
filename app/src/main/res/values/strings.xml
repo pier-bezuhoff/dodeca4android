@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
         <!ENTITY app_name "Dodeca Meditation">
-        <!ENTITY version_name "1.3.4">
+        <!ENTITY version_name "1.3.5">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
@@ -45,6 +45,13 @@
     <string name="dir_exporting_toast">Exporting folder \"%s\"…</string>
 
     <!-- Strings related to settings -->
+    <string name="settings_evolution_title">Evolution</string>
+    <string name="reverse_motion">Reverse motion</string>
+    <string name="speed_title">Speed</string>
+    <string name="speed_summary">Make %s updates in a row</string>
+    <string name="skip_n_title">Skip n updates</string>
+    <string name="skip_n_summary">Skip updates without drawing</string>
+
     <string name="settings_display_title">Display</string>
     <string name="redraw_trace_title">Redraw trace</string>
     <string name="redraw_trace_summary">Clear trace on scroll and scale</string>
@@ -61,13 +68,10 @@
     <string name="stat_20_updates_per_text">20 updates per %.3f seconds</string>
     <string name="stat_n_updates_initial"># of updates</string>
     <string name="stat_20_updates_per_initial">20 updates per #</string>
-    <string name="reverse_motion">Reverse motion</string>
     <string name="always_autocenter_title">Always autocenter</string>
     <string name="always_autocenter_summary">Autocenter when loading new ddu and best center is not specified</string>
     <string name="canvas_factor_title">Canvas factor</string>
     <string name="canvas_factor_summary">Canvas is %s times larger than visible screen</string>
-    <string name="speed_title">Speed</string>
-    <string name="speed_summary">Make %s updates in a row</string>
     <!-- v ups and fps are unused now -->
     <string name="ups_title">Speed</string>
     <string name="ups_summary">%s updates per second (speed of circle motion)</string>
@@ -75,7 +79,6 @@
     <string name="fps_summary">Frames per second, redraw speed</string>
     <!-- ^ -->
 
-    <string name="settings_ddu_files_title">ddu-pictures</string>
     <string name="restore_default_ddu_title">Restore current ddu-picture</string>
     <string name="restore_default_ddus_title">Restore all ddu-pictures</string>
     <string name="restore_defaults_title">Restore default settings</string>
@@ -160,5 +163,6 @@
     <string name="circle_visibility_description">Show/hide circle</string>
     <string name="circle_show_description">Visible</string>
     <string name="toggle_folders">Toggle folders</string>
+    <string name="settings_ddu_files_title">Revert defaults</string>
 
 </resources>
