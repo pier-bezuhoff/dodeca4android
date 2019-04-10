@@ -114,10 +114,9 @@ class DDU(
     }
 
     fun saveStreamAsDodecaLookCompatible(stream: OutputStream) {
-        // maybe: use buffered stream
         stream.use { outputStream ->
             val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
-            val dodecaLookHeader = "DUDU C++v.1"
+            val dodecaLookHeader = "DUDU C++v.1" // NOTE: important! without it DodecaLook fails
             writeln(dodecaLookHeader)
             val globals: List<String> = listOf(
                 backgroundColor.fromColor(),
