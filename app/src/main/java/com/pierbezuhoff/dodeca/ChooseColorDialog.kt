@@ -391,10 +391,11 @@ class CircleAdapter(
         crossinline onChosen: (newColor: Int) -> Unit
     ): AlertBuilder<DialogInterface> =
         context.alert(R.string.color_picker_dialog_message) {
+            // ISSUE: in landscape: ok/cancel are off screen
             val colorPicker = ColorPickerView(context)
             colorPicker.color = color
             colorPicker.showAlpha(false)
-            colorPicker.showHex(false) // focusing pop up keyboard
+            colorPicker.showHex(false) // focusing => pop up keyboard
             customView {
                 addView(colorPicker, ViewGroup.LayoutParams.MATCH_PARENT.let { ViewGroup.LayoutParams(it, it) })
             }

@@ -356,9 +356,9 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    fun saveDDU() {
+    fun saveDDU(newFile: File? = null) {
         val ddu = prepareDDUToSave()
-        if (ddu.file == null) {
+        if (newFile == null && ddu.file == null) {
             Log.i(TAG, "saveDDU: ddu has no file")
             // then save as
             context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
@@ -369,7 +369,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
                     newRule = newFigure.rule, newBorderColor = Just(newFigure.borderColor)
                 ) }
                 try {
-                    ddu.file?.let { file ->
+                    (newFile ?: ddu.file)?.let { file ->
                         Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
                         ddu.saveStream(file.outputStream())
                         uiThread {
@@ -467,7 +467,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         private val effectiveMajorPreferences: Set<SharedPreference<*>> =
             setOf(options.showAllCircles, options.autocenterAlways, options.speed, options.skipN, options.canvasFactor)
         private val secondaryMajorPreferences: Set<SharedPreference<*>> =
-            setOf(options.redrawTraceOnMove, options.reverseMotion, options.autosave, options.previewSize, options.previewSmartUpdates, options.nPreviewUpdates)
+            setOf(options.redrawTraceOnMove, options.reverseMotion, options.autosave, options.saveAs, options.previewSize, options.previewSmartUpdates, options.nPreviewUpdates)
         private val majorPreferences: Set<SharedPreference<*>> = effectiveMajorPreferences + secondaryMajorPreferences
         private val minorIndependentPreferences: Set<SharedPreference<*>> =
             setOf(options.motion, options.updating)

@@ -169,10 +169,10 @@ class DDU(
                 circleGroup.draw(canvas, shape = shape)
             }
         }
-        Log.i(
+/*        Log.i(
             TAG,
-            "preview \"${file?.nameWithoutExtension}\", smart: ${values.previewSmartUpdates} complexity = $complexity, nUpdates = $nUpdates"
-        )
+            "preview \"${file?.nameWithoutExtension}\", smart: ${values.previewSmartUpdates}, complexity = $complexity, nUpdates = $nUpdates"
+        )*/
         return bitmap
     }
 

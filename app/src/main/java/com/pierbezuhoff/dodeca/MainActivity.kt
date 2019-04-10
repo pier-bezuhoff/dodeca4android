@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.BaseAdapter
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -28,7 +29,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
 import kotlinx.android.synthetic.main.toolbar2.*
 import org.jetbrains.anko.alert
+import org.jetbrains.anko.cancelButton
+import org.jetbrains.anko.customView
 import org.jetbrains.anko.defaultSharedPreferences
+import org.jetbrains.anko.editText
 import org.jetbrains.anko.layoutInflater
 import org.jetbrains.anko.toast
 import permissions.dispatcher.NeedsPermission
@@ -51,18 +55,12 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        Options(resources)
-//        DDUFileDatabase.init(this)
-//        // extracting assets
-//        if (!dduDir.exists()) {
-//            Log.i(TAG, "Extracting assets into $dduDir")
-//            dduDir.mkdir()
-//            extractDDUFromAssets()
-//        }
         Options(resources).init() // init options.* and values.*
         DDUFileDatabase.init(this) /// the faster the better
-        if (values.versionCode < BuildConfig.VERSION_CODE) {
-            Log.i(TAG, "Upgrading to ${BuildConfig.VERSION_NAME}")
+        defaultSharedPreferences.fetch(options.versionCode)
+        if (values.versionCode != BuildConfig.VERSION_CODE) {
+            val upgrading = values.versionCode < BuildConfig.VERSION_CODE
+            Log.i(TAG, "${if (upgrading) "Upgrading" else "Degrading"} to ${BuildConfig.VERSION_NAME} (${values.versionCode} -> ${BuildConfig.VERSION_CODE})")
             defaultSharedPreferences.edit {
                 set(options.versionCode, BuildConfig.VERSION_CODE)
             }
@@ -184,7 +182,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                 intent.putExtra("dirPath", (dir ?: dduDir).absolutePath)
                 startActivityForResult(intent, DDU_CODE)
             }
-            R.id.save_button -> dodecaView.saveDDU()
+            R.id.save_button -> saveDDU()
             R.id.play_button -> { dodecaView.toggle(options.updating); setupPlayButton() }
             R.id.next_step_button -> { dodecaView.oneStep(); setupPlayButton() }
             R.id.trace_button -> { dodecaView.toggle(options.drawTrace); setupToggleButtonTint(trace_button, values.drawTrace) }
@@ -202,6 +200,30 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                     Intent(this@MainActivity, SettingsActivity::class.java),
                     APPLY_SETTINGS_CODE)
             }
+        }
+    }
+
+    private fun saveDDU() {
+        if (!values.saveAs) {
+            dodecaView.saveDDU()
+        } else {
+            alert(R.string.save_as_message) {
+                var name: EditText? = null
+                customView {
+                    name = editText(dodecaView.ddu.file?.nameWithoutExtension ?: "")
+                }
+                positiveButton(R.string.save_as_button_title) {
+                    // TODO: check if exists, not blank, etc.
+                    try {
+                        dodecaView.saveDDU(name?.text?.let {
+                            File(dir ?: dduDir, "$it.ddu").apply { Log.i(TAG, path); createNewFile() }
+                        })
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                }
+                cancelButton {  }
+            }.show()
         }
     }
 
@@ -256,7 +278,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                         }
                     }
                     having("default_ddus") {
-                        extractDDUFromAssets()
+                        extractDDUFromAssets(overwrite = true)
                         dodecaView.ddu.file?.let { file -> dodecaView.ddu = DDU.readFile(file) }
                     }
                     having("discard_previews") {
@@ -367,12 +389,13 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         if (bottomBarShown) hideBottomBar()
         else showBottomBar()
 
-    private fun extractDDUFromAssets() {
+    private fun extractDDUFromAssets(overwrite: Boolean = false) {
         val dir = dduDir
-        assets.list(getString(R.string.ddu_asset_dir))?.forEach { name -> extract1DDU(name, dir) }
+        assets.list(getString(R.string.ddu_asset_dir))?.forEach { name -> extract1DDU(name, dir, overwrite) }
     }
 
-    private fun extract1DDU(filename: Filename, dir: File = dduDir) = extract1DDU(filename, dir, dduFileDao, TAG)
+    private fun extract1DDU(filename: Filename, dir: File = dduDir, overwrite: Boolean = false) =
+        extract1DDU(filename, dir, dduFileDao, TAG, overwrite)
 
     class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {
         val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shapes

@@ -8,6 +8,7 @@
     <bool name="reverse_motion">false</bool>
     <string name="shape" translatable="false">circle</string>
     <bool name="autosave">false</bool>
+    <bool name="save_as">true</bool>
     <bool name="autocenter_always">true</bool>
     <string name="speed" translatable="false">1</string>
     <string name="skip_n" translatable="false">0</string>

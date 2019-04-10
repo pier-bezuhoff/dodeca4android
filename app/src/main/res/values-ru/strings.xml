@@ -140,4 +140,9 @@
     <string name="settings_evolution_title">Эволюция</string>
     <string name="skip_n_title">Пропустить n обновлений</string>
     <string name="skip_n_summary">Пропустить обновления без перерисовки</string>
+    <string name="settings_saves_title">Сохранения</string>
+    <string name="save_as_title">Сохранять как</string>
+    <string name="save_as_summary">Предлагать сохранить под другим именем</string>
+    <string name="save_as_message">Сохранить как</string>
+    <string name="save_as_button_title">Сохранить</string>
 </resources>
