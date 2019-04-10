@@ -15,7 +15,6 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
     >
-        <!--android:screenOrientation="locked"-->
         <activity
                 android:name=".MainActivity"
                 android:label="@string/app_name"
@@ -23,7 +22,6 @@
                 android:theme="@style/AppTheme.NoActionBar"> <!-- android:style/Theme.NoTitleBar.Fullscreen"> -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
             <intent-filter android:priority="100">
@@ -36,6 +34,7 @@
                 <!-- ^ -->
                 <data android:pathPattern=".*\\.ddu"/>
                 <data android:pathPattern=".*\\.DDU"/>
+                <!-- SEE: https://stackoverflow.com/questions/1733195/android-intent-filter-for-a-particular-file-extension -->
                 <data android:scheme="content"/>
                 <data android:scheme="file"/>
                 <data android:scheme="http"/>
