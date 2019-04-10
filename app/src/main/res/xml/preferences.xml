@@ -77,6 +77,20 @@
         />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/settings_saves_title">
+        <SwitchPreference
+                android:key="save_as"
+                android:defaultValue="@bool/save_as"
+                android:title="@string/save_as_title"
+                android:summary="@string/save_as_summary"
+        />
+        <SwitchPreference
+                android:key="autosave"
+                android:defaultValue="@bool/autosave"
+                android:title="@string/autosave_title"
+        />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/settings_ddu_files_title">
         <Preference
                 android:key="default_ddu"
@@ -89,11 +103,6 @@
         <Preference
                 android:key="default"
                 android:title="@string/restore_defaults_title"
-        />
-        <SwitchPreference
-                android:key="autosave"
-                android:defaultValue="@bool/autosave"
-                android:title="@string/autosave_title"
         />
     </PreferenceCategory>
 

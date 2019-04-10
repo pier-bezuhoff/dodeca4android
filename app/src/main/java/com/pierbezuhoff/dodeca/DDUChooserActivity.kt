@@ -290,6 +290,7 @@ class DDUChooserActivity : AppCompatActivity() {
             Log.i(TAG, "exporting dir \"${dir.name}\"")
             toast(getString(R.string.dir_exporting_toast, dir.name))
             // maybe: use File.walkTopDown()
+            // TODO: show progress bar or smth
             DocumentFile.fromTreeUri(this, uri)?.let { targetDir ->
                 exportDDUDocumentFile(dir, targetDir)
             }

@@ -5,6 +5,7 @@ import android.content.res.Resources
 import android.graphics.Matrix
 import android.util.DisplayMetrics
 import androidx.annotation.BoolRes
+import kotlin.reflect.KProperty
 
 // cannot see better solution yet
 // initialization (from MainActivity): `Options(resources: Resources)`
@@ -37,6 +38,8 @@ abstract class SharedPreference<T>(val default: T) where T : Any {
     }
 
     abstract fun remove(editor: SharedPreferences.Editor)
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 }
 
 open class Option<T>(val key: String, default: T) : SharedPreference<T>(default) where T : Any {
@@ -142,6 +145,7 @@ class Options(val resources: Resources) {
     }
     // val rotateShapes = Option("rotate_shapes", false)
     val autosave = BooleanOption("autosave", R.bool.autosave)
+    val saveAs = BooleanOption("save_as", R.bool.save_as)
     val autocenterAlways = BooleanOption("autocenter_always", R.bool.autocenter_always)
     val speed = ParsedFloatOption("speed", resources.getString(R.string.speed).toFloat())
     val skipN = ParsedIntOption("skip_n", resources.getString(R.string.skip_n).toInt())
@@ -164,25 +168,26 @@ class Options(val resources: Resources) {
 
 // NOTE: may be moved toplevel
 class Values(private val options: Options) {
-    val motion: Matrix get() = options.motion.value
-    val drawTrace: Boolean get() = options.drawTrace.value
-    val updating: Boolean get() = options.updating.value
-    val redrawTraceOnMove: Boolean get() = options.redrawTraceOnMove.value
-    val showAllCircles: Boolean get() = options.showAllCircles.value
-    val reverseMotion: Boolean get() = options.reverseMotion.value
-    val shape: Shapes get() = options.shape.value
-    val autosave: Boolean get() = options.autosave.value
-    val autocenterAlways: Boolean get() = options.autocenterAlways.value
-    val speed: Float get() = options.speed.value
-    val skipN: Int get() = options.skipN.value
-    val canvasFactor: Int get() = options.canvasFactor.value
-    val preferRecentDDU: Boolean get() = options.preferRecentDDU.value
-    val previewSize: Int get() = options.previewSize.value
-    val autocenterPreview: Boolean get() = options.autocenterPreview.value
-    val previewSizePx: Int get() = options.resources.dp2px(options.previewSize.value)
-    val nPreviewUpdates: Int get() = options.nPreviewUpdates.value
-    val previewSmartUpdates: Boolean get() = options.previewSmartUpdates.value
-    val versionCode: Int get() = options.versionCode.value
+    val motion: Matrix by options.motion
+    val drawTrace: Boolean by options.drawTrace
+    val updating: Boolean by options.updating
+    val redrawTraceOnMove: Boolean by options.redrawTraceOnMove
+    val showAllCircles: Boolean by options.showAllCircles
+    val reverseMotion: Boolean by options.reverseMotion
+    val shape: Shapes by options.shape
+    val autosave: Boolean by options.autosave
+    val saveAs: Boolean by options.saveAs
+    val autocenterAlways: Boolean by options.autocenterAlways
+    val speed: Float by options.speed
+    val skipN: Int by options.skipN
+    val canvasFactor: Int by options.canvasFactor
+    val preferRecentDDU: Boolean by options.preferRecentDDU
+    val previewSize: Int by options.previewSize
+    val autocenterPreview: Boolean by options.autocenterPreview
+    val previewSizePx: Int get() = options.resources.dp2px(values.previewSize)
+    val nPreviewUpdates: Int by options.nPreviewUpdates
+    val previewSmartUpdates: Boolean by options.previewSmartUpdates
+    val versionCode: Int by options.versionCode
 }
 
 internal fun Resources.dp2px(dp: Int): Int = dp * displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT

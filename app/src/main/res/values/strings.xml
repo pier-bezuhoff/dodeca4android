@@ -62,7 +62,6 @@
     <string name="rotate_shapes_title">Rotate shapes</string>
     <string name="rotate_shapes_summary">Rotate s̶q̶u̶a̶r̶e̶, cross, bars when updating</string>
     <!-- ^ -->
-    <string name="autosave_title">Autosave current ddu</string>
     <string name="show_stat_title">Show statistics</string>
     <string name="stat_n_updates_text">%d updates</string>
     <string name="stat_20_updates_per_text">20 updates per %.3f seconds</string>
@@ -78,6 +77,11 @@
     <string name="fps_title" translatable="false">FPS</string>
     <string name="fps_summary">Frames per second, redraw speed</string>
     <!-- ^ -->
+
+    <string name="settings_saves_title">Saves</string>
+    <string name="save_as_title">Save as</string>
+    <string name="save_as_summary">Prompt save under new name on save</string>
+    <string name="autosave_title">Autosave current ddu</string>
 
     <string name="restore_default_ddu_title">Restore current ddu-picture</string>
     <string name="restore_default_ddus_title">Restore all ddu-pictures</string>
@@ -95,7 +99,7 @@
     <string name="preview_smart_updates_summary">Number of updates depends on ddu complexity</string>
 
     <string name="settings_about_title">About</string>
-    <string name="description_summary">Android port for &app_name;</string>
+    <string name="description_summary">&app_name;: Android port for DodecaLook</string>
     <string name="version_title">Version</string>
     <string name="version_summary">&app_name; &version_name;</string>
     <string name="copyright_title" translatable="false">Copyright</string>
@@ -111,6 +115,10 @@
     <string name="permission_rationale_dialog_title">Permission request</string>
     <string name="permission_rationale_dialog_allow">Allow</string>
     <string name="permission_rationale_dialog_deny">Deny</string>
+
+    <!-- Save as dialog -->
+    <string name="save_as_message">Save as</string>
+    <string name="save_as_button_title">Save</string>
 
     <!-- Help -->
     <string name="help_title">Help</string>
