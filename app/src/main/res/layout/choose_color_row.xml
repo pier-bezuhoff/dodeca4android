@@ -81,6 +81,14 @@
                 android:ellipsize="end"
         />
     </androidx.constraintlayout.widget.ConstraintLayout>
+    <Space
+            android:layout_width="@dimen/inf_hspace"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/circle_layout"
+            app:layout_constraintEnd_toStartOf="@id/expand_group"
+    />
     <ToggleButton
             android:id="@+id/expand_group"
             android:background="@color/lightGray"
