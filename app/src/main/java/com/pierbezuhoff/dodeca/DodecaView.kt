@@ -330,6 +330,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         circleGroup = CircleGroupImpl(newDDU.circles, paint)
         if (newDDU.bestCenter == null && width > 0)
             newDDU.bestCenter = if (values.autocenterAlways) newDDU.autoCenter else center
+        values.motion.reset() // clear scale, BUG: editor.set(options.motion) does not set default
         if (initialized)
             centerize(newDDU)
         editing {
