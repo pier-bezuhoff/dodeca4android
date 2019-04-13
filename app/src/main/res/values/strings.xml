@@ -153,7 +153,7 @@
     <string name="circle_image_description">Circle image</string>
     <string name="circle_name_initial_text">#</string>
     <string name="expand_group_description">Expand/collapse group</string>
-    <string name="choose_circle_dialog_message">Choose circle to edit</string>
+    <string name="choose_circle_dialog_message">Choose circles to edit</string>
     <string name="choose_circle_dialog_edit">Edit</string>
     <string name="choose_circle_dialog_cancel">Cancel</string>
     <string name="edit_circle_dialog_message_single">Edit circle %s</string>
