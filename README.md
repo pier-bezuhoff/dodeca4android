@@ -4,13 +4,13 @@ Min version: 4.4 KitKat
 Recommended version: >= 5.0 Lolipop
 ...
 # TODO
-- [ ] Build std-1.4
 - [ ] ISSUE: DDUChooserActivity.kt/DDUAdapter/init may lead to OutOfMemoryError (large db, fast return to after opening a ddu)
 - [ ] skip n: in separate thread + optimize
 - [ ] check CirclesGroup without inline
+- [ ] Progress bar on: db requests (or LiveData), restore all ddus, import/export folder
+- [ ] ddu -> gif?
 - [ ] outer open folder implicit intent?
 - [ ] see ddu_files/ExampleSpirales: global 4, 4; no rules! but DodecaLook is playing them! knots?
-- [ ] import/export dir somehow (< 5.0 (KitKat))
 - [ ] file name -> relative path in db
 - [ ] factor * scale ~ 1 => fit screen ~~autocenter~~
 - [ ] Rotate shapes (sq, hb, vb; with canvas.withRotation(...))
