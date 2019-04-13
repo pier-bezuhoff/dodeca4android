@@ -100,6 +100,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     fun autocenter() {
         // maybe: when canvasFactor * scale ~ 1
         // try to fit screen
+        // BUG: sometimes skip to else
         if (values.drawTrace && trace.initialized &&
             values.canvasFactor == 1 &&
             1 - 1e-4 < scale && scale < 1 + 1e-1

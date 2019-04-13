@@ -18,7 +18,6 @@
                 android:defaultValue="@bool/reverse_motion"
                 android:title="@string/reverse_motion"
         />
-        <!-- NOTE: advanced -->
         <!-- TODO: add: rough primitive circles -->
         <!-- MAYBE: optimal performance -->
         <!-- NOTE: advanced -->
@@ -56,6 +55,7 @@
                 <!--android:title="@string/rotate_shapes_title"-->
                 <!--android:summary="@string/rotate_shapes_summary"-->
         <!--/>-->
+        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="autocenter_always"
                 android:defaultValue="@bool/autocenter_always"
@@ -119,6 +119,7 @@
                 android:title="@string/preview_size_title"
                 android:summary="@string/preview_size_summary"
         />
+        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="autocenter_preview"
                 android:defaultValue="@bool/autocenter_preview"
@@ -133,6 +134,7 @@
                 android:title="@string/n_preview_updates_title"
                 android:summary="@string/n_preview_updates_summary"
         />
+        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="preview_smart_updates"
                 android:defaultValue="@bool/preview_smart_updates"
@@ -144,21 +146,23 @@
     <PreferenceCategory android:title="@string/settings_about_title">
         <Preference
                 android:selectable="false"
-                android:summary="@string/description_summary" />
+                android:summary="@string/description_summary"
+        />
         <Preference
                 android:selectable="false"
                 android:title="@string/version_title"
-                android:summary="@string/version_summary" />
+                android:summary="@string/version_summary"
+        />
         <Preference
                 android:selectable="false"
                 android:title="@string/copyright_title"
-                android:summary="@string/copyright_summary" />
+                android:summary="@string/copyright_summary"
+        />
         <!-- MAYBE: add some links to websites -->
         <Preference
                 android:key="support"
                 android:title="@string/support_title"
         />
-        <!--android:summary="Report technical issues or suggest new features"-->
     </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

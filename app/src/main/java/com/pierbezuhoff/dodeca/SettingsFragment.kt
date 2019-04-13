@@ -93,12 +93,16 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     companion object {
         private const val TAG: String = "SettingsFragment"
+        // hidden in limited version
         private val ADVANCED_PREFERENCES = setOf(
             "show_all_circles",
+            "autocenter_always",
             /*"show_centers",*/
             /*"rotate_shapes",*/
             "skip_n",
-            "show_stat"
+            "show_stat",
+            "autocenter_preview",
+            "preview_smart_updates"
         )
     }
 }

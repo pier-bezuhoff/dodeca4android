@@ -80,7 +80,7 @@
 
     <string name="settings_saves_title">Saves</string>
     <string name="save_as_title">Save as</string>
-    <string name="save_as_summary">Prompt save under new name on save</string>
+    <string name="save_as_summary">Suggest to save under new name on save</string>
     <string name="autosave_title">Autosave current ddu</string>
 
     <string name="restore_default_ddu_title">Restore current ddu-picture</string>
