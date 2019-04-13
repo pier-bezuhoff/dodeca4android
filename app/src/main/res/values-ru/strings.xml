@@ -99,7 +99,7 @@
     <string name="circle_image_description">Изображение окружности</string>
     <string name="circle_name_initial_text">№</string>
     <string name="expand_group_description">Развернуть/свернуть группу</string>
-    <string name="choose_circle_dialog_message">Выбрать окружность для редактирования</string>
+    <string name="choose_circle_dialog_message">Выбрать окружности для редактирования</string>
     <string name="choose_circle_dialog_edit">Редактировать</string>
     <string name="choose_circle_dialog_cancel">Отмена</string>
     <string name="edit_circle_dialog_message_single">Редактировать окружность %s</string>
