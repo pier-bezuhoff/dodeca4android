@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.utils
 
 import android.graphics.Matrix
 import org.apache.commons.math3.complex.Complex

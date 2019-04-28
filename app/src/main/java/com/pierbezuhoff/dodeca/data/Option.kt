@@ -1,10 +1,14 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.data
 
 import android.content.SharedPreferences
 import android.content.res.Resources
 import android.graphics.Matrix
 import android.util.DisplayMetrics
 import androidx.annotation.BoolRes
+import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.utils.dx
+import com.pierbezuhoff.dodeca.utils.dy
+import com.pierbezuhoff.dodeca.utils.sx
 import kotlin.reflect.KProperty
 
 // cannot see better solution yet
@@ -124,7 +128,8 @@ class Options(val resources: Resources) {
             setOf("dx", "dy", "scale").forEach { editor.remove(it) }
         }
     }
-    private fun BooleanOption(key: String, @BoolRes id: Int): Option<Boolean> = Option(key, resources.getBoolean(id))
+    private fun BooleanOption(key: String, @BoolRes id: Int): Option<Boolean> =
+        Option(key, resources.getBoolean(id))
     val drawTrace = BooleanOption("draw_trace", R.bool.draw_trace)
     val updating = BooleanOption("updating", R.bool.updating)
     val redrawTraceOnMove = BooleanOption("redraw_trace", R.bool.redraw_trace)
@@ -147,16 +152,36 @@ class Options(val resources: Resources) {
     val autosave = BooleanOption("autosave", R.bool.autosave)
     val saveAs = BooleanOption("save_as", R.bool.save_as)
     val autocenterAlways = BooleanOption("autocenter_always", R.bool.autocenter_always)
-    val speed = ParsedFloatOption("speed", resources.getString(R.string.speed).toFloat())
-    val skipN = ParsedIntOption("skip_n", resources.getString(R.string.skip_n).toInt())
-    val canvasFactor = ParsedIntOption("canvas_factor", resources.getString(R.string.canvas_factor).toInt())
+    val speed = ParsedFloatOption(
+        "speed",
+        resources.getString(R.string.speed).toFloat()
+    )
+    val skipN = ParsedIntOption(
+        "skip_n",
+        resources.getString(R.string.skip_n).toInt()
+    )
+    val canvasFactor = ParsedIntOption(
+        "canvas_factor",
+        resources.getString(R.string.canvas_factor).toInt()
+    )
     val preferRecentDDU = BooleanOption("prefer_recent_ddu", R.bool.prefer_recent_ddu) // TODO: add to preferences
     // preview size in pixels, yet to be converted to dp
-    val previewSize = ParsedIntOption("preview_size", resources.getString(R.string.preview_size).toInt())
+    val previewSize = ParsedIntOption(
+        "preview_size",
+        resources.getString(R.string.preview_size).toInt()
+    )
     val autocenterPreview = BooleanOption("autocenter_preview", R.bool.autocenter_preview)
-    val nPreviewUpdates = ParsedIntOption("n_preview_updates", resources.getString(R.string.n_preview_updates).toInt())
-    val previewSmartUpdates = BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)
-    val versionCode = Option("version_code", resources.getInteger(R.integer.version_code))
+    val nPreviewUpdates = ParsedIntOption(
+        "n_preview_updates",
+        resources.getString(R.string.n_preview_updates).toInt()
+    )
+    val previewSmartUpdates = BooleanOption("preview_smart_updates",
+        R.bool.preview_smart_updates
+    )
+    val versionCode = Option(
+        "version_code",
+        resources.getInteger(R.integer.version_code)
+    )
 
     fun init() {
         if (!::options.isInitialized) {

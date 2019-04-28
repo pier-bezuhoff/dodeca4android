@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.utils
 
 import android.content.Context
 import android.graphics.Bitmap

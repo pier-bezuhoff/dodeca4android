@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.ui
 
 import android.app.Activity
 import android.content.Context
@@ -26,6 +26,24 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.pierbezuhoff.dodeca.utils.DB
+import com.pierbezuhoff.dodeca.utils.DDUFileDao
+import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.data.DDU
+import com.pierbezuhoff.dodeca.utils.insertOrUpdate
+import com.pierbezuhoff.dodeca.utils.FileName
+import com.pierbezuhoff.dodeca.utils.Filename
+import com.pierbezuhoff.dodeca.utils.Sleeping
+import com.pierbezuhoff.dodeca.utils.copyDirectory
+import com.pierbezuhoff.dodeca.utils.copyFile
+import com.pierbezuhoff.dodeca.utils.copyStream
+import com.pierbezuhoff.dodeca.utils.dduDir
+import com.pierbezuhoff.dodeca.utils.extract1DDU
+import com.pierbezuhoff.dodeca.utils.getDisplayName
+import com.pierbezuhoff.dodeca.utils.isDDU
+import com.pierbezuhoff.dodeca.utils.stripDDU
+import com.pierbezuhoff.dodeca.utils.withUniquePostfix
+import com.pierbezuhoff.dodeca.data.values
 import kotlinx.android.synthetic.main.activity_dduchooser.*
 import kotlinx.android.synthetic.main.dir_row.view.*
 import org.apache.commons.io.FileUtils
@@ -185,7 +203,9 @@ class DDUChooserActivity : AppCompatActivity() {
 
     private fun restoreDDUFile(file: File) {
         // TODO: restore imported files by original path
-        val original: Filename? = extract1DDU(file.name, dduDir, DB.dduFileDao(), TAG)
+        val original: Filename? = extract1DDU(file.name, dduDir, DB.dduFileDao(),
+            TAG
+        )
         original?.let {
             toast(getString(R.string.ddu_restore_toast, file.nameWithoutExtension, original.stripDDU()))
             with(dduAdapter) {
@@ -229,7 +249,9 @@ class DDUChooserActivity : AppCompatActivity() {
 //                putExtra("android.content.extra.SHOW_ADVANCED", true)
 //                putExtra("android.content.extra.FANCY", true)
             }
-            startActivityForResult(intent, IMPORT_DIR_REQUEST_CODE)
+            startActivityForResult(intent,
+                IMPORT_DIR_REQUEST_CODE
+            )
         } // NOTE: Android < 5 has no Intent.ACTION_OPEN_DOCUMENT_TREE
     }
 
@@ -274,7 +296,9 @@ class DDUChooserActivity : AppCompatActivity() {
             intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
                 // Documents.FLAG_DIR_SUPPORTS_CREATE
             }
-            startActivityForResult(intent, EXPORT_DIR_REQUEST_CODE)
+            startActivityForResult(intent,
+                EXPORT_DIR_REQUEST_CODE
+            )
         } else {
             toast("TODO: import directory $targetDir (for now works on Android 5.0+)")
             // TODO: find other way around
@@ -299,7 +323,10 @@ class DDUChooserActivity : AppCompatActivity() {
     }
 
     private fun deleteAll() {
-        alert(R.string.delete_all_alert_message, R.string.delete_all_alert_title) {
+        alert(
+            R.string.delete_all_alert_message,
+            R.string.delete_all_alert_title
+        ) {
             yesButton {
                 with(DB.dduFileDao()) {
                     dir.walkTopDown().iterator().forEach {
@@ -354,7 +381,9 @@ class DDUChooserActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_TITLE, file.name)
         }
         requestedDDUFile = file
-        startActivityForResult(intent, EXPORT_DDU_FOR_DODECALOOK_REQUEST_CODE)
+        startActivityForResult(intent,
+            EXPORT_DDU_FOR_DODECALOOK_REQUEST_CODE
+        )
     }
 
     private fun exportDDUFileForDodecaLook(uri: Uri) {
@@ -410,7 +439,9 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : RecyclerView(context, attrs, defStyleAttr) {
-    private val manager = GridLayoutManager(context, defaultNColumns)
+    private val manager = GridLayoutManager(context,
+        defaultNColumns
+    )
     private var columnWidth: Int? = null
 
     init {
@@ -443,13 +474,16 @@ class DirAdapter(
     class DirViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     private val dir: File get() = activity.dir
-    private val sleepingDirs: Sleeping<List<File>> = Sleeping { dir.listFiles { file -> file.isDirectory }.toList() }
+    private val sleepingDirs: Sleeping<List<File>> =
+        Sleeping { dir.listFiles { file -> file.isDirectory }.toList() }
     val dirs: List<File> by sleepingDirs
     var contextMenuCreatorPosition: Int? = null // track VH to act on it
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DirViewHolder =
-        DirViewHolder(LayoutInflater.from(parent.context)
-            .inflate(R.layout.dir_row, parent, false))
+        DirViewHolder(
+            LayoutInflater.from(parent.context)
+                .inflate(R.layout.dir_row, parent, false)
+        )
 
     override fun onBindViewHolder(holder: DirViewHolder, position: Int) {
         val dir = dirs[position]
@@ -485,9 +519,10 @@ class DDUAdapter(
 
     val dir: File get() = activity.dir
     var contextMenuCreatorPosition: Int? = null // track VH to act on it
-    private val sleepingFiles: Sleeping<ArrayList<File>> = Sleeping {
-        ArrayList(dir.listFiles().filter { it.extension.toLowerCase() == "ddu" })
-    }
+    private val sleepingFiles: Sleeping<ArrayList<File>> =
+        Sleeping {
+            ArrayList(dir.listFiles().filter { it.extension.toLowerCase() == "ddu" })
+        }
     val files: ArrayList<File> by sleepingFiles
     private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
     val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()

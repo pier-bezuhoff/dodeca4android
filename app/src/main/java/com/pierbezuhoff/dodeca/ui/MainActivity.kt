@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.ui
 
 import android.Manifest
 import android.app.Activity
@@ -25,6 +25,25 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
+import com.pierbezuhoff.dodeca.BuildConfig
+import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.data.DDU
+import com.pierbezuhoff.dodeca.data.Options
+import com.pierbezuhoff.dodeca.data.Shapes
+import com.pierbezuhoff.dodeca.data.fetch
+import com.pierbezuhoff.dodeca.data.options
+import com.pierbezuhoff.dodeca.data.set
+import com.pierbezuhoff.dodeca.data.values
+import com.pierbezuhoff.dodeca.onRequestPermissionsResult
+import com.pierbezuhoff.dodeca.readUriWithPermissionCheck
+import com.pierbezuhoff.dodeca.utils.DB
+import com.pierbezuhoff.dodeca.utils.DDUFileDao
+import com.pierbezuhoff.dodeca.utils.DDUFileDatabase
+import com.pierbezuhoff.dodeca.utils.Filename
+import com.pierbezuhoff.dodeca.utils.FlexibleTimer
+import com.pierbezuhoff.dodeca.utils.dduDir
+import com.pierbezuhoff.dodeca.utils.extract1DDU
+import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
 import kotlinx.android.synthetic.main.toolbar2.*
@@ -67,7 +86,8 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
             onUpgrade()
         }
             window.decorView.apply {
-            systemUiVisibility = IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
+            systemUiVisibility =
+                IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
             setOnSystemUiVisibilityChangeListener {
                 if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
                     this.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
@@ -78,7 +98,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         // listen scroll, double tap and scale gestures
-        DodecaGestureDetector(this, dodecaView, onSingleTap = { toggleBottomBar() })
+        DodecaGestureDetector(applicationContext, dodecaView, onSingleTap = { toggleBottomBar() })
         // handling launch from implicit intent
         Log.i(TAG, "Dodeca started${if (intent.action == Intent.ACTION_VIEW) " from implicit intent: ${intent.data?.path ?: "-"}" else ""}")
         if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
@@ -198,7 +218,8 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
             R.id.settings_button -> {
                 startActivityForResult(
                     Intent(this@MainActivity, SettingsActivity::class.java),
-                    APPLY_SETTINGS_CODE)
+                    APPLY_SETTINGS_CODE
+                )
             }
         }
     }
@@ -413,7 +434,8 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
             val itemView: View = convertView ?:
             context.layoutInflater.inflate(R.layout.shape_spinner_row, parent, false).apply {
-                tag = SpinnerViewHolder(findViewById(R.id.shape_spinner_image))
+                tag =
+                    SpinnerViewHolder(findViewById(R.id.shape_spinner_image))
             }
             (itemView.tag as SpinnerViewHolder).imageView.setImageDrawable(
                 ContextCompat.getDrawable(context, shapes[position]))

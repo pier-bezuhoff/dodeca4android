@@ -1,7 +1,8 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.pierbezuhoff.dodeca.R
 import kotlinx.android.synthetic.main.activity_help.*
 import java.util.Locale
 

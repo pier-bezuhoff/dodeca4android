@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.utils
 
 // Kotlin's `/\A. A?` is not expressive enough (A?? = A?)
 sealed class Maybe<out A> {
@@ -17,4 +17,6 @@ object None : Maybe<Nothing>() {
 }
 
 fun <A> Maybe(maybeA: A?): Maybe<A> = maybeA?.let { Just(it) } ?: None
-fun <A> justIf(a: A, condition: Boolean): Maybe<A> = if (condition) Just(a) else None
+fun <A> justIf(a: A, condition: Boolean): Maybe<A> = if (condition) Just(
+    a
+) else None

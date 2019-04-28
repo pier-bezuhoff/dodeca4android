@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.ui
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -10,6 +10,32 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.core.graphics.withMatrix
+import com.pierbezuhoff.dodeca.utils.DB
+import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.data.SharedPreference
+import com.pierbezuhoff.dodeca.data.Trace
+import com.pierbezuhoff.dodeca.data.CircleFigure
+import com.pierbezuhoff.dodeca.data.CircleGroup
+import com.pierbezuhoff.dodeca.data.CircleGroupImpl
+import com.pierbezuhoff.dodeca.data.DDU
+import com.pierbezuhoff.dodeca.data.exampleDDU
+import com.pierbezuhoff.dodeca.data.fetch
+import com.pierbezuhoff.dodeca.utils.insertOrUpdate
+import com.pierbezuhoff.dodeca.data.options
+import com.pierbezuhoff.dodeca.data.set
+import com.pierbezuhoff.dodeca.utils.ComplexFF
+import com.pierbezuhoff.dodeca.utils.Just
+import com.pierbezuhoff.dodeca.utils.Sleepy
+import com.pierbezuhoff.dodeca.utils.asFF
+import com.pierbezuhoff.dodeca.utils.dduDir
+import com.pierbezuhoff.dodeca.utils.dduPath
+import com.pierbezuhoff.dodeca.utils.dx
+import com.pierbezuhoff.dodeca.utils.dy
+import com.pierbezuhoff.dodeca.utils.mean
+import com.pierbezuhoff.dodeca.utils.minus
+import com.pierbezuhoff.dodeca.utils.move
+import com.pierbezuhoff.dodeca.utils.sx
+import com.pierbezuhoff.dodeca.data.values
 import org.apache.commons.math3.complex.Complex
 import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.doAsync
@@ -39,7 +65,8 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     private var lastUpdateTime: Long = 0L
     private var updateOnce = false
     private val paint = Paint(defaultPaint)
-    private val trace: Trace = Trace(paint = Paint(defaultPaint))
+    private val trace: Trace =
+        Trace(paint = Paint(defaultPaint))
     private var nUpdates: Long = 0L
 
     // MainActivity should set up this whenever SharedPreference/show_stat changes, maybe use Sleepy or smth
@@ -500,6 +527,6 @@ internal inline fun logMeasureTimeMilis(name: String = "", block: () -> Unit) {
         ns[name] = 1
         times[name] = time
     }
-    val overall = "%.3f".format(times[name]!!.toFloat()/ns[name]!!)
+    val overall = "%.3f".format(times[name]!!.toFloat()/ ns[name]!!)
     Log.i("logMeasureTimeMilis/$name", "overall: ${overall}ms, current: ${time}ms")
 }

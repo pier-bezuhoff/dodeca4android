@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.utils
 
 import kotlin.reflect.KProperty
 

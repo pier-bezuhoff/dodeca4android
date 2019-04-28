@@ -1,19 +1,13 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.utils
 
 import android.content.ContentResolver
-import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.Timer
-import kotlin.concurrent.timerTask
 
 typealias FileName = String // without extension
 typealias Filename = String // with extension
@@ -95,55 +89,5 @@ fun ContentResolver.getDisplayName(uri: Uri): Filename? {
         }
     }
     return filename
-}
-
-val Context.dduDir get() =  File(filesDir, "ddu")
-fun Context.dduPath(file: File): String =
-    file.absolutePath.substringAfter(dduDir.absolutePath).trim('/')
-
-fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, TAG: String, overwrite: Boolean = false): Filename? {
-    var source: Filename = filename
-    fun streamFromDDUAsset(filename: Filename): InputStream =
-        assets.open("${getString(R.string.ddu_asset_dir)}/$filename")
-    val inputStream: InputStream? = try {
-        streamFromDDUAsset(source)
-    } catch (e: IOException) {
-        dduFileDao.findByFilename(filename)?.let {
-            source = it.originalFilename
-            try {
-                streamFromDDUAsset(source)
-            } catch (e: IOException) { null }
-        }
-    }
-    return inputStream?.let {
-        val targetFile0 = File(dir, source)
-        val targetFile =
-            if (!overwrite && targetFile0.exists()) withUniquePostfix(targetFile0)
-            else targetFile0
-        targetFile.createNewFile()
-        Log.i(TAG, "Copying asset $source to ${targetFile.path}")
-        copyStream(inputStream, FileOutputStream(targetFile))
-        dduFileDao.insertOrUpdate(targetFile.name) { preview = null; originalFilename = source }
-        targetFile.name
-    } ?: null.also {
-        Log.w(TAG, "Cannot find asset $filename ($source)")
-    }
-}
-
-
-class FlexibleTimer(val timeMilis: Long, private val action: () -> Unit) {
-    private var timer: Timer? = null
-
-    fun start() {
-        timer?.cancel()
-        timer = Timer().apply {
-            schedule(timerTask { action() }, timeMilis)
-        }
-    }
-
-    fun stop() {
-        timer?.cancel()
-        timer = null
-    }
 }
 
