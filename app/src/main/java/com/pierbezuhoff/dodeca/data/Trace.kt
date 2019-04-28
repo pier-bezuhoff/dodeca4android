@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.data
 
 import android.graphics.Bitmap
 import android.graphics.Canvas

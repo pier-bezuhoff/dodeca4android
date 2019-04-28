@@ -1,6 +1,16 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.data
 
 import android.graphics.Color
+import com.pierbezuhoff.dodeca.utils.Maybe
+import com.pierbezuhoff.dodeca.utils.None
+import com.pierbezuhoff.dodeca.utils.abs2
+import com.pierbezuhoff.dodeca.utils.div
+import com.pierbezuhoff.dodeca.utils.inverted
+import com.pierbezuhoff.dodeca.utils.mean
+import com.pierbezuhoff.dodeca.utils.minus
+import com.pierbezuhoff.dodeca.utils.normalized
+import com.pierbezuhoff.dodeca.utils.plus
+import com.pierbezuhoff.dodeca.utils.times
 import org.apache.commons.math3.complex.Complex
 
 /* radius >= 0 */
@@ -105,7 +115,8 @@ class CircleFigure(center: Complex, radius: Double,
     ): CircleFigure = CircleFigure(
         newCenter ?: center, newRadius ?: radius,
         newColor ?: color, newFill ?: fill,
-        (newRule ?: rule)?.let { r -> // rule-less circles cannot be visible yet
+        (newRule ?: rule)?.let { r ->
+            // rule-less circles cannot be visible yet
             newShown?.let { shown ->
                 if (shown && r.startsWith('n'))
                     r.drop(1)

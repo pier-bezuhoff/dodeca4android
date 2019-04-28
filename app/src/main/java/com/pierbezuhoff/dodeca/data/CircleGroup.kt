@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.data
 
 import android.graphics.Canvas
 import android.graphics.Color
@@ -34,7 +34,8 @@ internal data class FigureAttributes(
 // NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times faster
 // maybe: have float old_s
 /* List<Circle> is represented as 3 DoubleArray */
-class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : CircleGroup {
+class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) :
+    CircleGroup {
     private var size: Int = cs.size
     private val xs: DoubleArray = DoubleArray(size) { cs[it].x }
     private val ys: DoubleArray = DoubleArray(size) { cs[it].y }
@@ -42,7 +43,14 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) : Circl
     private var oldXs: DoubleArray = xs // old_s are used for draw and as oldCircles in update
     private var oldYs: DoubleArray = ys
     private var oldRs: DoubleArray = rs
-    private val attrs: Array<FigureAttributes> = Array(size) { cs[it].run { FigureAttributes(color, fill, rule, borderColor) } }
+    private val attrs: Array<FigureAttributes> = Array(size) { cs[it].run {
+        FigureAttributes(
+            color,
+            fill,
+            rule,
+            borderColor
+        )
+    } }
     private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
     private var shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
     private val paints: Array<Paint> = attrs.map {

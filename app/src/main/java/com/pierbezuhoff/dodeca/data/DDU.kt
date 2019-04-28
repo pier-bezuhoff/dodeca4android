@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.data
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -7,16 +7,19 @@ import android.graphics.Matrix
 import android.graphics.Paint
 import android.util.Log
 import androidx.core.graphics.withMatrix
+import com.pierbezuhoff.dodeca.BuildConfig
+import com.pierbezuhoff.dodeca.utils.asFF
+import com.pierbezuhoff.dodeca.utils.mean
+import com.pierbezuhoff.dodeca.utils.minus
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
-import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 internal enum class Mode { // for scanning .ddu, before <mode parameter>
     NO, GLOBAL, RADIUS, X, Y, COLOR, FILL, RULE, CIRCLE_AUX;
-    fun next(): Mode = Mode.values().elementAtOrElse(ordinal + 1) { Mode.CIRCLE_AUX }
+    fun next(): Mode = Mode.values().elementAtOrElse(ordinal + 1) { CIRCLE_AUX }
 }
 
 internal data class CircleParams(
@@ -65,7 +68,8 @@ class DDU(
     fun copy() =
         DDU(
             backgroundColor, restGlobals.toList(), drawTrace, bestCenter, shape,
-            circles.map { it.copy(newRule = null) }, file)
+            circles.map { it.copy(newRule = null) }, file
+        )
 
     override fun toString(): String = """DDU(
         |  backgroundColor = ${backgroundColor.fromColor()}

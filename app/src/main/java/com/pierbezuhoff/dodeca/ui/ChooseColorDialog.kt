@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.ui
 
 import android.app.Dialog
 import android.content.Context
@@ -17,6 +17,12 @@ import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.data.CircleFigure
+import com.pierbezuhoff.dodeca.data.CircleGroup
+import com.pierbezuhoff.dodeca.utils.Maybe
+import com.pierbezuhoff.dodeca.utils.None
+import com.pierbezuhoff.dodeca.utils.justIf
 import com.rarepebble.colorpicker.ColorPickerView
 import kotlinx.android.synthetic.main.choose_color_dialog.view.*
 import kotlinx.android.synthetic.main.choose_color_row.view.*
@@ -134,11 +140,11 @@ class CircleAdapter(
                 if (list.size == 1)
                     list[0].apply { position = i }
                 else
-                CircleGroupRow(
-                    list.toSet().apply { forEach { it.position = null } },
-                    position = i,
-                    checked = list.all { it.checked }
-                )
+                    CircleGroupRow(
+                        list.toSet().apply { forEach { it.position = null } },
+                        position = i,
+                        checked = list.all { it.checked }
+                    )
             }
             .sortedByDescending { it.visible }
 
@@ -410,7 +416,10 @@ class CircleAdapter(
         val blueprint = circles.take(1)[0]
         val message = when(circles.size) {
             1 -> context.getString(R.string.edit_circle_dialog_message_single, blueprint.id.toString())
-            else -> context.getString(R.string.edit_circle_dialog_message_plural, circlesNumbers(circles))
+            else -> context.getString(
+                R.string.edit_circle_dialog_message_plural,
+                circlesNumbers(circles)
+            )
         }
         return editCircleDialog(blueprint.figure, message, onApply)
     }

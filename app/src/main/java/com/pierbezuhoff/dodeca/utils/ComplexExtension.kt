@@ -1,5 +1,6 @@
-package com.pierbezuhoff.dodeca
+package com.pierbezuhoff.dodeca.utils
 
+import com.pierbezuhoff.dodeca.data.Circle
 import org.apache.commons.math3.complex.Complex
 
 fun ComplexFF(x: Float, y: Float): Complex = Complex(x.toDouble(), y.toDouble())
