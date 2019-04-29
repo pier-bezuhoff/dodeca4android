@@ -10,20 +10,22 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.core.graphics.withMatrix
-import com.pierbezuhoff.dodeca.utils.DB
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.SharedPreference
-import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.CircleGroupImpl
 import com.pierbezuhoff.dodeca.data.DDU
+import com.pierbezuhoff.dodeca.data.SharedPreference
+import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.exampleDDU
 import com.pierbezuhoff.dodeca.data.fetch
-import com.pierbezuhoff.dodeca.utils.insertOrUpdate
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.set
+import com.pierbezuhoff.dodeca.data.values
+import com.pierbezuhoff.dodeca.models.DodecaViewModel
+import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
+import com.pierbezuhoff.dodeca.utils.DB
 import com.pierbezuhoff.dodeca.utils.Just
 import com.pierbezuhoff.dodeca.utils.Sleepy
 import com.pierbezuhoff.dodeca.utils.asFF
@@ -31,11 +33,11 @@ import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
 import com.pierbezuhoff.dodeca.utils.dx
 import com.pierbezuhoff.dodeca.utils.dy
+import com.pierbezuhoff.dodeca.utils.insertOrUpdate
 import com.pierbezuhoff.dodeca.utils.mean
 import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.move
 import com.pierbezuhoff.dodeca.utils.sx
-import com.pierbezuhoff.dodeca.data.values
 import org.apache.commons.math3.complex.Complex
 import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.doAsync
@@ -50,34 +52,13 @@ import kotlin.system.measureTimeMillis
 
 // NOTE: condition (width > 0) used when we should know view sizes (otherwise width == height == 0)
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
-    // dummy default, actual from init(), because I cannot use lateinit here
-    var afterNewDDU: (DDU) -> Unit = {}
-    private var initialized = false
-    // NOTE: used Delegates.vetoable instead of Delegates.observable because the latter handle after-change
-    var ddu: DDU by Delegates.vetoable(DDU(circles = emptyList()))
-        { _, _, value -> onNewDDU(value); afterNewDDU(value); true } // before change
-    lateinit var circleGroup: CircleGroup
-    val sharedPreferences: SharedPreferences by lazy { context.defaultSharedPreferences }
-    var nUpdatesView: TextView? = null
-    var time20UpdatesView: TextView? = null
+    lateinit var mainModel: MainViewModel
+    lateinit var model: DodecaViewModel
 
-    private var redrawTraceOnce: Boolean = options.drawTrace.default
-    private var lastUpdateTime: Long = 0L
-    private var updateOnce = false
-    private val paint = Paint(defaultPaint)
+    private var initialized = false
+
     private val trace: Trace =
         Trace(paint = Paint(defaultPaint))
-    private var nUpdates: Long = 0L
-
-    // MainActivity should set up this whenever SharedPreference/show_stat changes, maybe use Sleepy or smth
-    var showStat = true
-    private var last20NUpdates: Long = 0L
-    private var last20UpdateTime: Long = 0L
-
-    val dx get() = values.motion.dx
-    val dy get() = values.motion.dy
-    val scale get() = values.motion.sx
-    var pickedColor: Int? = null
 
     val centerX: Float get() = x + width / 2
     val centerY: Float get() = y + height / 2

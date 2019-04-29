@@ -145,4 +145,5 @@
     <string name="save_as_summary">Предлагать сохранить под другим именем</string>
     <string name="save_as_message">Сохранить как</string>
     <string name="save_as_button_title">Сохранить</string>
+    <string name="draw_circles_button_title">Режим рисования окружностей</string>
 </resources>

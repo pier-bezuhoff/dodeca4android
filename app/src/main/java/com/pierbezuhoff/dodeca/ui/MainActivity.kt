@@ -25,6 +25,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.DDU
@@ -34,8 +37,9 @@ import com.pierbezuhoff.dodeca.data.fetch
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.set
 import com.pierbezuhoff.dodeca.data.values
-import com.pierbezuhoff.dodeca.onRequestPermissionsResult
-import com.pierbezuhoff.dodeca.readUriWithPermissionCheck
+import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
+import com.pierbezuhoff.dodeca.models.DodecaViewModel
+import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.utils.DB
 import com.pierbezuhoff.dodeca.utils.DDUFileDao
 import com.pierbezuhoff.dodeca.utils.DDUFileDatabase
@@ -65,6 +69,12 @@ import java.io.IOException
 
 @RuntimePermissions
 class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener {
+    private val model by lazy {
+        ViewModelProviders.of(this).get(MainViewModel::class.java)
+    }
+    private val dodecaViewModel by lazy {
+        ViewModelProviders.of(this).get(DodecaViewModel::class.java)
+    }
     private var bottomBarShown = true
     private var dir: File? = null
     private var bottomBarHideTimer: FlexibleTimer =
@@ -94,7 +104,10 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
             }
         }
         window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-        setContentView(R.layout.activity_main)
+        val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        binding.lifecycleOwner = this
+        binding.model = model
+        binding.dodecaViewModel = dodecaViewModel
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         // listen scroll, double tap and scale gestures
@@ -109,7 +122,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         adjustStat()
         dodecaView.nUpdatesView = n_updates
         dodecaView.time20UpdatesView = updates_20
-        dodecaView.afterNewDDU = { afterNewDDU(it) }
+        dodecaViewModel.ddu.observe(this, Observer { afterNewDDU(it) })
         setupToolbar()
         bottomBarHideTimer.start()
     }
@@ -380,15 +393,6 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         } else {
             stat.visibility = LinearLayout.GONE
             dodecaView.showStat = false
-        }
-    }
-
-    fun openColorPicker() {
-        val fromColor = dodecaView.pickedColor
-        if (fromColor != null) {
-            // TODO: fromColor -> chooseNewColor -> dodecaView.changeColor(it)
-        } else {
-            toast(getString(R.string.please_pick_color_toast))
         }
     }
 
