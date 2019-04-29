@@ -35,8 +35,11 @@
     <string name="ddu_saved_toast">ddu-picture saved as \"%s\"</string>
     <string name="imported_ddu_overwrites_original_toast">Original ddu-picture was overwritten by imported one</string>
     <string name="imported_ddu_toast">New ddu-picture was imported:</string>
-    <string name="canvas_factor_oom_toast">Canvas factor %d is too large: it caused out of memory error! Trying smaller factor %d…</string>
-    <string name="minimal_canvas_factor_oom_toast">Minimal canvas factor %d caused out of memory error! Retrying…</string>
+    <string name="canvas_factor_oom_toast">Canvas factor %d is too large: it caused out of memory error! Trying smaller
+        factor %d…
+    </string>
+    <string name="minimal_canvas_factor_oom_toast">Minimal canvas factor %d caused out of memory error! Retrying…
+    </string>
     <string name="ddu_rename_toast">\"%s\" renamed to \"%s\"</string>
     <string name="ddu_delete_toast">\"%s\" deleted</string>
     <string name="ddu_restore_toast">\"%s\" restored to \"%s\"</string>
@@ -103,14 +106,16 @@
     <string name="version_title">Version</string>
     <string name="version_summary">&app_name; &version_name;</string>
     <string name="copyright_title" translatable="false">Copyright</string>
-    <string name="copyright_summary">© Revolt Pimenov (algorithms, esthetic geometry), Ivan Nikitin (programming)</string>
+    <string name="copyright_summary">© Revolt Pimenov (algorithms, esthetic geometry), Ivan Nikitin (programming)
+    </string>
     <string name="support_title">Feedback and support</string>
     <string name="feedback_subject" translatable="false">&app_name; support</string>
     <string name="developer_email" translatable="false">&feedback_email;</string>
 
     <!-- Strings related to permissions -->
     <string name="permission_storage_message">Please, allow storage access to import this ddu-picture</string>
-    <string name="permission_storage_accusation">You denied storage access permission. Why? You cannot import the ddu now!
+    <string name="permission_storage_accusation">You denied storage access permission. Why? You cannot import the ddu
+        now!
     </string>
     <string name="permission_rationale_dialog_title">Permission request</string>
     <string name="permission_rationale_dialog_allow">Allow</string>
@@ -142,7 +147,8 @@
     <string name="folder_icon_description">Folder icon</string>
     <string name="dir_name_initial_text">[folder name]</string>
     <string name="delete_ddus">Delete all ddu-pictures</string>
-    <string name="delete_all_alert_message">Do you want to permanently delete all ddu-pictures in current folder?</string>
+    <string name="delete_all_alert_message">Do you want to permanently delete all ddu-pictures in current folder?
+    </string>
     <string name="delete_all_alert_title">Deletion confirmation</string>
 
     <!-- Color chooser dialog -->
@@ -172,5 +178,9 @@
     <string name="circle_show_description">Visible</string>
     <string name="toggle_folders">Toggle folders</string>
     <string name="settings_ddu_files_title">Revert defaults</string>
+
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 
 </resources>

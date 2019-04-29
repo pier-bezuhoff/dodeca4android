@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
             }
             onUpgrade()
         }
-            window.decorView.apply {
+        window.decorView.apply {
             systemUiVisibility =
                 IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
             setOnSystemUiVisibilityChangeListener {
