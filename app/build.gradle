@@ -36,6 +36,9 @@ android {
             versionNameSuffix '-beta'
         }
     }
+    dataBinding {
+        enabled true
+    }
 }
 
 dependencies {
@@ -60,4 +63,5 @@ dependencies {
     kapt "com.github.hotchemi:permissionsdispatcher-processor:$permission_dispatcher_version"
     implementation "androidx.room:room-runtime:$room_version" // for abstraction over SQLite database
     kapt "androidx.room:room-compiler:$room_version"
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
 }

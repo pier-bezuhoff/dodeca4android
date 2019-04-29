@@ -2,64 +2,78 @@
 <layout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
 >
     <data>
-        <variable name="model" type="com.pierbezuhoff.dodeca.models.MainViewModel"/>
+        <variable name="model" type="com.pierbezuhoff.dodeca.models.DodecaEditViewModel"/>
     </data>
     <LinearLayout
-            android:id="@+id/toolbar1"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
     >
         <ImageButton
-                android:id="@+id/choose_color_button"
-                android:src="@drawable/ic_choose_color"
+                android:id="@+id/help_button"
+                android:src="@drawable/ic_help"
                 app:backgroundTint="@color/toolbarColor"
                 android:padding="8dp"
-                android:layout_weight="1"
                 android:layout_width="match_parent"
+                android:layout_weight="1"
                 android:layout_height="match_parent"
-                app:description="@{@string/choose_color_button_title}"
+                app:description="@{@string/help_button_title}"
         />
         <ImageButton
-                android:id="@+id/trace_button"
-                android:src="@drawable/ic_trace"
+                android:id="@+id/load_button"
+                android:src="@drawable/ic_open_file"
                 app:backgroundTint="@color/toolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:description="@{@string/trace_button_title}"
-        />
-        <Spinner
-                android:id="@+id/shape_spinner"
-                android:prompt="@string/shape_spinner_prompt"
-                android:spinnerMode="dialog"
-                android:layout_weight="1"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:description="@{@string/shape_spinner_title}"
+                app:description="@{@string/load_button_title}"
         />
         <ImageButton
-                android:id="@+id/clear_button"
-                android:src="@drawable/ic_clear"
+                android:id="@+id/save_button"
+                android:src="@drawable/ic_save_file"
                 app:backgroundTint="@color/toolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:description="@{@string/clear_button_title}"
+                app:description="@{@string/save_button_title}"
         />
         <ImageButton
-                android:id="@+id/autocenter_button"
-                android:src="@drawable/ic_autocenter"
+                android:id="@+id/play_button"
+                android:src="@drawable/ic_play"
                 app:backgroundTint="@color/toolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:description="@{@string/autocenter_button_title}"
+                app:description="@{@string/play_button_title}"
+                app:tintEnabled="@{model.playing}"
         />
+        <ImageButton
+                android:id="@+id/draw_circles_button"
+                android:src="@drawable/ic_add_circle"
+                app:backgroundTint="@color/toolbarColor"
+                android:padding="8dp"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:description="@{@string/draw_circles_button_title}"
+                app:tintEnabled="@{model.drawCirclesMode}"
+        />
+        <ImageButton
+                android:id="@+id/settings_button"
+                android:src="@drawable/ic_settings"
+                app:backgroundTint="@color/toolbarColor"
+                android:padding="8dp"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:description="@{@string/settings_button_title}"
+        />
+
     </LinearLayout>
 </layout>
