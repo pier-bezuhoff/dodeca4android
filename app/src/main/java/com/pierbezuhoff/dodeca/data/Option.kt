@@ -6,6 +6,7 @@ import android.graphics.Matrix
 import android.util.DisplayMetrics
 import androidx.annotation.BoolRes
 import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dx
 import com.pierbezuhoff.dodeca.utils.dy
 import com.pierbezuhoff.dodeca.utils.sx
@@ -18,17 +19,20 @@ lateinit var values: Values private set
 
 abstract class SharedPreference<T>(val default: T) where T : Any {
     var value = default
+    private val fetchCallbacks: MutableList<(T) -> Unit> = mutableListOf()
 
     abstract fun peek(sharedPreferences: SharedPreferences): T
 
-    // NOTE: fetch(_) { * } == fetch(_, onPostChange = { * })
-    fun fetch(sharedPreferences: SharedPreferences, onPreChange: (T) -> Unit = {}, onPostChange: (T) -> Unit = {}) {
+    private fun onFetch(value: T) {
+        fetchCallbacks.forEach { it(value) }
+    }
+
+    fun fetch(sharedPreferences: SharedPreferences) {
         try {
             val newValue = peek(sharedPreferences)
             val changed = value != newValue
-            if (changed) onPreChange(newValue)
             value = newValue
-            if (changed) onPostChange(value)
+            onFetch(value)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -44,6 +48,10 @@ abstract class SharedPreference<T>(val default: T) where T : Any {
     abstract fun remove(editor: SharedPreferences.Editor)
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+
+    fun addOnFetchCallback(callback: (T) -> Unit) {
+        fetchCallbacks.add(callback)
+    }
 }
 
 open class Option<T>(val key: String, default: T) : SharedPreference<T>(default) where T : Any {
@@ -164,7 +172,6 @@ class Options(val resources: Resources) {
         "canvas_factor",
         resources.getString(R.string.canvas_factor).toInt()
     )
-    val preferRecentDDU = BooleanOption("prefer_recent_ddu", R.bool.prefer_recent_ddu) // TODO: add to preferences
     // preview size in pixels, yet to be converted to dp
     val previewSize = ParsedIntOption(
         "preview_size",
@@ -178,6 +185,7 @@ class Options(val resources: Resources) {
     val previewSmartUpdates = BooleanOption("preview_smart_updates",
         R.bool.preview_smart_updates
     )
+    val recentDDU: Option<Filename> = Option("recent_ddu", resources.getString(R.string.first_ddu))
     val versionCode = Option(
         "version_code",
         resources.getInteger(R.integer.version_code)
@@ -206,22 +214,20 @@ class Values(private val options: Options) {
     val speed: Float by options.speed
     val skipN: Int by options.skipN
     val canvasFactor: Int by options.canvasFactor
-    val preferRecentDDU: Boolean by options.preferRecentDDU
     val previewSize: Int by options.previewSize
     val autocenterPreview: Boolean by options.autocenterPreview
     val previewSizePx: Int get() = options.resources.dp2px(values.previewSize)
     val nPreviewUpdates: Int by options.nPreviewUpdates
     val previewSmartUpdates: Boolean by options.previewSmartUpdates
+    val recentDDU: Filename by options.recentDDU
     val versionCode: Int by options.versionCode
 }
 
 internal fun Resources.dp2px(dp: Int): Int = dp * displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
 internal fun Resources.px2dp(px: Int): Int = px * DisplayMetrics.DENSITY_DEFAULT / displayMetrics.densityDpi
 
-fun <T : Any> SharedPreferences.fetch(
-    preference: SharedPreference<T>,
-    onPreChange: (T) -> Unit = {}, onPostChange: (T) -> Unit = {}
-) = preference.fetch(this, onPreChange, onPostChange)
+fun <T : Any> SharedPreferences.fetch(preference: SharedPreference<T>) =
+    preference.fetch(this)
 
 fun <T : Any> SharedPreferences.Editor.put(preference: SharedPreference<T>) =
     preference.put(this)

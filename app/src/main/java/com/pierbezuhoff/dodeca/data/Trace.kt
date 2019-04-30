@@ -3,14 +3,13 @@ package com.pierbezuhoff.dodeca.data
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
-import android.graphics.Paint
 
-class Trace(val paint: Paint) {
+class Trace {
     var initialized = false
     lateinit var bitmap: Bitmap
     lateinit var canvas: Canvas
     // `bitmap` top-left corner - screen top-left corner
-    val translation = Matrix() // factor => pre translation
+    private val translation = Matrix() // factor => pre translation
     val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
     // maybe: cache blitMatrix for performance (Sleepy)
     val blitMatrix get() = Matrix(translation).apply { postConcat(motion) }

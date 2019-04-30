@@ -8,101 +8,71 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import android.widget.TextView
 import androidx.core.graphics.withMatrix
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
-import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.CircleGroupImpl
 import com.pierbezuhoff.dodeca.data.DDU
 import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.Trace
-import com.pierbezuhoff.dodeca.data.exampleDDU
-import com.pierbezuhoff.dodeca.data.fetch
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.set
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
+import com.pierbezuhoff.dodeca.models.SharedPreferencesModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
 import com.pierbezuhoff.dodeca.utils.DB
 import com.pierbezuhoff.dodeca.utils.Just
 import com.pierbezuhoff.dodeca.utils.Sleepy
 import com.pierbezuhoff.dodeca.utils.asFF
-import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
 import com.pierbezuhoff.dodeca.utils.dx
 import com.pierbezuhoff.dodeca.utils.dy
 import com.pierbezuhoff.dodeca.utils.insertOrUpdate
-import com.pierbezuhoff.dodeca.utils.mean
 import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.move
-import com.pierbezuhoff.dodeca.utils.sx
 import org.apache.commons.math3.complex.Complex
-import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.File
 import kotlin.concurrent.fixedRateTimer
 import kotlin.math.roundToInt
-import kotlin.properties.Delegates
 import kotlin.reflect.KMutableProperty0
 import kotlin.system.measureTimeMillis
 
-// NOTE: condition (width > 0) used when we should know view sizes (otherwise width == height == 0)
 class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(context, attributeSet) {
     lateinit var mainModel: MainViewModel
     lateinit var model: DodecaViewModel
+    lateinit var sharedPreferencesModel: SharedPreferencesModel
 
     private var initialized = false
 
-    private val trace: Trace =
-        Trace(paint = Paint(defaultPaint))
-
-    val centerX: Float get() = x + width / 2
-    val centerY: Float get() = y + height / 2
+    private val centerX: Float get() = x + width / 2
+    private val centerY: Float get() = y + height / 2
     val center: Complex get() = ComplexFF(centerX, centerY)
 
+    private val knownSize: Boolean get() = width > 0
+
     private fun init() {
-        loadSharedPreferences()
-        try {
-            val recentDDU by lazy { sharedPreferences.getString("recent_ddu", null) }
-            val filename =
-                if (values.preferRecentDDU && recentDDU != null) recentDDU
-                else context.getString(R.string.first_ddu)
-            val dduFile = File(context.dduDir, filename)
-            this.ddu = DDU.readFile(dduFile)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            this.ddu = exampleDDU
-        }
+        registerOnFetchCallbacks()
+        sharedPreferencesModel.loadAll()
+        model.initFrom(context)
+        // TODO: updating -> local var & subscribe to options.updating changes
         fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
             if (values.updating) postInvalidate()
         }
     }
 
-    fun loadSharedPreferences() {
-        loadMajorSharedPreferences()
-        with(sharedPreferences) { minorPreferences.forEach { fetch(it) } }
-    }
-
-    fun loadMajorSharedPreferences() {
-        with(sharedPreferences) {
-            effectiveMajorPreferences.forEach { preference -> fetch(preference) { onNew(preference) } }
-            secondaryMajorPreferences.forEach { fetch(it) }
-        }
-    }
-
     fun centerize(ddu: DDU? = null) {
         // must occur BEFORE retrace
-        val targetDDU: DDU = ddu ?: this.ddu
-        if (width > 0) { // we know sizes
-            if (targetDDU.bestCenter != null)
-                centerize(targetDDU.bestCenter!!)
-            else if (values.autocenterAlways)
-                centerize(targetDDU.autoCenter)
-        }
+        if (knownSize)
+            (ddu ?: model.ddu.value)?.let { ddu ->
+                ddu.bestCenter
+                    ?.let { centerizeTo(it) }
+                    ?: if (values.autocenterAlways) centerizeTo(ddu.autoCenter)
+            }
     }
 
     fun autocenter() {
@@ -122,7 +92,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private fun centerize(newCenter: Complex) {
+    private fun centerizeTo(newCenter: Complex) {
         val visibleNewCenter = visible(newCenter)
         val (dx, dy) = (center - visibleNewCenter).asFF()
         updateScroll(dx, dy)
@@ -191,18 +161,6 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    /* scroll/translate screen and options.drawTrace */
-    fun updateScroll(ddx: Float, ddy: Float) {
-        values.motion.postTranslate(ddx, ddy)
-        updatingTrace { trace.translate(ddx, ddy) }
-    }
-
-    /* scale screen and options.drawTrace */
-    fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
-        values.motion.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
-        updatingTrace { trace.scale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
-    }
-
     /* when options.drawTrace: retrace if should do it on move, else do [action] */
     private inline fun updatingTrace(action: () -> Unit) {
         if (values.drawTrace) {
@@ -232,24 +190,26 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
 
     private fun tryRetrace() {
         var done = false
+        var canvasFactor = values.canvasFactor
         while (!done) {
             try {
                 trace.retrace(width, height)
                 done = true
             } catch (e: OutOfMemoryError) {
                 e.printStackTrace()
-                val canvasFactor = values.canvasFactor
                 if (canvasFactor > 1) {
                     val nextFactor = canvasFactor - 1
                     Log.w(TAG, "too large canvasFactor: $canvasFactor -> $nextFactor")
                     context.toast(context.getString(R.string.canvas_factor_oom_toast).format(canvasFactor, nextFactor))
-                    editing { options.canvasFactor.set(nextFactor, this) }
+                    canvasFactor = nextFactor
                 } else {
                     Log.e(TAG, "min canvasFactor  $canvasFactor is too large! Retrying...")
                     context.toast(context.getString(R.string.minimal_canvas_factor_oom_toast).format(canvasFactor))
                 }
             }
         }
+        if (canvasFactor != values.canvasFactor)
+            editing { options.canvasFactor.set(nextFactor, this) }
     }
 
     private inline fun onCanvas(canvas: Canvas, crossinline draw: (Canvas) -> Unit) =
@@ -323,7 +283,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     }
 
     private fun onNewDDU(newDDU: DDU) {
-        // NOTE: on first run: some bug may occur, because somewhere: retrace ... centerize ...
+        // NOTE: on first run: some bug may occur, because somewhere: retrace ... centerizeTo ...
         // i.e. white border may appear
         if (values.autosave && ddu.file != null) {
             saveDDU()
@@ -336,7 +296,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         last20UpdateTime = lastUpdateTime
 
         circleGroup = CircleGroupImpl(newDDU.circles, paint)
-        if (newDDU.bestCenter == null && width > 0)
+        if (newDDU.bestCenter == null && knownSize)
             newDDU.bestCenter = if (values.autocenterAlways) newDDU.autoCenter else center
         values.motion.reset() // clear scale, BUG: editor.set(options.motion) does not set default
         if (initialized)
@@ -408,7 +368,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
     // after update of option.value for minorPreferences
     private fun <T : Any> onChange(option: SharedPreference<T>, value: T = option.value) {
         when(option) {
-            options.drawTrace -> if (width > 0) {
+            options.drawTrace -> if (knownSize) {
                 if (value as Boolean) retrace()
                 else if (trace.initialized) {
                     trace.clear()
@@ -420,22 +380,19 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    // after update of option.value for effectiveMajorPreferences
-    private fun <T : Any> onNew(option: SharedPreference<T>) {
-        when(option) {
-            options.showAllCircles -> postInvalidate()
-            options.autocenterAlways -> if (option.value as Boolean && width > 0) autocenter()
-            options.canvasFactor -> if (width > 0) retrace()
-            options.speed -> UPS =
-                if (values.speed < 1)
-                    (values.speed * defaultUPS).roundToInt()
-                else
-                    defaultUPS
-            options.skipN -> if (values.skipN > 0) {
-                val toSkip: Int = values.skipN
-                Log.i(TAG, "skipping $toSkip updates")
+    private fun registerOnFetchCallbacks() {
+        !do once: not for every view - lifecycle aware
+        options.showAllCircles.addOnFetchCallback { postInvalidate() }
+        options.autocenterAlways.addOnFetchCallback { if (it && knownSize) autocenter() }
+        options.canvasFactor.addOnFetchCallback { if (knownSize) retrace() }
+        options.speed.addOnFetchCallback {
+            UPS = if (it < 1) (it * DEFAULT_UPS).roundToInt() else DEFAULT_UPS
+        }
+        options.skipN.addOnFetchCallback {
+            if (it > 0) {
+                Log.i(TAG, "skipping $it updates")
                 // TODO: in separate thread
-                repeat(toSkip) {
+                repeat(it) {
                     circleGroup.update()
                 }
                 // NOTE: slow and diverges
@@ -452,38 +409,17 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
         }
     }
 
-    private inline fun editing(block: SharedPreferences.Editor.() -> Unit) {
-        with(sharedPreferences.edit()) {
-            this.block()
-            apply()
-        }
-    }
-
     fun toggle(option: SharedPreference<Boolean>) {
         change(option, !option.value)
     }
 
     companion object {
-        val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
-            color = Color.BLACK
-            style = Paint.Style.STROKE
-        }
         private const val FPS = 60 // empirical
-        private const val defaultUPS = 60 // empirical
-        private var UPS = defaultUPS
+        private const val DEFAULT_UPS = 60 // empirical
+        private var UPS = DEFAULT_UPS
             set(value) { field = value; updateDt.awake() }
         const val dt = 1000f / FPS
         val updateDt = Sleepy { 1000f / UPS }
-        private val effectiveMajorPreferences: Set<SharedPreference<*>> =
-            setOf(options.showAllCircles, options.autocenterAlways, options.speed, options.skipN, options.canvasFactor)
-        private val secondaryMajorPreferences: Set<SharedPreference<*>> =
-            setOf(options.redrawTraceOnMove, options.reverseMotion, options.autosave, options.saveAs, options.previewSize, options.previewSmartUpdates, options.nPreviewUpdates)
-        private val majorPreferences: Set<SharedPreference<*>> = effectiveMajorPreferences + secondaryMajorPreferences
-        private val minorIndependentPreferences: Set<SharedPreference<*>> =
-            setOf(options.motion, options.updating)
-        private val minorDDUPreferences: Set<SharedPreference<*>> =
-            setOf(options.drawTrace, options.shape)
-        private val minorPreferences: Set<SharedPreference<*>> = minorIndependentPreferences + minorDDUPreferences
         private const val TAG = "DodecaView"
     }
 }
@@ -496,18 +432,3 @@ internal inline fun upon(prop: KMutableProperty0<Boolean>, action: () -> Unit) {
     }
 }
 
-// performance measurement
-internal val times: MutableMap<String, Long> = mutableMapOf()
-internal val ns: MutableMap<String, Int> = mutableMapOf()
-internal inline fun logMeasureTimeMilis(name: String = "", block: () -> Unit) {
-    val time = measureTimeMillis(block)
-    if (ns.contains(name)) {
-        ns[name] = ns[name]!! + 1
-        times[name] = times[name]!! + time
-    } else {
-        ns[name] = 1
-        times[name] = time
-    }
-    val overall = "%.3f".format(times[name]!!.toFloat()/ ns[name]!!)
-    Log.i("logMeasureTimeMilis/$name", "overall: ${overall}ms, current: ${time}ms")
-}
