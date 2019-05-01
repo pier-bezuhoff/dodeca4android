@@ -8,7 +8,9 @@ import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.fetch
 import com.pierbezuhoff.dodeca.data.options
 
-class SharedPreferencesModel(private val sharedPreferences: SharedPreferences) : SharedPreferences by sharedPreferences {
+class SharedPreferencesModel(
+    private val sharedPreferences: SharedPreferences
+) : SharedPreferences by sharedPreferences {
     val showAllCircles = ObservableBoolean(options.showAllCircles.value)
     val autocenterAlways = ObservableBoolean(options.autocenterAlways.value)
     val canvasFactor = ObservableInt(options.canvasFactor.value)
