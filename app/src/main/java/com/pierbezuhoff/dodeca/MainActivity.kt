@@ -423,7 +423,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
 
     companion object {
         const val TAG = "MainActivity"
-        const val LIMITED_VERSION = false
+        const val LIMITED_VERSION = true
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
         const val HELP_CODE = 3
