@@ -209,7 +209,7 @@ class DodecaView(context: Context, attributeSet: AttributeSet? = null) : View(co
             }
         }
         if (canvasFactor != values.canvasFactor)
-            editing { options.canvasFactor.set(nextFactor, this) }
+            sharedPreferencesModel.set(options.canvasFactor, canvasFactor)
     }
 
     private inline fun onCanvas(canvas: Canvas, crossinline draw: (Canvas) -> Unit) =

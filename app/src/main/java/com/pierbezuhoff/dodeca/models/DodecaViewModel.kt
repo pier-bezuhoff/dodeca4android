@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca.models
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -66,6 +67,7 @@ class DodecaViewModel : ViewModel() {
     }
 
     companion object {
+        const val TAG = "DodecaViewModel"
         val DEFAULT_PAINT = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
             color = Color.BLACK
             style = Paint.Style.STROKE

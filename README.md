@@ -20,4 +20,5 @@ Recommended version: >= 5.0 Lolipop
 - [ ] For release: disable Log.i-s?/
 - [ ] Knot (see C++)
 - [ ] Google Play: promotional video
+- [ ] Color depends on radius
 - [ ] 'Brush' (see C++)
