@@ -115,47 +115,12 @@ class StringLikeOption<T>(
 
 
 class Options(val resources: Resources) {
-    // ddu:r -> motion -> visible:r
-    val motion = object : SharedPreference<Matrix>(Matrix()) {
-        override fun peek(sharedPreferences: SharedPreferences): Matrix {
-            with(sharedPreferences) {
-                val dx = getFloat("dx", 0f)
-                val dy = getFloat("dy", 0f)
-                val scale = getFloat("scale", 1f)
-                return Matrix().apply { postTranslate(dx, dy); postScale(scale, scale) }
-            }
-        }
-        override fun put(editor: SharedPreferences.Editor) {
-            with(editor) {
-                putFloat("dx", value.dx)
-                putFloat("dy", value.dy)
-                putFloat("scale", value.sx) // sx == sy
-            }
-        }
-        override fun remove(editor: SharedPreferences.Editor) {
-            setOf("dx", "dy", "scale").forEach { editor.remove(it) }
-        }
-    }
     private fun BooleanOption(key: String, @BoolRes id: Int): Option<Boolean> =
         Option(key, resources.getBoolean(id))
-    val drawTrace = BooleanOption("draw_trace", R.bool.draw_trace)
-    val updating = BooleanOption("updating", R.bool.updating)
     val redrawTraceOnMove = BooleanOption("redraw_trace", R.bool.redraw_trace)
     val showAllCircles = BooleanOption("show_all_circles", R.bool.show_all_circles)
     // val showCenters = Option("show_centers", false)
     val reverseMotion = BooleanOption("reverse_motion", R.bool.reverse_motion)
-    val shape = object : Option<Shapes>(
-        "shape",
-        Shapes.valueOfOrNull(resources.getString(R.string.shape)) ?: Shapes.CIRCLE
-    ) {
-        override fun peek(sharedPreferences: SharedPreferences): Shapes =
-            sharedPreferences.getString(key, default.toString())
-                ?.toUpperCase()?.let { Shapes.valueOfOrNull(it) ?: default } ?: default
-
-        override fun put(editor: SharedPreferences.Editor) {
-            editor.putString(key, value.toString().toLowerCase())
-        }
-    }
     // val rotateShapes = Option("rotate_shapes", false)
     val autosave = BooleanOption("autosave", R.bool.autosave)
     val saveAs = BooleanOption("save_as", R.bool.save_as)
@@ -201,13 +166,9 @@ class Options(val resources: Resources) {
 
 // NOTE: may be moved toplevel
 class Values(private val options: Options) {
-    val motion: Matrix by options.motion
-    val drawTrace: Boolean by options.drawTrace
-    val updating: Boolean by options.updating
     val redrawTraceOnMove: Boolean by options.redrawTraceOnMove
     val showAllCircles: Boolean by options.showAllCircles
     val reverseMotion: Boolean by options.reverseMotion
-    val shape: Shapes by options.shape
     val autosave: Boolean by options.autosave
     val saveAs: Boolean by options.saveAs
     val autocenterAlways: Boolean by options.autocenterAlways
