@@ -1,6 +1,7 @@
 package com.pierbezuhoff.dodeca.models
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.databinding.ObservableBoolean
 import androidx.databinding.ObservableFloat
 import androidx.databinding.ObservableInt
@@ -20,6 +21,12 @@ class SharedPreferencesModel(
 
     fun loadAll() {
         allPreferences.forEach { sharedPreferences.fetch(it) }
+    }
+
+    fun <T: Any> set(sharedPreference: SharedPreference<T>, value: T) {
+        sharedPreferences.edit {
+            set(sharedPreference, value)
+        }
     }
 
     companion object {
