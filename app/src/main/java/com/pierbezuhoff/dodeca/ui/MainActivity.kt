@@ -40,6 +40,7 @@ import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
+import com.pierbezuhoff.dodeca.models.SharedPreferencesModel
 import com.pierbezuhoff.dodeca.utils.DB
 import com.pierbezuhoff.dodeca.utils.DDUFileDao
 import com.pierbezuhoff.dodeca.utils.DDUFileDatabase
@@ -75,6 +76,9 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     private val dodecaViewModel by lazy {
         ViewModelProviders.of(this).get(DodecaViewModel::class.java)
     }
+    private val sharedPreferencesModel by lazy {
+        SharedPreferencesModel(defaultSharedPreferences)
+    }
     private var bottomBarShown = true
     private var dir: File? = null
     private var bottomBarHideTimer: FlexibleTimer =
@@ -86,21 +90,18 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         super.onCreate(savedInstanceState)
         Options(resources).init() // init options.* and values.*
         DDUFileDatabase.init(this) /// the faster the better
-        defaultSharedPreferences.fetch(options.versionCode)
+        sharedPreferencesModel.fetch(options.versionCode)
         if (values.versionCode != BuildConfig.VERSION_CODE) {
             val upgrading = values.versionCode < BuildConfig.VERSION_CODE
             Log.i(TAG, "${if (upgrading) "Upgrading" else "Degrading"} to ${BuildConfig.VERSION_NAME} (${values.versionCode} -> ${BuildConfig.VERSION_CODE})")
-            defaultSharedPreferences.edit {
-                set(options.versionCode, BuildConfig.VERSION_CODE)
-            }
+            sharedPreferencesModel.set(options.versionCode, BuildConfig.VERSION_CODE)
             onUpgrade()
         }
         window.decorView.apply {
-            systemUiVisibility =
-                IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
+            systemUiVisibility = IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
             setOnSystemUiVisibilityChangeListener {
                 if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
-                    this.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+                    systemUiVisibility = IMMERSIVE_UI_VISIBILITY
             }
         }
         window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
@@ -108,21 +109,19 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         binding.lifecycleOwner = this
         binding.model = model
         binding.dodecaViewModel = dodecaViewModel
+        dodecaViewModel.sharedPreferencesModel = sharedPreferencesModel
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         // listen scroll, double tap and scale gestures
-        DodecaGestureDetector(applicationContext, dodecaView, onSingleTap = { toggleBottomBar() })
+        DodecaGestureDetector(applicationContext, -dodecaView, onSingleTap = { toggleBottomBar() })
         // handling launch from implicit intent
         Log.i(TAG, "Dodeca started${if (intent.action == Intent.ACTION_VIEW) " from implicit intent: ${intent.data?.path ?: "-"}" else ""}")
         if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
                 intent.type?.endsWith("ddu", ignoreCase = true) == true ||
                 intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)) {
-            intent.data?.let(::readUriWithPermissionCheck)
+            intent.data?.let { readUriWithPermissionCheck(it) }
         }
-        adjustStat()
-        dodecaView.nUpdatesView = n_updates
-        dodecaView.time20UpdatesView = updates_20
-        dodecaViewModel.ddu.observe(this, Observer { afterNewDDU(it) })
+//        dodecaViewModel.ddu.observe(this, Observer { })
         setupToolbar()
         bottomBarHideTimer.start()
     }
@@ -148,59 +147,25 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         }
     }
 
-
-    private fun afterNewDDU(ddu: DDU) {
-        shape_spinner.setSelection(ddu.shape.ordinal)
-        mapOf(
-            options.drawTrace to trace_button
-        ).forEach { (preference, button) ->
-            setupToggleButtonTint(button, preference.value)
-        }
-        setupPlayButton()
-    }
-
     private fun setupToolbar() {
         setOf(toolbar1, toolbar2).forEach { toolbar ->
             toolbar.children.filterIsInstance(ImageButton::class.java).forEach { button ->
-                TooltipCompat.setTooltipText(button, button.contentDescription)
                 button.setOnClickListener { onToolbarItemClick(it.id) }
             }
         }
         // ISSUE: on spinner dialog: stop bottom bar timer, pause dodecaView
         // BUG: after BOTTOM_BAR_HIDE_DELAY selection does not work!
         with(shape_spinner) {
-            TooltipCompat.setTooltipText(this, this.contentDescription)
             adapter = ShapeSpinnerAdapter(context)
             setSelection(0)
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onNothingSelected(parent: AdapterView<*>?) { showBottomBar() }
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    dodecaView.change(options.shape, Shapes.indexOrFirst(id.toInt()))
+                    dodecaViewModel.shape.value = Shapes.indexOrFirst(id.toInt())
                     showBottomBar()
                 }
             }
         }
-    }
-
-    private inline fun setupToggleButtonTint(button: ImageButton, value: Boolean) {
-//        (button as AppCompatImageButton).supportBackgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
-        ViewCompat.setBackgroundTintList(
-            button,
-            ColorStateList.valueOf(
-                ContextCompat.getColor(this,
-                    if (value) R.color.darkerToolbarColor
-                    else R.color.toolbarColor
-                )
-            )
-        )
-    }
-
-    private inline fun setupPlayButton() {
-        play_button.setImageDrawable(ContextCompat.getDrawable(
-            this,
-            if (values.updating) R.drawable.ic_pause
-            else R.drawable.ic_play
-        ))
     }
 
     private fun onToolbarItemClick(id: Int) {
@@ -216,18 +181,20 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                 startActivityForResult(intent, DDU_CODE)
             }
             R.id.save_button -> saveDDU()
-            R.id.play_button -> { dodecaView.toggle(options.updating); setupPlayButton() }
-            R.id.next_step_button -> { dodecaView.oneStep(); setupPlayButton() }
-            R.id.trace_button -> { dodecaView.toggle(options.drawTrace); setupToggleButtonTint(trace_button, values.drawTrace) }
+            R.id.play_button -> dodecaViewModel.updating.value = !dodecaViewModel.updating.value!!
+            R.id.next_step_button -> -dodecaView.oneStep()
+            R.id.trace_button -> dodecaViewModel.drawTrace.value = !dodecaViewModel.drawTrace.value!!
             R.id.choose_color_button -> {
-                updatingBeforePause = values.updating
-                if (values.updating)
-                    dodecaView.change(options.updating, false)
-                bottomBarHideTimer.stop() // will be restarted in onChooseColorClosed()
-                ChooseColorDialog(this, dodecaView.circleGroup).build().show()
+                dodecaViewModel.circleGroup.value?.let { circleGroup ->
+                    updatingBeforePause = dodecaViewModel.updating.value
+                    if (updatingBeforePause ?: true)
+                        dodecaViewModel.updating.value = false
+                    bottomBarHideTimer.stop() // will be restarted in onChooseColorClosed()
+                    ChooseColorDialog(this, circleGroup).build().show()
+                }
             }
-            R.id.clear_button -> dodecaView.retrace()
-            R.id.autocenter_button -> dodecaView.autocenter()
+            R.id.clear_button -> -dodecaView.retrace()
+            R.id.autocenter_button -> -dodecaView.autocenter()
             R.id.settings_button -> {
                 startActivityForResult(
                     Intent(this@MainActivity, SettingsActivity::class.java),
@@ -239,17 +206,17 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
 
     private fun saveDDU() {
         if (!values.saveAs) {
-            dodecaView.saveDDU()
+            -dodecaView.saveDDU()
         } else {
             alert(R.string.save_as_message) {
                 var name: EditText? = null
                 customView {
-                    name = editText(dodecaView.ddu.file?.nameWithoutExtension ?: "")
+                    name = editText(dodecaViewModel.ddu.value?.file?.nameWithoutExtension ?: "")
                 }
                 positiveButton(R.string.save_as_button_title) {
                     // TODO: check if exists, not blank, etc.
                     try {
-                        dodecaView.saveDDU(name?.text?.let {
+                        -dodecaView.saveDDU(name?.text?.let {
                             File(dir ?: dduDir, "$it.ddu").apply { Log.i(TAG, path); createNewFile() }
                         })
                     } catch (e: IOException) {
@@ -262,29 +229,23 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
     }
 
     override fun onChooseColorClosed() {
-        updatingBeforePause?.let { dodecaView.change(options.updating, it) }
+        updatingBeforePause?.let { dodecaViewModel.updating.value = it }
         showBottomBar()
     }
 
     override fun onResume() {
         super.onResume()
         updatingBeforePause?.let {
-            dodecaView.change(options.updating, it)
-            setupPlayButton()
+            dodecaViewModel.updating.value = it
         }
     }
 
     override fun onPause() {
         super.onPause()
-        updatingBeforePause = values.updating
-        dodecaView.change(options.updating, false)
-        if (values.autosave && dodecaView.ddu.file != null)
-            dodecaView.saveDDU()
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        // orientation and screenSize
+        updatingBeforePause = dodecaViewModel.updating.value
+        dodecaViewModel.updating.value = false
+        if (values.autosave && dodecaViewModel.ddu.value?.file != null)
+            -dodecaView.saveDDU()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -304,27 +265,27 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                         if (data?.getBooleanExtra(param, false) == true)
                             action()
                     }
-                    adjustStat()
                     having("default_ddu") {
-                        dodecaView.ddu.file?.let { file ->
+                        dodecaViewModel.ddu.value?.file?.let { file ->
                             extract1DDU(file.name)
-                            dodecaView.ddu = DDU.readFile(file)
+                            dodecaViewModel.loadDDU(DDU.readFile(file))
                         }
                     }
                     having("default_ddus") {
                         extractDDUFromAssets(overwrite = true)
-                        dodecaView.ddu.file?.let { file -> dodecaView.ddu = DDU.readFile(file) }
+                        dodecaViewModel.ddu.value?.file?.let { file ->
+                            dodecaViewModel.loadDDU(DDU.readFile(file))
+                        }
                     }
                     having("discard_previews") {
                         dduFileDao.getAll().forEach { dduFileDao.update(it.apply { preview = null }) }
                     }
                 }
-                dodecaView.loadMajorSharedPreferences()
+                sharedPreferencesModel.loadAll() => callbacks
             }
             HELP_CODE -> Unit
         }
         showBottomBar()
-        dodecaView.systemUiVisibility = IMMERSIVE_UI_VISIBILITY
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -337,7 +298,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
         Log.i(TAG, "reading ddu from path $path...")
         try {
             val file = File(path)
-            dodecaView.ddu = DDU.readFile(file)
+            dodecaViewModel.loadDDU(DDU.readFile(file))
         } catch (e: Exception) {
             e.printStackTrace()
             toast(getString(R.string.bad_ddu_format_toast) + " $path")
@@ -361,7 +322,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
                 }
                 Log.i(TAG, "imported ddu \"$name\"")
                 toast(getString(R.string.imported_ddu_toast) + " $name")
-                dodecaView.ddu = DDU.readFile(targetFile)
+                dodecaViewModel.loadDDU(DDU.readFile(targetFile))
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -384,16 +345,6 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener 
             negativeButton(getString(R.string.permission_rationale_dialog_deny)) { request.cancel() }
             isCancelable = false
         }.show()
-    }
-
-    private fun adjustStat() {
-        if (dodecaView.sharedPreferences.getBoolean("show_stat", false)) {
-            dodecaView.showStat = true
-            stat.visibility = LinearLayout.VISIBLE
-        } else {
-            stat.visibility = LinearLayout.GONE
-            dodecaView.showStat = false
-        }
     }
 
     private fun hideBottomBar() {

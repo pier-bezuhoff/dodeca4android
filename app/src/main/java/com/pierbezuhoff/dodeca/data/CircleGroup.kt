@@ -123,7 +123,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) :
         }
     }
 
-    private inline fun savingOld(action: () -> Unit) {
+    private inline fun savingOld(crossinline action: () -> Unit) {
         oldXs = xs.clone()
         oldYs = ys.clone()
         oldRs = rs.clone()
@@ -160,7 +160,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) :
         }
     }
 
-    private inline fun drawHelper(showAllCircles: Boolean, draw: (Int) -> Unit) {
+    private inline fun drawHelper(showAllCircles: Boolean, crossinline draw: (Int) -> Unit) {
         if (showAllCircles)
             for (i in 0 until size)
                 draw(i)
@@ -203,7 +203,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) :
     private inline fun drawTimesU(
         times: Int,
         canvas: Canvas, shape: Shapes, showAllCircles: Boolean,
-        update: () -> Unit
+        crossinline update: () -> Unit
     ) {
         when (shape) {
             Shapes.CIRCLE -> drawTimesUS(times, showAllCircles, update) { drawCircle(it, canvas) }
@@ -214,7 +214,12 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) :
         }
     }
 
-    private inline fun drawTimesUS(times: Int, showAllCircles: Boolean, update: () -> Unit, draw: (Int) -> Unit) {
+    private inline fun drawTimesUS(
+        times: Int,
+        showAllCircles: Boolean,
+        crossinline update: () -> Unit,
+        crossinline draw: (Int) -> Unit
+    ) {
         if (showAllCircles)
             drawTimesUSA(times, update) {
                 for (i in 0 until size)
@@ -227,7 +232,7 @@ class PrimitiveCircles(cs: List<CircleFigure>, private val paint: Paint) :
             }
     }
 
-    private inline fun drawTimesUSA(times: Int, update: () -> Unit, drawAll: () -> Unit) {
+    private inline fun drawTimesUSA(times: Int, crossinline update: () -> Unit, crossinline drawAll: () -> Unit) {
         repeat(times) {
             drawAll()
             savingOld { update() }

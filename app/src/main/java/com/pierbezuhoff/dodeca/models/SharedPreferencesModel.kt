@@ -29,8 +29,14 @@ class SharedPreferencesModel(
         }
     }
 
+    fun toggle(sharedPreference: SharedPreference<Boolean>) {
+        sharedPreferences.edit {
+            set(sharedPreference, !sharedPreference.value)
+        }
+    }
+
     companion object {
-        private val effectiveMajorPreferences: Set<SharedPreference<*>> =
+        private val effectivePreferences: Set<SharedPreference<*>> =
             setOf(
                 options.showAllCircles,
                 options.autocenterAlways,
@@ -38,7 +44,7 @@ class SharedPreferencesModel(
                 options.skipN,
                 options.canvasFactor
             )
-        private val secondaryMajorPreferences: Set<SharedPreference<*>> =
+        private val secondaryPreferences: Set<SharedPreference<*>> =
             setOf(
                 options.redrawTraceOnMove,
                 options.reverseMotion,
@@ -49,13 +55,7 @@ class SharedPreferencesModel(
                 options.nPreviewUpdates,
                 options.recentDDU
             )
-        private val majorPreferences: Set<SharedPreference<*>> = effectiveMajorPreferences + secondaryMajorPreferences
-        private val minorIndependentPreferences: Set<SharedPreference<*>> =
-            setOf(options.motion, options.updating)
-        private val minorDDUPreferences: Set<SharedPreference<*>> =
-            setOf(options.drawTrace, options.shape)
-        private val minorPreferences: Set<SharedPreference<*>> = minorIndependentPreferences + minorDDUPreferences
-        private val allPreferences: Set<SharedPreference<*>> = majorPreferences + minorPreferences
-    }
+        private val allPreferences: Set<SharedPreference<*>> = effectivePreferences + secondaryPreferences
+     }
 }
 

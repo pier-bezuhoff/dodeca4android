@@ -4,7 +4,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
 >
     <data>
-        <variable name="model" type="com.pierbezuhoff.dodeca.models.MainViewModel"/>
+        <variable name="dodecaViewModel" type="com.pierbezuhoff.dodeca.models.DodecaViewModel"/>
     </data>
     <LinearLayout
             android:id="@+id/toolbar2"
@@ -51,6 +51,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:description="@{@string/play_button_title}"
+                app:switchImageWhen="@{dodecaViewModel.updating}"
+                app:trueDrawable="@{@drawable/ic_play}"
+                app:falseDrawable="@{@drawable/ic_pause}"
         />
         <ImageButton
                 android:id="@+id/next_step_button"

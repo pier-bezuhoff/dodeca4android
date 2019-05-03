@@ -6,8 +6,9 @@ import android.graphics.Matrix
 
 class Trace {
     var initialized = false
-    lateinit var bitmap: Bitmap
-    lateinit var canvas: Canvas
+        private set
+    lateinit var bitmap: Bitmap private set
+    lateinit var canvas: Canvas private set
     // `bitmap` top-left corner - screen top-left corner
     private val translation = Matrix() // factor => pre translation
     val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
@@ -46,7 +47,9 @@ class Trace {
     }
 
     fun clear() {
-        bitmap.recycle()
-        initialized = false
+        if (initialized) {
+            bitmap.recycle()
+            initialized = false
+        }
     }
 }

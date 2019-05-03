@@ -16,4 +16,5 @@
     <string name="n_preview_updates" translatable="false">100</string>
     <bool name="preview_smart_updates">true</bool>
     <integer name="version_code">0</integer>
+    <integer name="stat_time_delta">20</integer>
 </resources>
