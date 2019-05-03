@@ -6,7 +6,6 @@ import com.pierbezuhoff.dodeca.utils.None
 import com.pierbezuhoff.dodeca.utils.abs2
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.inverted
-import com.pierbezuhoff.dodeca.utils.mean
 import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.normalized
 import com.pierbezuhoff.dodeca.utils.plus
@@ -203,4 +202,3 @@ enum class Shapes {
     }
 }
 
-val List<CircleFigure>.centroid get() = map { it.center }.mean()

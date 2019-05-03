@@ -2,14 +2,10 @@ package com.pierbezuhoff.dodeca.data
 
 import android.content.SharedPreferences
 import android.content.res.Resources
-import android.graphics.Matrix
 import android.util.DisplayMetrics
 import androidx.annotation.BoolRes
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.utils.Filename
-import com.pierbezuhoff.dodeca.utils.dx
-import com.pierbezuhoff.dodeca.utils.dy
-import com.pierbezuhoff.dodeca.utils.sx
 import kotlin.reflect.KProperty
 
 // cannot see better solution yet
@@ -137,6 +133,7 @@ class Options(val resources: Resources) {
         "canvas_factor",
         resources.getString(R.string.canvas_factor).toInt()
     )
+    val showStat = BooleanOption("show_stat", R.bool.show_stat)
     // preview size in pixels, yet to be converted to dp
     val previewSize = ParsedIntOption(
         "preview_size",
@@ -175,6 +172,7 @@ class Values(private val options: Options) {
     val speed: Float by options.speed
     val skipN: Int by options.skipN
     val canvasFactor: Int by options.canvasFactor
+    val showStat: Boolean by options.showStat
     val previewSize: Int by options.previewSize
     val autocenterPreview: Boolean by options.autocenterPreview
     val previewSizePx: Int get() = options.resources.dp2px(values.previewSize)

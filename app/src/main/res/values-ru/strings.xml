@@ -52,12 +52,9 @@
     </string>
     <string name="show_stat_title">Показывать статистику</string>
     <string name="stat_n_updates_text">%d пересчётов</string>
-    <string name="stat_20_updates_per_text">20 пересчётов за %.3f секунд</string>
     <string name="show_centers_title">Показывать центры окружностей</string>
     <string name="rotate_shapes_title">Поворачивать при инверсии</string>
     <string name="rotate_shapes_summary">Поворачивать к̶в̶а̶д̶р̶а̶т̶, крест, черту при инверсии</string>
-    <string name="stat_n_updates_initial">\? пересчётов</string>
-    <string name="stat_20_updates_per_initial">20 пересчётов за ?</string>
     <string name="help_button_title">Справка</string>
     <string name="help_title">Справка</string>
     <string name="canvas_factor_summary">Холст превосходит видимый экран в %s раз</string>
@@ -146,4 +143,6 @@
     <string name="save_as_message">Сохранить как</string>
     <string name="save_as_button_title">Сохранить</string>
     <string name="draw_circles_button_title">Режим рисования окружностей</string>
+    <string name="stat_x_updates_per_initial">\? пересчётов за ?</string>
+    <string name="stat_x_updates_per_text">%d пересчётов за %.3f секунд</string>
 </resources>
