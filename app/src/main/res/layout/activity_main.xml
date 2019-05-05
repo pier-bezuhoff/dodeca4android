@@ -3,10 +3,13 @@
 <layout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:bind="http://schemas.android.com/apk/res-auto"
+>
     <data>
         <variable name="model" type="com.pierbezuhoff.dodeca.models.MainViewModel"/>
         <variable name="dodecaViewModel" type="com.pierbezuhoff.dodeca.models.DodecaViewModel"/>
+        <variable name="sharedPreferencesModel" type="com.pierbezuhoff.dodeca.models.SharedPreferencesModel"/>
     </data>
     <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -25,6 +28,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:mainModel="@{model}"
                 app:model="@{dodecaViewModel}"
+                app:sharedPreferencesModel="@{sharedPreferencesModel}"
         />
 
         <LinearLayout
@@ -80,10 +84,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                 >
-                    <!-- TODO: pass models to toolbars -->
-                    <include layout="@layout/toolbar1"/>
+                    <include layout="@layout/toolbar1" bind:model="@{model}" bind:dodecaViewModel="@{dodecaViewModel}"/>
                     <View style="@style/dividerHorizontal"/>
-                    <include layout="@layout/toolbar2"/>
+                    <include layout="@layout/toolbar2" bind:model="@{model}" bind:dodecaViewModel="@{dodecaViewModel}"/>
                 </LinearLayout>
             </androidx.appcompat.widget.Toolbar>
 

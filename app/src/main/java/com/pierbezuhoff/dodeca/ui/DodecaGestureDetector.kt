@@ -6,17 +6,25 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 
-class DodecaGestureDetector(
-    context: Context,
-    val view: DodecaView,
-    val onSingleTap: (MotionEvent?) -> Unit = {}
-) : GestureDetector.SimpleOnGestureListener(), View.OnTouchListener {
-    private val gestureDetector = GestureDetector(context, this)
-    private val scaleListener = ScaleListener(view)
-    private val scaleDetector = ScaleGestureDetector(context, scaleListener)
+class DodecaGestureDetector(context: Context) : GestureDetector.SimpleOnGestureListener(), View.OnTouchListener {
+    interface SingleTapListener { fun onSingleTap(e: MotionEvent?) }
+    interface ScrollListener { fun onScroll(dx: Float, dy: Float) }
+    interface ScaleListener { fun onScale(scale: Float, focusX: Float, focusY: Float) }
 
-    init {
-        gestureDetector.setOnDoubleTapListener(this)
+    private val gestureDetector = GestureDetector(context, this).also {
+        it.setOnDoubleTapListener(this)
+    }
+    private val scaleGestureListener = ScaleGestureListener()
+    private val scaleDetector = ScaleGestureDetector(context, scaleGestureListener)
+
+    private var singleTapListener: SingleTapListener? = null
+    private var scrollListener: ScrollListener? = null
+
+    fun registerSingleTapListener(listener: SingleTapListener) { singleTapListener = listener }
+    fun registerScrollListener(listener: ScrollListener) { scrollListener = listener }
+    fun registerScaleListener(listener: ScaleListener) { scaleGestureListener.registerScaleListener(listener) }
+
+    inline fun registerAsOnTouchListenerFor(view: View) {
         view.setOnTouchListener(this)
     }
 
@@ -33,7 +41,7 @@ class DodecaGestureDetector(
     }
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
-        onSingleTap(e)
+        singleTapListener?.onSingleTap(e)
         return super.onSingleTapConfirmed(e)
     }
 
@@ -51,15 +59,19 @@ class DodecaGestureDetector(
     }
 
     override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-        view.updateScroll(-distanceX, -distanceY)
+        scrollListener?.onScroll(distanceX, distanceY)
         return super.onScroll(e1, e2, distanceX, distanceY)
     }
 }
 
-class ScaleListener(val view: DodecaView) : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+internal class ScaleGestureListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+    private var scaleListener: DodecaGestureDetector.ScaleListener? = null
+    fun registerScaleListener(listener: DodecaGestureDetector.ScaleListener) {
+        scaleListener = listener
+    }
     override fun onScale(detector: ScaleGestureDetector?): Boolean {
-        detector?.let {
-            view.updateScale(detector.scaleFactor, detector.focusX, detector.focusY)
+        detector?.apply {
+            scaleListener?.onScale(scaleFactor, focusX, focusY)
         }
         super.onScale(detector)
         return true

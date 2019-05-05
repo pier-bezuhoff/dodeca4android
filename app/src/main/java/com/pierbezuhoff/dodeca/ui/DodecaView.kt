@@ -24,14 +24,11 @@ import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.models.SharedPreferencesModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
-import com.pierbezuhoff.dodeca.utils.DB
 import com.pierbezuhoff.dodeca.utils.Just
 import com.pierbezuhoff.dodeca.utils.Sleepy
 import com.pierbezuhoff.dodeca.utils.asFF
-import com.pierbezuhoff.dodeca.utils.dduPath
 import com.pierbezuhoff.dodeca.utils.dx
 import com.pierbezuhoff.dodeca.utils.dy
-import com.pierbezuhoff.dodeca.utils.insertOrUpdate
 import com.pierbezuhoff.dodeca.utils.mean
 import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.move
@@ -43,17 +40,15 @@ import org.jetbrains.anko.uiThread
 import java.io.File
 import kotlin.concurrent.fixedRateTimer
 import kotlin.math.roundToInt
-import kotlin.reflect.KMutableProperty0
 
 class DodecaView(
     context: Context,
     attributeSet: AttributeSet? = null
-) : View(context, attributeSet), LifecycleOwner {
+) : View(context, attributeSet), LifecycleOwner, DodecaGestureDetector.ScrollListener, DodecaGestureDetector.ScaleListener {
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
-        .also { it.handleLifecycleEvent(Lifecycle.Event.ON_CREATE) }
-    private lateinit var mainModel: MainViewModel
-    private lateinit var model: DodecaViewModel
-    private lateinit var sharedPreferencesModel: SharedPreferencesModel
+    lateinit var mainModel: MainViewModel
+    lateinit var model: DodecaViewModel
+    lateinit var sharedPreferencesModel: SharedPreferencesModel
 
     private var initialized = false
 
@@ -75,32 +70,32 @@ class DodecaView(
     private lateinit var shape: Shapes
     private var redrawTraceOnce: Boolean = true
 
-    override fun getLifecycle(): Lifecycle = lifecycleRegistry
-
     init {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-        // listen to activity's onDestroy somehow
     }
 
-    private fun init() {
-        registerOnFetchCallbacks()
-        sharedPreferencesModel.loadAll()
-        registerObservers()
-        model.initFrom(context) // invoke set ddu and circleGroup
-        fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
-            if (updating) postInvalidate()
+    override fun getLifecycle(): Lifecycle = lifecycleRegistry
+
+    private fun firstRun() {
+        if (!initialized) {
+            registerOptionsObservers()
+            sharedPreferencesModel.loadAll()
+            registerObservers()
+            model.initFrom(context) // invoke set ddu and circleGroup
+            fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
+                if (updating) postInvalidate()
+            }
         }
     }
 
-    private fun registerOnFetchCallbacks() {
-        !do once: not for every view - lifecycle aware
-        options.showAllCircles.addOnFetchCallback { postInvalidate() }
-        options.autocenterAlways.addOnFetchCallback { if (it && knownSize) autocenter() }
-        options.canvasFactor.addOnFetchCallback { if (knownSize) retrace() }
-        options.speed.addOnFetchCallback {
+    private fun registerOptionsObservers() {
+        options.showAllCircles.liveData.observe(this, Observer { postInvalidate() })
+        options.autocenterAlways.liveData.observe(this, Observer { if (it && knownSize) autocenter() })
+        options.canvasFactor.liveData.observe(this, Observer { if (knownSize) retrace() })
+        options.speed.liveData.observe(this, Observer {
             UPS = if (it < 1) (it * DEFAULT_UPS).roundToInt() else DEFAULT_UPS
-        }
-        options.skipN.addOnFetchCallback {
+        })
+        options.skipN.liveData.observe(this, Observer {
             if (it > 0) {
                 Log.i(TAG, "skipping $it updates")
                 // TODO: in separate thread
@@ -111,11 +106,10 @@ class DodecaView(
                 // circleGroup.updateTimes(values.skipN, values.reverseMotion)
                 sharedPreferencesModel.edit { set(options.skipN, 0) }
             }
-        }
+        })
     }
 
     private fun registerObservers() {
-        !handle activity onDestroy -> lifecycle
         model.ddu.observe(this, Observer { onNewDDU(it) })
         model.circleGroup.observe(this, Observer { onNewCircleGroup(it) })
         model.updating.observe(this, Observer {
@@ -136,17 +130,37 @@ class DodecaView(
             shape = it
             postInvalidate()
         })
+
+        model.gestureDetector.observe(this, Observer { detector ->
+            detector.registerAsOnTouchListenerFor(this)
+            detector.registerScrollListener(this)
+            detector.registerScaleListener(this)
+        })
+        model.oneStepRequest.observe(this, Observer { oneStep() })
+        model.clearRequest.observe(this, Observer { retrace() })
+        model.autocenterRequest.observe(this, Observer { autocenter() })
+        model.saveDDUAtRequest.observe(this, Observer { saveDDU(it) })
+
         mainModel.bottomBarShown.observe(this, Observer {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
         })
+        // bestowing death
+        mainModel.onDestroy.observe(this, Observer {
+            lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+            maybeAutosave()
+        })
+    }
+
+    private fun maybeAutosave() {
+        if (values.autosave && ::ddu.isInitialized && ddu.file != null) {
+            saveDDU()
+        }
     }
 
     private fun onNewDDU(newDDU: DDU) {
         // NOTE: on first run: some bug may occur, because somewhere: retrace ... centerizeTo ...
         // i.e. white border may appear
-        if (values.autosave && ::ddu.isInitialized && ddu.file != null) {
-            saveDDU()
-        }
+        maybeAutosave()
         // defaulting
         ddu = newDDU
         redrawTraceOnce = drawTrace
@@ -159,7 +173,7 @@ class DodecaView(
 
     private fun onNewCircleGroup(circleGroup: CircleGroup) {
         this.circleGroup = circleGroup
-        ...
+        postInvalidate()
     }
 
     private fun centerize(ddu: DDU? = null) {
@@ -172,7 +186,7 @@ class DodecaView(
             }
     }
 
-    fun autocenter() {
+    private fun autocenter() {
         // maybe: when canvasFactor * scale ~ 1
         // try to fit screen
         // BUG: sometimes skip to else
@@ -198,10 +212,9 @@ class DodecaView(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (!initialized) {
-            initialized = true
             lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
-            !TODO: listen to self lifecycle
-            init()
+            firstRun()
+            initialized = true
         }
         centerize()
         if (!model.trace.initialized) retrace()
@@ -273,20 +286,23 @@ class DodecaView(
             invalidate()
     }
 
+    override fun onScroll(dx: Float, dy: Float) = updateScroll(-dx, -dy)
+    override fun onScale(scale: Float, focusX: Float, focusY: Float) = updateScale(scale, focusX, focusY)
+
     /* scroll/translate screen and options.drawTrace */
-    fun updateScroll(ddx: Float, ddy: Float) {
+    private fun updateScroll(ddx: Float, ddy: Float) {
         model.motion.postTranslate(ddx, ddy)
         updatingTrace { it.translate(ddx, ddy) }
     }
 
     /* scale screen and options.drawTrace */
-    fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
+    private fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
         model.motion.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
         updatingTrace { it.scale(dscale, dscale, focusX ?: centerX, focusY ?: centerY) }
     }
 
     /* when options.drawTrace turns on or sizes change */
-    fun retrace() {
+    private fun retrace() {
         tryRetrace()
         model.trace.canvas.concat(model.motion)
         redrawTraceOnce = drawTrace
@@ -356,7 +372,7 @@ class DodecaView(
         drawCircles(canvas)
     }
 
-    fun oneStep() {
+    private fun oneStep() {
         // 1 step = [speed] updates
         if (values.speed.roundToInt() <= 1) {
             updateCircles()
@@ -380,14 +396,18 @@ class DodecaView(
     }
 
     /* scale and translate all figures in ddu according to current view */
-    private fun prepareDDUToSave(): DDU {
+    private fun includeChangesIntoCurrentDDU(): DDU {
         // avoiding name clashes
         val _drawTrace = drawTrace
         val _shape = shape
         return ddu.copy().apply {
-            circles.forEach {
-                it.center = visible(it.center)
-                it.radius *= scale // = visibleRadius(it.radius)
+            circles.zip(circleGroup.figures) { figure, newFigure ->
+                figure.center = visible(figure.center)
+                figure.radius *= scale // = visibleRadius(figure.radius)
+                return@zip figure.copy(
+                    newColor = newFigure.color, newFill = newFigure.fill,
+                    newRule = newFigure.rule, newBorderColor = Just(newFigure.borderColor)
+                )
             }
             drawTrace = _drawTrace
             bestCenter = center
@@ -395,39 +415,16 @@ class DodecaView(
         }
     }
 
-    fun saveDDU(newFile: File? = null) {
-        val ddu = prepareDDUToSave()
-        if (newFile == null && ddu.file == null) {
-            Log.i(TAG, "saveDDU: ddu has no file")
-            // then save as
-            context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
-        } else {
-            doAsync {
-                ddu.circles = ddu.circles.zip(circleGroup.figures) { figure, newFigure -> figure.copy(
-                    newColor = newFigure.color, newFill = newFigure.fill,
-                    newRule = newFigure.rule, newBorderColor = Just(newFigure.borderColor)
-                ) }
-                try {
-                    (newFile ?: ddu.file)?.let { file ->
-                        Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
-                        ddu.saveStream(file.outputStream())
-                        uiThread {
-                            context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
-                        }
-                        DB.dduFileDao().insertOrUpdate(file.name) { preview = null }
-                    }
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    uiThread {
-                        context.toast(context.getString(R.string.error_ddu_save_toast))
-                    }
-                }
+    private fun saveDDU(newFile: File? = null) {
+        doAsync {
+            val ddu = includeChangesIntoCurrentDDU()
+            uiThread {
+                model.saveDDU(context, ddu, newFile)
             }
         }
     }
 
     private inline fun visible(z: Complex): Complex = model.motion.move(z)
-    private inline fun visibleRadius(r: Float): Float = model.motion.mapRadius(r)
 
     companion object {
         private const val TAG = "DodecaView"

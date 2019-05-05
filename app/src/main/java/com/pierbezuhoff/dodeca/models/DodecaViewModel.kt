@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,7 +17,14 @@ import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.exampleDDU
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
+import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
+import com.pierbezuhoff.dodeca.utils.DB
 import com.pierbezuhoff.dodeca.utils.dduDir
+import com.pierbezuhoff.dodeca.utils.dduPath
+import com.pierbezuhoff.dodeca.utils.insertOrUpdate
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.toast
+import org.jetbrains.anko.uiThread
 import java.io.File
 import kotlin.properties.Delegates
 
@@ -26,15 +34,26 @@ class DodecaViewModel : ViewModel() {
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
     private var _updateOnce = false
-    private var statTimeDelta: Int by Delegates.notNull() // n of updates between stat time update
     private var lastTimedUpdate: Long by Delegates.notNull()
-    private var lastTimedUpdateTime: Long by Delegates.notNull() // in ms <- System.currentTimeMillis()
+    private var lastTimedUpdateTime: Long by Delegates.notNull() // <- System.currentTimeMillis()
+
+    private val _oneStepRequest: MutableLiveData<Unit> = MutableLiveData()
+    private val _clearRequest: MutableLiveData<Unit> = MutableLiveData()
+    private val _autocenterRequest: MutableLiveData<Unit> = MutableLiveData()
+    private val _saveDDUAtRequest: MutableLiveData<File?> = MutableLiveData() // TODO: check setting value to null
+
+    val oneStepRequest: LiveData<Unit> = _oneStepRequest
+    val clearRequest: LiveData<Unit> = _clearRequest
+    val autocenterRequest: LiveData<Unit> = _autocenterRequest
+    val saveDDUAtRequest: LiveData<File?> = _saveDDUAtRequest
 
     val ddu: MutableLiveData<DDU> = MutableLiveData()
     val circleGroup: LiveData<CircleGroup> = _circleGroup
     val nUpdates: LiveData<Long> = _nUpdates
     val dTime: LiveData<Float> = _dTime
-    var lastUpdateTime: Long by Delegates.notNull() // in ms <- System.currentTimeMillis()
+    var lastUpdateTime: Long by Delegates.notNull() // <- System.currentTimeMillis()
+    var statTimeDelta: Int by Delegates.notNull() // n of updates between stat time update
+        private set
     val updateOnce: Boolean get() = if (_updateOnce) { _updateOnce = false; true } else false
     val paint = Paint(DEFAULT_PAINT)
 
@@ -44,6 +63,9 @@ class DodecaViewModel : ViewModel() {
     val shape: MutableLiveData<Shapes> = MutableLiveData(DEFAULT_SHAPE)
     val drawTrace: MutableLiveData<Boolean> = MutableLiveData(DEFAULT_DRAW_TRACE)
     val updating: MutableLiveData<Boolean> = MutableLiveData(DEFAULT_UPDATING)
+
+    private val _gestureDetector: MutableLiveData<DodecaGestureDetector> = MutableLiveData()
+    val gestureDetector: LiveData<DodecaGestureDetector> = _gestureDetector
 
     init {
         ddu.observeForever { onNewDDU(it) }
@@ -64,6 +86,10 @@ class DodecaViewModel : ViewModel() {
         statTimeDelta = context.resources.getInteger(R.integer.stat_time_delta)
     }
 
+    fun registerGestureDetector(detector: DodecaGestureDetector) {
+        _gestureDetector.value = detector
+    }
+
     fun loadDDU(newDDU: DDU) {
         ddu.value = newDDU
     }
@@ -71,6 +97,11 @@ class DodecaViewModel : ViewModel() {
     fun requestUpdateOnce() {
         _updateOnce = true
     }
+
+    fun requestOneStep() { _oneStepRequest.value = Unit }
+    fun requestClear() { _clearRequest.value = Unit }
+    fun requestAutocenter() { _autocenterRequest.value = Unit }
+    fun requestSaveDDUAt(file: File? = null) { _saveDDUAtRequest.value = file }
 
     fun updateStat(times: Int = 1) {
         val dNUpdates = times * (if (values.reverseMotion) -1 else 1)
@@ -99,6 +130,32 @@ class DodecaViewModel : ViewModel() {
         _circleGroup.value = CircleGroupImpl(ddu.circles, paint)
         ddu.file?.let { file ->
             sharedPreferencesModel.set(options.recentDDU, file.absolutePath)
+        }
+    }
+
+    fun saveDDU(context: Context, ddu: DDU, newFile: File? = null) {
+        if (newFile == null && ddu.file == null) {
+            Log.i(TAG, "saveDDU: ddu has no file")
+            // then save as
+            context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
+        } else {
+            context.doAsync {
+                try {
+                    (newFile ?: ddu.file)?.let { file ->
+                        Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
+                        ddu.saveStream(file.outputStream())
+                        uiThread {
+                            context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
+                        }
+                        DB.dduFileDao().insertOrUpdate(file.name) { preview = null }
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    uiThread {
+                        context.toast(context.getString(R.string.error_ddu_save_toast))
+                    }
+                }
+            }
         }
     }
 
