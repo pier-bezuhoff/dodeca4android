@@ -4,6 +4,8 @@ import android.content.SharedPreferences
 import android.content.res.Resources
 import android.util.DisplayMetrics
 import androidx.annotation.BoolRes
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.utils.Filename
 import kotlin.reflect.KProperty
@@ -15,20 +17,19 @@ lateinit var values: Values private set
 
 abstract class SharedPreference<T>(val default: T) where T : Any {
     var value = default
-    private val fetchCallbacks: MutableList<(T) -> Unit> = mutableListOf()
+        set(value) {
+            field = value
+            _liveData.value = value
+        }
+    private val _liveData: MutableLiveData<T> = MutableLiveData(value)
+    val liveData: LiveData<T> = _liveData
 
     abstract fun peek(sharedPreferences: SharedPreferences): T
-
-    private fun onFetch(value: T) {
-        fetchCallbacks.forEach { it(value) }
-    }
 
     fun fetch(sharedPreferences: SharedPreferences) {
         try {
             val newValue = peek(sharedPreferences)
-            val changed = value != newValue
             value = newValue
-            onFetch(value)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -44,10 +45,6 @@ abstract class SharedPreference<T>(val default: T) where T : Any {
     abstract fun remove(editor: SharedPreferences.Editor)
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
-
-    fun addOnFetchCallback(callback: (T) -> Unit) {
-        fetchCallbacks.add(callback)
-    }
 }
 
 open class Option<T>(val key: String, default: T) : SharedPreference<T>(default) where T : Any {
