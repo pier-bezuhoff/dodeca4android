@@ -19,9 +19,10 @@ import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.DB
+import com.pierbezuhoff.dodeca.utils.DDUFileDao
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
-import com.pierbezuhoff.dodeca.utils.insertOrUpdate
+import com.pierbezuhoff.dodeca.utils.insertOrDropPreview
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
@@ -30,6 +31,7 @@ import kotlin.properties.Delegates
 
 class DodecaViewModel : ViewModel() {
     lateinit var sharedPreferencesModel: SharedPreferencesModel
+    private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
     private val _circleGroup: MutableLiveData<CircleGroup> = MutableLiveData()
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
@@ -71,19 +73,24 @@ class DodecaViewModel : ViewModel() {
         ddu.observeForever { onNewDDU(it) }
     }
 
-    // TODO: avoid context
+    /* Set ddu, defaults and ddu-related LiveData-s */
     fun initFrom(context: Context) {
         ddu.value = try {
-            DDU.readFile(
-                if (File(values.recentDDU).exists())
-                    File(values.recentDDU)
-                else
-                    File(context.dduDir, values.recentDDU))
+            DDU.fromFile(getRecentDDUFile(context))
         } catch (e: Exception) {
             e.printStackTrace()
             exampleDDU
         }
         statTimeDelta = context.resources.getInteger(R.integer.stat_time_delta)
+    }
+
+    private fun getRecentDDUFile(context: Context): File {
+        val recentInCurrentDir = File(values.recentDDU)
+        val recentInDDUDir = File(context.dduDir, values.recentDDU)
+        if (recentInCurrentDir.exists())
+            return recentInCurrentDir
+        else
+            return recentInDDUDir
     }
 
     fun registerGestureDetector(detector: DodecaGestureDetector) {
@@ -119,7 +126,7 @@ class DodecaViewModel : ViewModel() {
 
     private fun onNewDDU(ddu: DDU) {
         trace.clear()
-        motion.reset() // NOTE: go to best center in DodecaView
+        motion.reset()
         shape.value = ddu.shape
         drawTrace.value = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
         updating.value = DEFAULT_UPDATING
@@ -133,22 +140,21 @@ class DodecaViewModel : ViewModel() {
         }
     }
 
-    fun saveDDU(context: Context, ddu: DDU, newFile: File? = null) {
-        if (newFile == null && ddu.file == null) {
+    fun saveDDU(context: Context, ddu: DDU, outputFile: File? = null) {
+        val file: File? = outputFile ?: ddu.file
+        if (file == null) {
             Log.i(TAG, "saveDDU: ddu has no file")
             // then save as
             context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
         } else {
             context.doAsync {
                 try {
-                    (newFile ?: ddu.file)?.let { file ->
-                        Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
-                        ddu.saveStream(file.outputStream())
-                        uiThread {
-                            context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
-                        }
-                        DB.dduFileDao().insertOrUpdate(file.name) { preview = null }
+                    Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
+                    ddu.saveToFile(file)
+                    uiThread {
+                        context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
                     }
+                    dduFileDao.insertOrDropPreview(file.name)
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     uiThread {

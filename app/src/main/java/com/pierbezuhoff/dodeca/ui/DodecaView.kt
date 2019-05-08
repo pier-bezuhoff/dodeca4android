@@ -81,7 +81,7 @@ class DodecaView(
             registerOptionsObservers()
             sharedPreferencesModel.loadAll()
             registerObservers()
-            model.initFrom(context) // invoke set ddu and circleGroup
+            model.initFrom(context) // set ddu, defaults and ddu-related LiveData-s
             fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
                 if (updating) postInvalidate()
             }

@@ -37,6 +37,7 @@ import com.pierbezuhoff.dodeca.models.SharedPreferencesModel
 import com.pierbezuhoff.dodeca.utils.DB
 import com.pierbezuhoff.dodeca.utils.DDUFileDao
 import com.pierbezuhoff.dodeca.utils.DDUFileDatabase
+import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.extract1DDU
@@ -71,7 +72,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
     private val sharedPreferencesModel by lazy {
         SharedPreferencesModel(defaultSharedPreferences)
     }
-    private var dir: File? = null
+    private val dir: File get() = model.dir.value ?: dduDir
     private var updatingBeforePause: Boolean? = null
     private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
 
@@ -100,6 +101,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         binding.dodecaViewModel = dodecaViewModel
         binding.sharedPreferencesModel = sharedPreferencesModel
         dodecaViewModel.sharedPreferencesModel = sharedPreferencesModel
+        model.setDirOnce(dduDir)
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         // listen single tap, scroll and scale gestures
@@ -171,7 +173,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
             }
             R.id.load_button -> {
                 val intent = Intent(this, DDUChooserActivity::class.java)
-                intent.putExtra("dirPath", (dir ?: dduDir).absolutePath)
+                intent.putExtra("dirPath", dir.absolutePath)
                 startActivityForResult(intent, DDU_CODE)
             }
             R.id.save_button -> saveDDU()
@@ -202,25 +204,30 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         if (!values.saveAs) {
             dodecaViewModel.requestSaveDDUAt()
         } else {
-            alert(R.string.save_as_message) {
-                var name: EditText? = null
-                customView {
-                    name = editText(dodecaViewModel.ddu.value?.file?.nameWithoutExtension ?: "")
-                }
-                positiveButton(R.string.save_as_button_title) {
-                    // TODO: check if exists, not blank, etc.
-                    try {
-                        dodecaViewModel.requestSaveDDUAt(name?.text?.let {
-                            File(dir ?: dduDir, "$it.ddu").apply { Log.i(TAG, path); createNewFile() }
-                        })
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
-                }
-                cancelButton {  }
-            }.show()
+            buildSaveAsDialog().show()
         }
     }
+
+    private fun buildSaveAsDialog() =
+        alert(R.string.save_as_message) {
+            val initialFileName: FileName = dodecaViewModel.ddu.value?.file?.nameWithoutExtension ?: ""
+            lateinit var fileNameEditText: EditText
+            customView {
+                fileNameEditText = editText(initialFileName)
+            }
+            positiveButton(R.string.save_as_button_title) {
+                // TODO: check if exists, not blank, etc.
+                try {
+                    val filename: Filename = "${fileNameEditText.text}.ddu"
+                    val file = File(dir, filename)
+                    dodecaViewModel.requestSaveDDUAt(file)
+                    Log.i(TAG, file.path)
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+            cancelButton {  }
+        }
 
     override fun onChooseColorClosed() {
         updatingBeforePause?.let { dodecaViewModel.updating.value = it }
@@ -247,7 +254,8 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         when (requestCode) {
             DDU_CODE ->
                 if (resultCode == Activity.RESULT_OK) {
-                    data?.getStringExtra("dirPath")?.let { dir = File(it) }
+                    data?.getStringExtra("dirPath")?.let { newDir ->
+                        model.changeDir(File(newDir)) }
                     data?.getStringExtra("path")?.let {
                         updatingBeforePause = null
                         readPath(it)
@@ -262,13 +270,13 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
                     having("default_ddu") {
                         dodecaViewModel.ddu.value?.file?.let { file ->
                             extract1DDU(file.name)
-                            dodecaViewModel.loadDDU(DDU.readFile(file))
+                            dodecaViewModel.loadDDU(DDU.fromFile(file))
                         }
                     }
                     having("default_ddus") {
                         extractDDUFromAssets(overwrite = true)
                         dodecaViewModel.ddu.value?.file?.let { file ->
-                            dodecaViewModel.loadDDU(DDU.readFile(file))
+                            dodecaViewModel.loadDDU(DDU.fromFile(file))
                         }
                     }
                     having("discard_previews") {
@@ -297,7 +305,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         Log.i(TAG, "reading ddu from path $path...")
         try {
             val file = File(path)
-            dodecaViewModel.loadDDU(DDU.readFile(file))
+            dodecaViewModel.loadDDU(DDU.fromFile(file))
         } catch (e: Exception) {
             e.printStackTrace()
             toast(getString(R.string.bad_ddu_format_toast) + " $path")
@@ -306,7 +314,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
 
     @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun readUri(uri: Uri) {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (!haveWriteExternalStoragePermission()) {
             Log.i(TAG, "permission WRITE_EXTERNAL_STORAGE not granted yet!")
         }
         Log.i(TAG, "reading ddu from uri $uri")
@@ -317,17 +325,28 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
             val inputStream = contentResolver.openInputStream(uri)
             inputStream?.let {
                 it.use { input ->
-                    FileOutputStream(targetFile).use { input.copyTo(it, DEFAULT_BUFFER_SIZE) }
+                    FileOutputStream(targetFile).use { output ->
+                        input.copyTo(output, DEFAULT_BUFFER_SIZE) }
                 }
                 Log.i(TAG, "imported ddu \"$name\"")
                 toast(getString(R.string.imported_ddu_toast) + " $name")
-                dodecaViewModel.loadDDU(DDU.readFile(targetFile))
+                val ddu: DDU = DDU.fromFile(targetFile)
+                dodecaViewModel.loadDDU(ddu)
             }
         } catch (e: Exception) {
             e.printStackTrace()
             toast(getString(R.string.bad_ddu_format_toast) + " ${uri.path}")
         }
     }
+
+    private fun haveWriteExternalStoragePermission(): Boolean {
+        val permissionStatus = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+        return permissionStatus == PackageManager.PERMISSION_GRANTED
+    }
+
 
     @OnShowRationale(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun showRationaleForReadExternalStorage(request: PermissionRequest) {
@@ -347,8 +366,9 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
     }
 
     private fun extractDDUFromAssets(overwrite: Boolean = false) {
-        val dir = dduDir
-        assets.list(getString(R.string.ddu_asset_dir))?.forEach { name -> extract1DDU(name, dir, overwrite) }
+        val targetDir = dduDir
+        assets.list(getString(R.string.ddu_asset_dir))?.forEach {name ->
+            extract1DDU(name, targetDir, overwrite) }
     }
 
     private fun extract1DDU(filename: Filename, dir: File = dduDir, overwrite: Boolean = false) =

@@ -23,10 +23,12 @@ class MainViewModel : ViewModel() {
     val onDestroy: LiveData<Unit> = _onDestroy
 
     init {
-        _bottomBarShown.observeForever { when(it) {
-            true -> bottomBarHideTimer.start()
-            false -> bottomBarHideTimer.stop()
-        } }
+        _bottomBarShown.observeForever {
+            when(it) {
+                true -> bottomBarHideTimer.start()
+                false -> bottomBarHideTimer.stop()
+            }
+        }
     }
 
     fun showBottomBar() {
@@ -44,6 +46,13 @@ class MainViewModel : ViewModel() {
     fun stopBottomBarHideTimer() = bottomBarHideTimer.stop()
 
     fun sendOnDestroy() { _onDestroy.value = Unit }
+
+    fun setDirOnce(dir: File) {
+        if (_dir.value == null)
+            _dir.value = dir
+    }
+
+    fun changeDir(dir: File) { _dir.value = dir }
 
     companion object {
         const val BOTTOM_BAR_HIDE_DELAY = 30 // seconds
