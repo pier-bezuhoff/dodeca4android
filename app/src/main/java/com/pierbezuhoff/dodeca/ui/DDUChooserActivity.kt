@@ -26,11 +26,11 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.pierbezuhoff.dodeca.utils.DB
-import com.pierbezuhoff.dodeca.utils.DDUFileDao
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.DDU
-import com.pierbezuhoff.dodeca.utils.insertOrUpdate
+import com.pierbezuhoff.dodeca.data.values
+import com.pierbezuhoff.dodeca.utils.DB
+import com.pierbezuhoff.dodeca.utils.DDUFileDao
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.Sleeping
@@ -40,10 +40,10 @@ import com.pierbezuhoff.dodeca.utils.copyStream
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.extract1DDU
 import com.pierbezuhoff.dodeca.utils.getDisplayName
+import com.pierbezuhoff.dodeca.utils.insertOrUpdate
 import com.pierbezuhoff.dodeca.utils.isDDU
 import com.pierbezuhoff.dodeca.utils.stripDDU
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
-import com.pierbezuhoff.dodeca.data.values
 import kotlinx.android.synthetic.main.activity_dduchooser.*
 import kotlinx.android.synthetic.main.dir_row.view.*
 import org.apache.commons.io.FileUtils
@@ -391,7 +391,7 @@ class DDUChooserActivity : AppCompatActivity() {
         requestedDDUFile?.let { file ->
             contentResolver.openOutputStream(uri)?.let { outputStream ->
                 Log.i(TAG, "exporting file \"${file.name}\" in DodecaLook-compatible format")
-                DDU.readFile(file).saveStreamAsDodecaLookCompatible(outputStream)
+                DDU.fromFile(file).saveToStreamForDodecaLook(outputStream)
             }
             requestedDDUFile = null
         }
@@ -575,7 +575,7 @@ class DDUAdapter(
         if (fileName !in buildings.keys) {
             buildings[fileName] = holder
             doAsync {
-                val ddu = DDU.readFile(file)
+                val ddu = DDU.fromFile(file)
                 // val size: Int = (0.4 * width).roundToInt() // width == height
                 val size = values.previewSizePx
                 val bitmap = ddu.preview(size, size)

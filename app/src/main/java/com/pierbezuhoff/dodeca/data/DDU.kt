@@ -14,29 +14,17 @@ import com.pierbezuhoff.dodeca.utils.minus
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.io.InputStream
+import java.io.InputStreamReader
 import java.io.OutputStream
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
-
-internal enum class Mode { // for scanning .ddu, before <mode parameter>
-    NO, GLOBAL, RADIUS, X, Y, COLOR, FILL, RULE, CIRCLE_AUX;
-    fun next(): Mode = Mode.values().elementAtOrElse(ordinal + 1) { CIRCLE_AUX }
-}
-
-internal data class CircleParams(
-    var radius: Double? = null, var x: Double? = null, var y: Double? = null,
-    var color: Int? = null, var fill: Boolean? = null,
-    var rule: String? = null, var borderColor: Int? = null) {
-    /* CircleParams MUST have [radius], [x] and [y] */
-    fun toCircleFigure(): CircleFigure =
-        CircleFigure(x!!, y!!, radius!!, color, fill, rule, borderColor)
-}
+import kotlin.reflect.KMutableProperty0
 
 /* In C++ (with it ddu was created) color is RRGGBB, but in Java -- AABBGGRR
 * see Bitmap.Config.ARGB_8888 (https://developer.android.com/reference/android/graphics/Bitmap.Config.html#ARGB_8888) */
-internal val Int.red: Int get() = (this and 0xff0000) shr 16
-internal val Int.green: Int get() = (this and 0x00ff00) shr 8
-internal val Int.blue: Int get() = this and 0x0000ff
+private val Int.red: Int get() = (this and 0xff0000) shr 16
+private val Int.green: Int get() = (this and 0x00ff00) shr 8
+private val Int.blue: Int get() = this and 0x0000ff
 
 /* RRGGBB -> AABBGGRR */
 internal fun Int.toColor(): Int = Color.rgb(blue, green, red)
@@ -50,7 +38,7 @@ internal fun Int.fromColor(): Int =
 // NOTE: when restGlobals = listOf(4, 4) some magic occurs (rule-less circles are moving in DodecaLook)
 class DDU(
     var backgroundColor: Int = DEFAULT_BACKGROUND_COLOR,
-    private var restGlobals: List<Int> = emptyList(), // unused
+    var restGlobals: List<Int> = emptyList(), // unused
     var drawTrace: Boolean? = null,
     var bestCenter: Complex? = null, // cross-(screen size)
     var shape: Shapes = DEFAULT_SHAPE,
@@ -83,69 +71,17 @@ class DDU(
         |)
     """.trimMargin()
 
-    fun saveStream(stream: OutputStream) {
-        // maybe: use buffered stream
-        stream.use { outputStream ->
-            val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
-            writeln(header)
-            val globals: List<String> = listOf(
-                backgroundColor.fromColor(),
-                *restGlobals.toTypedArray()
-            ).map { it.toString() }
-            globals.forEach { param ->
-                writeln("global")
-                writeln(param)
-            }
-            drawTrace?.let { writeln("drawTrace: $it") }
-            bestCenter?.let { writeln("bestCenter: ${it.real} ${it.imaginary}") }
-            writeln("shape: $shape")
-            circles.forEach { circle ->
-                writeln("\ncircle:")
-                listOf(
-                    circle.radius,
-                    circle.x,
-                    circle.y,
-                    circle.color.fromColor(),
-                    if (circle.fill) 1 else 0
-                ).forEach { param ->
-                    writeln(param.toString())
-                }
-                circle.rule?.let(writeln)
-                circle.borderColor?.let {
-                    writeln("borderColor: ${it.fromColor()}")
-                }
-            }
-        }
+    fun saveToFile(file: File) {
+        if (!file.exists())
+            file.createNewFile()
+        saveToStream(file.outputStream())
     }
 
-    fun saveStreamAsDodecaLookCompatible(stream: OutputStream) {
-        stream.use { outputStream ->
-            val writeln = { s: String -> outputStream.write("$s\n".toByteArray()) }
-            val dodecaLookHeader = "DUDU C++v.1" // NOTE: important! without it DodecaLook fails
-            writeln(dodecaLookHeader)
-            val globals: List<String> = listOf(
-                backgroundColor.fromColor(),
-                *restGlobals.toTypedArray()
-            ).map { it.toString() }
-            globals.forEach { param ->
-                writeln("global")
-                writeln(param)
-            }
-            circles.forEach { circle ->
-                writeln("circle:")
-                listOf(
-                    circle.radius,
-                    circle.x,
-                    circle.y,
-                    circle.color.fromColor(),
-                    if (circle.fill) 1 else 0
-                ).forEach { param ->
-                    writeln(param.toString())
-                }
-                writeln(circle.rule ?: "")
-            }
-        }
-    }
+    fun saveToStream(outputStream: OutputStream) =
+        DDUWriter(this).write(outputStream)
+
+    fun saveToStreamForDodecaLook(outputStream: OutputStream) =
+        DDUWriter(this).writeForDodecaLook(outputStream)
 
     fun preview(width: Int, height: Int): Bitmap {
         // used RGB_565 instead of ARGB_8888 for performance (visually indistinguishable)
@@ -188,96 +124,287 @@ class DDU(
         const val MIN_PREVIEW_UPDATES = 10
         const val NORMAL_PREVIEW_SIZE = 300 // with this preview_size preview_scale was tuned
         const val PREVIEW_SCALE = 0.5f
-        private val header: String get() = "Dodeca Meditation ${BuildConfig.VERSION_NAME} for Android"
 
-        fun readFile(file: File): DDU {
-            return readStream(file.inputStream()).apply { this.file = file }
-        }
+        fun fromFile(file: File): DDU =
+            fromStream(file.inputStream()).apply {
+                this.file = file
+            }
 
-        fun readStream(stream: InputStream): DDU {
-            var backgroundColor: Int = DEFAULT_BACKGROUND_COLOR
-            val restGlobals: MutableList<Int> = mutableListOf()
-            var drawTrace: Boolean? = null
-            var bestCenter: Complex? = null
-            var shape: Shapes = DEFAULT_SHAPE
-            val circles: MutableList<CircleFigure> = mutableListOf()
-            var nGlobals = 0
-            var mode: Mode = Mode.NO
-            var params = CircleParams()
-            val appendCircle: () -> Unit = {
-                if (mode > Mode.Y) { // we have at least radius and center
-                    circles.add(params.toCircleFigure())
-                } else if (mode >= Mode.RADIUS) {
-                    Log.w(TAG, "readStream: Unexpected end of circle, discarding...")
-                }
-            }
-            stream.reader().forEachLine { line ->
-                val s = line.trim()
-                when {
-                    mode == Mode.GLOBAL && s.isNotBlank() -> {
-                        when (nGlobals) {
-                            0 -> backgroundColor = s.toInt().toColor()
-                            1, 2 -> restGlobals.add(s.toInt()) // don't know, what this 2 means ("howInvers" and "howAnim")
-                            3 -> drawTrace = s != "0"
-                            4 -> s.split(" ").let {
-                                if (it.size == 2) {
-                                    val x = it[0].toDoubleOrNull()
-                                    val y = it[1].toDoubleOrNull()
-                                    if (x != null && y != null)
-                                        bestCenter = Complex(x, y)
-                                }
-                            }
-                        }
-                        nGlobals++
-                        mode = Mode.NO
-                    }
-                    s.startsWith("circle:") -> {
-                        appendCircle()
-                        params = CircleParams() // clear params
-                        mode = Mode.RADIUS
-                    }
-                    mode == Mode.NO -> when {
-                        s.startsWith("global") -> mode = Mode.GLOBAL
-                        s.startsWith("drawTrace:") ->
-                            drawTrace = s.substringAfter("drawTrace:").trim().toBoolean()
-                        s.startsWith("bestCenter:") ->
-                            s.substringAfter("bestCenter:").trim().split(" ").let {
-                                if (it.size == 2) {
-                                    val x = it[0].toDoubleOrNull()
-                                    val y = it[1].toDoubleOrNull()
-                                    if (x != null && y != null)
-                                        bestCenter = Complex(x, y)
-                                }
-                            }
-                        s.startsWith("shape:") ->
-                            Shapes.valueOfOrNull(s.substringAfter("shape:").trim())?.let {
-                                shape = it
-                            }
-                        s.startsWith("showOutline:") -> "ignore it" // deprecated
-                    }
-                    mode >= Mode.RADIUS && s.isNotBlank() -> {
-                        when (mode) {
-                            Mode.RADIUS -> params.radius = s.replace(',', '.').toDouble()
-                            Mode.X -> params.x = s.replace(',', '.').toDouble()
-                            Mode.Y -> params.y = s.replace(',', '.').toDouble()
-                            Mode.COLOR -> params.color = s.toInt().toColor()
-                            Mode.FILL -> params.fill = s != "0" // carefully
-                            Mode.RULE -> if (Regex("n?\\d+").matches(s))
-                                params.rule = s // rule MAY be absent
-                        }
-                        if (mode >= Mode.RULE && s.startsWith("borderColor:"))
-                            s.substringAfter("borderColor:").trim().let {
-                                params.borderColor = it.toIntOrNull()?.toColor()
-                            }
-                        mode = mode.next()
-                    }
-                }
-            }
-            appendCircle()
-            return DDU(backgroundColor, restGlobals, drawTrace, bestCenter, shape, circles)
-        }
+        private fun fromStream(stream: InputStream): DDU =
+            DDUReader(stream.reader()).read()
     }
 }
+
+
+private class CircleBuilder {
+    var radius: Double? = null
+    var x: Double? = null
+    var y: Double? = null
+    var color: Int? = null
+    var fill: Boolean? = null
+    var rule: String? = null
+    var borderColor: Int? = null
+
+    class NotEnoughBuildParametersException : Exception(
+        "CircleBuilder must have radius, x and y in order to build CircleFigure"
+    )
+
+    fun build(): CircleFigure {
+        if (x == null || y == null || radius == null)
+            throw NotEnoughBuildParametersException()
+        return CircleFigure(x!!, y!!, radius!!, color, fill, rule, borderColor)
+    }
+}
+
+
+private class DDUBuilder {
+    var backgroundColor: Int = DDU.DEFAULT_BACKGROUND_COLOR
+    val restGlobals: MutableList<Int> = mutableListOf()
+    var drawTrace: Boolean? = null
+    var bestCenter: Complex? = null
+    var shape: Shapes = DDU.DEFAULT_SHAPE
+    val circleFigures: MutableList<CircleFigure> = mutableListOf()
+
+    fun addCircleFigure(circleFigure: CircleFigure) {
+        circleFigures.add(circleFigure)
+    }
+
+    fun tryBuildAndAddCircleFigure(circleBuilder: CircleBuilder) {
+        try {
+            val circleFigure = circleBuilder.build()
+            addCircleFigure(circleFigure)
+        } catch (e: CircleBuilder.NotEnoughBuildParametersException) {
+            e.printStackTrace()
+        }
+    }
+
+    fun build(): DDU =
+        DDU(backgroundColor, restGlobals, drawTrace, bestCenter, shape, circleFigures)
+}
+
+
+private class DDUReader(private val reader: InputStreamReader) {
+    private enum class Mode { // for scanning .ddu, before <mode parameter>
+        NO, GLOBAL, RADIUS, X, Y, COLOR, FILL, RULE, CIRCLE_AUX;
+        fun next(): Mode = values().elementAtOrElse(ordinal + 1) { CIRCLE_AUX }
+    }
+
+    private val dduBuilder = DDUBuilder()
+    private var mode: Mode = Mode.NO // mode == FILL === before scanning [fill] parameter
+    private var nGlobals: Int = 0
+    private var circleBuilder = CircleBuilder()
+    private lateinit var trimmedLine: String
+
+    private fun maybeReadBoolean(s: String = trimmedLine): Boolean? {
+        return when (s) {
+            "0", "false" -> false
+            "1", "true" -> true
+            else -> null
+        }
+    }
+
+    private fun maybeReadDouble(s: String = trimmedLine): Double? =
+        s.replace(',', '.').toDoubleOrNull()
+
+    private fun maybeReadInt(s: String = trimmedLine): Int? =
+        s.toIntOrNull()
+
+    private fun maybeReadColor(s: String = trimmedLine): Int? =
+        s.toIntOrNull()?.toColor()
+
+    private fun maybeReadComplex(s: String = trimmedLine): Complex? {
+        s.split(" ").let {
+            if (it.size == 2) {
+                val x = it[0].toDoubleOrNull()
+                val y = it[1].toDoubleOrNull()
+                if (x != null && y != null)
+                    return Complex(x, y)
+            }
+        }
+        return null
+    }
+
+    private fun maybeReadShape(s: String = trimmedLine): Shapes? =
+        Shapes.valueOfOrNull(s)
+
+    private fun maybeReadRule(s: String = trimmedLine): String? =
+        if (Regex("n?\\d+").matches(s)) s else null
+
+    private infix fun <T : Any?> KMutableProperty0<T>.maybeSetGlobalTo(maybeValue: T?) {
+        maybeValue?.let { value ->
+            this.set(value)
+            nGlobals++
+        }
+    }
+
+    private infix fun <T : Any?> KMutableProperty0<T>.maybeSetTo(maybeValue: T?) {
+        maybeValue?.let { value ->
+            this.set(value)
+        }
+    }
+
+    private fun trimmedSubstringAfter(prefix: String) =
+        trimmedLine.substringAfter(prefix).trim()
+
+    private fun readLegacyGlobalLine() {
+        when (nGlobals) {
+            0 -> dduBuilder::backgroundColor maybeSetGlobalTo maybeReadColor()
+            // don't know, what this 2 means ("howInvers" and "howAnim")
+            1, 2 -> maybeReadInt()?.let {
+                dduBuilder.restGlobals.add(it)
+                nGlobals++
+            }
+            3 -> dduBuilder::drawTrace maybeSetGlobalTo maybeReadBoolean()
+            4 -> dduBuilder::bestCenter maybeSetGlobalTo maybeReadComplex()
+        }
+        mode = Mode.NO
+    }
+
+    private fun tryAddCircle() {
+        dduBuilder.tryBuildAndAddCircleFigure(circleBuilder)
+        circleBuilder = CircleBuilder()
+        mode = Mode.RADIUS
+    }
+
+    private fun readModernGlobalLine() {
+        when {
+            trimmedLine.startsWith("global") ->
+                mode = Mode.GLOBAL
+            trimmedLine.startsWith("drawTrace:") ->
+                dduBuilder::drawTrace maybeSetTo maybeReadBoolean(trimmedSubstringAfter("drawTrace:"))
+            trimmedLine.startsWith("bestCenter:") ->
+                dduBuilder::bestCenter maybeSetTo maybeReadComplex(trimmedSubstringAfter("bestCenter:"))
+            trimmedLine.startsWith("shape:") ->
+                dduBuilder::shape maybeSetTo maybeReadShape(trimmedSubstringAfter("shape:"))
+            trimmedLine.startsWith("showOutline:") ->
+                Log.w(TAG, "Deprecated ddu parameter: showOutline")
+        }
+    }
+
+    private fun readCircleLine() {
+        @Suppress("NON_EXHAUSTIVE_WHEN")
+        when (mode) {
+            Mode.RADIUS -> circleBuilder::radius maybeSetTo maybeReadDouble()
+            Mode.X -> circleBuilder::x maybeSetTo maybeReadDouble()
+            Mode.Y -> circleBuilder::y maybeSetTo maybeReadDouble()
+            Mode.COLOR -> circleBuilder::color maybeSetTo maybeReadColor()
+            Mode.FILL -> circleBuilder::fill maybeSetTo maybeReadBoolean()
+            Mode.RULE -> circleBuilder::rule maybeSetTo maybeReadRule()
+        }
+        if (mode >= Mode.RULE && trimmedLine.startsWith("borderColor:"))
+            circleBuilder::borderColor maybeSetTo maybeReadColor(trimmedSubstringAfter("borderColor:"))
+        mode = mode.next()
+    }
+
+    fun read(): DDU {
+        reader.forEachLine { line ->
+            trimmedLine = line.trim()
+            if (trimmedLine.isNotBlank())
+                when {
+                    mode == Mode.GLOBAL -> readLegacyGlobalLine()
+                    trimmedLine.startsWith("circle:") -> tryAddCircle()
+                    mode == Mode.NO -> readModernGlobalLine()
+                    mode >= Mode.RADIUS -> readCircleLine()
+                }
+        }
+        tryAddCircle()
+        return dduBuilder.build()
+    }
+
+    companion object {
+        private const val TAG = "DDUReader"
+    }
+}
+
+
+private class DDUWriter(private val ddu: DDU) {
+    private lateinit var outputStream: OutputStream
+    private val legacyGlobals: List<String> = listOf(
+        ddu.backgroundColor.fromColor(),
+        *ddu.restGlobals.toTypedArray()
+    ).map { it.toString() }
+
+    private fun writeLine(s: String) =
+        outputStream.write("$s\n".toByteArray())
+
+    private fun writeLegacyGlobal(global: String) {
+        writeLine("global")
+        writeLine(global)
+    }
+
+    private fun writeModernGlobals() {
+        maybeWriteDrawTrace()
+        maybeWriteBestCenter()
+        writeShape()
+    }
+
+    private fun maybeWriteDrawTrace() {
+        ddu.drawTrace?.let {
+            writeLine("drawTrace: $it")
+        }
+    }
+
+    private fun maybeWriteBestCenter() {
+        ddu.bestCenter?.let {
+            writeLine("bestCenter: ${it.real} ${it.imaginary}")
+        }
+    }
+
+    private fun writeShape() =
+        writeLine("shape: ${ddu.shape}")
+
+    private fun writeCircle(circleFigure: CircleFigure) {
+        writeLine("\ncircle:")
+        with(circleFigure) {
+            val fillInt = if (fill) 1 else 0
+            listOf(radius, x, y, color.fromColor(), fillInt).forEach {
+                writeLine(it.toString())
+            }
+            rule?.let { writeLine(it) }
+            borderColor?.fromColor()?.let {
+                writeLine("borderColor: $it")
+            }
+        }
+    }
+
+    private fun writeCircleForDodecaLook(circleFigure: CircleFigure) {
+        writeLine("circle:")
+        with(circleFigure) {
+            val fillInt = if (fill) 1 else 0
+            listOf(radius, x, y, color.fromColor(), fillInt).forEach {
+                writeLine(it.toString())
+            }
+            writeLine(rule ?: "")
+        }
+    }
+
+    fun write(output: OutputStream) {
+        // maybe: use buffered stream
+        outputStream = output
+        output.use {
+            writeLine(HEADER)
+            legacyGlobals.forEach { writeLegacyGlobal(it) }
+            writeModernGlobals()
+            ddu.circles.forEach { writeCircle(it) }
+        }
+    }
+
+    fun writeForDodecaLook(output: OutputStream) {
+        // maybe: abstract DDUWriter + 2 impl-s
+        outputStream = output
+        output.use {
+            writeLine(DODECA_LOOK_HEADER)
+            legacyGlobals.forEach { writeLegacyGlobal(it) }
+            ddu.circles.forEach { writeCircleForDodecaLook(it) }
+        }
+    }
+
+    companion object {
+        private const val HEADER: String = "Dodeca Meditation ${BuildConfig.VERSION_NAME} for Android"
+        private const val DODECA_LOOK_HEADER: String = "DUDU C++v.1" // NOTE: important! without it DodecaLook fails
+    }
+}
+
 
 val exampleDDU: DDU = run {
     val circle = CircleFigure(300.0, 400.0, 200.0, Color.BLUE, rule = "12")

@@ -35,8 +35,8 @@ class BitmapConverter {
 // TODO: store relative path instead of filename
 @Entity(indices = [Index("filename")])
 data class DDUFile(
-    @ColumnInfo(name = "filename") var filename: String,
-    @ColumnInfo(name = "original_filename") var originalFilename: String,
+    @ColumnInfo(name = "filename") var filename: Filename,
+    @ColumnInfo(name = "original_filename") var originalFilename: Filename,
     @ColumnInfo(name = "preview" /*, typeAffinity = ColumnInfo.BLOB*/) var preview: Bitmap? = null
 ) {
     @PrimaryKey(autoGenerate = true) var uid: Int = 0
@@ -51,7 +51,7 @@ interface DDUFileDao {
     fun loadAllByIds(dduFileIds: IntArray): List<DDUFile>
 
     @Query("SELECT * FROM ddufile WHERE filename LIKE :filename LIMIT 1")
-    fun findByFilename(filename: String): DDUFile?
+    fun findByFilename(filename: Filename): DDUFile?
 
     @Update fun update(dduFile: DDUFile)
 
@@ -61,12 +61,22 @@ interface DDUFileDao {
     @Delete fun delete(dduFile: DDUFile)
 }
 
-fun DDUFileDao.insertOrUpdate(filename: String, action: DDUFile.() -> Unit) {
+fun DDUFileDao.insertOrUpdate(filename: Filename, action: DDUFile.() -> Unit) {
     val dduFile: DDUFile? = findByFilename(filename)
     if (dduFile != null)
         update(dduFile.apply(action))
     else
         insert(DDUFile(filename = filename, originalFilename = filename).apply(action))
+}
+
+fun DDUFileDao.insertOrDropPreview(filename: Filename) {
+    val dduFile: DDUFile? = findByFilename(filename)
+    if (dduFile != null) {
+        dduFile.preview = null
+        update(dduFile)
+    } else {
+        insert(DDUFile(filename = filename, originalFilename = filename))
+    }
 }
 
 @Database(entities = [DDUFile::class], version = 2)
