@@ -16,13 +16,15 @@ class SharedPreferencesModel(
 
     fun <T: Any> set(sharedPreference: SharedPreference<T>, value: T) {
         sharedPreferences.edit {
-            set(sharedPreference, value)
+            sharedPreference.set(value, this)
+//            this.set(sharedPreference, value) // NOTE: without 'this' it means recursion (!)
         }
     }
 
     fun toggle(sharedPreference: SharedPreference<Boolean>) {
         sharedPreferences.edit {
-            set(sharedPreference, !sharedPreference.value)
+            sharedPreference.set(!sharedPreference.value, this)
+//            this.set(sharedPreference, !sharedPreference.value)
         }
     }
 

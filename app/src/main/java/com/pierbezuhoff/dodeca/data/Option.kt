@@ -182,13 +182,13 @@ class Values(private val options: Options) {
 internal fun Resources.dp2px(dp: Int): Int = dp * displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
 internal fun Resources.px2dp(px: Int): Int = px * DisplayMetrics.DENSITY_DEFAULT / displayMetrics.densityDpi
 
-fun <T : Any> SharedPreferences.fetch(preference: SharedPreference<T>) =
+inline fun <T : Any> SharedPreferences.fetch(preference: SharedPreference<T>) =
     preference.fetch(this)
 
-fun <T : Any> SharedPreferences.Editor.put(preference: SharedPreference<T>) =
+inline fun <T : Any> SharedPreferences.Editor.put(preference: SharedPreference<T>) =
     preference.put(this)
-fun <T : Any> SharedPreferences.Editor.set(preference: SharedPreference<T>, value: T? = null) =
+inline fun <T : Any> SharedPreferences.Editor.set(preference: SharedPreference<T>, value: T? = null) =
     preference.set(value, this)
-fun <T : Any> SharedPreferences.Editor.remove(preference: SharedPreference<T>) {
+inline fun <T : Any> SharedPreferences.Editor.remove(preference: SharedPreference<T>) {
     preference.remove(this)
 }

@@ -14,7 +14,6 @@ import com.pierbezuhoff.dodeca.data.CircleGroupImpl
 import com.pierbezuhoff.dodeca.data.DDU
 import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.Trace
-import com.pierbezuhoff.dodeca.data.exampleDDU
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
@@ -79,7 +78,7 @@ class DodecaViewModel : ViewModel() {
             DDU.fromFile(getRecentDDUFile(context))
         } catch (e: Exception) {
             e.printStackTrace()
-            exampleDDU
+            DDU.exampleDDU
         }
         statTimeDelta = context.resources.getInteger(R.integer.stat_time_delta)
     }
