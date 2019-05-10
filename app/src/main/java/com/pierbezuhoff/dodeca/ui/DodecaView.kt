@@ -124,12 +124,13 @@ class DodecaView(
         options.showAllCircles.observeHere {
             postInvalidate()
         }
+        // TODO: invoke only when changed
         options.autocenterAlways.observeHere {
             if (it && knownSize)
                 autocenter()
         }
         options.canvasFactor.observeHere {
-            if (knownSize)
+            if (it != model.trace.currentCanvasFactor && knownSize)
                 retrace()
         }
         options.speed.observeHere {
