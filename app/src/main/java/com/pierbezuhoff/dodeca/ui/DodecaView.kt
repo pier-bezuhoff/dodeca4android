@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import androidx.core.content.edit
 import androidx.core.graphics.withMatrix
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -18,7 +17,6 @@ import com.pierbezuhoff.dodeca.data.DDU
 import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
-import com.pierbezuhoff.dodeca.data.set
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
@@ -78,10 +76,10 @@ class DodecaView(
 
     private fun firstRun() {
         if (!initialized) {
-            registerOptionsObservers()
-            sharedPreferencesModel.loadAll()
             registerObservers()
             model.initFrom(context) // set ddu, defaults and ddu-related LiveData-s
+            registerOptionsObservers()
+            sharedPreferencesModel.loadAll()
             fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
                 if (updating) postInvalidate()
             }
@@ -104,7 +102,7 @@ class DodecaView(
                 }
                 // NOTE: slow and diverges
                 // circleGroup.updateTimes(values.skipN, values.reverseMotion)
-                sharedPreferencesModel.edit { set(options.skipN, 0) }
+                sharedPreferencesModel.set(options.skipN, 0)
             }
         })
     }
