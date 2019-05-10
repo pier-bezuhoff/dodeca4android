@@ -30,12 +30,11 @@ import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
+import com.pierbezuhoff.dodeca.db.DduFileDatabase
+import com.pierbezuhoff.dodeca.db.DduFileRepository
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.models.SharedPreferencesModel
-import com.pierbezuhoff.dodeca.utils.DB
-import com.pierbezuhoff.dodeca.utils.DduFileDao
-import com.pierbezuhoff.dodeca.utils.DduFileDatabase
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
@@ -72,7 +71,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         SharedPreferencesModel(defaultSharedPreferences)
     }
     private val dir: File get() = model.dir.value ?: dduDir
-    private val dduFileDao: DduFileDao by lazy { DB.dduFileDao() }
+    private val dduFileRepository = DduFileRepository.INSTANCE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -209,6 +208,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         if (!values.saveAs) {
             dodecaViewModel.requestSaveDduAt()
         } else {
+            dodecaViewModel.pause()
             buildSaveAsDialog().show()
         }
     }
@@ -281,7 +281,9 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
                         }
                     }
                     having("discard_previews") {
-                        dduFileDao.getAll().forEach { dduFileDao.update(it.apply { preview = null }) }
+                        dduFileRepository.getAllDduFiles().forEach { dduFile ->
+                            dduFileRepository.dropPreview(dduFile)
+                        }
                     }
                 }
                 sharedPreferencesModel.fetchAll()
@@ -374,7 +376,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
     }
 
     private fun extract1Ddu(filename: Filename, dir: File = dduDir, overwrite: Boolean = false) =
-        extract1Ddu(filename, dir, dduFileDao, TAG, overwrite)
+        extract1Ddu(filename, dir, dduFileRepository, TAG, overwrite)
 
     class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {
         val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shapes

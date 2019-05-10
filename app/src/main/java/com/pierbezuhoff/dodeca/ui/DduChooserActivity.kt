@@ -29,8 +29,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.values
-import com.pierbezuhoff.dodeca.utils.DB
-import com.pierbezuhoff.dodeca.utils.DduFileDao
+import com.pierbezuhoff.dodeca.db.DduFileRepository
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.Sleeping
@@ -40,7 +39,6 @@ import com.pierbezuhoff.dodeca.utils.copyStream
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.extract1Ddu
 import com.pierbezuhoff.dodeca.utils.getDisplayName
-import com.pierbezuhoff.dodeca.utils.insertOrUpdate
 import com.pierbezuhoff.dodeca.utils.isDdu
 import com.pierbezuhoff.dodeca.utils.stripDdu
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
@@ -57,11 +55,13 @@ import org.jetbrains.anko.uiThread
 import org.jetbrains.anko.yesButton
 import java.io.File
 
+// TODO: refactor with databindings and viewmodel
 // MAYBE: action bar: search by name
 // MAYBE: store in sharedPreferences last dir
 // MAYBE: link to external folder
 class DduChooserActivity : AppCompatActivity() {
     lateinit var dir: File // current
+    private val dduFileRepository = DduFileRepository.INSTANCE
     private lateinit var dduAdapter: DduAdapter
     private lateinit var dirAdapter: DirAdapter
     private var requestedDduFile: File? = null
@@ -156,7 +156,7 @@ class DduChooserActivity : AppCompatActivity() {
     private fun renameDduFile(file: File, position: Int) {
         val name: FileName = file.nameWithoutExtension
         var input: EditText? = null
-        val originalFilename: Filename? = DB.dduFileDao().findByFilename(file.name)?.originalFilename
+        val originalFilename: Filename? = dduFileRepository.getOriginalFilename(file.name)
         val appendix =
             if (originalFilename != null && originalFilename != file.name)
                 " " + getString(R.string.rename_dialog_original_name, originalFilename.stripDdu())
@@ -173,10 +173,8 @@ class DduChooserActivity : AppCompatActivity() {
                     Log.i(TAG, "$file -> $newFile: $success")
                     if (success) {
                         toast(getString(R.string.ddu_rename_toast, name, newName))
-                        val preview: Bitmap? = with(DB.dduFileDao()) {
-                            insertOrUpdate(file.name) { this.filename = newFilename }
-                            findByFilename(newFilename)?.preview
-                        }
+                        dduFileRepository.updateFilenameInserting(file.name, newFilename = newFilename)
+                        val preview: Bitmap? = dduFileRepository.getPreview(newFilename)
                         with(dduAdapter) {
                             files[position] = newFile
                             previews[newFilename] = preview
@@ -193,9 +191,7 @@ class DduChooserActivity : AppCompatActivity() {
 
     private fun deleteDduFile(file: File, position: Int) {
         toast(getString(R.string.ddu_delete_toast, file.nameWithoutExtension))
-        with(DB.dduFileDao()) {
-            findByFilename(file.name)?.let { delete(it) }
-        }
+        dduFileRepository.delete(file.name)
         file.delete()
         dduAdapter.files.removeAt(position)
         dduAdapter.notifyDataSetChanged()
@@ -203,7 +199,7 @@ class DduChooserActivity : AppCompatActivity() {
 
     private fun restoreDduFile(file: File) {
         // TODO: restore imported files by original path
-        val original: Filename? = extract1Ddu(file.name, dduDir, DB.dduFileDao(),
+        val original: Filename? = extract1Ddu(file.name, dduDir, dduFileRepository,
             TAG
         )
         original?.let {
@@ -224,10 +220,8 @@ class DduChooserActivity : AppCompatActivity() {
     }
 
     private fun deleteDir(dir: File) {
-        with(DB.dduFileDao()) {
-            dir.walkTopDown().iterator().forEach {
-                if (it.isDdu) findByFilename(it.name)?.let { delete(it) }
-            }
+        dir.walkTopDown().iterator().forEach {
+            if (it.isDdu) dduFileRepository.delete(it.name)
         }
         val success = dir.deleteRecursively()
         if (!success)
@@ -328,10 +322,8 @@ class DduChooserActivity : AppCompatActivity() {
             R.string.delete_all_alert_title
         ) {
             yesButton {
-                with(DB.dduFileDao()) {
-                    dir.walkTopDown().iterator().forEach {
-                        if (it.isDdu) findByFilename(it.name)?.let { delete(it) }
-                    }
+                dir.walkTopDown().iterator().forEach {
+                    if (it.isDdu) dduFileRepository.delete(it.name)
                 }
                 FileUtils.cleanDirectory(dir)
                 onDirChange(dir)
@@ -524,14 +516,14 @@ class DduAdapter(
             ArrayList(dir.listFiles().filter { it.extension.toLowerCase() == "ddu" })
         }
     val files: ArrayList<File> by sleepingFiles
-    private val dduFileDao: DduFileDao by lazy { DB.dduFileDao() }
+    private val dduFileRepository = DduFileRepository.INSTANCE
     val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()
     val buildings: MutableMap<Filename, DduViewHolder?> = mutableMapOf()
 
     init {
         // maybe: in async task; show ContentLoadingProgressBar or ProgressDialog
         // ISSUE: may lead to OutOfMemoryError (fast return to after opening a ddu)
-        dduFileDao.getAll().forEach {
+        dduFileRepository.getAllDduFiles().forEach {
             previews[it.filename] = it.preview
         }
     }
@@ -580,7 +572,7 @@ class DduAdapter(
                 val size = values.previewSizePx
                 val bitmap = ddu.preview(size, size)
                 previews[fileName] = bitmap
-                dduFileDao.insertOrUpdate(file.name) { this.preview = bitmap }
+                dduFileRepository.setPreviewInserting(file.name, newPreview = bitmap)
                 buildings[fileName]?.let { currentHolder ->
                     uiThread {
                         val preview: ImageView = currentHolder.view.findViewById(R.id.ddu_preview)

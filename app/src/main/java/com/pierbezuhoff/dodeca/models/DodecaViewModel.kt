@@ -17,12 +17,10 @@ import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
+import com.pierbezuhoff.dodeca.db.DduFileRepository
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
-import com.pierbezuhoff.dodeca.utils.DB
-import com.pierbezuhoff.dodeca.utils.DduFileDao
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
-import com.pierbezuhoff.dodeca.utils.insertOrDropPreview
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
@@ -31,7 +29,7 @@ import kotlin.properties.Delegates
 
 class DodecaViewModel : ViewModel() {
     lateinit var sharedPreferencesModel: SharedPreferencesModel
-    private val dduFileDao: DduFileDao by lazy { DB.dduFileDao() }
+    private val dduFileRepository: DduFileRepository = DduFileRepository.INSTANCE
     private val _ddu: MutableLiveData<Ddu> = MutableLiveData()
     private val _circleGroup: MutableLiveData<CircleGroup> = MutableLiveData()
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
@@ -130,10 +128,23 @@ class DodecaViewModel : ViewModel() {
         _updateOnce = true
     }
 
-    fun requestOneStep() { _oneStepRequest.value = Unit }
-    fun requestClear() { _clearRequest.value = Unit }
-    fun requestAutocenter() { _autocenterRequest.value = Unit }
-    fun requestSaveDduAt(file: File? = null) { _saveDduAtRequest.value = file }
+    fun requestOneStep() {
+        _oneStepRequest.value = Unit
+    }
+
+    fun requestClear() {
+        _clearRequest.value = Unit
+    }
+
+    fun requestAutocenter() {
+        _autocenterRequest.value = Unit
+    }
+
+    // requestSaveDduAt -> (pause; DodecaView.saveDdu) -> DodecaViewModel.saveDdu -> resume
+    fun requestSaveDduAt(file: File? = null) {
+        pause()
+        _saveDduAtRequest.value = file
+    }
 
     fun updateStat(times: Int = 1) {
         val dNUpdates = times * (if (values.reverseMotion) -1 else 1)
@@ -163,7 +174,7 @@ class DodecaViewModel : ViewModel() {
                     uiThread {
                         context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
                     }
-                    dduFileDao.insertOrDropPreview(file.name)
+                    dduFileRepository.dropPreviewInserting(file.name)
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     uiThread {
@@ -172,14 +183,17 @@ class DodecaViewModel : ViewModel() {
                 }
             }
         }
+        resume()
     }
 
     fun resume() =
         updating.postValue(oldUpdating)
 
     fun pause() {
-        oldUpdating = updating.value ?: DEFAULT_UPDATING
-        updating.postValue(false)
+        if (updating.value != false) {
+            oldUpdating = updating.value ?: DEFAULT_UPDATING
+            updating.postValue(false)
+        }
     }
 
     fun stop() {
