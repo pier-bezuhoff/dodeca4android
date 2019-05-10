@@ -11,14 +11,15 @@ import androidx.lifecycle.ViewModel
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.CircleGroupImpl
-import com.pierbezuhoff.dodeca.data.DDU
+import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.Shapes
+import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.DB
-import com.pierbezuhoff.dodeca.utils.DDUFileDao
+import com.pierbezuhoff.dodeca.utils.DduFileDao
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
 import com.pierbezuhoff.dodeca.utils.insertOrDropPreview
@@ -30,7 +31,8 @@ import kotlin.properties.Delegates
 
 class DodecaViewModel : ViewModel() {
     lateinit var sharedPreferencesModel: SharedPreferencesModel
-    private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
+    private val dduFileDao: DduFileDao by lazy { DB.dduFileDao() }
+    private val _ddu: MutableLiveData<Ddu> = MutableLiveData()
     private val _circleGroup: MutableLiveData<CircleGroup> = MutableLiveData()
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
@@ -41,63 +43,87 @@ class DodecaViewModel : ViewModel() {
     private val _oneStepRequest: MutableLiveData<Unit> = MutableLiveData()
     private val _clearRequest: MutableLiveData<Unit> = MutableLiveData()
     private val _autocenterRequest: MutableLiveData<Unit> = MutableLiveData()
-    private val _saveDDUAtRequest: MutableLiveData<File?> = MutableLiveData() // TODO: check setting value to null
+    private val _saveDduAtRequest: MutableLiveData<File?> = MutableLiveData() // TODO: check setting value to null
+    private var oldUpdating: Boolean = DEFAULT_UPDATING
 
     val oneStepRequest: LiveData<Unit> = _oneStepRequest
     val clearRequest: LiveData<Unit> = _clearRequest
     val autocenterRequest: LiveData<Unit> = _autocenterRequest
-    val saveDDUAtRequest: LiveData<File?> = _saveDDUAtRequest
+    val saveDduAtRequest: LiveData<File?> = _saveDduAtRequest
 
-    val ddu: MutableLiveData<DDU> = MutableLiveData()
+    val ddu: LiveData<Ddu> = _ddu
     val circleGroup: LiveData<CircleGroup> = _circleGroup
     val nUpdates: LiveData<Long> = _nUpdates
     val dTime: LiveData<Float> = _dTime
     var lastUpdateTime: Long by Delegates.notNull() // <- System.currentTimeMillis()
     var statTimeDelta: Int by Delegates.notNull() // n of updates between stat time update
         private set
-    val updateOnce: Boolean get() = if (_updateOnce) { _updateOnce = false; true } else false
+    val updateOnce: Boolean
+        get() = if (_updateOnce) { _updateOnce = false; true } else false
     val paint = Paint(DEFAULT_PAINT)
 
     val trace: Trace = Trace()
     // ddu:r -> motion -> visible:r
     val motion: Matrix = Matrix()
-    val shape: MutableLiveData<Shapes> = MutableLiveData(DEFAULT_SHAPE)
-    val drawTrace: MutableLiveData<Boolean> = MutableLiveData(DEFAULT_DRAW_TRACE)
-    val updating: MutableLiveData<Boolean> = MutableLiveData(DEFAULT_UPDATING)
+    val shape: MutableLiveData<Shapes> = MutableLiveData()
+    val drawTrace: MutableLiveData<Boolean> = MutableLiveData()
+    val updating: MutableLiveData<Boolean> = MutableLiveData()
 
     private val _gestureDetector: MutableLiveData<DodecaGestureDetector> = MutableLiveData()
     val gestureDetector: LiveData<DodecaGestureDetector> = _gestureDetector
 
-    init {
-        ddu.observeForever { onNewDDU(it) }
-    }
-
     /* Set ddu, defaults and ddu-related LiveData-s */
     fun initFrom(context: Context) {
-        ddu.value = try {
-            DDU.fromFile(getRecentDDUFile(context))
-        } catch (e: Exception) {
-            e.printStackTrace()
-            DDU.exampleDDU
-        }
+        loadDdu(context.getInitialDdu())
         statTimeDelta = context.resources.getInteger(R.integer.stat_time_delta)
+        sharedPreferencesModel.fetchAll()
     }
 
-    private fun getRecentDDUFile(context: Context): File {
-        val recentInCurrentDir = File(values.recentDDU)
-        val recentInDDUDir = File(context.dduDir, values.recentDDU)
-        if (recentInCurrentDir.exists())
-            return recentInCurrentDir
+    private fun Context.getInitialDdu(): Ddu =
+        try {
+            Ddu.fromFile(this.getRecentDduFile())
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Ddu.EXAMPLE_DDU
+        }
+
+    private fun Context.getRecentDduFile(): File {
+        sharedPreferencesModel.fetch(options.recentDdu)
+        val recentFromAbsolutePath = File(values.recentDdu) // new format
+        val recentInDduDir = File(this.dduDir, values.recentDdu) // deprecated format
+        if (recentFromAbsolutePath.exists())
+            return recentFromAbsolutePath
         else
-            return recentInDDUDir
+            return recentInDduDir
+    }
+
+    fun <T : Any> setSharedPreference(sharedPreference: SharedPreference<T>, value: T) {
+        sharedPreferencesModel.set(sharedPreference, value)
     }
 
     fun registerGestureDetector(detector: DodecaGestureDetector) {
         _gestureDetector.value = detector
     }
 
-    fun loadDDU(newDDU: DDU) {
-        ddu.value = newDDU
+    fun loadDdu(ddu: Ddu) {
+        resetDduParams()
+        _nUpdates.value = 0
+        _circleGroup.value = CircleGroupImpl(ddu.circles, paint)
+        _ddu.value = ddu
+        shape.value = ddu.shape
+        drawTrace.value = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
+        updating.value = DEFAULT_UPDATING
+        ddu.file?.let { file ->
+            setSharedPreference(options.recentDdu, file.absolutePath)
+        }
+    }
+
+    private fun resetDduParams() {
+        trace.clear()
+        motion.reset()
+        lastTimedUpdate = 0
+        lastUpdateTime = System.currentTimeMillis()
+        lastTimedUpdateTime = lastUpdateTime
     }
 
     fun requestUpdateOnce() {
@@ -107,7 +133,7 @@ class DodecaViewModel : ViewModel() {
     fun requestOneStep() { _oneStepRequest.value = Unit }
     fun requestClear() { _clearRequest.value = Unit }
     fun requestAutocenter() { _autocenterRequest.value = Unit }
-    fun requestSaveDDUAt(file: File? = null) { _saveDDUAtRequest.value = file }
+    fun requestSaveDduAt(file: File? = null) { _saveDduAtRequest.value = file }
 
     fun updateStat(times: Int = 1) {
         val dNUpdates = times * (if (values.reverseMotion) -1 else 1)
@@ -123,26 +149,10 @@ class DodecaViewModel : ViewModel() {
         }
     }
 
-    private fun onNewDDU(ddu: DDU) {
-        trace.clear()
-        motion.reset()
-        shape.value = ddu.shape
-        drawTrace.value = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
-        updating.value = DEFAULT_UPDATING
-        _nUpdates.value = 0
-        lastTimedUpdate = 0
-        lastUpdateTime = System.currentTimeMillis()
-        lastTimedUpdateTime = lastUpdateTime
-        _circleGroup.value = CircleGroupImpl(ddu.circles, paint)
-        ddu.file?.let { file ->
-            sharedPreferencesModel.set(options.recentDDU, file.absolutePath)
-        }
-    }
-
-    fun saveDDU(context: Context, ddu: DDU, outputFile: File? = null) {
+    fun saveDdu(context: Context, ddu: Ddu, outputFile: File? = null) {
         val file: File? = outputFile ?: ddu.file
         if (file == null) {
-            Log.i(TAG, "saveDDU: ddu has no file")
+            Log.i(TAG, "saveDdu: ddu has no file")
             // then save as
             context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
         } else {
@@ -162,6 +172,27 @@ class DodecaViewModel : ViewModel() {
                 }
             }
         }
+    }
+
+    fun resume() =
+        updating.postValue(oldUpdating)
+
+    fun pause() {
+        oldUpdating = updating.value ?: DEFAULT_UPDATING
+        updating.postValue(false)
+    }
+
+    fun stop() {
+        oldUpdating = true
+        updating.postValue(false)
+    }
+
+    fun toggleUpdating() {
+        updating.value = !(updating.value ?: DEFAULT_UPDATING)
+    }
+
+    fun toggleDrawTrace() {
+        drawTrace.value = !(drawTrace.value ?: DEFAULT_DRAW_TRACE)
     }
 
     companion object {

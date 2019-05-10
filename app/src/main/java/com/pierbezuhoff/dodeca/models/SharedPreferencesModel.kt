@@ -8,23 +8,27 @@ import com.pierbezuhoff.dodeca.data.options
 
 class SharedPreferencesModel(
     private val sharedPreferences: SharedPreferences
-) : SharedPreferences by sharedPreferences {
+) {
 
-    fun loadAll() {
-        allPreferences.forEach { sharedPreferences.fetch(it) }
+    fun fetchAll() {
+        allPreferences.forEach {
+            fetch(it)
+        }
+    }
+
+    fun <T : Any> fetch(sharedPreference: SharedPreference<T>) {
+        sharedPreferences.fetch(sharedPreference)
     }
 
     fun <T: Any> set(sharedPreference: SharedPreference<T>, value: T) {
         sharedPreferences.edit {
-            sharedPreference.set(value, this)
-//            this.set(sharedPreference, value) // NOTE: without 'this' it means recursion (!)
+            sharedPreference.set(value, this) // NOTE: set(sharedPreference, value) means recursion
         }
     }
 
     fun toggle(sharedPreference: SharedPreference<Boolean>) {
         sharedPreferences.edit {
             sharedPreference.set(!sharedPreference.value, this)
-//            this.set(sharedPreference, !sharedPreference.value)
         }
     }
 
@@ -46,7 +50,7 @@ class SharedPreferencesModel(
                 options.previewSize,
                 options.previewSmartUpdates,
                 options.nPreviewUpdates,
-                options.recentDDU
+                options.recentDdu
             )
         private val allPreferences: Set<SharedPreference<*>> = effectivePreferences + secondaryPreferences
      }

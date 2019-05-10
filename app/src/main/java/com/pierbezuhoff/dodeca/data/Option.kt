@@ -144,7 +144,7 @@ class Options(val resources: Resources) {
     val previewSmartUpdates = BooleanOption("preview_smart_updates",
         R.bool.preview_smart_updates
     )
-    val recentDDU: Option<Filename> = Option("recent_ddu", resources.getString(R.string.first_ddu))
+    val recentDdu: Option<Filename> = Option("recent_ddu", resources.getString(R.string.first_ddu))
     val versionCode = Option(
         "version_code",
         resources.getInteger(R.integer.version_code)
@@ -175,7 +175,7 @@ class Values(private val options: Options) {
     val previewSizePx: Int get() = options.resources.dp2px(values.previewSize)
     val nPreviewUpdates: Int by options.nPreviewUpdates
     val previewSmartUpdates: Boolean by options.previewSmartUpdates
-    val recentDDU: Filename by options.recentDDU
+    val recentDdu: Filename by options.recentDdu
     val versionCode: Int by options.versionCode
 }
 

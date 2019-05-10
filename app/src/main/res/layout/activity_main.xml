@@ -28,7 +28,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:mainModel="@{model}"
                 app:model="@{dodecaViewModel}"
-                app:sharedPreferencesModel="@{sharedPreferencesModel}"
         />
 
         <LinearLayout

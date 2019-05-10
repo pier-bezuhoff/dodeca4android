@@ -34,7 +34,7 @@ import org.jetbrains.anko.include
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
-class ChooseColorDialog(val activity: MainActivity, private val circleGroup: CircleGroup) {
+class ChooseColorDialog(private val activity: MainActivity, private val circleGroup: CircleGroup) {
     private var listener: ChooseColorListener = activity
     private lateinit var rowAdapter: CircleAdapter
 

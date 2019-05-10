@@ -12,8 +12,8 @@ import java.io.OutputStream
 typealias FileName = String // without extension
 typealias Filename = String // with extension
 val Filename.isDDU: Boolean get() = endsWith(".ddu", ignoreCase = true)
-fun Filename.stripDDU(): FileName = this.removeSuffix(".ddu").removeSuffix(".DDU")
-val File.isDDU: Boolean get() = extension.toLowerCase() == "ddu"
+fun Filename.stripDdu(): FileName = this.removeSuffix(".ddu").removeSuffix(".Ddu")
+val File.isDdu: Boolean get() = extension.toLowerCase() == "ddu"
 val DocumentFile.isDDU: Boolean get() = name?.isDDU ?: false
 
 fun copyStream(inputStream: InputStream, outputStream: OutputStream) =
@@ -57,7 +57,7 @@ fun withUniquePostfix(file: File, allFiles: List<File> = file.siblings()): File 
     val name = namePart1(fileName)
     val postfixes: Set<Int> = allFiles
         .asSequence()
-        .filter { it.isDDU }
+        .filter { it.isDdu }
         .map {
             it.nameWithoutExtension.let { name ->
                 part1.find(name)?.groupValues

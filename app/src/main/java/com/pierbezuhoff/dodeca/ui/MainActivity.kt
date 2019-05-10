@@ -24,10 +24,9 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProviders
 import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.DDU
+import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.Options
 import com.pierbezuhoff.dodeca.data.Shapes
-import com.pierbezuhoff.dodeca.data.fetch
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
@@ -35,12 +34,12 @@ import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.models.SharedPreferencesModel
 import com.pierbezuhoff.dodeca.utils.DB
-import com.pierbezuhoff.dodeca.utils.DDUFileDao
-import com.pierbezuhoff.dodeca.utils.DDUFileDatabase
+import com.pierbezuhoff.dodeca.utils.DduFileDao
+import com.pierbezuhoff.dodeca.utils.DduFileDatabase
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
-import com.pierbezuhoff.dodeca.utils.extract1DDU
+import com.pierbezuhoff.dodeca.utils.extract1Ddu
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
@@ -73,22 +72,16 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         SharedPreferencesModel(defaultSharedPreferences)
     }
     private val dir: File get() = model.dir.value ?: dduDir
-    private var updatingBeforePause: Boolean? = null
-    private val dduFileDao: DDUFileDao by lazy { DB.dduFileDao() }
+    private val dduFileDao: DduFileDao by lazy { DB.dduFileDao() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Options(resources).init() // init options.* and values.*
-        DDUFileDatabase.init(this) /// the faster the better
+        DduFileDatabase.init(this) /// the faster the better
         sharedPreferencesModel.fetch(options.versionCode)
-        if (values.versionCode != BuildConfig.VERSION_CODE) {
-            val upgrading = values.versionCode < BuildConfig.VERSION_CODE
-            Log.i(TAG, "${if (upgrading) "Upgrading" else "Degrading"} to ${BuildConfig.VERSION_NAME} (${values.versionCode} -> ${BuildConfig.VERSION_CODE})")
-            sharedPreferencesModel.set(options.versionCode, BuildConfig.VERSION_CODE)
-            onUpgrade()
-        }
+        checkUpgrade()
         window.decorView.apply {
-            systemUiVisibility = IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
+            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
             setOnSystemUiVisibilityChangeListener {
                 if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
                     systemUiVisibility = IMMERSIVE_UI_VISIBILITY
@@ -120,6 +113,20 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         model.showBottomBar()
     }
 
+    private fun checkUpgrade() {
+        val currentVersionCode = BuildConfig.VERSION_CODE
+        val oldVersionCode = values.versionCode
+        if (oldVersionCode != currentVersionCode) {
+            val upgrading: Boolean = oldVersionCode < currentVersionCode
+            val upgradingOrDegrading: String = if (upgrading) "Upgrading" else "Degrading"
+            val currentVersionName: String = BuildConfig.VERSION_NAME
+            val versionCodeChange: String = "$oldVersionCode -> $currentVersionCode"
+            Log.i(TAG,"$upgradingOrDegrading to $currentVersionName ($versionCodeChange)")
+            sharedPreferencesModel.set(options.versionCode, currentVersionCode)
+            onUpgrade()
+        }
+    }
+
     override fun onSingleTap(e: MotionEvent?) = model.toggleBottomBar()
 
     private fun onUpgrade() {
@@ -128,14 +135,14 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
             if (!dduDir.exists()) {
                 Log.i(TAG, "Extracting all assets into $dduDir")
                 dduDir.mkdir()
-                extractDDUFromAssets()
+                extractDduFromAssets()
             } else {
                 // TODO: check it
                 // try to export new ddus
                 Log.i(TAG, "Adding new ddu assets into $dduDir")
                 val existedDdus = dduDir.listFiles().map { it.name }.toSet()
                 assets.list(getString(R.string.ddu_asset_dir))?.filter { it !in existedDdus }?.forEach { name ->
-                    extract1DDU(name, dduDir)
+                    extract1Ddu(name, dduDir)
                 }
             }
         } catch (e: IOException) {
@@ -172,19 +179,17 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
                 startActivityForResult(intent, HELP_CODE)
             }
             R.id.load_button -> {
-                val intent = Intent(this, DDUChooserActivity::class.java)
+                val intent = Intent(this, DduChooserActivity::class.java)
                 intent.putExtra("dirPath", dir.absolutePath)
                 startActivityForResult(intent, DDU_CODE)
             }
             R.id.save_button -> saveDDU()
-            R.id.play_button -> dodecaViewModel.updating.value = !dodecaViewModel.updating.value!!
+            R.id.play_button -> dodecaViewModel.toggleUpdating()
             R.id.next_step_button -> dodecaViewModel.requestOneStep()
-            R.id.trace_button -> dodecaViewModel.drawTrace.value = !dodecaViewModel.drawTrace.value!!
+            R.id.trace_button -> dodecaViewModel.toggleDrawTrace()
             R.id.choose_color_button -> {
                 dodecaViewModel.circleGroup.value?.let { circleGroup ->
-                    updatingBeforePause = dodecaViewModel.updating.value
-                    if (updatingBeforePause ?: true)
-                        dodecaViewModel.updating.value = false
+                    dodecaViewModel.pause()
                     model.stopBottomBarHideTimer() // will be restarted in onChooseColorClosed()
                     ChooseColorDialog(this, circleGroup).build().show()
                 }
@@ -202,7 +207,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
 
     private fun saveDDU() {
         if (!values.saveAs) {
-            dodecaViewModel.requestSaveDDUAt()
+            dodecaViewModel.requestSaveDduAt()
         } else {
             buildSaveAsDialog().show()
         }
@@ -220,7 +225,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
                 try {
                     val filename: Filename = "${fileNameEditText.text}.ddu"
                     val file = File(dir, filename)
-                    dodecaViewModel.requestSaveDDUAt(file)
+                    dodecaViewModel.requestSaveDduAt(file)
                     Log.i(TAG, file.path)
                 } catch (e: IOException) {
                     e.printStackTrace()
@@ -230,23 +235,20 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         }
 
     override fun onChooseColorClosed() {
-        updatingBeforePause?.let { dodecaViewModel.updating.value = it }
+        dodecaViewModel.resume()
         model.showBottomBar()
     }
 
     override fun onResume() {
         super.onResume()
-        updatingBeforePause?.let {
-            dodecaViewModel.updating.value = it
-        }
+        dodecaViewModel.resume()
     }
 
     override fun onPause() {
         super.onPause()
-        updatingBeforePause = dodecaViewModel.updating.value
-        dodecaViewModel.updating.value = false
+        dodecaViewModel.pause()
         if (values.autosave && dodecaViewModel.ddu.value?.file != null)
-            dodecaViewModel.requestSaveDDUAt()
+            dodecaViewModel.requestSaveDduAt()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -257,7 +259,6 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
                     data?.getStringExtra("dirPath")?.let { newDir ->
                         model.changeDir(File(newDir)) }
                     data?.getStringExtra("path")?.let {
-                        updatingBeforePause = null
                         readPath(it)
                     }
                 }
@@ -269,21 +270,21 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
                     }
                     having("default_ddu") {
                         dodecaViewModel.ddu.value?.file?.let { file ->
-                            extract1DDU(file.name)
-                            dodecaViewModel.loadDDU(DDU.fromFile(file))
+                            extract1Ddu(file.name)
+                            dodecaViewModel.loadDdu(Ddu.fromFile(file))
                         }
                     }
                     having("default_ddus") {
-                        extractDDUFromAssets(overwrite = true)
+                        extractDduFromAssets(overwrite = true)
                         dodecaViewModel.ddu.value?.file?.let { file ->
-                            dodecaViewModel.loadDDU(DDU.fromFile(file))
+                            dodecaViewModel.loadDdu(Ddu.fromFile(file))
                         }
                     }
                     having("discard_previews") {
                         dduFileDao.getAll().forEach { dduFileDao.update(it.apply { preview = null }) }
                     }
                 }
-                sharedPreferencesModel.loadAll()
+                sharedPreferencesModel.fetchAll()
             }
             HELP_CODE -> Unit
         }
@@ -305,7 +306,7 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         Log.i(TAG, "reading ddu from path $path...")
         try {
             val file = File(path)
-            dodecaViewModel.loadDDU(DDU.fromFile(file))
+            dodecaViewModel.loadDdu(Ddu.fromFile(file))
         } catch (e: Exception) {
             e.printStackTrace()
             toast(getString(R.string.bad_ddu_format_toast) + " $path")
@@ -330,8 +331,8 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
                 }
                 Log.i(TAG, "imported ddu \"$name\"")
                 toast(getString(R.string.imported_ddu_toast) + " $name")
-                val ddu: DDU = DDU.fromFile(targetFile)
-                dodecaViewModel.loadDDU(ddu)
+                val ddu: Ddu = Ddu.fromFile(targetFile)
+                dodecaViewModel.loadDdu(ddu)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -365,14 +366,15 @@ class MainActivity : AppCompatActivity(), ChooseColorDialog.ChooseColorListener,
         }.show()
     }
 
-    private fun extractDDUFromAssets(overwrite: Boolean = false) {
+    private fun extractDduFromAssets(overwrite: Boolean = false) {
         val targetDir = dduDir
         assets.list(getString(R.string.ddu_asset_dir))?.forEach {name ->
-            extract1DDU(name, targetDir, overwrite) }
+            extract1Ddu(name, targetDir, overwrite)
+        }
     }
 
-    private fun extract1DDU(filename: Filename, dir: File = dduDir, overwrite: Boolean = false) =
-        extract1DDU(filename, dir, dduFileDao, TAG, overwrite)
+    private fun extract1Ddu(filename: Filename, dir: File = dduDir, overwrite: Boolean = false) =
+        extract1Ddu(filename, dir, dduFileDao, TAG, overwrite)
 
     class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {
         val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shapes

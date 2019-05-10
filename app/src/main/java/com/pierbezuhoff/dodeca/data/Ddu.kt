@@ -21,7 +21,7 @@ import kotlin.math.sqrt
 import kotlin.reflect.KMutableProperty0
 
 // NOTE: when restGlobals = listOf(4, 4) some magic occurs (rule-less circles are moving in DodecaLook)
-class DDU(
+class Ddu(
     var backgroundColor: Int = DEFAULT_BACKGROUND_COLOR,
     var restGlobals: List<Int> = emptyList(), // unused
     var drawTrace: Boolean? = null,
@@ -40,12 +40,12 @@ class DDU(
 
     // NOTE: copy(newRule = null) resolves overload ambiguity
     fun copy() =
-        DDU(
+        Ddu(
             backgroundColor, restGlobals.toList(), drawTrace, bestCenter, shape,
             circles.map { it.copy(newRule = null) }, file
         )
 
-    override fun toString(): String = """DDU(
+    override fun toString(): String = """Ddu(
         |  backgroundColor = ${backgroundColor.fromColor()}
         |  restGlobals = $restGlobals
         |  drawTrace = $drawTrace
@@ -98,22 +98,22 @@ class DDU(
     }
 
     companion object {
-        private const val TAG: String = "DDU"
+        private const val TAG: String = "Ddu"
         const val DEFAULT_BACKGROUND_COLOR: Int = Color.WHITE
         val DEFAULT_SHAPE: Shapes = Shapes.CIRCLE
         private const val MIN_PREVIEW_UPDATES = 10
         private const val NORMAL_PREVIEW_SIZE = 300 // with this preview_size preview_scale was tuned
         private const val PREVIEW_SCALE = 0.5f
 
-        fun fromFile(file: File): DDU =
+        fun fromFile(file: File): Ddu =
             fromStream(file.inputStream()).apply {
                 this.file = file
             }
 
-        fun fromStream(stream: InputStream): DDU =
-            DDUReader(stream.reader()).read()
+        fun fromStream(stream: InputStream): Ddu =
+            DduReader(stream.reader()).read()
 
-        val exampleDDU: DDU = run {
+        val EXAMPLE_DDU: Ddu = run {
             val circle = CircleFigure(300.0, 400.0, 200.0, Color.BLUE, rule = "12")
             val circle1 = CircleFigure(450.0, 850.0, 300.0, Color.LTGRAY)
             val circle2 = CircleFigure(460.0, 850.0, 300.0, Color.DKGRAY)
@@ -127,7 +127,7 @@ class DDU(
                 circle1.inverted(circle),
                 CircleFigure(600.0, 900.0, 10.0, Color.RED, fill = true)
             )
-            DDU(Color.WHITE, circles = circles)
+            Ddu(Color.WHITE, circles = circles)
         }
     }
 }
@@ -142,9 +142,12 @@ private class CircleBuilder {
     var rule: String? = null
     var borderColor: Int? = null
 
-    class NotEnoughBuildParametersException : Exception(
-        "CircleBuilder must have radius, x and y in order to build CircleFigure"
-    )
+    class NotEnoughBuildParametersException(message: String = DEFAULT_MESSAGE) : Exception(message) {
+        companion object {
+            private const val DEFAULT_MESSAGE: String =
+                "CircleBuilder must have radius, x and y in order to build CircleFigure"
+        }
+    }
 
     @Throws(NotEnoughBuildParametersException::class)
     fun build(): CircleFigure {
@@ -155,25 +158,16 @@ private class CircleBuilder {
 }
 
 
-private class DDUBuilder {
-    var backgroundColor: Int = DDU.DEFAULT_BACKGROUND_COLOR
+private class DduBuilder {
+    var backgroundColor: Int = Ddu.DEFAULT_BACKGROUND_COLOR
     val restGlobals: MutableList<Int> = mutableListOf()
     var drawTrace: Boolean? = null
     var bestCenter: Complex? = null
-    var shape: Shapes = DDU.DEFAULT_SHAPE
+    var shape: Shapes = Ddu.DEFAULT_SHAPE
     val circleFigures: MutableList<CircleFigure> = mutableListOf()
 
-    fun build(): DDU =
-        DDU(backgroundColor, restGlobals, drawTrace, bestCenter, shape, circleFigures)
-
-    fun tryBuildAndAddCircleFigure(circleBuilder: CircleBuilder) {
-        try {
-            val circleFigure = circleBuilder.build()
-            addCircleFigure(circleFigure)
-        } catch (e: CircleBuilder.NotEnoughBuildParametersException) {
-            e.printStackTrace()
-        }
-    }
+    fun build(): Ddu =
+        Ddu(backgroundColor, restGlobals, drawTrace, bestCenter, shape, circleFigures)
 
     fun addCircleFigure(circleFigure: CircleFigure) {
         circleFigures.add(circleFigure)
@@ -181,20 +175,22 @@ private class DDUBuilder {
 }
 
 
-private class DDUReader(private val reader: InputStreamReader) {
+private class DduReader(private val reader: InputStreamReader) {
     private enum class Mode { // for scanning .ddu, before <mode parameter>
         NO, GLOBAL, RADIUS, X, Y, COLOR, FILL, RULE, CIRCLE_AUX;
         fun next(): Mode = values().elementAtOrElse(ordinal + 1) { CIRCLE_AUX }
     }
 
-    private val dduBuilder = DDUBuilder()
+    private val dduBuilder = DduBuilder()
     private var mode: Mode = Mode.NO // mode == FILL === before scanning [fill] parameter
     private var nGlobals: Int = 0
-    private var circleBuilder = CircleBuilder()
+    private lateinit var circleBuilder: CircleBuilder
     private lateinit var trimmedLine: String
+    private var nOfLine: Long = 0
 
-    fun read(): DDU {
+    fun read(): Ddu {
         reader.forEachLine { line ->
+            nOfLine++
             trimmedLine = line.trim()
             if (trimmedLine.isNotBlank())
                 when {
@@ -223,7 +219,15 @@ private class DDUReader(private val reader: InputStreamReader) {
     }
 
     private fun tryAddCircle() {
-        dduBuilder.tryBuildAndAddCircleFigure(circleBuilder)
+        if (this::circleBuilder.isInitialized) {
+            try {
+                val circleFigure = circleBuilder.build()
+                dduBuilder.addCircleFigure(circleFigure)
+            } catch (e: CircleBuilder.NotEnoughBuildParametersException) {
+                e.printStackTrace()
+                Log.w(TAG, "Error in DduReader.tryAddCircle occurred while reading line $nOfLine")
+            }
+        }
         circleBuilder = CircleBuilder()
         mode = Mode.RADIUS
     }
@@ -310,12 +314,12 @@ private class DDUReader(private val reader: InputStreamReader) {
         trimmedLine.substringAfter(prefix).trim()
 
     companion object {
-        private const val TAG = "DDUReader"
+        private const val TAG = "DduReader"
     }
 }
 
 
-private class DDUWriter(private val ddu: DDU) {
+private class DDUWriter(private val ddu: Ddu) {
     private lateinit var outputStream: OutputStream
     private val legacyGlobals: List<String> = listOf(
         ddu.backgroundColor.fromColor(),
