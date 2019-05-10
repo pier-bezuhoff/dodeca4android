@@ -5,7 +5,7 @@ Recommended version: >= 5.0 Lolipop
 ...
 # TODO
 - [ ] Add to help: для некомерческого использования
-- [ ] ISSUE: DDUChooserActivity.kt/DDUAdapter/init may lead to OutOfMemoryError (large db, fast return to after opening a ddu)
+- [ ] ISSUE: DduChooserActivity.kt/DDUAdapter/init may lead to OutOfMemoryError (large db, fast return to after opening a ddu)
 - [ ] skip n: in separate thread + optimize
 - [ ] check CirclesGroup without inline
 - [ ] Progress bar on: db requests (or LiveData), restore all ddus, import/export folder

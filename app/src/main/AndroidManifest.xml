@@ -54,7 +54,7 @@
                 <action android:name="android.intent.action.SEND"/>
             </intent-filter>
         </activity>
-        <activity android:name=".ui.DDUChooserActivity"/>
+        <activity android:name=".ui.DduChooserActivity"/>
         <activity android:name=".ui.HelpActivity"/>
     </application>
 

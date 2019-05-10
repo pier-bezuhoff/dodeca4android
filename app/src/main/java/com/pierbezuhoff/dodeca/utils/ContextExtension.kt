@@ -12,7 +12,7 @@ val Context.dduDir get() =  File(filesDir, "ddu")
 fun Context.dduPath(file: File): String =
     file.absolutePath.substringAfter(dduDir.absolutePath).trim('/')
 
-fun Context.extract1DDU(filename: Filename, dir: File, dduFileDao: DDUFileDao, TAG: String, overwrite: Boolean = false): Filename? {
+fun Context.extract1Ddu(filename: Filename, dir: File, dduFileDao: DduFileDao, TAG: String, overwrite: Boolean = false): Filename? {
     var source: Filename = filename
     fun streamFromDDUAsset(filename: Filename): InputStream =
         assets.open("${getString(R.string.ddu_asset_dir)}/$filename")

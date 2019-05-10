@@ -34,7 +34,7 @@ class BitmapConverter {
 
 // TODO: store relative path instead of filename
 @Entity(indices = [Index("filename")])
-data class DDUFile(
+data class DduFile(
     @ColumnInfo(name = "filename") var filename: Filename,
     @ColumnInfo(name = "original_filename") var originalFilename: Filename,
     @ColumnInfo(name = "preview" /*, typeAffinity = ColumnInfo.BLOB*/) var preview: Bitmap? = null
@@ -43,54 +43,54 @@ data class DDUFile(
 }
 
 @Dao
-interface DDUFileDao {
+interface DduFileDao {
     @Query("SELECT * FROM ddufile")
-    fun getAll(): List<DDUFile>
+    fun getAll(): List<DduFile>
 
     @Query("SELECT * FROM ddufile WHERE uid IN (:dduFileIds)")
-    fun loadAllByIds(dduFileIds: IntArray): List<DDUFile>
+    fun loadAllByIds(dduFileIds: IntArray): List<DduFile>
 
     @Query("SELECT * FROM ddufile WHERE filename LIKE :filename LIMIT 1")
-    fun findByFilename(filename: Filename): DDUFile?
+    fun findByFilename(filename: Filename): DduFile?
 
-    @Update fun update(dduFile: DDUFile)
+    @Update fun update(dduFile: DduFile)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(vararg dduFiles: DDUFile)
+    fun insert(vararg dduFiles: DduFile)
 
-    @Delete fun delete(dduFile: DDUFile)
+    @Delete fun delete(dduFile: DduFile)
 }
 
-fun DDUFileDao.insertOrUpdate(filename: Filename, action: DDUFile.() -> Unit) {
-    val dduFile: DDUFile? = findByFilename(filename)
+fun DduFileDao.insertOrUpdate(filename: Filename, action: DduFile.() -> Unit) {
+    val dduFile: DduFile? = findByFilename(filename)
     if (dduFile != null)
         update(dduFile.apply(action))
     else
-        insert(DDUFile(filename = filename, originalFilename = filename).apply(action))
+        insert(DduFile(filename = filename, originalFilename = filename).apply(action))
 }
 
-fun DDUFileDao.insertOrDropPreview(filename: Filename) {
-    val dduFile: DDUFile? = findByFilename(filename)
+fun DduFileDao.insertOrDropPreview(filename: Filename) {
+    val dduFile: DduFile? = findByFilename(filename)
     if (dduFile != null) {
         dduFile.preview = null
         update(dduFile)
     } else {
-        insert(DDUFile(filename = filename, originalFilename = filename))
+        insert(DduFile(filename = filename, originalFilename = filename))
     }
 }
 
-@Database(entities = [DDUFile::class], version = 2)
+@Database(entities = [DduFile::class], version = 2)
 @TypeConverters(BitmapConverter::class)
-abstract class DDUFileDatabase : RoomDatabase() {
-    abstract fun dduFileDao(): DDUFileDao
+abstract class DduFileDatabase : RoomDatabase() {
+    abstract fun dduFileDao(): DduFileDao
 
     companion object {
-        var INSTANCE: DDUFileDatabase? = null
+        var INSTANCE: DduFileDatabase? = null
         fun init(context: Context) {
             if (INSTANCE == null)
-                synchronized(DDUFileDatabase) {
+                synchronized(DduFileDatabase) {
                     if (INSTANCE == null)
-                        INSTANCE = Room.databaseBuilder(context, DDUFileDatabase::class.java, "ddu-files")
+                        INSTANCE = Room.databaseBuilder(context, DduFileDatabase::class.java, "ddu-files")
                             .allowMainThreadQueries()
                             .build()
                 }
@@ -98,4 +98,4 @@ abstract class DDUFileDatabase : RoomDatabase() {
     }
 }
 
-val DB: DDUFileDatabase by lazy { DDUFileDatabase.INSTANCE!! }
+val DB: DduFileDatabase by lazy { DduFileDatabase.INSTANCE!! }
