@@ -42,7 +42,7 @@ class PrimitiveCircles(
     private val xs: DoubleArray = DoubleArray(size) { cs[it].x }
     private val ys: DoubleArray = DoubleArray(size) { cs[it].y }
     private val rs: DoubleArray = DoubleArray(size) { cs[it].radius }
-    private var oldXs: DoubleArray = xs // old_s are used for draw and as oldCircles in update
+    private var oldXs: DoubleArray = xs // old_s are used for draw and as oldCircles in redraw
     private var oldYs: DoubleArray = ys
     private var oldRs: DoubleArray = rs
     private val attrs: Array<FigureAttributes> = Array(size) {
@@ -185,8 +185,8 @@ class PrimitiveCircles(
         _drawTimes(times, reverse, canvas, shape, showAllCircles)
     }
 
-    /* draw; update; draw; update ...; draw
-    * (times + 1) x draw, times x update
+    /* draw; redraw; draw; redraw ...; draw
+    * (times + 1) x draw, times x redraw
     * times >= 1
     * some clever inline-magic used
     * */

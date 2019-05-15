@@ -21,9 +21,7 @@ import com.pierbezuhoff.dodeca.db.DduFileRepository
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
-import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
-import org.jetbrains.anko.uiThread
 import java.io.File
 import kotlin.properties.Delegates
 
@@ -41,36 +39,27 @@ class DodecaViewModel : ViewModel() {
     private val _oneStepRequest: MutableLiveData<Unit> = MutableLiveData()
     private val _clearRequest: MutableLiveData<Unit> = MutableLiveData()
     private val _autocenterRequest: MutableLiveData<Unit> = MutableLiveData()
-    private val _saveDduAtRequest: MutableLiveData<File?> = MutableLiveData() // TODO: check setting value to null
+
     private var oldUpdating: Boolean = DEFAULT_UPDATING
 
     val oneStepRequest: LiveData<Unit> = _oneStepRequest
     val clearRequest: LiveData<Unit> = _clearRequest
     val autocenterRequest: LiveData<Unit> = _autocenterRequest
-    val saveDduAtRequest: LiveData<File?> = _saveDduAtRequest
 
-    val ddu: LiveData<Ddu> = _ddu
-    val circleGroup: LiveData<CircleGroup> = _circleGroup
+    lateinit var dduRepresentation: DduRepresentation private set
     val nUpdates: LiveData<Long> = _nUpdates
     val dTime: LiveData<Float> = _dTime
     var lastUpdateTime: Long by Delegates.notNull() // <- System.currentTimeMillis()
-    var statTimeDelta: Int by Delegates.notNull() // n of updates between stat time update
+    var statTimeDelta: Int by Delegates.notNull() // n of updates between stat time redraw
         private set
     val updateOnce: Boolean
         get() = if (_updateOnce) { _updateOnce = false; true } else false
-    val paint = Paint(DEFAULT_PAINT)
 
-    val trace: Trace = Trace()
-    // ddu:r -> motion -> visible:r
-    val motion: Matrix = Matrix()
-    val shape: MutableLiveData<Shapes> = MutableLiveData()
-    val drawTrace: MutableLiveData<Boolean> = MutableLiveData()
     val updating: MutableLiveData<Boolean> = MutableLiveData()
 
     private val _gestureDetector: MutableLiveData<DodecaGestureDetector> = MutableLiveData()
     val gestureDetector: LiveData<DodecaGestureDetector> = _gestureDetector
 
-    /* Set ddu, defaults and ddu-related LiveData-s */
     fun initFrom(context: Context) {
         loadDdu(context.getInitialDdu())
         statTimeDelta = context.resources.getInteger(R.integer.stat_time_delta)
@@ -141,9 +130,18 @@ class DodecaViewModel : ViewModel() {
     }
 
     // requestSaveDduAt -> (pause; DodecaView.saveDdu) -> DodecaViewModel.saveDdu -> resume
-    fun requestSaveDduAt(file: File? = null) {
+    suspend fun saveDduAt(context: Context, file: File? = null) {
         pause()
-        _saveDduAtRequest.value = file
+        val maybeDdu = dduRepresentation.buildCurrentDdu()
+        maybeDdu?.let { ddu ->
+            saveDdu(context, ddu, file)
+        }
+    }
+
+    suspend fun maybeAutosave(context: Context) {
+        if (values.autosave && dduRepresentation.initialized && ddu.file != null) {
+            saveDdu(context)
+        }
     }
 
     fun updateStat(times: Int = 1) {
@@ -160,27 +158,21 @@ class DodecaViewModel : ViewModel() {
         }
     }
 
-    fun saveDdu(context: Context, ddu: Ddu, outputFile: File? = null) {
+    private suspend fun saveDdu(context: Context, ddu: Ddu, outputFile: File? = null) {
         val file: File? = outputFile ?: ddu.file
         if (file == null) {
             Log.i(TAG, "saveDdu: ddu has no file")
             // then save as
             context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
         } else {
-            context.doAsync {
-                try {
-                    Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
-                    ddu.saveToFile(file)
-                    uiThread {
-                        context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
-                    }
-                    dduFileRepository.dropPreviewInserting(file.name)
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    uiThread {
-                        context.toast(context.getString(R.string.error_ddu_save_toast))
-                    }
-                }
+            try {
+                Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
+                ddu.saveToFile(file)
+                context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
+                dduFileRepository.dropPreviewInserting(file.name)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                context.toast(context.getString(R.string.error_ddu_save_toast))
             }
         }
         resume()

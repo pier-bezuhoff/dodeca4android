@@ -11,6 +11,8 @@ import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.utils.asFF
 import com.pierbezuhoff.dodeca.utils.mean
 import com.pierbezuhoff.dodeca.utils.minus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.commons.math3.complex.Complex
 import java.io.File
 import java.io.InputStream
@@ -56,16 +58,16 @@ class Ddu(
         |)
     """.trimMargin()
 
-    fun saveToFile(file: File) {
+    suspend fun saveToFile(file: File) = withContext(Dispatchers.IO) {
         if (!file.exists())
             file.createNewFile()
         saveToStream(file.outputStream())
     }
 
-    fun saveToStream(outputStream: OutputStream) =
-        DDUWriter(this).write(outputStream)
+    suspend fun saveToStream(outputStream: OutputStream) =
+        DDUWriter(this@Ddu).write(outputStream)
 
-    fun saveToStreamForDodecaLook(outputStream: OutputStream) =
+    suspend fun saveToStreamForDodecaLook(outputStream: OutputStream) =
         DDUWriter(this).writeForDodecaLook(outputStream)
 
     fun preview(width: Int, height: Int): Bitmap {
@@ -105,13 +107,15 @@ class Ddu(
         private const val NORMAL_PREVIEW_SIZE = 300 // with this preview_size preview_scale was tuned
         private const val PREVIEW_SCALE = 0.5f
 
-        fun fromFile(file: File): Ddu =
+        suspend fun fromFile(file: File): Ddu = withContext(Dispatchers.IO) {
             fromStream(file.inputStream()).apply {
                 this.file = file
             }
+        }
 
-        fun fromStream(stream: InputStream): Ddu =
+        suspend fun fromStream(stream: InputStream): Ddu = withContext(Dispatchers.IO) {
             DduReader(stream.reader()).read()
+        }
 
         val EXAMPLE_DDU: Ddu = run {
             val circle = CircleFigure(300.0, 400.0, 200.0, Color.BLUE, rule = "12")
@@ -188,21 +192,22 @@ private class DduReader(private val reader: InputStreamReader) {
     private lateinit var trimmedLine: String
     private var nOfLine: Long = 0
 
-    fun read(): Ddu {
-        reader.forEachLine { line ->
-            nOfLine++
-            trimmedLine = line.trim()
-            if (trimmedLine.isNotBlank())
-                when {
-                    mode == Mode.GLOBAL -> readLegacyGlobalLine()
-                    trimmedLine.startsWith("circle:") -> tryAddCircle()
-                    mode == Mode.NO -> readModernGlobalLine()
-                    mode >= Mode.RADIUS -> readCircleLine()
-                }
+    suspend fun read(): Ddu =
+        withContext(Dispatchers.IO) {
+            reader.forEachLine { line ->
+                nOfLine++
+                trimmedLine = line.trim()
+                if (trimmedLine.isNotBlank())
+                    when {
+                        mode == Mode.GLOBAL -> readLegacyGlobalLine()
+                        trimmedLine.startsWith("circle:") -> tryAddCircle()
+                        mode == Mode.NO -> readModernGlobalLine()
+                        mode >= Mode.RADIUS -> readCircleLine()
+                    }
+            }
+            tryAddCircle()
+            dduBuilder.build()
         }
-        tryAddCircle()
-        return dduBuilder.build()
-    }
 
     private fun readLegacyGlobalLine() {
         when (nGlobals) {
@@ -326,24 +331,28 @@ private class DDUWriter(private val ddu: Ddu) {
         *ddu.restGlobals.toTypedArray()
     ).map { it.toString() }
 
-    fun write(output: OutputStream) {
-        // maybe: use buffered stream
-        outputStream = output
-        output.use {
-            writeLine(HEADER)
-            legacyGlobals.forEach { writeLegacyGlobal(it) }
-            writeModernGlobals()
-            ddu.circles.forEach { writeCircle(it) }
+    suspend fun write(output: OutputStream) {
+        withContext(Dispatchers.IO) {
+            // maybe: use buffered stream
+            outputStream = output
+            output.use {
+                writeLine(HEADER)
+                legacyGlobals.forEach { writeLegacyGlobal(it) }
+                writeModernGlobals()
+                ddu.circles.forEach { writeCircle(it) }
+            }
         }
     }
 
-    fun writeForDodecaLook(output: OutputStream) {
+    suspend fun writeForDodecaLook(output: OutputStream) {
         // maybe: abstract DDUWriter + 2 impl-s
-        outputStream = output
-        output.use {
-            writeLine(DODECA_LOOK_HEADER)
-            legacyGlobals.forEach { writeLegacyGlobal(it) }
-            ddu.circles.forEach { writeCircleForDodecaLook(it) }
+        withContext(Dispatchers.IO) {
+            outputStream = output
+            output.use {
+                writeLine(DODECA_LOOK_HEADER)
+                legacyGlobals.forEach { writeLegacyGlobal(it) }
+                ddu.circles.forEach { writeCircleForDodecaLook(it) }
+            }
         }
     }
 
