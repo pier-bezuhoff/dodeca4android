@@ -4,7 +4,10 @@ Min version: 4.4 KitKat
 Recommended version: >= 5.0 Lolipop
 ...
 # TODO
-- [ ] Add to help: для некомерческого использования
+- [ ] Room: LiveData/coroutines
+- [ ] Paging
+- [ ] Navigation
+- [ ] unit & instrumentation tests!
 - [ ] ISSUE: DduChooserActivity.kt/DDUAdapter/init may lead to OutOfMemoryError (large db, fast return to after opening a ddu)
 - [ ] skip n: in separate thread + optimize
 - [ ] check CirclesGroup without inline

@@ -43,7 +43,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             editor.clear()
             PreferenceManager.setDefaultValues(context, R.xml.preferences, true)
             editor.apply()
-            setupPreferences(rootKey) // a bit recursive, update defaults
+            setupPreferences(rootKey) // a bit recursive, redraw defaults
         }
         setOf("preview_size", "n_preview_updates", "preview_smart_updates").forEach { key ->
             hookChange(key) { addExtraResult("discard_previews") }

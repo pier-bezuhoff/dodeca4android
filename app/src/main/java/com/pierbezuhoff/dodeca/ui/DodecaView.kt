@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca.ui
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -17,7 +18,6 @@ import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.SharedPreference
-import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
@@ -60,8 +60,6 @@ class DodecaView(
 
     private val knownSize: Boolean get() = width > 0
 
-    private val dx get() = model.motion.dx
-    private val dy get() = model.motion.dy
     private val scale get() = model.motion.sx
 
     private lateinit var ddu: Ddu
@@ -96,14 +94,12 @@ class DodecaView(
         canvas?.let {
             when {
                 updating -> updateCanvas(canvas)
-                model.updateOnce -> {
-                    updateCanvas(canvas)
-                }
-                drawTrace -> drawTraceCanvas(canvas)
+                model.updateOnce -> updateCanvas(canvas)
+                drawTrace -> canvas.drawTraceCanvas()
                 else -> onCanvas(canvas) {
-                    // pause and no options.drawTrace
-                    drawBackground(it)
-                    drawCircles(it)
+                    // pause and not drawTrace
+                    drawBackground()
+                    drawCircles()
                 }
             }
         }
@@ -194,7 +190,6 @@ class DodecaView(
         model.oneStepRequest.observeHere { oneStep() }
         model.clearRequest.observeHere { retrace() }
         model.autocenterRequest.observeHere { autocenter() }
-        model.saveDduAtRequest.observeHere { saveDdu(it) }
 
         mainModel.bottomBarShown.observeHere {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
@@ -216,12 +211,6 @@ class DodecaView(
 
     private fun <T> LiveData<T>.observeHere(action: (T) -> Unit) {
         observe(this@DodecaView, Observer(action))
-    }
-
-    private fun maybeAutosave() {
-        if (values.autosave && ::ddu.isInitialized && ddu.file != null) {
-            saveDdu()
-        }
     }
 
     private fun onNewDdu(newDdu: Ddu) {
@@ -279,8 +268,8 @@ class DodecaView(
                 updateCircles()
                 model.lastUpdateTime = System.currentTimeMillis()
             } else {
-                onTraceCanvas { traceCanvas ->
-                    drawCirclesTimes(times, traceCanvas)
+                onTraceCanvas {
+                    drawCirclesTimes(times)
                 }
                 model.lastUpdateTime = System.currentTimeMillis()
                 model.updateStat(times) // wrong behaviour
@@ -294,25 +283,25 @@ class DodecaView(
         if (drawTrace) {
             onTraceCanvas {
                 if (redrawTraceOnce)
-                    drawBackground(it)
-                drawCircles(it)
+                    drawBackground()
+                drawCircles()
             }
-            drawTraceCanvas(canvas)
+            canvas.drawTraceCanvas()
         } else {
             onCanvas(canvas) {
-                drawBackground(it)
-                drawCircles(it)
+                drawBackground()
+                drawCircles()
             }
         }
     }
 
-    /* when options.drawTrace: retrace if should do it on move, else do [action] */
-    private inline fun updatingTrace(action: (Trace) -> Unit) {
+    private inline fun transform(crossinline transformation: Matrix.() -> Unit) {
+        model.motion.transformation()
         if (drawTrace) {
             if (values.redrawTraceOnMove)
                 retrace()
             else {
-                action(model.trace)
+                model.trace.motion.transformation()
                 invalidate()
             }
         } else if (!updating)
@@ -322,31 +311,25 @@ class DodecaView(
     override fun onScroll(dx: Float, dy: Float) = updateScroll(-dx, -dy)
     override fun onScale(scale: Float, focusX: Float, focusY: Float) = updateScale(scale, focusX, focusY)
 
-    /* scroll/translate screen and options.drawTrace */
-    private fun updateScroll(ddx: Float, ddy: Float) {
-        model.motion.postTranslate(ddx, ddy)
-        updatingTrace {
-            it.translate(ddx, ddy)
+    private fun updateScroll(ddx: Float, ddy: Float) =
+        transform {
+            postTranslate(ddx, ddy)
         }
-    }
 
-    /* scale screen and options.drawTrace */
-    private fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) {
-        model.motion.postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
-        updatingTrace {
-            it.scale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
+    private fun updateScale(dscale: Float, focusX: Float? = null, focusY: Float? = null) =
+        transform {
+            postScale(dscale, dscale, focusX ?: centerX, focusY ?: centerY)
         }
-    }
 
-    /* when options.drawTrace turns on or sizes change */
+    /** Reset trace and invalidate */
     private fun retrace() {
         tryRetrace()
         model.trace.canvas.concat(model.motion)
         redrawTraceOnce = drawTrace
         if (!updating) {
             onTraceCanvas {
-                drawBackground(it)
-                drawCircles(it)
+                drawBackground()
+                drawCircles()
             }
         }
         invalidate()
@@ -376,26 +359,23 @@ class DodecaView(
             model.setSharedPreference(options.canvasFactor, canvasFactor)
     }
 
-    private inline fun onCanvas(canvas: Canvas, crossinline draw: (Canvas) -> Unit) =
-        canvas.withMatrix(model.motion) { draw(this) }
+    private inline fun onCanvas(canvas: Canvas, crossinline draw: Canvas.() -> Unit) =
+        canvas.withMatrix(model.motion) { draw() }
 
-    private inline fun onTraceCanvas(crossinline draw: (Canvas) -> Unit) =
-        draw(model.trace.canvas)
+    private inline fun onTraceCanvas(crossinline draw: Canvas.() -> Unit) =
+        model.trace.canvas.draw()
 
-    /* draw options.drawTrace canvas on DodecaView canvas */
-    private inline fun drawTraceCanvas(canvas: Canvas) =
-        canvas.drawBitmap(model.trace.bitmap, model.trace.blitMatrix, model.paint)
+    private inline fun Canvas.drawTraceCanvas() =
+        drawBitmap(model.trace.bitmap, model.trace.blitMatrix, model.paint)
 
-    /* draw background color on [canvas] */
-    private inline fun drawBackground(canvas: Canvas) =
-        canvas.drawColor(ddu.backgroundColor)
+    private inline fun Canvas.drawBackground() =
+        drawColor(ddu.backgroundColor)
 
-    /* draw`figures` on [canvas] */
-    private inline fun drawCircles(canvas: Canvas) {
-        circleGroup.draw(canvas, shape = shape, showAllCircles = values.showAllCircles)
+    private inline fun Canvas.drawCircles() {
+        circleGroup.draw(this, shape = shape, showAllCircles = values.showAllCircles)
     }
 
-    private inline fun drawCirclesTimes(times: Int, canvas: Canvas) {
+    private inline fun Canvas.drawCirclesTimes(times: Int) {
 //        circleGroup.drawTimes(
 //            times,
 //            values.reverseMotion,
@@ -403,10 +383,10 @@ class DodecaView(
 //        )
         // for some mysterious reason this is a bit faster than circleGroup.drawTimes
         repeat(times) {
-            drawCircles(canvas)
+            drawCircles()
             circleGroup.update(values.reverseMotion)
         }
-        drawCircles(canvas)
+        drawCircles()
     }
 
     // 1 step = [speed] updates
@@ -417,8 +397,8 @@ class DodecaView(
             model.lastUpdateTime = System.currentTimeMillis()
         } else {
             val batch = values.speed.roundToInt()
-            onTraceCanvas { traceCanvas ->
-                drawCirclesTimes(batch, traceCanvas)
+            onTraceCanvas {
+                drawCirclesTimes(batch)
             }
             model.lastUpdateTime = System.currentTimeMillis()
             model.updateStat(batch) // wrong behaviour
@@ -432,7 +412,7 @@ class DodecaView(
         circleGroup.update(values.reverseMotion)
     }
 
-    /* scale and translate all figures in ddu according to current view */
+    /** Scale and translate all figures in ddu according to current view creating new ddu */
     private fun includeChangesIntoCurrentDdu(): Ddu {
         // avoiding name clashes
         val _drawTrace = drawTrace
@@ -449,15 +429,6 @@ class DodecaView(
             drawTrace = _drawTrace
             bestCenter = center
             shape = _shape
-        }
-    }
-
-    private fun saveDdu(newFile: File? = null) {
-        doAsync {
-            val ddu = includeChangesIntoCurrentDdu()
-            uiThread {
-                model.saveDdu(context, ddu, newFile)
-            }
         }
     }
 
