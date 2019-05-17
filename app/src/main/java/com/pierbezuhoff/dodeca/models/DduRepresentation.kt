@@ -3,6 +3,11 @@ package com.pierbezuhoff.dodeca.models
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.util.Log
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.OnLifecycleEvent
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.CircleGroupImpl
@@ -23,30 +28,43 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.math3.complex.Complex
 
-class DduRepresentation(private val ddu: Ddu) :
+class DduRepresentation(val ddu: Ddu) :
     DodecaGestureDetector.ScrollListener,
     DodecaGestureDetector.ScaleListener
 {
-    interface Presenter {
+    interface Presenter : LifecycleOwner {
         fun getCenter(): Complex?
         fun redraw()
         fun redrawTrace()
         fun requestRedrawTraceOnce()
     }
+    private var presenter: Presenter? = null
 
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
     private val circleGroup: CircleGroup = CircleGroupImpl(ddu.circles, paint)
+    private var updating: Boolean = DEFAULT_UPDATING
+
     private var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
     private var shape: Shapes = ddu.shape
 
-    // ddu:r -> motion -> visible:r
-    private val motion: Matrix = Matrix()
+    private val motion: Matrix = Matrix() // visible(x) = motion.move(x)
     private val trace: Trace = Trace()
-    private lateinit var presenter: Presenter
 
-    init {
-        // maybe autosave
+    private val presenterDisconnector: LifecycleObserver = object : LifecycleObserver {
+        @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        fun disconnectPresenter() {
+            this@DduRepresentation.presenter = null
+        }
+    }
+
+    fun connectPresenter(presenter: Presenter) {
+        if (this.presenter != null) { // should not happen
+            Log.w(TAG, "Connecting new presenter while previous one is non-null!")
+            this.presenter?.lifecycle?.removeObserver(presenterDisconnector)
+        }
+        this.presenter = presenter
+        presenter.lifecycle.addObserver(presenterDisconnector)
         setBestCenter()
         ddu.bestCenter?.let {
             centerizeTo(it)
@@ -55,20 +73,15 @@ class DduRepresentation(private val ddu: Ddu) :
         presenter.redraw()
     }
 
-    fun withCircleGroup(change: CircleGroup.() -> Unit) {
-        circleGroup.change()
-        presenter.redraw()
-    }
-
     private fun setBestCenter() {
         if (ddu.bestCenter == null)
             ddu.bestCenter =
                 if (values.autocenterAlways) ddu.autoCenter
-                else presenter.getCenter()
+                else presenter?.getCenter()
     }
 
     private fun centerizeTo(newCenter: Complex) {
-        presenter.getCenter()?.let { center ->
+        presenter?.getCenter()?.let { center ->
             val newVisibleCenter = visible(newCenter)
             val (dx, dy) = (center - newVisibleCenter).asFF()
             scroll(dx, dy)
@@ -86,7 +99,7 @@ class DduRepresentation(private val ddu: Ddu) :
         ) {
             scroll(-trace.motion.dx, -trace.motion.dy)
         } else {
-            presenter.getCenter()?.let { center ->
+            presenter?.getCenter()?.let { center ->
                 val shownCircles: List<CircleFigure> = circleGroup.figures.filter(CircleFigure::show)
                 val visibleCenter = shownCircles.map { visible(it.center) }.mean()
                 val (dx, dy) = (center - visibleCenter).asFF()
@@ -115,34 +128,33 @@ class DduRepresentation(private val ddu: Ddu) :
         motion.transformation()
         if (drawTrace) {
             if (values.redrawTraceOnMove)
-                presenter.redrawTrace()
+                presenter?.redrawTrace()
             else {
                 trace.motion.transformation()
-                presenter.redraw()
+                presenter?.redraw()
             }
         } else if (!updating)
-            presenter.redraw()
+            presenter?.redraw()
     }
 
     /** Scale and translate all figures in ddu according to current view creating new ddu */
     suspend fun buildCurrentDdu(): Ddu? =
         withContext(Dispatchers.Default) {
-            presenter.getCenter()?.let { center ->
-                // avoiding name clashes
-                val _drawTrace = drawTrace
-                val _shape = shape
+            presenter?.getCenter()?.let { center ->
+                val currentDrawTrace = drawTrace
+                val currentShape = shape
                 ddu.copy().apply {
                     circles.zip(circleGroup.figures) { figure, newFigure ->
                         figure.center = visible(figure.center)
-                        figure.radius *= motion.sx // = visibleRadius(figure.radius)
+                        figure.radius *= motion.sx
                         return@zip figure.copy(
                             newColor = newFigure.color, newFill = newFigure.fill,
                             newRule = newFigure.rule, newBorderColor = Just(newFigure.borderColor)
                         )
                     }
-                    drawTrace = _drawTrace
+                    drawTrace = currentDrawTrace
                     bestCenter = center
-                    shape = _shape
+                    shape = currentShape
                 }
             }
         }
@@ -151,6 +163,7 @@ class DduRepresentation(private val ddu: Ddu) :
         motion.move(z)
 
     companion object {
+        private const val TAG: String = "DduRepresentation"
         private val DEFAULT_PAINT =
             Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
                 color = Color.BLACK

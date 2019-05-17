@@ -1,13 +1,19 @@
 package com.pierbezuhoff.dodeca.models
 
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.utils.FlexibleTimer
+import com.pierbezuhoff.dodeca.utils.dduDir
 import java.io.File
 
-class MainViewModel : ViewModel() {
+class MainViewModel(application: Application) : AndroidViewModel(application) {
+    private val context: Context
+        get() = getApplication<Application>().applicationContext
+
     private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData(true)
     private val _dir: MutableLiveData<File> = MutableLiveData()
     // TODO: setup on sh prf changes
@@ -33,6 +39,8 @@ class MainViewModel : ViewModel() {
         options.showStat.liveData.observeForever {
             _showStat.postValue(it)
         }
+        if (_dir.value == null)
+            _dir.value = context.dduDir
     }
 
     fun showBottomBar() =
@@ -50,11 +58,6 @@ class MainViewModel : ViewModel() {
 
     fun sendOnDestroy() {
         _onDestroy.value = Unit
-    }
-
-    fun setDirOnce(dir: File) {
-        if (_dir.value == null)
-            _dir.value = dir
     }
 
     fun changeDir(dir: File) {
