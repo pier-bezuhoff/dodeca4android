@@ -52,7 +52,8 @@ class SharedPreferencesModel(
                 options.nPreviewUpdates,
                 options.recentDdu
             )
-        private val allPreferences: Set<SharedPreference<*>> = effectivePreferences + secondaryPreferences
+        private val allPreferences: Set<SharedPreference<*>> =
+            effectivePreferences + secondaryPreferences
      }
 }
 
