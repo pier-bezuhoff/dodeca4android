@@ -60,9 +60,8 @@ class DodecaView(
         super.onSizeChanged(w, h, oldw, oldh)
         if (!initialized) {
             lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
-            firstRun()
+            onFirstRun()
         }
-        centerize()
         if (!model.trace.initialized)
             retrace()
     }
@@ -84,9 +83,14 @@ class DodecaView(
     }
 
     override fun getCenter(): Complex? =
-        if (knownSize && initialized) ComplexFF(centerX, centerY) else null
+        if (knownSize && initialized) ComplexFF(centerX, centerY)
+        else null
 
-    private fun firstRun() {
+    override fun getSize(): Pair<Int, Int>? =
+        if (knownSize && initialized) Pair(width, height)
+        else null
+
+    private fun onFirstRun() {
         if (!initialized) {
             initialized = true
             registerOptionsObservers()
@@ -197,17 +201,7 @@ class DodecaView(
         val timeToUpdate: Boolean = System.currentTimeMillis() - model.lastUpdateTime >= updateDt.value
         if (updating && timeToUpdate) {
             val times = values.speed.roundToInt()
-            if (times <= 1) {
-                updateCircles()
-                model.lastUpdateTime = System.currentTimeMillis()
-            } else {
-                onTraceCanvas {
-                    drawCirclesTimes(times)
-                }
-                model.lastUpdateTime = System.currentTimeMillis()
-                model.updateStat(times) // wrong behaviour
-                // FIX: wrong stat
-            }
+            drawTimes(times)
         }
         drawUpdatedCanvas(canvas)
     }
@@ -230,6 +224,7 @@ class DodecaView(
 
     /** Reset trace and invalidate */
     private fun retrace() {
+        ? delegate to ddu repr
         tryRetrace()
         model.trace.canvas.concat(model.motion)
         redrawTraceOnce = drawTrace
@@ -247,7 +242,7 @@ class DodecaView(
         var canvasFactor = values.canvasFactor
         while (!done) {
             try {
-                model.trace.retrace(width, height)
+                model.createTrace(width, height)
                 done = true
             } catch (e: OutOfMemoryError) {
                 e.printStackTrace()
@@ -264,6 +259,25 @@ class DodecaView(
         }
         if (canvasFactor != values.canvasFactor)
             model.setSharedPreference(options.canvasFactor, canvasFactor)
+    }
+
+    /** Draw bg and circles with motion */
+    private inline fun Canvas.drawVisible() =
+        onCanvas(this) {
+            drawBackground()
+            drawCircles()
+        }
+
+    private inline fun drawTimes(times: Int = 1) {
+        if (times <= 1) {
+            updateCircles()
+        } else {
+            onTraceCanvas {
+                drawCirclesTimes(times)
+            }
+        }
+        model.lastUpdateTime = System.currentTimeMillis()
+        model.updateStat(times) // FIX: wrong stat
     }
 
     private inline fun onCanvas(canvas: Canvas, crossinline draw: Canvas.() -> Unit) =
@@ -299,23 +313,13 @@ class DodecaView(
     // 1 step = [speed] updates
     private fun oneStep() {
         model.stop()
-        if (values.speed.roundToInt() <= 1) {
-            updateCircles()
-            model.lastUpdateTime = System.currentTimeMillis()
-        } else {
-            val batch = values.speed.roundToInt()
-            onTraceCanvas {
-                drawCirclesTimes(batch)
-            }
-            model.lastUpdateTime = System.currentTimeMillis()
-            model.updateStat(batch) // wrong behaviour
-        }
+        val batch = values.speed.roundToInt()
+        drawTimes(batch)
         model.requestUpdateOnce()
         postInvalidate()
     }
 
     private inline fun updateCircles() {
-        model.updateStat()
         circleGroup.update(values.reverseMotion)
     }
 

@@ -34,6 +34,8 @@ class DduRepresentation(val ddu: Ddu) :
 {
     interface Presenter : LifecycleOwner {
         fun getCenter(): Complex?
+        /** return (width, height) or null */
+        fun getSize(): Pair<Int, Int>?
         fun redraw()
         fun redrawTrace()
         fun requestRedrawTraceOnce()
@@ -88,23 +90,27 @@ class DduRepresentation(val ddu: Ddu) :
         }
     }
 
-    private fun autocenterize() {
-        // maybe: when canvasFactor * scale ~ 1
-        // try to fit screen
-        // BUG: sometimes skip to else
+    fun autocenterize() {
+        // maybe: when canvasFactor * scale ~ 1 try to fit screen
         val scale: Float = motion.sx
         if (drawTrace && trace.initialized &&
             values.canvasFactor == 1 &&
             1 - 1e-4 < scale && scale < 1 + 1e-1
         ) {
             scroll(-trace.motion.dx, -trace.motion.dy)
-        } else {
+        } else { // BUG: sometimes skip to else
             presenter?.getCenter()?.let { center ->
                 val shownCircles: List<CircleFigure> = circleGroup.figures.filter(CircleFigure::show)
                 val visibleCenter = shownCircles.map { visible(it.center) }.mean()
                 val (dx, dy) = (center - visibleCenter).asFF()
                 scroll(dx, dy)
             }
+        }
+    }
+
+    fun clear() {
+        presenter?.getSize()?.let { (width: Int, height: Int) ->
+            trace.retrace(width, height)
         }
     }
 
