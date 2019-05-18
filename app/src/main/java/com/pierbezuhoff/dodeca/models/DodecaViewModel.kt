@@ -23,6 +23,7 @@ import com.pierbezuhoff.dodeca.utils.dduPath
 import kotlinx.coroutines.launch
 import org.jetbrains.anko.toast
 import java.io.File
+import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
 class DodecaViewModel(application: Application) : AndroidViewModel(application) {
@@ -38,15 +39,7 @@ class DodecaViewModel(application: Application) : AndroidViewModel(application) 
     private var lastTimedUpdate: Long by Delegates.notNull()
     private var lastTimedUpdateTime: Long by Delegates.notNull() // <- System.currentTimeMillis()
 
-    private val _oneStepRequest: MutableLiveData<Unit> = MutableLiveData()
-    private val _clearRequest: MutableLiveData<Unit> = MutableLiveData()
-    private val _autocenterRequest: MutableLiveData<Unit> = MutableLiveData()
-
     private var oldUpdating: Boolean = DEFAULT_UPDATING
-
-    val oneStepRequest: LiveData<Unit> = _oneStepRequest
-    val clearRequest: LiveData<Unit> = _clearRequest
-    val autocenterRequest: LiveData<Unit> = _autocenterRequest
 
     val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
     val nUpdates: LiveData<Long> = _nUpdates
@@ -123,15 +116,21 @@ class DodecaViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun requestOneStep() {
-        _oneStepRequest.value = Unit
+        dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
+            stop()
+            val batch = values.speed.roundToInt()
+            dduRepresentation.drawTimes(batch)
+            requestUpdateOnce()
+            dduRepresentation.postInvalidate()
+        }
     }
 
     fun requestClear() {
-        _clearRequest.value = Unit
+        dduRepresentation.value?.clear()
     }
 
     fun requestAutocenter() {
-        _autocenterRequest.value = Unit
+        dduRepresentation.value?.autocenterize()
     }
 
     fun requestSaveDdu() {
