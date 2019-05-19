@@ -1,9 +1,11 @@
 package com.pierbezuhoff.dodeca.models
 
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.util.Log
+import androidx.core.graphics.withMatrix
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -27,6 +29,7 @@ import com.pierbezuhoff.dodeca.utils.sx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.math3.complex.Complex
+import kotlin.math.roundToInt
 
 class DduRepresentation(val ddu: Ddu) :
     DodecaGestureDetector.ScrollListener,
@@ -37,7 +40,6 @@ class DduRepresentation(val ddu: Ddu) :
         /** return (width, height) or null */
         fun getSize(): Pair<Int, Int>?
         fun redraw()
-        fun redrawTrace()
         fun requestRedrawTraceOnce()
     }
     private var presenter: Presenter? = null
@@ -51,7 +53,7 @@ class DduRepresentation(val ddu: Ddu) :
     private var shape: Shapes = ddu.shape
 
     private val motion: Matrix = Matrix() // visible(x) = motion.move(x)
-    private val trace: Trace = Trace()
+    private var trace: Trace? = null
 
     private val presenterDisconnector: LifecycleObserver = object : LifecycleObserver {
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
@@ -71,7 +73,7 @@ class DduRepresentation(val ddu: Ddu) :
         ddu.bestCenter?.let {
             centerizeTo(it)
         }
-        presenter.requestRedrawTraceOnce()
+        clearTrace()
         presenter.redraw()
     }
 
@@ -93,11 +95,13 @@ class DduRepresentation(val ddu: Ddu) :
     fun autocenterize() {
         // maybe: when canvasFactor * scale ~ 1 try to fit screen
         val scale: Float = motion.sx
-        if (drawTrace && trace.initialized &&
+        if (drawTrace && trace != null &&
             values.canvasFactor == 1 &&
             1 - 1e-4 < scale && scale < 1 + 1e-1
         ) {
-            scroll(-trace.motion.dx, -trace.motion.dy)
+            trace?.let {
+                scroll(-it.motion.dx, -it.motion.dy)
+            }
         } else { // BUG: sometimes skip to else
             presenter?.getCenter()?.let { center ->
                 val shownCircles: List<CircleFigure> = circleGroup.figures.filter(CircleFigure::show)
@@ -108,9 +112,9 @@ class DduRepresentation(val ddu: Ddu) :
         }
     }
 
-    fun clear() {
+    fun clearTrace() {
         presenter?.getSize()?.let { (width: Int, height: Int) ->
-            trace.retrace(width, height)
+            trace = Trace(width, height)
         }
     }
 
@@ -134,9 +138,9 @@ class DduRepresentation(val ddu: Ddu) :
         motion.transformation()
         if (drawTrace) {
             if (values.redrawTraceOnMove)
-                presenter?.redrawTrace()
+                clearTrace()
             else {
-                trace.motion.transformation()
+                trace?.motion?.transformation()
                 presenter?.redraw()
             }
         } else if (!updating)
@@ -168,6 +172,86 @@ class DduRepresentation(val ddu: Ddu) :
     private fun visible(z: Complex): Complex =
         motion.move(z)
 
+    ////////////////////////////////////////////////
+    fun onDraw(canvas: Canvas) =
+        when {
+            updating || updateOnce -> updateCanvas(canvas)
+            drawTrace -> canvas.drawTraceCanvas()
+            else -> canvas.drawVisible() // pause and not drawTrace
+        }
+
+    private fun updateCanvas(canvas: Canvas) {
+        val timeToUpdate: Boolean = System.currentTimeMillis() - lastUpdateTime >= updateDt.value
+        if (updating && timeToUpdate) {
+            val times = values.speed.roundToInt()
+            drawTimes(times)
+        }
+        drawUpdatedCanvas(canvas)
+    }
+
+    private fun drawUpdatedCanvas(canvas: Canvas) {
+        if (drawTrace) {
+            onTraceCanvas {
+                if (redrawTraceOnce)
+                    drawBackground()
+                drawCircles()
+            }
+            canvas.drawTraceCanvas()
+        } else {
+            canvas.drawVisible()
+        }
+    }
+
+    fun drawTimes(times: Int = 1) {
+        if (times <= 1) {
+            updateCircles()
+        } else {
+            onTraceCanvas {
+                drawCirclesTimes(times)
+            }
+        }
+        lastUpdateTime = System.currentTimeMillis()
+        updateStat(times) // FIX: wrong stat
+    }
+
+    /** Draw bg and circles with motion */
+    private inline fun Canvas.drawVisible() =
+        onCanvas(this) {
+            drawBackground()
+            drawCircles()
+        }
+
+    private inline fun onCanvas(canvas: Canvas, crossinline draw: Canvas.() -> Unit) =
+        canvas.withMatrix(motion) { draw() }
+
+    private inline fun onTraceCanvas(crossinline draw: Canvas.() -> Unit) =
+        trace?.canvas?.draw()
+
+    private inline fun Canvas.drawTraceCanvas() =
+        trace?.drawOn(this, paint)
+
+    private inline fun Canvas.drawBackground() =
+        drawColor(ddu.backgroundColor)
+
+    private inline fun Canvas.drawCircles() {
+        circleGroup.draw(
+            canvas = this,
+            shape = shape, showAllCircles = values.showAllCircles
+        )
+    }
+
+    private inline fun Canvas.drawCirclesTimes(times: Int) {
+        circleGroup.drawTimes(
+            times = times, canvas = this,
+            shape = shape, showAllCircles = values.showAllCircles, reverse = values.reverseMotion
+        )
+    }
+
+    private inline fun updateCircles() {
+        circleGroup.update(values.reverseMotion)
+    }
+    ////////////////////////////////////////////////
+
     companion object {
         private const val TAG: String = "DduRepresentation"
         private val DEFAULT_PAINT =
@@ -177,6 +261,5 @@ class DduRepresentation(val ddu: Ddu) :
             }
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
-        private val DEFAULT_SHAPE = Shapes.CIRCLE
     }
 }

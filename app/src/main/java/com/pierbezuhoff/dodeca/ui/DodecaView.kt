@@ -34,16 +34,17 @@ class DodecaView(
     LifecycleOwner,
     DduRepresentation.Presenter
 {
-    private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
-    lateinit var mainModel: MainViewModel
-    lateinit var model: DodecaViewModel
+    lateinit var mainModel: MainViewModel // inject
+    lateinit var model: DodecaViewModel // inject
+    private val lifecycleRegistry: LifecycleRegistry =
+        LifecycleRegistry(this)
 
     private var initialized = false
 
     private val centerX: Float get() = x + width / 2
     private val centerY: Float get() = y + height / 2
 
-    private val knownSize: Boolean get() = width > 0
+    private val knownSize: Boolean get() = width > 0 || height > 0
 
     private var updating: Boolean = false // unused default, cannot have lateinit here
     private var redrawTraceOnce: Boolean = true
@@ -53,89 +54,20 @@ class DodecaView(
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
     }
 
-    override fun getLifecycle(): Lifecycle =
-        lifecycleRegistry
-
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (!initialized) {
             lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
             onFirstRun()
         }
-        if (!model.trace.initialized)
-            retrace()
     }
-
-    override fun onDraw(canvas: Canvas?) {
-        super.onDraw(canvas)
-        canvas?.let {
-            when {
-                updating -> updateCanvas(canvas)
-                model.updateOnce -> updateCanvas(canvas)
-                drawTrace -> canvas.drawTraceCanvas()
-                else -> onCanvas(canvas) {
-                    // pause and not drawTrace
-                    drawBackground()
-                    drawCircles()
-                }
-            }
-        }
-    }
-
-    override fun getCenter(): Complex? =
-        if (knownSize && initialized) ComplexFF(centerX, centerY)
-        else null
-
-    override fun getSize(): Pair<Int, Int>? =
-        if (knownSize && initialized) Pair(width, height)
-        else null
 
     private fun onFirstRun() {
-        if (!initialized) {
-            initialized = true
-            registerOptionsObservers()
-            registerObservers()
-            fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
-                if (updating) postInvalidate()
-            }
-        }
-    }
-
-    private fun registerOptionsObservers() {
-        options.showAllCircles.observeHere {
-            postInvalidate()
-        }
-        // TODO: invoke only when changed
-        options.autocenterAlways.observeHere {
-            if (it && knownSize)
-                autocenter()
-        }
-        options.canvasFactor.observeHere {
-            if (it != model.trace.currentCanvasFactor && knownSize)
-                retrace()
-        }
-        options.speed.observeHere {
-            UPS =
-                if (it < 1)
-                    (it * DEFAULT_UPS).roundToInt()
-                else DEFAULT_UPS
-        }
-        options.skipN.observeHere {
-            if (it > 0) {
-                Log.i(TAG, "skipping $it updates")
-                model.pause()
-                doAsync {
-                    repeat(it) {
-                        circleGroup.update()
-                    }
-                    // NOTE: slow and diverges
-                    // circleGroup.updateTimes(values.skipN, values.reverseMotion)
-                    uiThread {
-                        model.setSharedPreference(options.skipN, 0)
-                        model.resume()
-                    }
-                }
-            }
+        initialized = true
+        registerObservers()
+        registerOptionsObservers()
+        fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
+            if (updating) postInvalidate()
         }
     }
 
@@ -186,6 +118,44 @@ class DodecaView(
         }
     }
 
+    private fun registerOptionsObservers() {
+        options.showAllCircles.observeHere {
+            postInvalidate()
+        }
+        // TODO: invoke only when changed
+        options.autocenterAlways.observeHere {
+            if (it && knownSize)
+                autocenter()
+        }
+        options.canvasFactor.observeHere {
+            if (it != model.trace.currentCanvasFactor && knownSize)
+                retrace()
+        }
+        options.speed.observeHere {
+            UPS =
+                if (it < 1)
+                    (it * DEFAULT_UPS).roundToInt()
+                else DEFAULT_UPS
+        }
+        options.skipN.observeHere {
+            if (it > 0) {
+                Log.i(TAG, "skipping $it updates")
+                model.pause()
+                doAsync {
+                    repeat(it) {
+                        circleGroup.update()
+                    }
+                    // NOTE: slow and diverges
+                    // circleGroup.updateTimes(values.skipN, values.reverseMotion)
+                    uiThread {
+                        model.setSharedPreference(options.skipN, 0)
+                        model.resume()
+                    }
+                }
+            }
+        }
+    }
+
     private fun <T : Any> SharedPreference<T>.observeHere(action: (T) -> Unit) {
         liveData.observe(this@DodecaView, Observer {
             if (initialized)
@@ -197,29 +167,26 @@ class DodecaView(
         observe(this@DodecaView, Observer(action))
     }
 
-    private fun updateCanvas(canvas: Canvas) {
-        val timeToUpdate: Boolean = System.currentTimeMillis() - model.lastUpdateTime >= updateDt.value
-        if (updating && timeToUpdate) {
-            val times = values.speed.roundToInt()
-            drawTimes(times)
+    override fun getLifecycle(): Lifecycle =
+        lifecycleRegistry
+
+    override fun getCenter(): Complex? =
+        if (knownSize && initialized) ComplexFF(centerX, centerY)
+        else null
+
+    override fun getSize(): Pair<Int, Int>? = // NOTE: android.utils.Size from API 21
+        if (knownSize && initialized) Pair(width, height)
+        else null
+
+    override fun onDraw(canvas: Canvas?) {
+        super.onDraw(canvas)
+        canvas?.let {
+            model.onDraw(canvas)
         }
-        drawUpdatedCanvas(canvas)
     }
 
-    private inline fun drawUpdatedCanvas(canvas: Canvas) {
-        if (drawTrace) {
-            onTraceCanvas {
-                if (redrawTraceOnce)
-                    drawBackground()
-                drawCircles()
-            }
-            canvas.drawTraceCanvas()
-        } else {
-            onCanvas(canvas) {
-                drawBackground()
-                drawCircles()
-            }
-        }
+    override fun redraw() {
+        postInvalidate()
     }
 
     /** Reset trace and invalidate */
@@ -261,70 +228,7 @@ class DodecaView(
             model.setSharedPreference(options.canvasFactor, canvasFactor)
     }
 
-    /** Draw bg and circles with motion */
-    private inline fun Canvas.drawVisible() =
-        onCanvas(this) {
-            drawBackground()
-            drawCircles()
-        }
-
-    private inline fun drawTimes(times: Int = 1) {
-        if (times <= 1) {
-            updateCircles()
-        } else {
-            onTraceCanvas {
-                drawCirclesTimes(times)
-            }
-        }
-        model.lastUpdateTime = System.currentTimeMillis()
-        model.updateStat(times) // FIX: wrong stat
-    }
-
-    private inline fun onCanvas(canvas: Canvas, crossinline draw: Canvas.() -> Unit) =
-        canvas.withMatrix(model.motion) { draw() }
-
-    private inline fun onTraceCanvas(crossinline draw: Canvas.() -> Unit) =
-        model.trace.canvas.draw()
-
-    private inline fun Canvas.drawTraceCanvas() =
-        drawBitmap(model.trace.bitmap, model.trace.blitMatrix, model.paint)
-
-    private inline fun Canvas.drawBackground() =
-        drawColor(ddu.backgroundColor)
-
-    private inline fun Canvas.drawCircles() {
-        circleGroup.draw(this, shape = shape, showAllCircles = values.showAllCircles)
-    }
-
-    private inline fun Canvas.drawCirclesTimes(times: Int) {
-//        circleGroup.drawTimes(
-//            times,
-//            values.reverseMotion,
-//            canvas, shape = values.shape, showAllCircles = values.showAllCircles, showOutline = values.showOutline
-//        )
-        // for some mysterious reason this is a bit faster than circleGroup.drawTimes
-        repeat(times) {
-            drawCircles()
-            circleGroup.update(values.reverseMotion)
-        }
-        drawCircles()
-    }
-
-    // 1 step = [speed] updates
-    private fun oneStep() {
-        model.stop()
-        val batch = values.speed.roundToInt()
-        drawTimes(batch)
-        model.requestUpdateOnce()
-        postInvalidate()
-    }
-
-    private inline fun updateCircles() {
-        circleGroup.update(values.reverseMotion)
-    }
-
     private fun onDestroy() {
-        !disconnect DR
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         model.maybeAutosave()
         Log.i(TAG, "onDestroy")

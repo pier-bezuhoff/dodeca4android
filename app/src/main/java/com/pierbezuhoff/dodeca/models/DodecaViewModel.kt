@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca.models
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.Log
@@ -121,12 +122,12 @@ class DodecaViewModel(application: Application) : AndroidViewModel(application) 
             val batch = values.speed.roundToInt()
             dduRepresentation.drawTimes(batch)
             requestUpdateOnce()
-            dduRepresentation.postInvalidate()
+            dduRepresentation.presenter.redraw()
         }
     }
 
     fun requestClear() {
-        dduRepresentation.value?.clear()
+        dduRepresentation.value?.clearTrace()
     }
 
     fun requestAutocenter() {
@@ -219,6 +220,9 @@ class DodecaViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleDrawTrace() {
         drawTrace.value = !(drawTrace.value ?: DEFAULT_DRAW_TRACE)
     }
+
+    fun onDraw(canvas: Canvas) =
+        dduRepresentation.value?.onDraw(canvas)
 
     fun setShape(shape: Shapes)
 
