@@ -3,56 +3,39 @@ package com.pierbezuhoff.dodeca.data
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
+import android.graphics.Paint
 
-class Trace {
-    var initialized = false
-        private set
-    lateinit var bitmap: Bitmap private set
-    lateinit var canvas: Canvas private set
-    // `bitmap` top-left corner - screen top-left corner
-    private val translation = Matrix() // factor => pre translation
-    val motion = Matrix() // visible canvas = motion . translation $ canvas = blitMatrix canvas
-    // maybe: cache blitMatrix for performance (Sleepy)
-    val blitMatrix get() = Matrix(translation).apply { postConcat(motion) }
-    private val factor: Int get() = values.canvasFactor // bitmap == (factor ^ 2) * screens
-    var currentCanvasFactor: Int? = null
-        private set
+class Trace(width: Int, height: Int) {
+    // NOTE: bitmap == (factor ^ 2) * screens
+    private val bitmap: Bitmap
+    val canvas: Canvas
+    /** (bitmap top-left corner) - (screen top-left corner) */
+    private val translation: Matrix
+    val motion: Matrix // visible canvas = motion . translation $ canvas = blitMatrix canvas
+    // maybe: cache blitMatrix for performance
+    private val blitMatrix
+        get() = Matrix(translation).apply { postConcat(motion) }
+    var currentCanvasFactor: Int = factor
 
-    // visible
-    fun translate(dx: Float, dy: Float) {
-        motion.postTranslate(dx, dy)
-    }
-
-    // visible
-    fun scale(sx: Float, sy: Float, x: Float = 0f, y: Float = 0f) {
-        motion.postScale(sx, sy, x, y)
-    }
-
-    private fun initTranslation(width: Int, height: Int): Pair<Float, Float> {
-        val dx = (1f - factor) * width / 2
-        val dy = (1f - factor) * height / 2
-        translation.reset()
-        translation.preTranslate(dx, dy)
-        return Pair(dx, dy)
-    }
-
-    fun retrace(width: Int, height: Int) {
-        // or use Bitmap.Config.ARGB_8888
+    init {
         bitmap = Bitmap.createBitmap(
             factor * width, factor * height,
-            Bitmap.Config.RGB_565)
-        currentCanvasFactor = factor
+            BITMAP_CONFIG
+        )
         canvas = Canvas(bitmap)
-        val (dx, dy) = initTranslation(width, height)
-        motion.reset()
+        translation = Matrix()
+        motion = Matrix()
+        val dx: Float = (1f - factor) * width / 2
+        val dy: Float = (1f - factor) * height / 2
         canvas.translate(-dx, -dy)
-        initialized = true
+        translation.postTranslate(dx, dy)
     }
 
-    fun clear() {
-        if (initialized) {
-            bitmap.recycle()
-            initialized = false
-        }
+    fun drawOn(canvas: Canvas, paint: Paint) =
+        canvas.drawBitmap(bitmap, blitMatrix, paint)
+
+    companion object {
+        private val BITMAP_CONFIG = Bitmap.Config.RGB_565
+        private val factor: Int get() = values.canvasFactor
     }
 }

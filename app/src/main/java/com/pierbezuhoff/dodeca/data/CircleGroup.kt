@@ -175,14 +175,13 @@ class PrimitiveCircles(
         reverse: Boolean,
         canvas: Canvas, shape: Shapes, showAllCircles: Boolean
     ) {
-        /* straightforward:
         repeat(times) {
             _draw(canvas, shape, showAllCircles)
             _update(reverse)
         }
         _draw(canvas, shape, showAllCircles)
-        */
-        _drawTimes(times, reverse, canvas, shape, showAllCircles)
+        // TODO: understand why following is slower and diverges
+        // _drawTimes(times, reverse, canvas, shape, showAllCircles)
     }
 
     /* draw; redraw; draw; redraw ...; draw
