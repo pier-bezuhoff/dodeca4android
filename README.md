@@ -4,6 +4,7 @@ Min version: 4.4 KitKat
 Recommended version: >= 5.0 Lolipop
 ...
 # TODO
+- [ ] Not infinite zoom! Ex: growing-triton.ddu
 - [ ] Room: LiveData/coroutines
 - [ ] Paging
 - [ ] Navigation

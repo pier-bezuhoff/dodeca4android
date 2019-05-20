@@ -5,17 +5,20 @@ import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.core.graphics.withMatrix
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.OnLifecycleEvent
+import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.CircleGroupImpl
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.Trace
+import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Just
@@ -42,7 +45,16 @@ class DduRepresentation(val ddu: Ddu) :
         fun redraw()
         fun requestRedrawTraceOnce()
     }
+    interface StatHolder { fun updateStat(delta: Int = 1) }
+    interface ToastEmitter {
+        fun toast(message: CharSequence)
+        fun formatToast(@StringRes id: Int, vararg args: Any)
+    }
+
+    internal lateinit var sharedPreferencesModel: SharedPreferencesModel // inject
     private var presenter: Presenter? = null
+    private var statHolder: StatHolder? = null
+    private var toastEmitter: ToastEmitter? = null
 
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
@@ -75,6 +87,14 @@ class DduRepresentation(val ddu: Ddu) :
         }
         clearTrace()
         presenter.redraw()
+    }
+
+    fun connectStatHolder(statHolder: StatHolder) {
+        this.statHolder = statHolder
+    }
+
+    fun connectToastEmitter(toastEmitter: ToastEmitter) {
+        this.toastEmitter = toastEmitter
     }
 
     private fun setBestCenter() {
@@ -177,8 +197,47 @@ class DduRepresentation(val ddu: Ddu) :
         when {
             updating || updateOnce -> updateCanvas(canvas)
             drawTrace -> canvas.drawTraceCanvas()
-            else -> canvas.drawVisible() // pause and not drawTrace
+            else -> onCanvas(canvas) { drawVisible() } // pause and not drawTrace
         }
+
+    /** Reset trace and invalidate */
+    private fun retrace() {
+        tryRetrace()
+        trace?.canvas?.concat(motion)
+        redrawTraceOnce = drawTrace
+        if (!updating) {
+            onTraceCanvas {
+                drawVisible()
+            }
+        }
+        presenter?.redraw()
+    }
+
+    private fun tryRetrace() {
+        var done = false
+        var canvasFactor = values.canvasFactor
+        presenter?.getSize()?.let { (width: Int, height: Int) ->
+            while (!done) {
+                try {
+                    trace = Trace(width, height)
+                    done = true
+                } catch (e: OutOfMemoryError) {
+                    e.printStackTrace()
+                    if (canvasFactor > 1) {
+                        val nextFactor = canvasFactor - 1
+                        Log.w(TAG, "too large canvasFactor: $canvasFactor -> $nextFactor")
+                        toastEmitter?.formatToast(R.string.canvas_factor_oom_toast, canvasFactor, nextFactor)
+                        canvasFactor = nextFactor
+                    } else {
+                        Log.e(TAG, "min canvasFactor  $canvasFactor is too large! Retrying...")
+                        toastEmitter?.formatToast(R.string.minimal_canvas_factor_oom_toast, canvasFactor)
+                    }
+                }
+            }
+            if (canvasFactor != values.canvasFactor)
+                sharedPreferencesModel.set(options.canvasFactor, canvasFactor)
+        }
+    }
 
     private fun updateCanvas(canvas: Canvas) {
         val timeToUpdate: Boolean = System.currentTimeMillis() - lastUpdateTime >= updateDt.value
@@ -198,7 +257,7 @@ class DduRepresentation(val ddu: Ddu) :
             }
             canvas.drawTraceCanvas()
         } else {
-            canvas.drawVisible()
+            onCanvas(canvas) { drawVisible() }
         }
     }
 
@@ -211,15 +270,8 @@ class DduRepresentation(val ddu: Ddu) :
             }
         }
         lastUpdateTime = System.currentTimeMillis()
-        updateStat(times) // FIX: wrong stat
+        statHolder?.updateStat(times) // FIX: wrong stat
     }
-
-    /** Draw bg and circles with motion */
-    private inline fun Canvas.drawVisible() =
-        onCanvas(this) {
-            drawBackground()
-            drawCircles()
-        }
 
     private inline fun onCanvas(canvas: Canvas, crossinline draw: Canvas.() -> Unit) =
         canvas.withMatrix(motion) { draw() }
@@ -229,6 +281,12 @@ class DduRepresentation(val ddu: Ddu) :
 
     private inline fun Canvas.drawTraceCanvas() =
         trace?.drawOn(this, paint)
+
+    /** Draw background and circles */
+    private inline fun Canvas.drawVisible() {
+        drawBackground()
+        drawCircles()
+    }
 
     private inline fun Canvas.drawBackground() =
         drawColor(ddu.backgroundColor)

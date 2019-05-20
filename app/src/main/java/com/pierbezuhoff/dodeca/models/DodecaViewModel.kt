@@ -27,13 +27,21 @@ import java.io.File
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
-class DodecaViewModel(application: Application) : AndroidViewModel(application) {
-    lateinit var sharedPreferencesModel: SharedPreferencesModel
+class DodecaViewModel(application: Application) :
+    AndroidViewModel(application),
+    DduRepresentation.StatHolder,
+    DduRepresentation.ToastEmitter
+{
+
+    lateinit var sharedPreferencesModel: SharedPreferencesModel // inject
     private val dduFileRepository: DduFileRepository = DduFileRepository.INSTANCE
     private val context: Context
         get() = getApplication<Application>().applicationContext
 
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
+    private val _updating: MutableLiveData<Boolean> = MutableLiveData() // TODO: connect to DduRepresentation
+    private val _drawTrace: MutableLiveData<Boolean> = MutableLiveData() // TODO: connect to DduRepresentation
+    private val _shape: MutableLiveData<Shapes> = MutableLiveData() // TODO: connect to MainViewModel and DduRepresentation
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
     private var _updateOnce = false
@@ -43,6 +51,9 @@ class DodecaViewModel(application: Application) : AndroidViewModel(application) 
     private var oldUpdating: Boolean = DEFAULT_UPDATING
 
     val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
+    val updating: LiveData<Boolean> = _updating
+    val drawTrace: LiveData<Boolean> = _drawTrace
+    val shape: LiveData<Shapes> = _shape
     val nUpdates: LiveData<Long> = _nUpdates
     val dTime: LiveData<Float> = _dTime
     var lastUpdateTime: Long by Delegates.notNull() // <- System.currentTimeMillis()
@@ -67,7 +78,12 @@ class DodecaViewModel(application: Application) : AndroidViewModel(application) 
         maybeAutosave() // async
         resetDduParams() // maybe: into DduRepresentation
         _nUpdates.value = 0
-        _dduRepresentation.value = DduRepresentation(ddu) // invoke DodecaView observer
+        DduRepresentation(ddu).let { dduRepresentation: DduRepresentation ->
+            dduRepresentation.connectStatHolder(this)
+            dduRepresentation.connectToastEmitter(this)
+            dduRepresentation.sharedPreferencesModel = sharedPreferencesModel
+            _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
+        }
         ddu.file?.let { file: File ->
             setSharedPreference(options.recentDdu, file.absolutePath)
         }
@@ -164,20 +180,6 @@ class DodecaViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun updateStat(times: Int = 1) {
-        val dNUpdates = times * (if (values.reverseMotion) -1 else 1)
-        val n: Long = (nUpdates.value ?: 0L) + dNUpdates
-        _nUpdates.value = n
-        if (values.showStat) {
-            val overhead = n - lastTimedUpdate
-            if (overhead >= statTimeDelta) {
-                _dTime.value = (lastUpdateTime - lastTimedUpdateTime) / (overhead / statTimeDelta.toFloat()) / 1000f
-                lastTimedUpdate = n
-                lastTimedUpdateTime = lastUpdateTime
-            }
-        }
-    }
-
     private suspend fun save(ddu: Ddu, outputFile: File? = null) {
         val file: File? = outputFile ?: ddu.file
         if (file == null) {
@@ -195,6 +197,28 @@ class DodecaViewModel(application: Application) : AndroidViewModel(application) 
                 context.toast(context.getString(R.string.error_ddu_save_toast))
             }
         }
+    }
+
+    override fun updateStat(delta: Int) {
+        val dNUpdates = delta * (if (values.reverseMotion) -1 else 1)
+        val n: Long = (nUpdates.value ?: 0L) + dNUpdates
+        _nUpdates.value = n
+        if (values.showStat) {
+            val overhead = n - lastTimedUpdate
+            if (overhead >= statTimeDelta) {
+                _dTime.value = (lastUpdateTime - lastTimedUpdateTime) / (overhead / statTimeDelta.toFloat()) / 1000f
+                lastTimedUpdate = n
+                lastTimedUpdateTime = lastUpdateTime
+            }
+        }
+    }
+
+    override fun toast(message: CharSequence) {
+        context.toast(message)
+    }
+
+    override fun formatToast(id: Int, vararg args: Any) {
+        context.toast(context.getString(id, *args))
     }
 
     fun resume() =

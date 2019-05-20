@@ -189,45 +189,6 @@ class DodecaView(
         postInvalidate()
     }
 
-    /** Reset trace and invalidate */
-    private fun retrace() {
-        ? delegate to ddu repr
-        tryRetrace()
-        model.trace.canvas.concat(model.motion)
-        redrawTraceOnce = drawTrace
-        if (!updating) {
-            onTraceCanvas {
-                drawBackground()
-                drawCircles()
-            }
-        }
-        invalidate()
-    }
-
-    private fun tryRetrace() {
-        var done = false
-        var canvasFactor = values.canvasFactor
-        while (!done) {
-            try {
-                model.createTrace(width, height)
-                done = true
-            } catch (e: OutOfMemoryError) {
-                e.printStackTrace()
-                if (canvasFactor > 1) {
-                    val nextFactor = canvasFactor - 1
-                    Log.w(TAG, "too large canvasFactor: $canvasFactor -> $nextFactor")
-                    context.toast(context.getString(R.string.canvas_factor_oom_toast).format(canvasFactor, nextFactor))
-                    canvasFactor = nextFactor
-                } else {
-                    Log.e(TAG, "min canvasFactor  $canvasFactor is too large! Retrying...")
-                    context.toast(context.getString(R.string.minimal_canvas_factor_oom_toast).format(canvasFactor))
-                }
-            }
-        }
-        if (canvasFactor != values.canvasFactor)
-            model.setSharedPreference(options.canvasFactor, canvasFactor)
-    }
-
     private fun onDestroy() {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         model.maybeAutosave()
