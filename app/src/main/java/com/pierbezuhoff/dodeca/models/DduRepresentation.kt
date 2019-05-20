@@ -22,6 +22,8 @@ import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Just
+import com.pierbezuhoff.dodeca.utils.Once
+import com.pierbezuhoff.dodeca.utils.Sleeping
 import com.pierbezuhoff.dodeca.utils.asFF
 import com.pierbezuhoff.dodeca.utils.dx
 import com.pierbezuhoff.dodeca.utils.dy
@@ -43,7 +45,6 @@ class DduRepresentation(val ddu: Ddu) :
         /** return (width, height) or null */
         fun getSize(): Pair<Int, Int>?
         fun redraw()
-        fun requestRedrawTraceOnce()
     }
     interface StatHolder { fun updateStat(delta: Int = 1) }
     interface ToastEmitter {
@@ -56,16 +57,23 @@ class DduRepresentation(val ddu: Ddu) :
     private var statHolder: StatHolder? = null
     private var toastEmitter: ToastEmitter? = null
 
+    private val updateScheduler: UpdateScheduler = UpdateScheduler()
+    private val drawer: Drawer = Drawer()
+
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
     private val circleGroup: CircleGroup = CircleGroupImpl(ddu.circles, paint)
-    private var updating: Boolean = DEFAULT_UPDATING
 
-    private var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
-    private var shape: Shapes = ddu.shape
+    // NOTE: changes ONLY from outside (DodecaViewModel)
+    var updating: Boolean = DEFAULT_UPDATING
+    var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
+    var shape: Shapes = ddu.shape
 
-    private val motion: Matrix = Matrix() // visible(x) = motion.move(x)
+    private val motion: Matrix = Matrix() // visible(z) = motion.move(z)
     private var trace: Trace? = null
+
+    private var redrawTraceOnce: Boolean by Once()
+    private var updateOnce: Boolean by Once()
 
     private val presenterDisconnector: LifecycleObserver = object : LifecycleObserver {
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
@@ -132,10 +140,17 @@ class DduRepresentation(val ddu: Ddu) :
         }
     }
 
-    fun clearTrace() {
-        presenter?.getSize()?.let { (width: Int, height: Int) ->
-            trace = Trace(width, height)
-        }
+    fun draw(canvas: Canvas) =
+        drawer.draw(canvas)
+
+    fun clearTrace() =
+        drawer.clearTrace()
+
+    fun oneStep() {
+        val batch: Int = values.speed.roundToInt()
+        drawer.drawTimes(batch)
+        updateOnce = true
+        presenter?.redraw()
     }
 
     override fun onScale(scale: Float, focusX: Float, focusY: Float) =
@@ -192,123 +207,141 @@ class DduRepresentation(val ddu: Ddu) :
     private fun visible(z: Complex): Complex =
         motion.move(z)
 
-    ////////////////////////////////////////////////
-    fun onDraw(canvas: Canvas) =
-        when {
-            updating || updateOnce -> updateCanvas(canvas)
-            drawTrace -> canvas.drawTraceCanvas()
-            else -> onCanvas(canvas) { drawVisible() } // pause and not drawTrace
+    private class UpdateScheduler {
+        private var lastUpdateTime: Long = 0
+        var ups: Int = DEFAULT_UPS // updates per second
+            set(value) { field = value; sleepingUpdateDt.awake() }
+        private val sleepingUpdateDt = Sleeping { 1000f / ups }
+        private val updateDt: Float by sleepingUpdateDt
+
+        fun timeToUpdate(): Boolean =
+            System.currentTimeMillis() - lastUpdateTime >= updateDt
+
+        fun doUpdate() {
+            lastUpdateTime = System.currentTimeMillis()
         }
 
-    /** Reset trace and invalidate */
-    private fun retrace() {
-        tryRetrace()
-        trace?.canvas?.concat(motion)
-        redrawTraceOnce = drawTrace
-        if (!updating) {
-            onTraceCanvas {
-                drawVisible()
-            }
+        companion object {
+            private const val DEFAULT_UPS = 60 // empirical
         }
-        presenter?.redraw()
     }
 
-    private fun tryRetrace() {
-        var done = false
-        var canvasFactor = values.canvasFactor
-        presenter?.getSize()?.let { (width: Int, height: Int) ->
-            while (!done) {
-                try {
-                    trace = Trace(width, height)
-                    done = true
-                } catch (e: OutOfMemoryError) {
-                    e.printStackTrace()
-                    if (canvasFactor > 1) {
-                        val nextFactor = canvasFactor - 1
-                        Log.w(TAG, "too large canvasFactor: $canvasFactor -> $nextFactor")
-                        toastEmitter?.formatToast(R.string.canvas_factor_oom_toast, canvasFactor, nextFactor)
-                        canvasFactor = nextFactor
-                    } else {
-                        Log.e(TAG, "min canvasFactor  $canvasFactor is too large! Retrying...")
-                        toastEmitter?.formatToast(R.string.minimal_canvas_factor_oom_toast, canvasFactor)
-                    }
+    private inner class Drawer {
+        fun draw(canvas: Canvas) =
+            when {
+                updating || updateOnce -> updateCanvas(canvas)
+                drawTrace -> canvas.drawTraceCanvas()
+                else -> onCanvas(canvas) {
+                    drawVisible()
                 }
             }
-            if (canvasFactor != values.canvasFactor)
-                sharedPreferencesModel.set(options.canvasFactor, canvasFactor)
-        }
-    }
 
-    private fun updateCanvas(canvas: Canvas) {
-        val timeToUpdate: Boolean = System.currentTimeMillis() - lastUpdateTime >= updateDt.value
-        if (updating && timeToUpdate) {
-            val times = values.speed.roundToInt()
-            drawTimes(times)
-        }
-        drawUpdatedCanvas(canvas)
-    }
-
-    private fun drawUpdatedCanvas(canvas: Canvas) {
-        if (drawTrace) {
-            onTraceCanvas {
-                if (redrawTraceOnce)
-                    drawBackground()
-                drawCircles()
+        /** Reset trace and invalidate */
+        fun clearTrace() {
+            tryClearTrace()
+            trace?.canvas?.concat(motion)
+            redrawTraceOnce = drawTrace
+            if (!updating) {
+                onTraceCanvas {
+                    drawVisible()
+                }
             }
-            canvas.drawTraceCanvas()
-        } else {
-            onCanvas(canvas) { drawVisible() }
+            presenter?.redraw()
         }
-    }
 
-    fun drawTimes(times: Int = 1) {
-        if (times <= 1) {
-            updateCircles()
-        } else {
-            onTraceCanvas {
-                drawCirclesTimes(times)
+        private fun tryClearTrace() {
+            var done = false
+            var canvasFactor = values.canvasFactor
+            presenter?.getSize()?.let { (width: Int, height: Int) ->
+                while (!done) {
+                    try {
+                        trace = Trace(width, height)
+                        done = true
+                    } catch (e: OutOfMemoryError) {
+                        e.printStackTrace()
+                        if (canvasFactor > 1) {
+                            val nextFactor = canvasFactor - 1
+                            Log.w(TAG, "too large canvasFactor: $canvasFactor -> $nextFactor")
+                            toastEmitter?.formatToast(R.string.canvas_factor_oom_toast, canvasFactor, nextFactor)
+                            canvasFactor = nextFactor
+                        } else {
+                            Log.e(TAG, "min canvasFactor  $canvasFactor is too large! Retrying...")
+                            toastEmitter?.formatToast(R.string.minimal_canvas_factor_oom_toast, canvasFactor)
+                        }
+                    }
+                }
+                if (canvasFactor != values.canvasFactor)
+                    sharedPreferencesModel.set(options.canvasFactor, canvasFactor)
             }
         }
-        lastUpdateTime = System.currentTimeMillis()
-        statHolder?.updateStat(times) // FIX: wrong stat
+
+        private fun updateCanvas(canvas: Canvas) {
+            if (updating && updateScheduler.timeToUpdate()) {
+                val times = values.speed.roundToInt()
+                drawer.drawTimes(times)
+                statHolder?.updateStat(times)
+                updateScheduler.doUpdate()
+            }
+            drawer.drawUpdatedCanvas(canvas)
+        }
+
+        fun drawTimes(times: Int = 1) {
+            if (times <= 1) {
+                circleGroup.update(reverse = values.reverseMotion)
+            } else {
+                onTraceCanvas {
+                    drawCirclesTimes(times)
+                }
+            }
+        }
+
+        private fun drawUpdatedCanvas(canvas: Canvas) {
+            if (drawTrace) {
+                onTraceCanvas {
+                    if (redrawTraceOnce)
+                        drawBackground()
+                    drawCircles()
+                }
+                canvas.drawTraceCanvas()
+            } else {
+                onCanvas(canvas) {
+                    drawVisible()
+                }
+            }
+        }
+
+        private inline fun onCanvas(canvas: Canvas, crossinline draw: Canvas.() -> Unit) =
+            canvas.withMatrix(motion) { draw() }
+
+        private inline fun onTraceCanvas(crossinline draw: Canvas.() -> Unit) =
+            trace?.canvas?.draw()
+
+        private inline fun Canvas.drawTraceCanvas() =
+            trace?.drawOn(this, paint)
+
+        /** Draw background and circles */
+        private inline fun Canvas.drawVisible() {
+            drawBackground()
+            drawCircles()
+        }
+
+        private inline fun Canvas.drawBackground() =
+            drawColor(ddu.backgroundColor)
+
+        private inline fun Canvas.drawCircles() {
+            circleGroup.draw(
+                canvas = this,
+                shape = shape, showAllCircles = values.showAllCircles
+            )
+        }
+
+        private inline fun Canvas.drawCirclesTimes(times: Int) {
+            circleGroup.drawTimes(
+                times = times, canvas = this,
+                shape = shape, showAllCircles = values.showAllCircles, reverse = values.reverseMotion
+            )
+        }
     }
-
-    private inline fun onCanvas(canvas: Canvas, crossinline draw: Canvas.() -> Unit) =
-        canvas.withMatrix(motion) { draw() }
-
-    private inline fun onTraceCanvas(crossinline draw: Canvas.() -> Unit) =
-        trace?.canvas?.draw()
-
-    private inline fun Canvas.drawTraceCanvas() =
-        trace?.drawOn(this, paint)
-
-    /** Draw background and circles */
-    private inline fun Canvas.drawVisible() {
-        drawBackground()
-        drawCircles()
-    }
-
-    private inline fun Canvas.drawBackground() =
-        drawColor(ddu.backgroundColor)
-
-    private inline fun Canvas.drawCircles() {
-        circleGroup.draw(
-            canvas = this,
-            shape = shape, showAllCircles = values.showAllCircles
-        )
-    }
-
-    private inline fun Canvas.drawCirclesTimes(times: Int) {
-        circleGroup.drawTimes(
-            times = times, canvas = this,
-            shape = shape, showAllCircles = values.showAllCircles, reverse = values.reverseMotion
-        )
-    }
-
-    private inline fun updateCircles() {
-        circleGroup.update(values.reverseMotion)
-    }
-    ////////////////////////////////////////////////
 
     companion object {
         private const val TAG: String = "DduRepresentation"
@@ -321,3 +354,4 @@ class DduRepresentation(val ddu: Ddu) :
         private const val DEFAULT_UPDATING = true
     }
 }
+

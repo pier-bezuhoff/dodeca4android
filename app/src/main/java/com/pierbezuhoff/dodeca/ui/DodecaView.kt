@@ -198,11 +198,7 @@ class DodecaView(
     companion object {
         private const val TAG = "DodecaView"
         private const val FPS = 60 // empirical
-        private const val DEFAULT_UPS = 60 // empirical
-        private var UPS = DEFAULT_UPS
-            set(value) { field = value; updateDt.awake() }
         const val dt = 1000f / FPS
-        val updateDt = Sleepy { 1000f / UPS }
         private const val IMMERSIVE_UI_VISIBILITY = SYSTEM_UI_FLAG_LAYOUT_STABLE or SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or SYSTEM_UI_FLAG_IMMERSIVE or SYSTEM_UI_FLAG_FULLSCREEN or SYSTEM_UI_FLAG_HIDE_NAVIGATION or SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
 }
