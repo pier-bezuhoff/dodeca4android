@@ -16,6 +16,8 @@ import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.CircleGroupImpl
 import com.pierbezuhoff.dodeca.data.Ddu
+import com.pierbezuhoff.dodeca.data.DduAttributesHolder
+import com.pierbezuhoff.dodeca.data.ImmutableCircleGroup
 import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
@@ -36,9 +38,10 @@ import kotlinx.coroutines.withContext
 import org.apache.commons.math3.complex.Complex
 import kotlin.math.roundToInt
 
-class DduRepresentation(val ddu: Ddu) :
+class DduRepresentation(override val ddu: Ddu) :
     DodecaGestureDetector.ScrollListener,
-    DodecaGestureDetector.ScaleListener
+    DodecaGestureDetector.ScaleListener,
+    DduAttributesHolder
 {
     interface Presenter : LifecycleOwner {
         fun getCenter(): Complex?
@@ -63,11 +66,13 @@ class DduRepresentation(val ddu: Ddu) :
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
     private val circleGroup: CircleGroup = CircleGroupImpl(ddu.circles, paint)
-
-    // NOTE: changes ONLY from outside (DodecaViewModel)
-    var updating: Boolean = DEFAULT_UPDATING
-    var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
-    var shape: Shapes = ddu.shape
+    val immutableCircleGroup: ImmutableCircleGroup get() = circleGroup
+    override var updating: Boolean = DEFAULT_UPDATING
+        set(value) = changeUpdating(value)
+    override var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
+        set(value) = changeDrawTrace(value)
+    override var shape: Shapes = ddu.shape
+        set(value) = changeShape(value)
 
     private val motion: Matrix = Matrix() // visible(z) = motion.move(z)
     private var trace: Trace? = null
@@ -206,6 +211,30 @@ class DduRepresentation(val ddu: Ddu) :
 
     private fun visible(z: Complex): Complex =
         motion.move(z)
+
+    fun changeCircleGroup(act: CircleGroup.() -> Unit) {
+        circleGroup.act()
+        presenter?.redraw()
+    }
+
+    private fun changeUpdating(newUpdating: Boolean) {
+        updating = newUpdating
+        if (newUpdating)
+            presenter?.redraw()
+    }
+
+    private fun changeDrawTrace(newDrawTrace: Boolean) {
+        drawTrace = newDrawTrace
+        if (newDrawTrace)
+            clearTrace()
+        else
+            presenter?.redraw()
+    }
+
+    private fun changeShape(newShape: Shapes) {
+        shape = newShape
+        presenter?.redraw()
+    }
 
     private class UpdateScheduler {
         private var lastUpdateTime: Long = 0

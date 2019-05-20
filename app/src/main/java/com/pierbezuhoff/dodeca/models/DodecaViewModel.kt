@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
+import com.pierbezuhoff.dodeca.data.ImmutableCircleGroup
 import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.options
@@ -186,14 +187,16 @@ class DodecaViewModel(application: Application) :
 
     fun resume() {
         val newUpdating = oldUpdating
-        updating.postValue(newUpdating)
+        _updating.postValue(newUpdating)
+        dduRepresentation.value?.updating = newUpdating
     }
 
     fun pause() {
         if (updating.value != false) {
             oldUpdating = updating.value ?: DEFAULT_UPDATING
             val newUpdating = false
-            updating.postValue(newUpdating)
+            _updating.postValue(newUpdating)
+            dduRepresentation.value?.updating = newUpdating
             maybeAutosave()
         }
     }
@@ -203,21 +206,34 @@ class DodecaViewModel(application: Application) :
     }
 
     fun toggleUpdating() {
-        updating.value = !(updating.value ?: DEFAULT_UPDATING)
+        val newUpdating: Boolean = !(updating.value ?: DEFAULT_UPDATING)
+        _updating.value = newUpdating
+        dduRepresentation.value?.updating = newUpdating
     }
 
     fun toggleDrawTrace() {
-        drawTrace.value = !(drawTrace.value ?: DEFAULT_DRAW_TRACE)
+        val newDrawTrace: Boolean = !(drawTrace.value ?: DEFAULT_DRAW_TRACE)
+        _drawTrace.value = newDrawTrace
+        dduRepresentation.value?.drawTrace = newDrawTrace
     }
 
     fun onDraw(canvas: Canvas) =
         dduRepresentation.value?.draw(canvas)
 
-    fun setShape(shape: Shapes)
+    fun setShape(shape: Shapes) {
+        _shape.value = shape
+        dduRepresentation.value?.shape = shape
+    }
 
-    fun getDduFile(): File?
+    fun getDduFile(): File? =
+        dduRepresentation.value?.ddu?.file
 
-    fun getCircleGroup(): CircleGroup?
+    fun getCircleGroup(): ImmutableCircleGroup? =
+        dduRepresentation.value?.immutableCircleGroup
+
+    fun changeCircleGroup(act: CircleGroup.() -> Unit) {
+        dduRepresentation.value?.changeCircleGroup(act)
+    }
 
     fun updateDduAttributesFrom(dduRepresentation: DduRepresentation) {
         _updating.value = dduRepresentation.updating

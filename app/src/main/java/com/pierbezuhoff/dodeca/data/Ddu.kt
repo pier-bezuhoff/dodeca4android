@@ -132,6 +132,13 @@ class Ddu(
     }
 }
 
+interface DduAttributesHolder {
+    val ddu: Ddu
+    var updating: Boolean
+    var drawTrace: Boolean
+    var shape: Shapes
+}
+
 
 private class CircleBuilder {
     var radius: Double? = null
