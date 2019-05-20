@@ -5,27 +5,21 @@ import android.graphics.Canvas
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import androidx.core.graphics.withMatrix
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.options
-import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
-import com.pierbezuhoff.dodeca.utils.Sleepy
 import org.apache.commons.math3.complex.Complex
 import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import kotlin.concurrent.fixedRateTimer
-import kotlin.math.roundToInt
 
 class DodecaView(
     context: Context,
@@ -46,9 +40,7 @@ class DodecaView(
 
     private val knownSize: Boolean get() = width > 0 || height > 0
 
-    private var updating: Boolean = false // unused default, cannot have lateinit here
-    private var redrawTraceOnce: Boolean = true
-        get() = if (field) { field = false; true } else false
+//    private var updating: Boolean = false // unused default, cannot have lateinit here
 
     init {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
@@ -74,41 +66,10 @@ class DodecaView(
     private fun registerObservers() {
         model.dduRepresentation.observeHere {
             it.connectPresenter(this)
-            on new ddu
         }
-        model.circleGroup.observeHere {
-            circleGroup = it
-            postInvalidate()
-        }
-        model.updating.observeHere {
-            updating = it
-            if (it) {
-                lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
-                postInvalidate()
-            } else {
-                lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-            }
-        }
-        model.drawTrace.observeHere {
-            drawTrace = it
-            if (it) retrace()
-            else if (model.trace.initialized) {
-                model.trace.clear()
-                postInvalidate()
-            }
-        }
-        model.shape.observeHere {
-            shape = it
-            postInvalidate()
-        }
-
         model.gestureDetector.observeHere { detector ->
             detector.registerAsOnTouchListenerFor(this)
         }
-        model.oneStepRequest.observeHere { oneStep() }
-        model.clearRequest.observeHere { retrace() }
-        model.autocenterRequest.observeHere { autocenter() }
-
         mainModel.bottomBarShown.observeHere {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
         }
