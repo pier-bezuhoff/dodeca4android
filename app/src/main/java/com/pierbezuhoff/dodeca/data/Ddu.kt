@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.util.Log
+import androidx.annotation.ColorInt
+import androidx.annotation.IntRange
 import androidx.core.graphics.withMatrix
 import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.utils.asFF
@@ -83,15 +85,9 @@ class Ddu(
         val scale: Float = PREVIEW_SCALE * width / NORMAL_PREVIEW_SIZE // or use options.preview_size.default
         val matrix = Matrix().apply { postTranslate(dx, dy); postScale(scale, scale, centerX, centerY) }
         canvas.withMatrix(matrix) {
-            canvas.drawColor(backgroundColor)
+            drawColor(backgroundColor)
             if (drawTrace ?: true) {
-                // TODO: understand, why drawTimes is slower
-                // circleGroup.drawTimes(previewUpdates, canvas = canvas, shape = shape)
-                repeat(nUpdates) {
-                    circleGroup.draw(canvas, shape = shape)
-                    circleGroup.update()
-                }
-                circleGroup.draw(canvas, shape = shape)
+                circleGroup.drawTimes(nUpdates, canvas = canvas, shape = shape)
             } else {
                 circleGroup.draw(canvas, shape = shape)
             }
@@ -418,15 +414,18 @@ private class DDUWriter(private val ddu: Ddu) {
 
 /* In C++ (with it ddu was created) color is RRGGBB, but in Java -- AABBGGRR
 * see Bitmap.Config.ARGB_8888 (https://developer.android.com/reference/android/graphics/Bitmap.Config.html#ARGB_8888) */
+@get:IntRange(from = 0, to = 255)
 private val Int.red: Int get() = (this and 0xff0000) shr 16
+@get:IntRange(from = 0, to = 255)
 private val Int.green: Int get() = (this and 0x00ff00) shr 8
+@get:IntRange(from = 0, to = 255)
 private val Int.blue: Int get() = this and 0x0000ff
 
 /* RRGGBB -> AABBGGRR */
-internal fun Int.toColor(): Int = Color.rgb(blue, green, red)
+@ColorInt internal fun Int.toColor(): Int = Color.rgb(blue, green, red)
 // = ((blue shl 16) + (green shl 8) + red).inv() xor 0xffffff
 
 /* AABBGGRR -> RRGGBB */
-internal fun Int.fromColor(): Int =
+internal fun @receiver:ColorInt Int.fromColor(): Int =
     (Color.blue(this) shl 16) + (Color.green(this) shl 8) + Color.red(this)
 
