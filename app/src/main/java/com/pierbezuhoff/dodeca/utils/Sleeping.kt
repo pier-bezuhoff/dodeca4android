@@ -2,7 +2,7 @@ package com.pierbezuhoff.dodeca.utils
 
 import kotlin.reflect.KProperty
 
-open class Sleepy<out T>(private val initializer: () -> T) {
+class Sleeping<out T>(private val initializer: () -> T) {
     private var _value: T? = null
     val value: T get() =
         if (_value != null) {
@@ -12,6 +12,9 @@ open class Sleepy<out T>(private val initializer: () -> T) {
             _value!!
         }
 
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T =
+        value
+
     fun awake(): T {
         _value = initializer()
         return _value!!
@@ -20,9 +23,4 @@ open class Sleepy<out T>(private val initializer: () -> T) {
     fun forget() {
         _value = null
     }
-}
-
-// delegate for Sleepy
-class Sleeping<out T>(initializer: () -> T) : Sleepy<T>(initializer) {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 }

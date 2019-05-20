@@ -3,8 +3,6 @@ package com.pierbezuhoff.dodeca.models
 import android.app.Application
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -24,12 +22,11 @@ import com.pierbezuhoff.dodeca.utils.dduPath
 import kotlinx.coroutines.launch
 import org.jetbrains.anko.toast
 import java.io.File
-import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
 class DodecaViewModel(application: Application) :
     AndroidViewModel(application),
-    DduRepresentation.StatHolder,
+    DduRepresentation.StatHolder, // by statUpdater
     DduRepresentation.ToastEmitter
 {
 
@@ -39,14 +36,11 @@ class DodecaViewModel(application: Application) :
         get() = getApplication<Application>().applicationContext
 
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
-    private val _updating: MutableLiveData<Boolean> = MutableLiveData() // TODO: connect to DduRepresentation
-    private val _drawTrace: MutableLiveData<Boolean> = MutableLiveData() // TODO: connect to DduRepresentation
-    private val _shape: MutableLiveData<Shapes> = MutableLiveData() // TODO: connect to MainViewModel and DduRepresentation
+    private val _updating: MutableLiveData<Boolean> = MutableLiveData()
+    private val _drawTrace: MutableLiveData<Boolean> = MutableLiveData()
+    private val _shape: MutableLiveData<Shapes> = MutableLiveData()
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
-    private var _updateOnce = false
-    private var lastTimedUpdate: Long by Delegates.notNull()
-    private var lastTimedUpdateTime: Long by Delegates.notNull() // <- System.currentTimeMillis()
 
     private var oldUpdating: Boolean = DEFAULT_UPDATING
 
@@ -54,13 +48,10 @@ class DodecaViewModel(application: Application) :
     val updating: LiveData<Boolean> = _updating
     val drawTrace: LiveData<Boolean> = _drawTrace
     val shape: LiveData<Shapes> = _shape
+
+    private val statUpdater: StatUpdater = StatUpdater()
     val nUpdates: LiveData<Long> = _nUpdates
     val dTime: LiveData<Float> = _dTime
-    var lastUpdateTime: Long by Delegates.notNull() // <- System.currentTimeMillis()
-    var statTimeDelta: Int by Delegates.notNull() // n of updates between stat time redraw
-        private set
-    val updateOnce: Boolean
-        get() = if (_updateOnce) { _updateOnce = false; true } else false
 
     private val _gestureDetector: MutableLiveData<DodecaGestureDetector> = MutableLiveData()
     val gestureDetector: LiveData<DodecaGestureDetector> = _gestureDetector
@@ -70,18 +61,17 @@ class DodecaViewModel(application: Application) :
             val initialDdu: Ddu = getInitialDdu()
             loadDdu(initialDdu)
         }
-        statTimeDelta = context.resources.getInteger(R.integer.stat_time_delta)
         sharedPreferencesModel.fetchAll()
     }
 
     fun loadDdu(ddu: Ddu) {
         maybeAutosave() // async
-        resetDduParams() // maybe: into DduRepresentation
-        _nUpdates.value = 0
+        statUpdater.reset()
         DduRepresentation(ddu).let { dduRepresentation: DduRepresentation ->
             dduRepresentation.connectStatHolder(this)
             dduRepresentation.connectToastEmitter(this)
             dduRepresentation.sharedPreferencesModel = sharedPreferencesModel
+            updateDduAttributesFrom(dduRepresentation)
             _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
         }
         ddu.file?.let { file: File ->
@@ -122,23 +112,10 @@ class DodecaViewModel(application: Application) :
             return recentInDduDir
     }
 
-    private fun resetDduParams() {
-        lastTimedUpdate = 0
-        lastUpdateTime = System.currentTimeMillis()
-        lastTimedUpdateTime = lastUpdateTime
-    }
-
-    fun requestUpdateOnce() {
-        _updateOnce = true
-    }
-
     fun requestOneStep() {
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
             stop()
-            val batch = values.speed.roundToInt()
-            dduRepresentation.drawTimes(batch)
-            requestUpdateOnce()
-            dduRepresentation.presenter.redraw()
+            dduRepresentation.oneStep()
         }
     }
 
@@ -199,20 +176,6 @@ class DodecaViewModel(application: Application) :
         }
     }
 
-    override fun updateStat(delta: Int) {
-        val dNUpdates = delta * (if (values.reverseMotion) -1 else 1)
-        val n: Long = (nUpdates.value ?: 0L) + dNUpdates
-        _nUpdates.value = n
-        if (values.showStat) {
-            val overhead = n - lastTimedUpdate
-            if (overhead >= statTimeDelta) {
-                _dTime.value = (lastUpdateTime - lastTimedUpdateTime) / (overhead / statTimeDelta.toFloat()) / 1000f
-                lastTimedUpdate = n
-                lastTimedUpdateTime = lastUpdateTime
-            }
-        }
-    }
-
     override fun toast(message: CharSequence) {
         context.toast(message)
     }
@@ -221,20 +184,22 @@ class DodecaViewModel(application: Application) :
         context.toast(context.getString(id, *args))
     }
 
-    fun resume() =
-        updating.postValue(oldUpdating)
+    fun resume() {
+        val newUpdating = oldUpdating
+        updating.postValue(newUpdating)
+    }
 
     fun pause() {
         if (updating.value != false) {
             oldUpdating = updating.value ?: DEFAULT_UPDATING
-            updating.postValue(false)
+            val newUpdating = false
+            updating.postValue(newUpdating)
             maybeAutosave()
         }
     }
 
     fun stop() {
         oldUpdating = true
-        updating.postValue(false)
     }
 
     fun toggleUpdating() {
@@ -246,7 +211,7 @@ class DodecaViewModel(application: Application) :
     }
 
     fun onDraw(canvas: Canvas) =
-        dduRepresentation.value?.onDraw(canvas)
+        dduRepresentation.value?.draw(canvas)
 
     fun setShape(shape: Shapes)
 
@@ -254,12 +219,53 @@ class DodecaViewModel(application: Application) :
 
     fun getCircleGroup(): CircleGroup?
 
+    fun updateDduAttributesFrom(dduRepresentation: DduRepresentation) {
+        _updating.value = dduRepresentation.updating
+        _drawTrace.value = dduRepresentation.drawTrace
+        _shape.value = dduRepresentation.shape
+    }
+
+    override fun updateStat(delta: Int) =
+        statUpdater.updateStat(delta)
+
+    private inner class StatUpdater : DduRepresentation.StatHolder {
+        private val statTimeDelta: Int = context.resources.getInteger(R.integer.stat_time_delta)
+        private var nUpdates: Long by Delegates.observable(0L) { _, _, newNUpdates: Long ->
+            _nUpdates.value = newNUpdates
+        }
+        private var lastUpdateTime: Long = 0
+        private var lastTimedUpdate: Long = 0
+        private var lastTimedUpdateTime: Long = 0
+        private var dTime: Float? by Delegates.observable<Float?>(null) { _, _, newDTime: Float? ->
+            _dTime.value = newDTime
+        }
+
+        override fun updateStat(delta: Int) {
+            lastUpdateTime = System.currentTimeMillis()
+            val dNUpdates: Int = delta * (if (values.reverseMotion) -1 else 1)
+            nUpdates += dNUpdates
+            if (values.showStat) {
+                val overhead: Long = nUpdates - lastTimedUpdate
+                if (overhead >= statTimeDelta) {
+                    dTime = (lastUpdateTime - lastTimedUpdateTime) / (overhead / statTimeDelta.toFloat()) / 1000f
+                    lastTimedUpdate = nUpdates
+                    lastTimedUpdateTime = lastUpdateTime
+                }
+            }
+        }
+
+        fun reset() {
+            nUpdates = 0
+            lastUpdateTime = 0
+            lastTimedUpdate = 0
+            lastTimedUpdateTime = 0
+            dTime = null
+
+        }
+    }
+
     companion object {
         const val TAG = "DodecaViewModel"
-        private val DEFAULT_PAINT = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
-            color = Color.BLACK
-            style = Paint.Style.STROKE
-        }
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
         private val DEFAULT_SHAPE = Shapes.CIRCLE
