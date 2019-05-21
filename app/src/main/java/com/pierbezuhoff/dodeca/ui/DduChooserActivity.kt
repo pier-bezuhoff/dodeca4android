@@ -44,6 +44,10 @@ import com.pierbezuhoff.dodeca.utils.stripDdu
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.android.synthetic.main.activity_dduchooser.*
 import kotlinx.android.synthetic.main.dir_row.view.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
@@ -54,14 +58,18 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import org.jetbrains.anko.yesButton
 import java.io.File
+import kotlin.coroutines.CoroutineContext
 
-// TODO: refactor with databindings and viewmodel
+// TODO: refactor with databindings, viewmodel and coroutines
 // MAYBE: action bar: search by name
 // MAYBE: store in sharedPreferences last dir
 // MAYBE: link to external folder
-class DduChooserActivity : AppCompatActivity() {
+class DduChooserActivity : AppCompatActivity(), CoroutineScope {
     lateinit var dir: File // current
     private val dduFileRepository = DduFileRepository.INSTANCE
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
+    private lateinit var job: Job
     private lateinit var dduAdapter: DduAdapter
     private lateinit var dirAdapter: DirAdapter
     private var requestedDduFile: File? = null
@@ -69,6 +77,7 @@ class DduChooserActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        job = Job()
         dir = dduDir
         intent.getStringExtra("dirPath")?.let { dir = File(it) }
         setContentView(R.layout.activity_dduchooser)
@@ -153,45 +162,56 @@ class DduChooserActivity : AppCompatActivity() {
         return isSet1 || isSet2 || super.onContextItemSelected(item)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+    }
+
     private fun renameDduFile(file: File, position: Int) {
-        val name: FileName = file.nameWithoutExtension
-        var input: EditText? = null
-        val originalFilename: Filename? = dduFileRepository.getOriginalFilename(file.name)
-        val appendix =
-            if (originalFilename != null && originalFilename != file.name)
-                " " + getString(R.string.rename_dialog_original_name, originalFilename.stripDdu())
-            else ""
-        alert(getString(R.string.rename_dialog_message, name, appendix)) {
-            customView {
-                input = editText(name)
-            }
-            positiveButton(getString(R.string.ddu_rename)) {
-                input?.text?.toString()?.trim()?.let { newName: FileName ->
-                    val newFilename = "$newName.ddu"
-                    val newFile = File(file.parentFile.absolutePath, newFilename)
-                    val success = file.renameTo(newFile)
-                    Log.i(TAG, "$file -> $newFile: $success")
-                    if (success) {
-                        toast(getString(R.string.ddu_rename_toast, name, newName))
-                        dduFileRepository.updateFilenameInserting(file.name, newFilename = newFilename)
-                        val preview: Bitmap? = dduFileRepository.getPreview(newFilename)
-                        with(dduAdapter) {
-                            files[position] = newFile
-                            previews[newFilename] = preview
-                            refreshDir()
+        launch {
+            val name: FileName = file.nameWithoutExtension
+            var input: EditText? = null
+            val originalFilename: Filename? = dduFileRepository.getOriginalFilename(file.name)
+            val appendix =
+                if (originalFilename != null && originalFilename != file.name)
+                    " " + getString(R.string.rename_dialog_original_name, originalFilename.stripDdu())
+                else ""
+            alert(getString(R.string.rename_dialog_message, name, appendix)) {
+                customView {
+                    input = editText(name)
+                }
+                positiveButton(getString(R.string.ddu_rename)) {
+                    launch {
+                        input?.text?.toString()?.trim()?.let { newName: FileName ->
+                            val newFilename = "$newName.ddu"
+                            val newFile = File(file.parentFile.absolutePath, newFilename)
+                            val success = file.renameTo(newFile)
+                            Log.i(TAG, "$file -> $newFile: $success")
+                            if (success) {
+                                toast(getString(R.string.ddu_rename_toast, name, newName))
+                                dduFileRepository.updateFilenameInserting(file.name, newFilename = newFilename)
+                                val preview: Bitmap? = dduFileRepository.getPreview(newFilename)
+                                with(dduAdapter) {
+                                    files[position] = newFile
+                                    previews[newFilename] = preview
+                                    refreshDir()
+                                }
+                            } else {
+                                Log.w(TAG, "failed to rename $file to $newFile")
+                            }
                         }
-                    } else {
-                        Log.w(TAG, "failed to rename $file to $newFile")
                     }
                 }
-            }
-            cancelButton { }
-        }.show()
+                cancelButton { }
+            }.show()
+        }
     }
 
     private fun deleteDduFile(file: File, position: Int) {
         toast(getString(R.string.ddu_delete_toast, file.nameWithoutExtension))
-        dduFileRepository.delete(file.name)
+        launch {
+            dduFileRepository.delete(file.name)
+        }
         file.delete()
         dduAdapter.files.removeAt(position)
         dduAdapter.notifyDataSetChanged()
@@ -199,15 +219,18 @@ class DduChooserActivity : AppCompatActivity() {
 
     private fun restoreDduFile(file: File) {
         // TODO: restore imported files by original path
-        val original: Filename? = extract1Ddu(file.name, dduDir, dduFileRepository,
-            TAG
-        )
-        original?.let {
-            toast(getString(R.string.ddu_restore_toast, file.nameWithoutExtension, original.stripDdu()))
-            with(dduAdapter) {
-                previews[original] = null
-                buildings.remove(original)
-                refreshDir()
+        launch {
+            val original: Filename? = extract1Ddu(
+                file.name, dduDir, dduFileRepository,
+                TAG
+            )
+            original?.let {
+                toast(getString(R.string.ddu_restore_toast, file.nameWithoutExtension, original.stripDdu()))
+                with(dduAdapter) {
+                    previews[original] = null
+                    buildings.remove(original)
+                    refreshDir()
+                }
             }
         }
     }
@@ -220,13 +243,15 @@ class DduChooserActivity : AppCompatActivity() {
     }
 
     private fun deleteDir(dir: File) {
-        dir.walkTopDown().iterator().forEach {
-            if (it.isDdu) dduFileRepository.delete(it.name)
+        launch {
+            dir.walkTopDown().iterator().forEach {
+                if (it.isDdu) dduFileRepository.delete(it.name)
+            }
+            val success = dir.deleteRecursively()
+            if (!success)
+                Log.w(TAG, "failed to delete directory \"$dir\"")
+            dirAdapter.refreshDir()
         }
-        val success = dir.deleteRecursively()
-        if (!success)
-            Log.w(TAG, "failed to delete directory \"$dir\"")
-        dirAdapter.refreshDir()
     }
 
     private fun toggleFolders() {
@@ -322,11 +347,13 @@ class DduChooserActivity : AppCompatActivity() {
             R.string.delete_all_alert_title
         ) {
             yesButton {
-                dir.walkTopDown().iterator().forEach {
-                    if (it.isDdu) dduFileRepository.delete(it.name)
+                launch {
+                    dir.walkTopDown().iterator().forEach {
+                        if (it.isDdu) dduFileRepository.delete(it.name)
+                    }
+                    FileUtils.cleanDirectory(dir)
+                    onDirChange(dir)
                 }
-                FileUtils.cleanDirectory(dir)
-                onDirChange(dir)
             }
             cancelButton { }
         }.show()
@@ -379,13 +406,14 @@ class DduChooserActivity : AppCompatActivity() {
     }
 
     private fun exportDduFileForDodecaLook(uri: Uri) {
-        // TODO: convert to old ddu format
-        requestedDduFile?.let { file ->
-            contentResolver.openOutputStream(uri)?.let { outputStream ->
-                Log.i(TAG, "exporting file \"${file.name}\" in DodecaLook-compatible format")
-                Ddu.fromFile(file).saveToStreamForDodecaLook(outputStream)
+        launch {
+            requestedDduFile?.let { file ->
+                contentResolver.openOutputStream(uri)?.let { outputStream ->
+                    Log.i(TAG, "exporting file \"${file.name}\" in DodecaLook-compatible format")
+                    Ddu.fromFile(file).saveToStreamForDodecaLook(outputStream)
+                }
+                requestedDduFile = null
             }
-            requestedDduFile = null
         }
     }
 
@@ -523,8 +551,10 @@ class DduAdapter(
     init {
         // maybe: in async task; show ContentLoadingProgressBar or ProgressDialog
         // ISSUE: may lead to OutOfMemoryError (fast return to after opening a ddu)
-        dduFileRepository.getAllDduFiles().forEach {
-            previews[it.filename] = it.preview
+        activity.launch {
+            dduFileRepository.getAllDduFiles().forEach {
+                previews[it.filename] = it.preview
+            }
         }
     }
 
@@ -567,19 +597,21 @@ class DduAdapter(
         if (fileName !in buildings.keys) {
             buildings[fileName] = holder
             doAsync {
-                val ddu = Ddu.fromFile(file)
-                // val size: Int = (0.4 * width).roundToInt() // width == height
-                val size = values.previewSizePx
-                val bitmap = ddu.preview(size, size)
-                previews[fileName] = bitmap
-                dduFileRepository.setPreviewInserting(file.name, newPreview = bitmap)
-                buildings[fileName]?.let { currentHolder ->
-                    uiThread {
-                        val preview: ImageView = currentHolder.view.findViewById(R.id.ddu_preview)
-                        val progressBar: ProgressBar = currentHolder.view.findViewById(R.id.preview_progress)
-                        preview.setImageBitmap(bitmap)
-                        preview.visibility = View.VISIBLE
-                        progressBar.visibility = View.GONE
+                activity.launch {
+                    val ddu = Ddu.fromFile(file)
+                    // val size: Int = (0.4 * width).roundToInt() // width == height
+                    val size = values.previewSizePx
+                    val bitmap = ddu.preview(size, size)
+                    previews[fileName] = bitmap
+                    dduFileRepository.setPreviewInserting(file.name, newPreview = bitmap)
+                    buildings[fileName]?.let { currentHolder ->
+                        uiThread {
+                            val preview: ImageView = currentHolder.view.findViewById(R.id.ddu_preview)
+                            val progressBar: ProgressBar = currentHolder.view.findViewById(R.id.preview_progress)
+                            preview.setImageBitmap(bitmap)
+                            preview.visibility = View.VISIBLE
+                            progressBar.visibility = View.GONE
+                        }
                     }
                 }
             }

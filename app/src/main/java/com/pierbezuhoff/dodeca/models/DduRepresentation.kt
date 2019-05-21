@@ -13,10 +13,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.OnLifecycleEvent
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
-import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.DduAttributesHolder
-import com.pierbezuhoff.dodeca.data.ImmutableCircleGroup
+import com.pierbezuhoff.dodeca.data.DduOptionsChangeListener
 import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
@@ -70,8 +69,7 @@ class DduRepresentation(override val ddu: Ddu) :
 
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
-    private val circleGroup: SuspendableCircleGroup = SuspendableCircleGroup(ddu.circles, paint)
-    val immutableCircleGroup: ImmutableCircleGroup get() = circleGroup
+    val circleGroup: SuspendableCircleGroup = SuspendableCircleGroup(ddu.circles, paint)
     override var updating: Boolean = DEFAULT_UPDATING
         set(value) = changeUpdating(value)
     override var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
@@ -173,6 +171,10 @@ class DduRepresentation(override val ddu: Ddu) :
         presenter?.redraw()
     }
 
+    fun requestUpdateOnce() {
+        updateOnce = true
+    }
+
     override fun onScale(scale: Float, focusX: Float, focusY: Float) =
         scale(scale, focusX, focusY)
 
@@ -247,11 +249,6 @@ class DduRepresentation(override val ddu: Ddu) :
 
     override fun onSpeed(speed: Float) {
         updateScheduler.setSpeed(speed)
-    }
-
-    fun changeCircleGroup(act: CircleGroup.() -> Unit) {
-        circleGroup.act()
-        presenter?.redraw()
     }
 
     private fun changeUpdating(newUpdating: Boolean) {

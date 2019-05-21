@@ -43,6 +43,12 @@ import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
 import kotlinx.android.synthetic.main.toolbar2.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
@@ -58,9 +64,11 @@ import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 @RuntimePermissions
 class MainActivity : AppCompatActivity(),
+    CoroutineScope,
     ChooseColorDialog.ChooseColorListener,
     DodecaGestureDetector.SingleTapListener
 {
@@ -75,11 +83,15 @@ class MainActivity : AppCompatActivity(),
     }
     private val dir: File
         get() = model.dir.value ?: dduDir
-    private val dduFileRepository =
-        DduFileRepository.INSTANCE
+    private val dduFileRepository = DduFileRepository.INSTANCE
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
+    private lateinit var job: Job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        job = Job()
+        // TODO: migrate to OptionsViewModel
         Options(resources).init() // init options.* and values.*
         DduFileDatabase.init(this) /// the faster the better
         sharedPreferencesModel.fetch(options.versionCode)
@@ -138,26 +150,29 @@ class MainActivity : AppCompatActivity(),
         )
     }
 
-    override fun onSingleTap(e: MotionEvent?) = model.toggleBottomBar()
+    override fun onSingleTap(e: MotionEvent?) =
+        model.toggleBottomBar()
 
     private fun onUpgrade() {
         // extracting assets
-        try {
-            if (!dduDir.exists()) {
-                Log.i(TAG, "Extracting all assets into $dduDir")
-                dduDir.mkdir()
-                extractDduFromAssets()
-            } else {
-                // TODO: check it
-                // try to export new ddus
-                Log.i(TAG, "Adding new ddu assets into $dduDir")
-                val existedDdus = dduDir.listFiles().map { it.name }.toSet()
-                assets.list(getString(R.string.ddu_asset_dir))?.filter { it !in existedDdus }?.forEach { name ->
-                    extract1Ddu(name, dduDir)
+        runBlocking(Dispatchers.IO) {
+            try {
+                if (!dduDir.exists()) {
+                    Log.i(TAG, "Extracting all assets into $dduDir")
+                    dduDir.mkdir()
+                    extractDduFromAssets()
+                } else {
+                    // TODO: check it
+                    // try to export new ddus
+                    Log.i(TAG, "Adding new ddu assets into $dduDir")
+                    val existedDdus = dduDir.listFiles().map { it.name }.toSet()
+                    assets.list(getString(R.string.ddu_asset_dir))?.filter { it !in existedDdus }?.forEach { name ->
+                        extract1Ddu(name, dduDir)
+                    }
                 }
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
         }
     }
 
@@ -202,8 +217,12 @@ class MainActivity : AppCompatActivity(),
             R.id.choose_color_button -> {
                 dodecaViewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
                     dodecaViewModel.pause()
-                    model.stopBottomBarHideTimer() // will be restarted in onChooseColorClosed()
-                    ChooseColorDialog(this, circleGroup).build().show()
+                    model.cancelBottomBarHidingJob()
+                    ChooseColorDialog(
+                        this,
+                        chooseColorListener = this,
+                        circleGroup = circleGroup
+                    ).build().show()
                 }
             }
             R.id.clear_button -> dodecaViewModel.requestClear()
@@ -219,7 +238,7 @@ class MainActivity : AppCompatActivity(),
 
     private fun saveDDU() {
         if (!values.saveAs) {
-            dodecaViewModel.requestSaveDduAt()
+            dodecaViewModel.requestSaveDdu()
         } else {
             dodecaViewModel.pause()
             buildSaveAsDialog().show()
@@ -249,6 +268,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onChooseColorClosed() {
         dodecaViewModel.resume()
+        dodecaViewModel.requestUpdateOnce()
         model.showBottomBar()
     }
 
@@ -281,20 +301,25 @@ class MainActivity : AppCompatActivity(),
                     }
                     having("default_ddu") {
                         dodecaViewModel.getDduFile()?.let { file: File ->
-                            extract1Ddu(file.name)
-                            dodecaViewModel.loadDduFrom(file)
+                            runBlocking {
+                                extract1Ddu(file.name)
+                                dodecaViewModel.loadDduFrom(file)
+                            }
                         }
                     }
                     having("default_ddus") {
-                        extractDduFromAssets(overwrite = true)
-                        dodecaViewModel.getDduFile()?.let { file: File ->
-                            dodecaViewModel.loadDduFrom(file)
+                        runBlocking {
+                            extractDduFromAssets(overwrite = true)
+                            dodecaViewModel.getDduFile()?.let { file: File ->
+                                dodecaViewModel.loadDduFrom(file)
+                            }
                         }
                     }
                     having("discard_previews") {
-
-                        dduFileRepository.getAllDduFiles().forEach { dduFile ->
-                            dduFileRepository.dropPreview(dduFile)
+                        launch(coroutineContext) {
+                            dduFileRepository.getAllDduFiles().forEach { dduFile ->
+                                dduFileRepository.dropPreview(dduFile)
+                            }
                         }
                     }
                 }
@@ -312,6 +337,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onDestroy() {
         model.sendOnDestroy()
+        job.cancel()
         super.onDestroy()
     }
 
@@ -379,14 +405,16 @@ class MainActivity : AppCompatActivity(),
         }.show()
     }
 
-    private fun extractDduFromAssets(overwrite: Boolean = false) {
-        val targetDir = dduDir
-        assets.list(getString(R.string.ddu_asset_dir))?.forEach {name ->
-            extract1Ddu(name, targetDir, overwrite)
+    private suspend fun extractDduFromAssets(overwrite: Boolean = false) {
+        withContext(Dispatchers.IO) {
+            val targetDir = dduDir
+            assets.list(getString(R.string.ddu_asset_dir))?.forEach { name ->
+                extract1Ddu(name, targetDir, overwrite)
+            }
         }
     }
 
-    private fun extract1Ddu(filename: Filename, dir: File = dduDir, overwrite: Boolean = false) =
+    private suspend fun extract1Ddu(filename: Filename, dir: File = dduDir, overwrite: Boolean = false) =
         extract1Ddu(filename, dir, dduFileRepository, TAG, overwrite)
 
     class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {
