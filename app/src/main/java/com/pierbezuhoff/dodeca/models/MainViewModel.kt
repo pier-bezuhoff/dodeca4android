@@ -5,9 +5,12 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.data.options
-import com.pierbezuhoff.dodeca.utils.FlexibleTimer
 import com.pierbezuhoff.dodeca.utils.dduDir
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -20,8 +23,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _showStat: MutableLiveData<Boolean> = MutableLiveData(false)
     private val _shapeOrdinal: MutableLiveData<Int> = MutableLiveData(0)
     private val _onDestroy: MutableLiveData<Unit> = MutableLiveData()
-    private var bottomBarHideTimer: FlexibleTimer =
-        FlexibleTimer(1000L * BOTTOM_BAR_HIDE_DELAY) { hideBottomBar() }
+    private var bottomBarHidingJob: Job? = null
 
     val bottomBarShown: LiveData<Boolean> = _bottomBarShown
     val dir: LiveData<File> = _dir
@@ -32,8 +34,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         _bottomBarShown.observeForever {
             when(it) {
-                true -> bottomBarHideTimer.start()
-                false -> bottomBarHideTimer.stop()
+                true -> hideBottomBarAfterTimeout()
+                false -> cancelBottomBarHidingJob()
             }
         }
         options.showStat.liveData.observeForever {
@@ -46,15 +48,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun showBottomBar() =
         _bottomBarShown.postValue(true)
 
-    fun hideBottomBar() =
-        _bottomBarShown.postValue(false)
+    private fun hideBottomBarAfterTimeout() {
+        bottomBarHidingJob = viewModelScope.launch {
+            delay(BOTTOM_BAR_HIDE_DELAY_IN_MILLISECONDS)
+            _bottomBarShown.value = false
+        }
+    }
+
+    private fun cancelBottomBarHidingJob() {
+        bottomBarHidingJob?.cancel()
+    }
 
     fun toggleBottomBar() {
         _bottomBarShown.value = !(_bottomBarShown.value ?: false)
     }
-
-    fun stopBottomBarHideTimer() =
-        bottomBarHideTimer.stop()
 
     fun sendOnDestroy() {
         _onDestroy.value = Unit
@@ -65,6 +72,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
-        const val BOTTOM_BAR_HIDE_DELAY = 30 // seconds
+        private const val BOTTOM_BAR_HIDE_DELAY_IN_SECONDS = 30
+        private const val BOTTOM_BAR_HIDE_DELAY_IN_MILLISECONDS: Long =
+            1000L * BOTTOM_BAR_HIDE_DELAY_IN_SECONDS
     }
 }

@@ -10,7 +10,7 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.utils.Filename
 import kotlin.reflect.KProperty
 
-// cannot see better solution yet
+// TODO: migrate to OptionsViewModel
 // initialization (from MainActivity): `Options(resources: Resources)`
 lateinit var options: Options private set
 lateinit var values: Values private set
@@ -52,6 +52,7 @@ open class Option<T>(val key: String, default: T) : SharedPreference<T>(default)
     override fun hashCode(): Int = key.hashCode()
     override fun toString(): String = "Option '$key': $value (default $default)"
 
+    @Suppress("UNCHECKED_CAST")
     override fun peek(sharedPreferences: SharedPreferences): T = when (default) {
         is Boolean -> sharedPreferences.getBoolean(key, default) as T
         is String -> sharedPreferences.getString(key, default) as T
@@ -93,21 +94,8 @@ class ParsedFloatOption(key: String, default: Float) : Option<Float>(key, defaul
     }
 }
 
-class StringLikeOption<T>(
-    key: String, default: T,
-    val toString: (T) -> String = Any::toString,
-    val fromString: (String) -> T?
-) : Option<T>(key, default) where T : Any {
-    val valueString: String get() = toString(value)
-    override fun peek(sharedPreferences: SharedPreferences): T =
-        sharedPreferences.getString(key, toString(default))?.let { fromString(it) } ?: default
-    override fun put(editor: SharedPreferences.Editor) {
-        editor.putString(key, valueString)
-    }
-}
-
-
 class Options(val resources: Resources) {
+    @Suppress("FunctionName")
     private fun BooleanOption(key: String, @BoolRes id: Int): Option<Boolean> =
         Option(key, resources.getBoolean(id))
     val redrawTraceOnMove = BooleanOption("redraw_trace", R.bool.redraw_trace)
@@ -179,8 +167,11 @@ class Values(private val options: Options) {
     val versionCode: Int by options.versionCode
 }
 
-internal fun Resources.dp2px(dp: Int): Int = dp * displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
-internal fun Resources.px2dp(px: Int): Int = px * DisplayMetrics.DENSITY_DEFAULT / displayMetrics.densityDpi
+internal fun Resources.dp2px(dp: Int): Int =
+    dp * displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
+
+internal fun Resources.px2dp(px: Int): Int =
+    px * DisplayMetrics.DENSITY_DEFAULT / displayMetrics.densityDpi
 
 inline fun <T : Any> SharedPreferences.fetch(preference: SharedPreference<T>) =
     preference.fetch(this)

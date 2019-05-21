@@ -4,14 +4,16 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.SparseArray
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 // NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times faster
 // maybe: have float old_s
 /* List<Circle> is represented as 3 DoubleArray */
-class PrimitiveCircles(
+internal class PrimitiveCircles(
     cs: List<CircleFigure>,
     private val paint: Paint
-) : CircleGroup {
+) : SuspendableCircleGroup {
     private var size: Int = cs.size
     private val xs: DoubleArray = DoubleArray(size) { cs[it].x }
     private val ys: DoubleArray = DoubleArray(size) { cs[it].y }
@@ -91,12 +93,22 @@ class PrimitiveCircles(
         }
     }
 
-    // FIX: slow and diverges
     override fun updateTimes(times: Int, reverse: Boolean) {
-        if (reverse) {
+        repeat(times) {
+            _update(reverse)
+        }
+        // FIX: slow and diverges
+/*        if (reverse) {
             savingOld { repeat(times) { reversedUpdate() } }
         } else {
             savingOld { repeat(times) { straightUpdate() } }
+        }*/
+    }
+
+    override suspend fun suspendableUpdateTimes(times: Int, reverse: Boolean) {
+        // TODO: optimize
+        repeat(times) {
+            withContext(Dispatchers.Default) { _update(reverse) }
         }
     }
 
@@ -158,6 +170,21 @@ class PrimitiveCircles(
         _draw(canvas, shape, showAllCircles)
         // TODO: understand why following is slower and diverges
         // _drawTimes(times, reverse, canvas, shape, showAllCircles)
+    }
+
+    override suspend fun suspendableDrawTimes(
+        times: Int,
+        reverse: Boolean,
+        canvas: Canvas,
+        shape: Shapes,
+        showAllCircles: Boolean
+    ) {
+        // TODO: optimize
+        repeat(times) {
+            withContext(Dispatchers.Default) { _draw(canvas, shape, showAllCircles) }
+            withContext(Dispatchers.Default) { _update(reverse) }
+        }
+        withContext(Dispatchers.Default) { _draw(canvas, shape, showAllCircles) }
     }
 
     /* draw; redraw; draw; redraw ...; draw

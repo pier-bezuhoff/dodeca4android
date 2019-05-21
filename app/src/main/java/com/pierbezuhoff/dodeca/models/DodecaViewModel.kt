@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
@@ -21,6 +22,7 @@ import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.anko.toast
 import java.io.File
 import kotlin.properties.Delegates
@@ -30,7 +32,6 @@ class DodecaViewModel(application: Application) :
     DduRepresentation.StatHolder, // by statUpdater
     DduRepresentation.ToastEmitter
 {
-
     lateinit var sharedPreferencesModel: SharedPreferencesModel // inject
     private val dduFileRepository: DduFileRepository = DduFileRepository.INSTANCE
     private val context: Context
@@ -63,6 +64,7 @@ class DodecaViewModel(application: Application) :
             loadDdu(initialDdu)
         }
         sharedPreferencesModel.fetchAll()
+        registerOptionsObservers()
     }
 
     fun loadDdu(ddu: Ddu) {
@@ -89,6 +91,33 @@ class DodecaViewModel(application: Application) :
 
     fun registerGestureDetector(detector: DodecaGestureDetector) {
         _gestureDetector.value = detector
+    }
+
+    private fun registerOptionsObservers() {
+        options.showAllCircles.observe { dduRepresentation.value?.onShowAllCircles(it) }
+        options.autocenterAlways.observe { dduRepresentation.value?.onAutocenterAlways(it) }
+        options.canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
+        options.speed.observe { dduRepresentation.value?.onSpeed(it) }
+        // TODO: skipN --> request, wait until done
+        options.skipN.observe { skipN: Int ->
+            dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
+                if (skipN > 0) {
+                    Log.i(TAG, "skipping $skipN updates")
+                    pause()
+                    viewModelScope.launch {
+                        withTimeoutOrNull(SKIP_N_TIMEOUT_MILLISECONDS) {
+                            dduRepresentation.updateTimes(skipN)
+                            setSharedPreference(options.skipN, 0)
+                        } ?: Log.w(TAG, "skipN aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s)")
+                        resume()
+                    }
+                }
+            }
+        }
+    }
+
+    private inline fun <T : Any> SharedPreference<T>.observe(crossinline action: (T) -> Unit) {
+        liveData.observeForever { Observer<T> { action(it) } }
     }
 
     fun <T : Any> setSharedPreference(sharedPreference: SharedPreference<T>, value: T) {
@@ -235,7 +264,7 @@ class DodecaViewModel(application: Application) :
         dduRepresentation.value?.changeCircleGroup(act)
     }
 
-    fun updateDduAttributesFrom(dduRepresentation: DduRepresentation) {
+    private fun updateDduAttributesFrom(dduRepresentation: DduRepresentation) {
         _updating.value = dduRepresentation.updating
         _drawTrace.value = dduRepresentation.drawTrace
         _shape.value = dduRepresentation.shape
@@ -285,5 +314,16 @@ class DodecaViewModel(application: Application) :
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
         private val DEFAULT_SHAPE = Shapes.CIRCLE
+        private const val SKIP_N_TIMEOUT_SECONDS = 60
+        private const val SKIP_N_TIMEOUT_MILLISECONDS: Long =
+            1000L * SKIP_N_TIMEOUT_SECONDS
     }
 }
+
+interface DduOptionsChangeListener {
+    fun onShowAllCircles(showAllCircles: Boolean)
+    fun onAutocenterAlways(autocenterAlways: Boolean)
+    fun onCanvasFactor(canvasFactor: Int)
+    fun onSpeed(speed: Float)
+}
+
