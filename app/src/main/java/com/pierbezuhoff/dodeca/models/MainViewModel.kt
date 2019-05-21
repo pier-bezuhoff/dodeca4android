@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.utils.dduDir
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -28,7 +29,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val bottomBarShown: LiveData<Boolean> = _bottomBarShown
     val dir: LiveData<File> = _dir
     val showStat: LiveData<Boolean> = _showStat
-    val shapeOrdinal: LiveData<Int> = _shapeOrdinal
+    val shapeOrdinal: LiveData<Int> = _shapeOrdinal // FIX: initial only, selection changes further without shapeOrdinal
     val onDestroy: LiveData<Unit> = _onDestroy
 
     init {
@@ -48,10 +49,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun showBottomBar() =
         _bottomBarShown.postValue(true)
 
+    fun hideBottomBar() =
+        _bottomBarShown.postValue(false)
+
     private fun hideBottomBarAfterTimeout() {
-        bottomBarHidingJob = viewModelScope.launch {
+        bottomBarHidingJob?.cancel()
+        bottomBarHidingJob = viewModelScope.launch(Dispatchers.Default) {
             delay(BOTTOM_BAR_HIDE_DELAY_IN_MILLISECONDS)
-            _bottomBarShown.value = false
+            hideBottomBar()
         }
     }
 
@@ -72,6 +77,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
+        private const val TAG = "MainViewModel"
         private const val BOTTOM_BAR_HIDE_DELAY_IN_SECONDS = 30
         private const val BOTTOM_BAR_HIDE_DELAY_IN_MILLISECONDS: Long =
             1000L * BOTTOM_BAR_HIDE_DELAY_IN_SECONDS

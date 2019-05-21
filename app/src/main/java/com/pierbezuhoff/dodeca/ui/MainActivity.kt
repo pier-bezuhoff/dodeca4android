@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity(),
         binding.model = model
         binding.dodecaViewModel = dodecaViewModel
         binding.sharedPreferencesModel = sharedPreferencesModel
-        dodecaViewModel.sharedPreferencesModel = sharedPreferencesModel
+        dodecaViewModel.setSharedPreferencesModel(sharedPreferencesModel)
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         // listen single tap, scroll and scale gestures
@@ -218,6 +218,8 @@ class MainActivity : AppCompatActivity(),
                 dodecaViewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
                     dodecaViewModel.pause()
                     model.cancelBottomBarHidingJob()
+                    // BUG: bottom bar hiding anyway (smth caused knew hideBottomBarAfterTimeout)
+                    // NOTE: but it's recreated after dialog quit
                     ChooseColorDialog(
                         this,
                         chooseColorListener = this,
@@ -417,7 +419,7 @@ class MainActivity : AppCompatActivity(),
     private suspend fun extract1Ddu(filename: Filename, dir: File = dduDir, overwrite: Boolean = false) =
         extract1Ddu(filename, dir, dduFileRepository, TAG, overwrite)
 
-    class ShapeSpinnerAdapter(val context: Context) : BaseAdapter() {
+    class ShapeSpinnerAdapter(private val context: Context) : BaseAdapter() {
         val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shapes
             R.drawable.ic_circle,
             R.drawable.ic_square,
