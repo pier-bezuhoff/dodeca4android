@@ -31,7 +31,7 @@ class DodecaViewModel(application: Application) :
     DduRepresentation.StatHolder, // by statUpdater
     DduRepresentation.ToastEmitter
 {
-    lateinit var sharedPreferencesModel: SharedPreferencesModel // inject
+    private lateinit var sharedPreferencesModel: SharedPreferencesModel // inject
     private val dduFileRepository: DduFileRepository = DduFileRepository.INSTANCE
     private val context: Context
         get() = getApplication<Application>().applicationContext
@@ -63,8 +63,12 @@ class DodecaViewModel(application: Application) :
             val initialDdu: Ddu = getInitialDdu()
             loadDdu(initialDdu)
         }
-        sharedPreferencesModel.fetchAll()
         registerOptionsObservers()
+    }
+
+    fun setSharedPreferencesModel(sharedPreferencesModel: SharedPreferencesModel) {
+        this.sharedPreferencesModel = sharedPreferencesModel
+        sharedPreferencesModel.fetchAll()
     }
 
     fun loadDdu(ddu: Ddu) {
@@ -100,6 +104,7 @@ class DodecaViewModel(application: Application) :
         options.speed.observe { dduRepresentation.value?.onSpeed(it) }
         // TODO: skipN --> request, wait until done
         options.skipN.observe { skipN: Int ->
+            // BUG: does not work
             dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
                 if (skipN > 0) {
                     Log.i(TAG, "skipping $skipN updates")
@@ -143,6 +148,7 @@ class DodecaViewModel(application: Application) :
     }
 
     fun requestOneStep() {
+        // FIX: does not work
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
             stop()
             dduRepresentation.oneStep()

@@ -71,11 +71,11 @@ class DduRepresentation(override val ddu: Ddu) :
 
     val circleGroup: SuspendableCircleGroup = SuspendableCircleGroup(ddu.circles, paint)
     override var updating: Boolean = DEFAULT_UPDATING
-        set(value) = changeUpdating(value)
+        set(value) { field = value; changeUpdating(value) }
     override var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
-        set(value) = changeDrawTrace(value)
+        set(value) { field = value; changeDrawTrace(value) }
     override var shape: Shapes = ddu.shape
-        set(value) = changeShape(value)
+        set(value) { field = value; changeShape(value) }
 
     private val motion: Matrix = Matrix() // visible(z) = motion.move(z)
     private var trace: Trace? = null
@@ -252,13 +252,11 @@ class DduRepresentation(override val ddu: Ddu) :
     }
 
     private fun changeUpdating(newUpdating: Boolean) {
-        updating = newUpdating
         if (newUpdating)
             presenter?.redraw()
     }
 
     private fun changeDrawTrace(newDrawTrace: Boolean) {
-        drawTrace = newDrawTrace
         if (newDrawTrace)
             clearTrace()
         else
@@ -266,7 +264,6 @@ class DduRepresentation(override val ddu: Ddu) :
     }
 
     private fun changeShape(newShape: Shapes) {
-        shape = newShape
         presenter?.redraw()
     }
 
