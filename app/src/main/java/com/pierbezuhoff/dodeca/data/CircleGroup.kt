@@ -1,8 +1,7 @@
 package com.pierbezuhoff.dodeca.data
 
 import android.graphics.Canvas
-
-typealias CircleGroupImpl = PrimitiveCircles
+import android.graphics.Paint
 
 interface ImmutableCircleGroup {
     val figures: List<CircleFigure>
@@ -10,8 +9,6 @@ interface ImmutableCircleGroup {
 }
 
 interface CircleGroup : ImmutableCircleGroup {
-    override val figures: List<CircleFigure>
-    override operator fun get(i: Int): CircleFigure
     operator fun set(i: Int, figure: CircleFigure)
     fun update(reverse: Boolean = false)
     fun updateTimes(times: Int, reverse: Boolean = false)
@@ -22,3 +19,18 @@ interface CircleGroup : ImmutableCircleGroup {
         canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false)
 }
 
+interface SuspendableCircleGroup : CircleGroup {
+    suspend fun suspendableUpdateTimes(times: Int, reverse: Boolean = false)
+    suspend fun suspendableDrawTimes(
+        times: Int,
+        reverse: Boolean = false,
+        canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false)
+}
+
+@Suppress("FunctionName")
+fun CircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): CircleGroup =
+    PrimitiveCircles(circleFigures, defaultPaint)
+
+@Suppress("FunctionName")
+fun SuspendableCircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): SuspendableCircleGroup =
+    PrimitiveCircles(circleFigures, defaultPaint)

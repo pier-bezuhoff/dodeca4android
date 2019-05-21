@@ -14,11 +14,11 @@ import androidx.lifecycle.OnLifecycleEvent
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.CircleGroup
-import com.pierbezuhoff.dodeca.data.CircleGroupImpl
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.DduAttributesHolder
 import com.pierbezuhoff.dodeca.data.ImmutableCircleGroup
 import com.pierbezuhoff.dodeca.data.Shapes
+import com.pierbezuhoff.dodeca.data.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
@@ -33,7 +33,11 @@ import com.pierbezuhoff.dodeca.utils.mean
 import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.move
 import com.pierbezuhoff.dodeca.utils.sx
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.math3.complex.Complex
 import kotlin.math.roundToInt
@@ -41,9 +45,10 @@ import kotlin.math.roundToInt
 class DduRepresentation(override val ddu: Ddu) :
     DodecaGestureDetector.ScrollListener,
     DodecaGestureDetector.ScaleListener,
+    DduOptionsChangeListener,
     DduAttributesHolder
 {
-    interface Presenter : LifecycleOwner {
+    interface Presenter : LifecycleOwner, CoroutineScope {
         fun getCenter(): Complex?
         /** return (width, height) or null */
         fun getSize(): Pair<Int, Int>?
@@ -65,7 +70,7 @@ class DduRepresentation(override val ddu: Ddu) :
 
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
-    private val circleGroup: CircleGroup = CircleGroupImpl(ddu.circles, paint)
+    private val circleGroup: SuspendableCircleGroup = SuspendableCircleGroup(ddu.circles, paint)
     val immutableCircleGroup: ImmutableCircleGroup get() = circleGroup
     override var updating: Boolean = DEFAULT_UPDATING
         set(value) = changeUpdating(value)
@@ -99,7 +104,17 @@ class DduRepresentation(override val ddu: Ddu) :
             centerizeTo(it)
         }
         clearTrace()
-        presenter.redraw()
+        // drawing main loop
+        with(presenter) {
+            launch(coroutineContext) {
+                delay(INITIAL_DELAY)
+                while (isActive) {
+                    if (updating)
+                        redraw()
+                    delay(DT_IN_MILLISECONDS)
+                }
+            }
+        }
     }
 
     fun connectStatHolder(statHolder: StatHolder) {
@@ -209,8 +224,30 @@ class DduRepresentation(override val ddu: Ddu) :
             }
         }
 
+    suspend fun updateTimes(times: Int) =
+        circleGroup.suspendableUpdateTimes(times, reverse = values.reverseMotion)
+
     private fun visible(z: Complex): Complex =
         motion.move(z)
+
+    override fun onShowAllCircles(showAllCircles: Boolean) {
+        presenter?.redraw()
+    }
+
+    override fun onAutocenterAlways(autocenterAlways: Boolean) {
+        // MAYBE: invoke only when changed
+        if (autocenterAlways)
+            autocenterize()
+    }
+
+    override fun onCanvasFactor(canvasFactor: Int) {
+        if (canvasFactor != trace?.currentCanvasFactor)
+            clearTrace()
+    }
+
+    override fun onSpeed(speed: Float) {
+        updateScheduler.setSpeed(speed)
+    }
 
     fun changeCircleGroup(act: CircleGroup.() -> Unit) {
         circleGroup.act()
@@ -238,7 +275,7 @@ class DduRepresentation(override val ddu: Ddu) :
 
     private class UpdateScheduler {
         private var lastUpdateTime: Long = 0
-        var ups: Int = DEFAULT_UPS // updates per second
+        private var ups: Int = DEFAULT_UPS // updates per second
             set(value) { field = value; sleepingUpdateDt.awake() }
         private val sleepingUpdateDt = Sleeping { 1000f / ups }
         private val updateDt: Float by sleepingUpdateDt
@@ -248,6 +285,13 @@ class DduRepresentation(override val ddu: Ddu) :
 
         fun doUpdate() {
             lastUpdateTime = System.currentTimeMillis()
+        }
+
+        fun setSpeed(speed: Float) {
+            ups =
+                if (speed < 1)
+                    (speed * DEFAULT_UPS).roundToInt()
+                else DEFAULT_UPS
         }
 
         companion object {
@@ -381,6 +425,9 @@ class DduRepresentation(override val ddu: Ddu) :
             }
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
+        private const val FPS = 60 // empirical
+        private const val DT_IN_MILLISECONDS: Long = (1000f / FPS).toLong() // interval between presenter.redraw() calls
+        private const val INITIAL_DELAY: Long = 1
     }
 }
 

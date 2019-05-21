@@ -10,28 +10,31 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import com.pierbezuhoff.dodeca.data.SharedPreference
-import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import org.apache.commons.math3.complex.Complex
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
-import kotlin.concurrent.fixedRateTimer
+import kotlin.coroutines.CoroutineContext
 
 class DodecaView(
     context: Context,
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet),
     LifecycleOwner,
+    CoroutineScope,
     DduRepresentation.Presenter
 {
     lateinit var mainModel: MainViewModel // inject
     lateinit var model: DodecaViewModel // inject
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
     private val lifecycleRegistry: LifecycleRegistry =
         LifecycleRegistry(this)
+    private val job: Job = Job()
 
     private var initialized = false
 
@@ -39,8 +42,6 @@ class DodecaView(
     private val centerY: Float get() = y + height / 2
 
     private val knownSize: Boolean get() = width > 0 || height > 0
-
-//    private var updating: Boolean = false // unused default, cannot have lateinit here
 
     init {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
@@ -57,10 +58,6 @@ class DodecaView(
     private fun onFirstRun() {
         initialized = true
         registerObservers()
-        registerOptionsObservers()
-        fixedRateTimer("DodecaView-updater", initialDelay = 1L, period = dt.toLong()) {
-            if (updating) postInvalidate()
-        }
     }
 
     private fun registerObservers() {
@@ -77,51 +74,6 @@ class DodecaView(
         mainModel.onDestroy.observeHere {
             onDestroy()
         }
-    }
-
-    private fun registerOptionsObservers() {
-        options.showAllCircles.observeHere {
-            postInvalidate()
-        }
-        // TODO: invoke only when changed
-        options.autocenterAlways.observeHere {
-            if (it && knownSize)
-                autocenter()
-        }
-        options.canvasFactor.observeHere {
-            if (it != model.trace.currentCanvasFactor && knownSize)
-                retrace()
-        }
-        options.speed.observeHere {
-            UPS =
-                if (it < 1)
-                    (it * DEFAULT_UPS).roundToInt()
-                else DEFAULT_UPS
-        }
-        options.skipN.observeHere {
-            if (it > 0) {
-                Log.i(TAG, "skipping $it updates")
-                model.pause()
-                doAsync {
-                    repeat(it) {
-                        circleGroup.update()
-                    }
-                    // NOTE: slow and diverges
-                    // circleGroup.updateTimes(values.skipN, values.reverseMotion)
-                    uiThread {
-                        model.setSharedPreference(options.skipN, 0)
-                        model.resume()
-                    }
-                }
-            }
-        }
-    }
-
-    private fun <T : Any> SharedPreference<T>.observeHere(action: (T) -> Unit) {
-        liveData.observe(this@DodecaView, Observer {
-            if (initialized)
-                action(it)
-        })
     }
 
     private fun <T> LiveData<T>.observeHere(action: (T) -> Unit) {
@@ -151,6 +103,7 @@ class DodecaView(
     }
 
     private fun onDestroy() {
+        job.cancel()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         model.maybeAutosave()
         Log.i(TAG, "onDestroy")
@@ -158,8 +111,6 @@ class DodecaView(
 
     companion object {
         private const val TAG = "DodecaView"
-        private const val FPS = 60 // empirical
-        const val dt = 1000f / FPS
         private const val IMMERSIVE_UI_VISIBILITY = SYSTEM_UI_FLAG_LAYOUT_STABLE or SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or SYSTEM_UI_FLAG_IMMERSIVE or SYSTEM_UI_FLAG_FULLSCREEN or SYSTEM_UI_FLAG_HIDE_NAVIGATION or SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
 }
