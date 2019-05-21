@@ -55,7 +55,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun cancelBottomBarHidingJob() {
+    fun cancelBottomBarHidingJob() {
         bottomBarHidingJob?.cancel()
     }
 

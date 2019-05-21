@@ -419,6 +419,13 @@ private class DDUWriter(private val ddu: Ddu) {
     }
 }
 
+interface DduOptionsChangeListener {
+    fun onShowAllCircles(showAllCircles: Boolean)
+    fun onAutocenterAlways(autocenterAlways: Boolean)
+    fun onCanvasFactor(canvasFactor: Int)
+    fun onSpeed(speed: Float)
+}
+
 /* In C++ (with it ddu was created) color is RRGGBB, but in Java -- AABBGGRR
 * see Bitmap.Config.ARGB_8888 (https://developer.android.com/reference/android/graphics/Bitmap.Config.html#ARGB_8888) */
 @get:IntRange(from = 0, to = 255)

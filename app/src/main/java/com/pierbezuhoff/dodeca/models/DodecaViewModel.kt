@@ -12,7 +12,6 @@ import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
-import com.pierbezuhoff.dodeca.data.ImmutableCircleGroup
 import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.options
@@ -40,7 +39,7 @@ class DodecaViewModel(application: Application) :
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
     private val _updating: MutableLiveData<Boolean> = MutableLiveData()
     private val _drawTrace: MutableLiveData<Boolean> = MutableLiveData()
-    private val _shape: MutableLiveData<Shapes> = MutableLiveData()
+    private val _shape: MutableLiveData<Shapes> = MutableLiveData() // TODO: connect to MainViewModel.shapeOrdinal
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
 
@@ -54,6 +53,7 @@ class DodecaViewModel(application: Application) :
     private val statUpdater: StatUpdater = StatUpdater()
     val nUpdates: LiveData<Long> = _nUpdates
     val dTime: LiveData<Float> = _dTime
+    val statTimeDelta: Int = statUpdater.statTimeDelta
 
     private val _gestureDetector: MutableLiveData<DodecaGestureDetector> = MutableLiveData()
     val gestureDetector: LiveData<DodecaGestureDetector> = _gestureDetector
@@ -120,7 +120,7 @@ class DodecaViewModel(application: Application) :
         liveData.observeForever { Observer<T> { action(it) } }
     }
 
-    fun <T : Any> setSharedPreference(sharedPreference: SharedPreference<T>, value: T) {
+    private fun <T : Any> setSharedPreference(sharedPreference: SharedPreference<T>, value: T) {
         sharedPreferencesModel.set(sharedPreference, value)
     }
 
@@ -136,10 +136,10 @@ class DodecaViewModel(application: Application) :
         sharedPreferencesModel.fetch(options.recentDdu)
         val recentFromAbsolutePath = File(values.recentDdu) // new format
         val recentInDduDir = File(context.dduDir, values.recentDdu) // deprecated format
-        if (recentFromAbsolutePath.exists())
-            return recentFromAbsolutePath
+        return if (recentFromAbsolutePath.exists())
+            recentFromAbsolutePath
         else
-            return recentInDduDir
+            recentInDduDir
     }
 
     fun requestOneStep() {
@@ -167,6 +167,10 @@ class DodecaViewModel(application: Application) :
         viewModelScope.launch {
             saveDdu(file)
         }
+    }
+
+    fun requestUpdateOnce() {
+        dduRepresentation.value?.requestUpdateOnce()
     }
 
     /** async, maybe schedule ddu saving */
@@ -257,12 +261,8 @@ class DodecaViewModel(application: Application) :
     fun getDduFile(): File? =
         dduRepresentation.value?.ddu?.file
 
-    fun getCircleGroup(): ImmutableCircleGroup? =
-        dduRepresentation.value?.immutableCircleGroup
-
-    fun changeCircleGroup(act: CircleGroup.() -> Unit) {
-        dduRepresentation.value?.changeCircleGroup(act)
-    }
+    fun getCircleGroup(): CircleGroup? =
+        dduRepresentation.value?.circleGroup
 
     private fun updateDduAttributesFrom(dduRepresentation: DduRepresentation) {
         _updating.value = dduRepresentation.updating
@@ -274,7 +274,7 @@ class DodecaViewModel(application: Application) :
         statUpdater.updateStat(delta)
 
     private inner class StatUpdater : DduRepresentation.StatHolder {
-        private val statTimeDelta: Int = context.resources.getInteger(R.integer.stat_time_delta)
+        internal val statTimeDelta: Int = context.resources.getInteger(R.integer.stat_time_delta)
         private var nUpdates: Long by Delegates.observable(0L) { _, _, newNUpdates: Long ->
             _nUpdates.value = newNUpdates
         }
@@ -313,17 +313,9 @@ class DodecaViewModel(application: Application) :
         const val TAG = "DodecaViewModel"
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
-        private val DEFAULT_SHAPE = Shapes.CIRCLE
         private const val SKIP_N_TIMEOUT_SECONDS = 60
         private const val SKIP_N_TIMEOUT_MILLISECONDS: Long =
             1000L * SKIP_N_TIMEOUT_SECONDS
     }
-}
-
-interface DduOptionsChangeListener {
-    fun onShowAllCircles(showAllCircles: Boolean)
-    fun onAutocenterAlways(autocenterAlways: Boolean)
-    fun onCanvasFactor(canvasFactor: Int)
-    fun onSpeed(speed: Float)
 }
 

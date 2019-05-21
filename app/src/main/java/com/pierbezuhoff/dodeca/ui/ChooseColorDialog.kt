@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.DialogInterface
 import android.graphics.PorterDuff
 import android.graphics.drawable.LayerDrawable
-import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,12 +29,17 @@ import kotlinx.android.synthetic.main.edit_circle.view.*
 import org.jetbrains.anko.AlertBuilder
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.customView
+import org.jetbrains.anko.displayMetrics
 import org.jetbrains.anko.include
+import org.jetbrains.anko.layoutInflater
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
-class ChooseColorDialog(private val activity: MainActivity, private val circleGroup: CircleGroup) {
-    private var listener: ChooseColorListener = activity
+class ChooseColorDialog(
+    private val context: Context,
+    private val chooseColorListener: ChooseColorListener,
+    private val circleGroup: CircleGroup
+) {
     private lateinit var rowAdapter: CircleAdapter
 
     interface ChooseColorListener {
@@ -43,15 +47,13 @@ class ChooseColorDialog(private val activity: MainActivity, private val circleGr
     }
 
     fun build(): Dialog {
-        val builder = AlertDialog.Builder(activity)
-        val inflater = activity.layoutInflater
+        val builder = AlertDialog.Builder(context)
+        val inflater = context.layoutInflater
         val layout = inflater.inflate(R.layout.choose_color_dialog, null)
         builder.setView(layout)
-        val manager = LinearLayoutManager(activity)
-        rowAdapter = CircleAdapter(activity, circleGroup)
-        val height: Int = DisplayMetrics().apply {
-            activity.windowManager.defaultDisplay.getMetrics(this)
-        }.heightPixels
+        val manager = LinearLayoutManager(context)
+        rowAdapter = CircleAdapter(context, circleGroup)
+        val height: Int = context.displayMetrics.heightPixels
         val recyclerView = layout.circle_rows.apply {
             layoutManager = manager
             adapter = rowAdapter
@@ -69,9 +71,9 @@ class ChooseColorDialog(private val activity: MainActivity, private val circleGr
         val dialog = builder.apply {
             setMessage(R.string.choose_circle_dialog_message)
             setPositiveButton(R.string.choose_circle_dialog_edit) { _, _ -> Unit } // will be set later
-            setNegativeButton(R.string.choose_circle_dialog_cancel) { _, _ -> listener.onChooseColorClosed() }
+            setNegativeButton(R.string.choose_circle_dialog_cancel) { _, _ -> chooseColorListener.onChooseColorClosed() }
         }.create()
-        dialog.setOnDismissListener { listener.onChooseColorClosed() }
+        dialog.setOnDismissListener { chooseColorListener.onChooseColorClosed() }
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 if (rowAdapter.checkedRows.isNotEmpty())
