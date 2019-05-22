@@ -41,7 +41,7 @@
                 android:background="@color/translucentLightBackground"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:showWhen="@{model.showStat}"
+                app:showWhen="@{safeUnbox(model.showStat)}"
         >
             <TextView
                     android:text="@{@string/stat_n_updates_text(dodecaViewModel.nUpdates)}"
@@ -76,7 +76,7 @@
                     app:contentInsetStartWithNavigation="0dp"
                     app:contentInsetEnd="0dp"
                     app:contentInsetEndWithActions="0dp"
-                    app:showWhen="@{model.bottomBarShown}"
+                    app:showWhen="@{safeUnbox(model.bottomBarShown)}"
             >
                 <LinearLayout
                         android:orientation="vertical"

@@ -6,6 +6,7 @@
     <data>
         <variable name="model" type="com.pierbezuhoff.dodeca.models.MainViewModel"/>
         <variable name="dodecaViewModel" type="com.pierbezuhoff.dodeca.models.DodecaViewModel"/>
+        <import type="com.pierbezuhoff.dodeca.data.Shape"/>
     </data>
     <LinearLayout
             android:id="@+id/toolbar1"
@@ -32,7 +33,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:description="@{@string/trace_button_title}"
-                app:tintEnabled="@{dodecaViewModel.drawTrace}"
+                app:tintEnabled="@{safeUnbox(dodecaViewModel.drawTrace)}"
         />
         <Spinner
                 android:id="@+id/shape_spinner"
@@ -41,9 +42,11 @@
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:selectedItemPosition="@={Shape.toOrdinal(dodecaViewModel.shape)}"
+                android:onItemSelected="@{(parent, view, position, id) -> model.__log(`model.showBottomBar()`)}"
+                android:onNothingSelected="@{(parent) -> model.__log(`model.showBottomBar()`)}"
                 app:description="@{@string/shape_spinner_title}"
         />
-        <!--android:selectedItemPosition="@={model.shapeOrdinal}"-->
         <ImageButton
                 android:id="@+id/clear_button"
                 android:src="@drawable/ic_clear"

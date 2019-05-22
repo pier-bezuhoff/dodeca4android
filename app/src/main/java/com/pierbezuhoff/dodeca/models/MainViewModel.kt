@@ -2,11 +2,11 @@ package com.pierbezuhoff.dodeca.models
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.utils.dduDir
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +28,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val bottomBarShown: LiveData<Boolean> = _bottomBarShown
     val dir: LiveData<File> = _dir
     val showStat: LiveData<Boolean> = _showStat
-    val shapeOrdinal: MutableLiveData<Int> = MutableLiveData(0)
     val onDestroy: LiveData<Unit> = _onDestroy
 
     init {
@@ -43,14 +42,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         if (_dir.value == null)
             _dir.value = context.dduDir
-        shapeOrdinal.observeForever { showBottomBar() }
-    }
-
-    fun updateFromShape(shape: LiveData<Shapes>) {
-        shape.observeForever { newShape: Shapes ->
-            if (newShape.ordinal != shapeOrdinal.value)
-                shapeOrdinal.value = newShape.ordinal
-        }
     }
 
     fun showBottomBar() =
@@ -86,6 +77,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun changeDir(dir: File) {
         _dir.value = dir
+    }
+
+    // for debug
+    fun __log(message: String) {
+        Log.i(TAG, message)
     }
 
     companion object {

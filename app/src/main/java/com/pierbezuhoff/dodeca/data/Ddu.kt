@@ -30,7 +30,7 @@ class Ddu(
     var restGlobals: List<Int> = emptyList(), // unused
     var drawTrace: Boolean? = null,
     var bestCenter: Complex? = null, // cross-(screen size)
-    var shape: Shapes = DEFAULT_SHAPE,
+    var shape: Shape = DEFAULT_SHAPE,
     var circles: List<CircleFigure> = emptyList(),
     var file: File? = null
 ) {
@@ -98,7 +98,7 @@ class Ddu(
     companion object {
         private const val TAG: String = "Ddu"
         const val DEFAULT_BACKGROUND_COLOR: Int = Color.WHITE
-        val DEFAULT_SHAPE: Shapes = Shapes.CIRCLE
+        val DEFAULT_SHAPE: Shape = Shape.CIRCLE
         private const val MIN_PREVIEW_UPDATES = 10
         private const val NORMAL_PREVIEW_SIZE = 300 // with this preview_size preview_scale was tuned
         private const val PREVIEW_SCALE = 0.5f
@@ -136,7 +136,7 @@ interface DduAttributesHolder {
     val ddu: Ddu
     var updating: Boolean
     var drawTrace: Boolean
-    var shape: Shapes
+    var shape: Shape
 }
 
 
@@ -170,7 +170,7 @@ private class DduBuilder {
     val restGlobals: MutableList<Int> = mutableListOf()
     var drawTrace: Boolean? = null
     var bestCenter: Complex? = null
-    var shape: Shapes = Ddu.DEFAULT_SHAPE
+    var shape: Shape = Ddu.DEFAULT_SHAPE
     val circleFigures: MutableList<CircleFigure> = mutableListOf()
 
     fun build(): Ddu =
@@ -312,8 +312,8 @@ private class DduReader(private val reader: InputStreamReader) {
         return null
     }
 
-    private fun maybeReadShape(s: String = trimmedLine): Shapes? =
-        Shapes.valueOfOrNull(s)
+    private fun maybeReadShape(s: String = trimmedLine): Shape? =
+        Shape.valueOfOrNull(s)
 
     private fun maybeReadRule(s: String = trimmedLine): String? =
         if (Regex("n?\\d+").matches(s)) s else null

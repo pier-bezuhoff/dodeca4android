@@ -5,9 +5,7 @@ import com.pierbezuhoff.dodeca.utils.Maybe
 import com.pierbezuhoff.dodeca.utils.None
 import com.pierbezuhoff.dodeca.utils.abs2
 import com.pierbezuhoff.dodeca.utils.div
-import com.pierbezuhoff.dodeca.utils.inverted
 import com.pierbezuhoff.dodeca.utils.minus
-import com.pierbezuhoff.dodeca.utils.normalized
 import com.pierbezuhoff.dodeca.utils.plus
 import com.pierbezuhoff.dodeca.utils.times
 import org.apache.commons.math3.complex.Complex
@@ -94,8 +92,6 @@ class CircleFigure(center: Complex, radius: Double,
     val rule: String? = DEFAULT_RULE,
     val borderColor: Int? = DEFAULT_BORDER_COLOR // used only when [fill], otherwise [color] is used
 ) : Circle(center, radius) {
-    // point.abs() === 1 // maybe: store only angle
-    var point: Complex = Complex.ONE // indicate direction when inverting
     val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
     val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
     val show: Boolean get() = dynamic && !dynamicHidden
@@ -125,15 +121,7 @@ class CircleFigure(center: Complex, radius: Double,
             } ?: r
         },
         newBorderColor.orElse(borderColor)
-    ).apply {
-        point = this@CircleFigure.point // hope it refers to outer [this]
-    }
-
-//    fun copy(
-//        newCenter: Complex? = null, newRadius: Double? = null,
-//        newColor: Int? = null, newFill: Boolean? = null,
-//        newRule: String? = null, newBorderColor: Int? = null
-//    ): CircleFigure = copy(newCenter, newRadius, newColor, newFill, newRule, Just(newBorderColor))
+    )
 
     constructor(
         circle: Circle,
@@ -157,48 +145,27 @@ class CircleFigure(center: Complex, radius: Double,
         rule ?: DEFAULT_RULE, borderColor ?: DEFAULT_BORDER_COLOR
     )
 
-    override fun toString(): String = """CircleFigure(
+    override fun toString(): String =
+        """CircleFigure(
         |  center = ($x, $y)
         |  radius = $radius
-        |  point = $point
         |  color = ${color.fromColor()}
         |  fill = $fill${
-    rule?.let { "\n  rule = $it" } ?: ""
-    }${
-    borderColor?.let { "\n  borderColor = $it" } ?: ""
-    }
+        rule?.let { "\n  rule = $it" } ?: ""
+        }${
+        borderColor?.let { "\n  borderColor = $it" } ?: ""
+        }
         |)
     """.trimMargin()
 
     override fun inverted(circle: Circle): CircleFigure =
-        CircleFigure(super.inverted(circle), color, fill, rule).apply {
-            point = this@CircleFigure.invertedPoint(circle)
-        }
-
-    override fun invert(circle: Circle) {
-        super.invert(circle)
-        point = invertedPoint(circle)
-    }
-
-    private fun invertedPoint(circle: Circle): Complex = (center + point).inverted(circle).run {
-        if (this.abs() == 0.0) Complex.ONE else (this - center).normalized()
-    }
+        CircleFigure(super.inverted(circle), color, fill, rule)
 
     companion object {
         const val DEFAULT_COLOR: Int = Color.BLACK
         const val DEFAULT_FILL = false
         val DEFAULT_RULE: String? = null
         val DEFAULT_BORDER_COLOR: Int? = null
-    }
-}
-
-enum class Shapes {
-    CIRCLE, SQUARE, CROSS, VERTICAL_BAR, HORIZONTAL_BAR;
-    companion object {
-        val strings get() = Shapes.values().map { it.toString() }
-        fun valueOfOrNull(s: String): Shapes? = try { valueOf(s) } catch (e: IllegalArgumentException) { null }
-        fun indexOrFirst(index: Int): Shapes =
-            if (index < Shapes.values().size) Shapes.values()[index] else Shapes.values()[0]
     }
 }
 

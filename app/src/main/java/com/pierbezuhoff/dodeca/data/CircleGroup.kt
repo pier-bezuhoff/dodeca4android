@@ -12,11 +12,11 @@ interface CircleGroup : ImmutableCircleGroup {
     operator fun set(i: Int, figure: CircleFigure)
     fun update(reverse: Boolean = false)
     fun updateTimes(times: Int, reverse: Boolean = false)
-    fun draw(canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false)
+    fun draw(canvas: Canvas, shape: Shape = Shape.CIRCLE, showAllCircles: Boolean = false)
     fun drawTimes(
         times: Int,
         reverse: Boolean = false,
-        canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false)
+        canvas: Canvas, shape: Shape = Shape.CIRCLE, showAllCircles: Boolean = false)
 }
 
 interface SuspendableCircleGroup : CircleGroup {
@@ -24,7 +24,7 @@ interface SuspendableCircleGroup : CircleGroup {
     suspend fun suspendableDrawTimes(
         times: Int,
         reverse: Boolean = false,
-        canvas: Canvas, shape: Shapes = Shapes.CIRCLE, showAllCircles: Boolean = false)
+        canvas: Canvas, shape: Shape = Shape.CIRCLE, showAllCircles: Boolean = false)
 }
 
 @Suppress("FunctionName")

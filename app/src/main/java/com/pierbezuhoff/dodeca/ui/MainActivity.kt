@@ -12,7 +12,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.AdapterView
 import android.widget.BaseAdapter
 import android.widget.EditText
 import android.widget.ImageButton
@@ -101,8 +100,7 @@ class MainActivity : AppCompatActivity(),
         binding.model = model
         binding.dodecaViewModel = dodecaViewModel
         binding.sharedPreferencesModel = sharedPreferencesModel
-        dodecaViewModel.updateFromShapeOrdinal(model.shapeOrdinal)
-        model.updateFromShape(dodecaViewModel.shape)
+        // TODO: model.showbb on shape change
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         // FIX: detector does not work at all
@@ -188,30 +186,6 @@ class MainActivity : AppCompatActivity(),
         // BUG: after BOTTOM_BAR_HIDE_DELAY selection does not work!
         with(shape_spinner) {
             adapter = ShapeSpinnerAdapter(context)
-//            setOnTouchListener { _, event ->
-//                if (event.action == MotionEvent.ACTION_UP) {
-//                    temporaryPause()
-//                }
-//                false
-//            }
-//            setOnKeyListener { _, keyCode, _ ->
-//                if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
-//                    temporaryPause()
-//                    return@setOnKeyListener true
-//                } else
-//                    return@setOnKeyListener false
-//            }
-            // invoked from onItemSelected
-//            model.shapeOrdinal.observe(this@MainActivity, Observer { resumeAfterTemporaryPause() })
-            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    Log.i(TAG, "on smth")
-                }
-                override fun onNothingSelected(parent: AdapterView<*>?) {
-                    Log.i(TAG, "on nothing")
-                }
-            }
-            // ISSUE: cannot intercept onNothingSelected
         }
     }
 
@@ -444,7 +418,7 @@ class MainActivity : AppCompatActivity(),
         extract1Ddu(filename, dir, dduFileRepository, TAG, overwrite)
 
     class ShapeSpinnerAdapter(private val context: Context) : BaseAdapter() {
-        val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shapes
+        val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shape
             R.drawable.ic_circle,
             R.drawable.ic_square,
             R.drawable.ic_cross,
