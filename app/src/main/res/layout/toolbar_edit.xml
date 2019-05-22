@@ -2,7 +2,6 @@
 <layout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
 >
     <data>
         <variable name="model" type="com.pierbezuhoff.dodeca.models.DodecaEditViewModel"/>
@@ -51,7 +50,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:description="@{@string/play_button_title}"
-                app:tintEnabled="@{model.playing}"
+                app:tintEnabled="@{safeUnbox(model.playing)}"
         />
         <ImageButton
                 android:id="@+id/draw_circles_button"
@@ -62,7 +61,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:description="@{@string/draw_circles_button_title}"
-                app:tintEnabled="@{model.drawCirclesMode}"
+                app:tintEnabled="@{safeUnbox(model.drawCirclesMode)}"
         />
         <ImageButton
                 android:id="@+id/settings_button"

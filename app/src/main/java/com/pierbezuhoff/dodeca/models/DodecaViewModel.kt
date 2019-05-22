@@ -12,7 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
-import com.pierbezuhoff.dodeca.data.Shapes
+import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
@@ -40,7 +40,6 @@ class DodecaViewModel(application: Application) :
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
     private val _updating: MutableLiveData<Boolean> = MutableLiveData()
     private val _drawTrace: MutableLiveData<Boolean> = MutableLiveData()
-    private val _shape: MutableLiveData<Shapes> = MutableLiveData() // TODO: connect to MainViewModel.shapeOrdinal
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
 
@@ -49,7 +48,7 @@ class DodecaViewModel(application: Application) :
     val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
     val updating: LiveData<Boolean> = _updating
     val drawTrace: LiveData<Boolean> = _drawTrace
-    val shape: LiveData<Shapes> = _shape
+    val shape: MutableLiveData<Shape> = MutableLiveData(DEFAULT_SHAPE)
 
     private val statUpdater: StatUpdater = StatUpdater()
     val nUpdates: LiveData<Long> = _nUpdates
@@ -65,6 +64,9 @@ class DodecaViewModel(application: Application) :
                 detector.registerScrollListener(it)
                 detector.registerScaleListener(it)
             }
+        }
+        shape.observeForever { shape: Shape ->
+            dduRepresentation.value?.shape = shape
         }
         viewModelScope.launch {
             val initialDdu: Ddu = getInitialDdu()
@@ -271,16 +273,6 @@ class DodecaViewModel(application: Application) :
     fun onDraw(canvas: Canvas) =
         dduRepresentation.value?.draw(canvas)
 
-    fun updateFromShapeOrdinal(shapeOrdinal: LiveData<Int>) {
-        shapeOrdinal.observeForever { ordinal: Int ->
-            if (shape.value?.ordinal != ordinal) {
-                val newShape: Shapes = Shapes.indexOrFirst(ordinal)
-                _shape.value = newShape
-                dduRepresentation.value?.shape = newShape
-            }
-        }
-    }
-
     fun getDduFile(): File? =
         dduRepresentation.value?.ddu?.file
 
@@ -290,7 +282,7 @@ class DodecaViewModel(application: Application) :
     private fun updateDduAttributesFrom(dduRepresentation: DduRepresentation) {
         _updating.value = dduRepresentation.updating
         _drawTrace.value = dduRepresentation.drawTrace
-        _shape.value = dduRepresentation.shape
+        shape.value = dduRepresentation.shape
     }
 
     override fun updateStat(delta: Int) =
@@ -336,6 +328,7 @@ class DodecaViewModel(application: Application) :
         const val TAG = "DodecaViewModel"
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
+        private val DEFAULT_SHAPE = Shape.CIRCLE
         private const val SKIP_N_TIMEOUT_SECONDS = 60
         private const val SKIP_N_TIMEOUT_MILLISECONDS: Long =
             1000L * SKIP_N_TIMEOUT_SECONDS

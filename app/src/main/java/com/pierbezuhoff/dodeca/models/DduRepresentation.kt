@@ -16,7 +16,7 @@ import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.DduAttributesHolder
 import com.pierbezuhoff.dodeca.data.DduOptionsChangeListener
-import com.pierbezuhoff.dodeca.data.Shapes
+import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
@@ -74,7 +74,7 @@ class DduRepresentation(override val ddu: Ddu) :
         set(value) { field = value; changeUpdating(value) }
     override var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
         set(value) { field = value; changeDrawTrace(value) }
-    override var shape: Shapes = ddu.shape
+    override var shape: Shape = ddu.shape
         set(value) { field = value; changeShape(value) }
 
     private val motion: Matrix = Matrix() // visible(z) = motion.move(z)
@@ -263,7 +263,7 @@ class DduRepresentation(override val ddu: Ddu) :
             presenter?.redraw()
     }
 
-    private fun changeShape(newShape: Shapes) {
+    private fun changeShape(newShape: Shape) {
         presenter?.redraw()
     }
 
@@ -293,6 +293,7 @@ class DduRepresentation(override val ddu: Ddu) :
         }
     }
 
+    @Suppress("NOTHING_TO_INLINE")
     private inner class Drawer {
         fun draw(canvas: Canvas) =
             when {

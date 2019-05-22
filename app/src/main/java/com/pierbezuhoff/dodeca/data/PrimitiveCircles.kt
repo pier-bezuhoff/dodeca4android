@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 // NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times faster
 // maybe: have float old_s
 /* List<Circle> is represented as 3 DoubleArray */
+@Suppress("NOTHING_TO_INLINE")
 internal class PrimitiveCircles(
     cs: List<CircleFigure>,
     private val paint: Paint
@@ -134,18 +135,18 @@ internal class PrimitiveCircles(
                 invert(i, j)
     }
 
-    override fun draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean) =
+    override fun draw(canvas: Canvas, shape: Shape, showAllCircles: Boolean) =
         _draw(canvas, shape, showAllCircles)
 
-    private inline fun _draw(canvas: Canvas, shape: Shapes, showAllCircles: Boolean) {
+    private inline fun _draw(canvas: Canvas, shape: Shape, showAllCircles: Boolean) {
         // TODO: rotation
         // TODO: show centers
         when (shape) {
-            Shapes.CIRCLE -> drawHelper(showAllCircles) { drawCircle(it, canvas) }
-            Shapes.SQUARE -> drawHelper(showAllCircles) { drawSquare(it, canvas) }
-            Shapes.CROSS -> drawHelper(showAllCircles) { drawCross(it, canvas) }
-            Shapes.VERTICAL_BAR -> drawHelper(showAllCircles) { drawVerticalBar(it, canvas) }
-            Shapes.HORIZONTAL_BAR -> drawHelper(showAllCircles) { drawHorizontalBar(it, canvas) }
+            Shape.CIRCLE -> drawHelper(showAllCircles) { drawCircle(it, canvas) }
+            Shape.SQUARE -> drawHelper(showAllCircles) { drawSquare(it, canvas) }
+            Shape.CROSS -> drawHelper(showAllCircles) { drawCross(it, canvas) }
+            Shape.VERTICAL_BAR -> drawHelper(showAllCircles) { drawVerticalBar(it, canvas) }
+            Shape.HORIZONTAL_BAR -> drawHelper(showAllCircles) { drawHorizontalBar(it, canvas) }
         }
     }
 
@@ -161,7 +162,7 @@ internal class PrimitiveCircles(
     override fun drawTimes(
         times: Int,
         reverse: Boolean,
-        canvas: Canvas, shape: Shapes, showAllCircles: Boolean
+        canvas: Canvas, shape: Shape, showAllCircles: Boolean
     ) {
         repeat(times) {
             _draw(canvas, shape, showAllCircles)
@@ -176,7 +177,7 @@ internal class PrimitiveCircles(
         times: Int,
         reverse: Boolean,
         canvas: Canvas,
-        shape: Shapes,
+        shape: Shape,
         showAllCircles: Boolean
     ) {
         // TODO: optimize
@@ -195,7 +196,7 @@ internal class PrimitiveCircles(
     private inline fun _drawTimes(
         times: Int,
         reverse: Boolean,
-        canvas: Canvas, shape: Shapes, showAllCircles: Boolean
+        canvas: Canvas, shape: Shape, showAllCircles: Boolean
     ) {
         if (reverse)
             drawTimesU(times, canvas, shape, showAllCircles) { reversedUpdate() }
@@ -205,15 +206,15 @@ internal class PrimitiveCircles(
 
     private inline fun drawTimesU(
         times: Int,
-        canvas: Canvas, shape: Shapes, showAllCircles: Boolean,
+        canvas: Canvas, shape: Shape, showAllCircles: Boolean,
         crossinline update: () -> Unit
     ) {
         when (shape) {
-            Shapes.CIRCLE -> drawTimesUS(times, showAllCircles, update) { drawCircle(it, canvas) }
-            Shapes.SQUARE -> drawTimesUS(times, showAllCircles, update) { drawSquare(it, canvas) }
-            Shapes.CROSS -> drawTimesUS(times, showAllCircles, update) { drawCross(it, canvas) }
-            Shapes.VERTICAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawVerticalBar(it, canvas) }
-            Shapes.HORIZONTAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawHorizontalBar(it, canvas) }
+            Shape.CIRCLE -> drawTimesUS(times, showAllCircles, update) { drawCircle(it, canvas) }
+            Shape.SQUARE -> drawTimesUS(times, showAllCircles, update) { drawSquare(it, canvas) }
+            Shape.CROSS -> drawTimesUS(times, showAllCircles, update) { drawCross(it, canvas) }
+            Shape.VERTICAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawVerticalBar(it, canvas) }
+            Shape.HORIZONTAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawHorizontalBar(it, canvas) }
         }
     }
 

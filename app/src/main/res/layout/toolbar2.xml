@@ -52,7 +52,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:description="@{@string/play_button_title}"
-                app:switchImageWhen="@{dodecaViewModel.updating}"
+                app:switchImageWhen="@{safeUnbox(dodecaViewModel.updating)}"
                 app:trueDrawable="@{@drawable/ic_pause}"
                 app:falseDrawable="@{@drawable/ic_play}"
         />
