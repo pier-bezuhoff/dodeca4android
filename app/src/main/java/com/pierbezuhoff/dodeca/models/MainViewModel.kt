@@ -28,7 +28,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val bottomBarShown: LiveData<Boolean> = _bottomBarShown
     val dir: LiveData<File> = _dir
     val showStat: LiveData<Boolean> = _showStat
-    // FIX: initial only, selection changes further without shapeOrdinal
     val shapeOrdinal: MutableLiveData<Int> = MutableLiveData(0)
     val onDestroy: LiveData<Unit> = _onDestroy
 
@@ -70,6 +69,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun cancelBottomBarHidingJob() {
         bottomBarHidingJob?.cancel()
+    }
+
+    fun restartBottomBarHidingJobIfShown() {
+        if (bottomBarShown.value == true)
+            hideBottomBarAfterTimeout()
     }
 
     fun toggleBottomBar() {

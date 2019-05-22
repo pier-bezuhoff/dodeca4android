@@ -1,12 +1,21 @@
 package com.pierbezuhoff.dodeca.db
 
+import android.content.Context
 import android.graphics.Bitmap
+import androidx.room.Room
 import com.pierbezuhoff.dodeca.utils.Filename
 
 // TODO: refactor usage
-class DduFileRepository private constructor() {
+class DduFileRepository private constructor(context: Context) {
+    private val db: DduFileDatabase by lazy {
+        Room.databaseBuilder(
+            context.applicationContext,
+            DduFileDatabase::class.java,
+            DB_NAME
+        ).build()
+    }
     private val dduFileDao: DduFileDao by lazy {
-        DduFileDatabase.INSTANCE!!.dduFileDao()
+        db.dduFileDao()
     }
 
     suspend fun getAllDduFiles(): List<DduFile> =
@@ -70,6 +79,15 @@ class DduFileRepository private constructor() {
         }
 
     companion object {
-        val INSTANCE: DduFileRepository = DduFileRepository()
+        @Volatile private var instance: DduFileRepository? = null
+        private const val DB_NAME: String = "ddu-files"
+
+        /** Thread-safe via double-checked locking */
+        fun get(context: Context): DduFileRepository =
+            instance ?: synchronized(this) {
+                instance ?: DduFileRepository(context).also {
+                    instance = it
+                }
+            }
     }
 }

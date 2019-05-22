@@ -32,9 +32,10 @@ class DodecaViewModel(application: Application) :
     DduRepresentation.ToastEmitter
 {
     private lateinit var sharedPreferencesModel: SharedPreferencesModel // inject
-    private val dduFileRepository: DduFileRepository = DduFileRepository.INSTANCE
     private val context: Context
         get() = getApplication<Application>().applicationContext
+    private val dduFileRepository: DduFileRepository =
+        DduFileRepository.get(context)
 
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
     private val _updating: MutableLiveData<Boolean> = MutableLiveData()
@@ -43,7 +44,7 @@ class DodecaViewModel(application: Application) :
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
 
-    private var oldUpdating: Boolean = DEFAULT_UPDATING
+    private var oldUpdating: Boolean? = null
 
     val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
     val updating: LiveData<Boolean> = _updating
@@ -59,6 +60,12 @@ class DodecaViewModel(application: Application) :
     val gestureDetector: LiveData<DodecaGestureDetector> = _gestureDetector
 
     init {
+        gestureDetector.observeForever { detector ->
+            dduRepresentation.value?.let {
+                detector.registerScrollListener(it)
+                detector.registerScaleListener(it)
+            }
+        }
         viewModelScope.launch {
             val initialDdu: Ddu = getInitialDdu()
             loadDdu(initialDdu)
@@ -78,6 +85,10 @@ class DodecaViewModel(application: Application) :
             dduRepresentation.connectStatHolder(this)
             dduRepresentation.connectToastEmitter(this)
             dduRepresentation.sharedPreferencesModel = sharedPreferencesModel
+            gestureDetector.value?.apply {
+                registerScrollListener(dduRepresentation)
+                registerScaleListener(dduRepresentation)
+            }
             updateDduAttributesFrom(dduRepresentation)
             _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
         }
@@ -148,7 +159,6 @@ class DodecaViewModel(application: Application) :
     }
 
     fun requestOneStep() {
-        // FIX: does not work
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
             stop()
             dduRepresentation.oneStep()
@@ -225,27 +235,29 @@ class DodecaViewModel(application: Application) :
     }
 
     fun resume() {
-        val newUpdating = oldUpdating
-        _updating.postValue(newUpdating)
-        dduRepresentation.value?.updating = newUpdating
+        Log.i(TAG, "resume: oldUpdating = $oldUpdating")
+        val newUpdating = oldUpdating ?: DEFAULT_UPDATING
+        setUpdating(newUpdating)
     }
 
     fun pause() {
-        if (updating.value != false) {
-            oldUpdating = updating.value ?: DEFAULT_UPDATING
-            val newUpdating = false
-            _updating.postValue(newUpdating)
-            dduRepresentation.value?.updating = newUpdating
-            maybeAutosave()
-        }
+        oldUpdating = updating.value
+        setUpdating(false)
+        maybeAutosave()
     }
 
     fun stop() {
-        oldUpdating = true
+        oldUpdating = null
+        setUpdating(false)
+        maybeAutosave()
     }
 
     fun toggleUpdating() {
         val newUpdating: Boolean = !(updating.value ?: DEFAULT_UPDATING)
+        setUpdating(newUpdating)
+    }
+
+    private fun setUpdating(newUpdating: Boolean) {
         _updating.value = newUpdating
         dduRepresentation.value?.updating = newUpdating
     }

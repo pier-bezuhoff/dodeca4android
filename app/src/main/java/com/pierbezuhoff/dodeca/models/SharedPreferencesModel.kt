@@ -20,6 +20,11 @@ class SharedPreferencesModel(
         sharedPreferences.fetch(sharedPreference)
     }
 
+    fun <T : Any> fetched(sharedPreference: SharedPreference<T>): T {
+        sharedPreferences.fetch(sharedPreference)
+        return sharedPreference.value
+    }
+
     fun <T: Any> set(sharedPreference: SharedPreference<T>, value: T) {
         sharedPreferences.edit {
             sharedPreference.set(value, this) // NOTE: set(sharedPreference, value) means recursion
