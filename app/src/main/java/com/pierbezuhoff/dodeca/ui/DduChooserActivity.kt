@@ -66,7 +66,8 @@ import kotlin.coroutines.CoroutineContext
 // MAYBE: link to external folder
 class DduChooserActivity : AppCompatActivity(), CoroutineScope {
     lateinit var dir: File // current
-    private val dduFileRepository = DduFileRepository.INSTANCE
+    private val dduFileRepository =
+        DduFileRepository.get(this)
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
     private lateinit var job: Job
@@ -544,7 +545,7 @@ class DduAdapter(
             ArrayList(dir.listFiles().filter { it.extension.toLowerCase() == "ddu" })
         }
     val files: ArrayList<File> by sleepingFiles
-    private val dduFileRepository = DduFileRepository.INSTANCE
+    private val dduFileRepository = DduFileRepository.get(activity)
     val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()
     val buildings: MutableMap<Filename, DduViewHolder?> = mutableMapOf()
 

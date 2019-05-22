@@ -17,10 +17,7 @@ lateinit var values: Values private set
 
 abstract class SharedPreference<T>(val default: T) where T : Any {
     var value = default
-        set(value) {
-            field = value
-            _liveData.value = value
-        }
+        set(value) { field = value; _liveData.value = value }
     private val _liveData: MutableLiveData<T> = MutableLiveData(value)
     val liveData: LiveData<T> = _liveData
 

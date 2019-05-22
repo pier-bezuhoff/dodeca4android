@@ -12,6 +12,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.AdapterView
 import android.widget.BaseAdapter
 import android.widget.EditText
 import android.widget.ImageButton
@@ -28,7 +29,6 @@ import com.pierbezuhoff.dodeca.data.Options
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
-import com.pierbezuhoff.dodeca.db.DduFileDatabase
 import com.pierbezuhoff.dodeca.db.DduFileRepository
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
@@ -81,7 +81,8 @@ class MainActivity : AppCompatActivity(),
     }
     private val dir: File
         get() = model.dir.value ?: dduDir
-    private val dduFileRepository = DduFileRepository.INSTANCE
+    private val dduFileRepository =
+        DduFileRepository.get(this)
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
     private lateinit var job: Job
@@ -91,9 +92,7 @@ class MainActivity : AppCompatActivity(),
         job = Job()
         // TODO: migrate to OptionsViewModel
         Options(resources).init() // init options.* and values.*
-        DduFileDatabase.init(this) /// the faster the better
         dodecaViewModel.setSharedPreferencesModel(sharedPreferencesModel)
-        sharedPreferencesModel.fetch(options.versionCode)
         checkUpgrade()
         setupWindow()
         val binding: ActivityMainBinding =
@@ -107,25 +106,28 @@ class MainActivity : AppCompatActivity(),
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         // FIX: detector does not work at all
-        // listen single tap, scroll and scale gestures
-        DodecaGestureDetector(this).let {
+        DodecaGestureDetector(applicationContext).let {
             it.registerSingleTapListener(this)
             dodecaViewModel.registerGestureDetector(it)
         }
-        // handling launch from implicit intent
         Log.i(TAG, "Dodeca started${if (intent.action == Intent.ACTION_VIEW) " from implicit intent: ${intent.data?.path ?: "-"}" else ""}")
-        if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
-                intent.type?.endsWith("ddu", ignoreCase = true) == true ||
-                intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)) {
-            intent.data?.let { readUriWithPermissionCheck(it) }
-        }
+        handleLaunchFromImplicitIntent()
         setupToolbar()
         model.showBottomBar()
     }
 
+    private fun handleLaunchFromImplicitIntent() {
+        if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
+                intent.type?.endsWith("ddu", ignoreCase = true) == true ||
+                intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)
+        ) {
+            intent.data?.let { readUriWithPermissionCheck(it) }
+        }
+    }
+
     private fun checkUpgrade() {
         val currentVersionCode = BuildConfig.VERSION_CODE
-        val oldVersionCode = values.versionCode
+        val oldVersionCode = sharedPreferencesModel.fetched(options.versionCode)
         if (oldVersionCode != currentVersionCode) {
             val upgrading: Boolean = oldVersionCode < currentVersionCode
             val upgradingOrDegrading: String = if (upgrading) "Upgrading" else "Degrading"
@@ -183,10 +185,33 @@ class MainActivity : AppCompatActivity(),
                 button.setOnClickListener { onToolbarItemClick(it.id) }
             }
         }
-        // ISSUE: on spinner dialog: stop bottom bar timer, pause dodecaView
         // BUG: after BOTTOM_BAR_HIDE_DELAY selection does not work!
         with(shape_spinner) {
             adapter = ShapeSpinnerAdapter(context)
+//            setOnTouchListener { _, event ->
+//                if (event.action == MotionEvent.ACTION_UP) {
+//                    temporaryPause()
+//                }
+//                false
+//            }
+//            setOnKeyListener { _, keyCode, _ ->
+//                if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+//                    temporaryPause()
+//                    return@setOnKeyListener true
+//                } else
+//                    return@setOnKeyListener false
+//            }
+            // invoked from onItemSelected
+//            model.shapeOrdinal.observe(this@MainActivity, Observer { resumeAfterTemporaryPause() })
+            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    Log.i(TAG, "on smth")
+                }
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    Log.i(TAG, "on nothing")
+                }
+            }
+            // ISSUE: cannot intercept onNothingSelected
         }
     }
 
@@ -202,16 +227,13 @@ class MainActivity : AppCompatActivity(),
                 intent.putExtra("dirPath", dir.absolutePath)
                 startActivityForResult(intent, DDU_CODE)
             }
-            R.id.save_button -> saveDDU()
+            R.id.save_button -> saveDdu()
             R.id.play_button -> dodecaViewModel.toggleUpdating()
             R.id.next_step_button -> dodecaViewModel.requestOneStep()
             R.id.trace_button -> dodecaViewModel.toggleDrawTrace()
             R.id.choose_color_button -> {
                 dodecaViewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
-                    dodecaViewModel.pause()
-                    model.cancelBottomBarHidingJob()
-                    // BUG: bottom bar hiding anyway (smth caused knew hideBottomBarAfterTimeout)
-                    // NOTE: but it's recreated after dialog quit
+                    temporaryPause()
                     ChooseColorDialog(
                         this,
                         chooseColorListener = this,
@@ -230,11 +252,11 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
-    private fun saveDDU() {
+    private fun saveDdu() {
         if (!values.saveAs) {
             dodecaViewModel.requestSaveDdu()
         } else {
-            dodecaViewModel.pause()
+            temporaryPause()
             buildSaveAsDialog().show()
         }
     }
@@ -252,28 +274,38 @@ class MainActivity : AppCompatActivity(),
                     val filename: Filename = "${fileNameEditText.text}.ddu"
                     val file = File(dir, filename)
                     dodecaViewModel.requestSaveDduAt(file)
-                    Log.i(TAG, file.path)
                 } catch (e: IOException) {
                     e.printStackTrace()
-                }
+                } finally { resumeAfterTemporaryPause() }
             }
-            cancelButton {  }
+            cancelButton { resumeAfterTemporaryPause() }
         }
 
-    override fun onChooseColorClosed() {
+    private fun temporaryPause() {
+        dodecaViewModel.pause()
+        model.cancelBottomBarHidingJob()
+    }
+
+    private fun resumeAfterTemporaryPause() {
         dodecaViewModel.resume()
-        dodecaViewModel.requestUpdateOnce()
         model.showBottomBar()
+    }
+
+    override fun onChooseColorClosed() {
+        resumeAfterTemporaryPause()
+        dodecaViewModel.requestUpdateOnce()
     }
 
     override fun onResume() {
         super.onResume()
         dodecaViewModel.resume()
+        model.restartBottomBarHidingJobIfShown()
     }
 
     override fun onPause() {
         super.onPause()
         dodecaViewModel.pause()
+        model.cancelBottomBarHidingJob()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
