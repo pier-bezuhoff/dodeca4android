@@ -4,7 +4,6 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.ImageView
-import android.widget.Spinner
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -38,9 +37,4 @@ fun switchImageWhen(imageView: ImageView, enabled: Boolean, trueDrawable: Drawab
 fun description(view: View, description: String) {
     TooltipCompat.setTooltipText(view, description)
     view.contentDescription = description
-}
-
-@BindingAdapter("selection")
-fun selection(spinner: Spinner, ordinal: Int) {
-    spinner.setSelection(ordinal)
 }

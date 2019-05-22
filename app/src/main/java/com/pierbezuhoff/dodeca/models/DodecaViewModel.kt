@@ -259,9 +259,14 @@ class DodecaViewModel(application: Application) :
     fun onDraw(canvas: Canvas) =
         dduRepresentation.value?.draw(canvas)
 
-    fun setShape(shape: Shapes) {
-        _shape.value = shape
-        dduRepresentation.value?.shape = shape
+    fun updateFromShapeOrdinal(shapeOrdinal: LiveData<Int>) {
+        shapeOrdinal.observeForever { ordinal: Int ->
+            if (shape.value?.ordinal != ordinal) {
+                val newShape: Shapes = Shapes.indexOrFirst(ordinal)
+                _shape.value = newShape
+                dduRepresentation.value?.shape = newShape
+            }
+        }
     }
 
     fun getDduFile(): File? =
