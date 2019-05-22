@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.utils.dduDir
 import kotlinx.coroutines.Dispatchers
@@ -20,16 +21,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData(true)
     private val _dir: MutableLiveData<File> = MutableLiveData()
-    // TODO: setup on sh prf changes
     private val _showStat: MutableLiveData<Boolean> = MutableLiveData(false)
-    private val _shapeOrdinal: MutableLiveData<Int> = MutableLiveData(0)
     private val _onDestroy: MutableLiveData<Unit> = MutableLiveData()
     private var bottomBarHidingJob: Job? = null
 
     val bottomBarShown: LiveData<Boolean> = _bottomBarShown
     val dir: LiveData<File> = _dir
     val showStat: LiveData<Boolean> = _showStat
-    val shapeOrdinal: LiveData<Int> = _shapeOrdinal // FIX: initial only, selection changes further without shapeOrdinal
+    // FIX: initial only, selection changes further without shapeOrdinal
+    val shapeOrdinal: MutableLiveData<Int> = MutableLiveData(0)
     val onDestroy: LiveData<Unit> = _onDestroy
 
     init {
@@ -44,6 +44,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         if (_dir.value == null)
             _dir.value = context.dduDir
+        shapeOrdinal.observeForever { showBottomBar() }
+    }
+
+    fun updateFromShape(shape: LiveData<Shapes>) {
+        shape.observeForever { newShape: Shapes ->
+            if (newShape.ordinal != shapeOrdinal.value)
+                shapeOrdinal.value = newShape.ordinal
+        }
     }
 
     fun showBottomBar() =

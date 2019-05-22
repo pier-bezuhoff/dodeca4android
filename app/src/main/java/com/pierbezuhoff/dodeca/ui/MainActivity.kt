@@ -12,7 +12,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.AdapterView
 import android.widget.BaseAdapter
 import android.widget.EditText
 import android.widget.ImageButton
@@ -26,7 +25,6 @@ import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Options
-import com.pierbezuhoff.dodeca.data.Shapes
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
@@ -94,6 +92,7 @@ class MainActivity : AppCompatActivity(),
         // TODO: migrate to OptionsViewModel
         Options(resources).init() // init options.* and values.*
         DduFileDatabase.init(this) /// the faster the better
+        dodecaViewModel.setSharedPreferencesModel(sharedPreferencesModel)
         sharedPreferencesModel.fetch(options.versionCode)
         checkUpgrade()
         setupWindow()
@@ -103,9 +102,11 @@ class MainActivity : AppCompatActivity(),
         binding.model = model
         binding.dodecaViewModel = dodecaViewModel
         binding.sharedPreferencesModel = sharedPreferencesModel
-        dodecaViewModel.setSharedPreferencesModel(sharedPreferencesModel)
+        dodecaViewModel.updateFromShapeOrdinal(model.shapeOrdinal)
+        model.updateFromShape(dodecaViewModel.shape)
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
+        // FIX: detector does not work at all
         // listen single tap, scroll and scale gestures
         DodecaGestureDetector(this).let {
             it.registerSingleTapListener(this)
@@ -186,15 +187,6 @@ class MainActivity : AppCompatActivity(),
         // BUG: after BOTTOM_BAR_HIDE_DELAY selection does not work!
         with(shape_spinner) {
             adapter = ShapeSpinnerAdapter(context)
-            setSelection(0)
-            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onNothingSelected(parent: AdapterView<*>?) { model.showBottomBar() }
-                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    val newShape: Shapes = Shapes.indexOrFirst(id.toInt())
-                    dodecaViewModel.setShape(newShape)
-                    model.showBottomBar()
-                }
-            }
         }
     }
 
