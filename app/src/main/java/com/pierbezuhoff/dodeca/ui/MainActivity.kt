@@ -25,6 +25,7 @@ import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Options
+import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
@@ -100,10 +101,8 @@ class MainActivity : AppCompatActivity(),
         binding.model = model
         binding.dodecaViewModel = dodecaViewModel
         binding.sharedPreferencesModel = sharedPreferencesModel
-        // TODO: model.showbb on shape change
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
-        // FIX: detector does not work at all
         DodecaGestureDetector(applicationContext).let {
             it.registerSingleTapListener(this)
             dodecaViewModel.registerGestureDetector(it)
@@ -418,15 +417,17 @@ class MainActivity : AppCompatActivity(),
         extract1Ddu(filename, dir, dduFileRepository, TAG, overwrite)
 
     class ShapeSpinnerAdapter(private val context: Context) : BaseAdapter() {
-        val shapes: Array<Int> = arrayOf( // the same order as in Circle.kt/Shape
-            R.drawable.ic_circle,
-            R.drawable.ic_square,
-            R.drawable.ic_cross,
-            R.drawable.ic_vertical_bar,
-            R.drawable.ic_horizontal_bar
+        private val shapeDrawableResources: Map<Shape, Int> = mapOf(
+            Shape.CIRCLE to R.drawable.ic_circle,
+            Shape.SQUARE to R.drawable.ic_square,
+            Shape.CROSS to R.drawable.ic_cross,
+            Shape.VERTICAL_BAR to R.drawable.ic_vertical_bar,
+            Shape.HORIZONTAL_BAR to R.drawable.ic_horizontal_bar
         )
+        private val shapes: Array<Shape> = Shape.values()
         private class SpinnerViewHolder(val imageView: ImageView)
-        override fun getItem(position: Int): Any = shapes[position]
+
+        override fun getItem(position: Int): Shape = shapes[position]
         override fun getItemId(position: Int): Long = position.toLong()
         override fun getCount(): Int = shapes.size
 
@@ -435,8 +436,9 @@ class MainActivity : AppCompatActivity(),
             context.layoutInflater.inflate(R.layout.shape_spinner_row, parent, false).apply {
                 tag = SpinnerViewHolder(findViewById(R.id.shape_spinner_image))
             }
+            val shapeDrawableResource: Int = shapeDrawableResources.getValue(shapes[position])
             (itemView.tag as SpinnerViewHolder).imageView.setImageDrawable(
-                ContextCompat.getDrawable(context, shapes[position]))
+                ContextCompat.getDrawable(context, shapeDrawableResource))
             return itemView
         }
     }
@@ -447,8 +449,6 @@ class MainActivity : AppCompatActivity(),
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
         const val HELP_CODE = 3
-        // fullscreen, but with bottom navigation
-        const val FULLSCREEN_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_FULLSCREEN
         // distraction free
         const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
