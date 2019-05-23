@@ -13,11 +13,11 @@ class DodecaGestureDetector(context: Context) : GestureDetector.SimpleOnGestureL
     interface ScaleListener { fun onScale(scale: Float, focusX: Float, focusY: Float) }
 
     private val gestureDetector =
-        GestureDetector(context, this).also {
+        GestureDetector(context.applicationContext, this).also {
             it.setOnDoubleTapListener(this)
         }
     private val scaleGestureListener = ScaleGestureListener()
-    private val scaleDetector = ScaleGestureDetector(context, scaleGestureListener)
+    private val scaleDetector = ScaleGestureDetector(context.applicationContext, scaleGestureListener)
 
     private var singleTapListener: SingleTapListener? = null
     private var scrollListener: ScrollListener? = null

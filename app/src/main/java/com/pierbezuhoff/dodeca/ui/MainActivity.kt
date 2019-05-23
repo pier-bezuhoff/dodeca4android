@@ -29,10 +29,10 @@ import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.db.DduFileRepository
-import com.pierbezuhoff.dodeca.models.DodecaAndroidViewModelWithSharedPreferencesWrapperFactory
+import com.pierbezuhoff.dodeca.models.DodecaAndroidViewModelWithOptionsManagerFactory
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
-import com.pierbezuhoff.dodeca.models.SharedPreferencesWrapper
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
@@ -67,10 +67,10 @@ class MainActivity : AppCompatActivityWithCoroutineContext(),
     DodecaGestureDetector.SingleTapListener
 {
     private val sharedPreferencesWrapper by lazy {
-        SharedPreferencesWrapper(defaultSharedPreferences)
+        OptionsManager(defaultSharedPreferences)
     }
     private val dodecaFactory by lazy {
-        DodecaAndroidViewModelWithSharedPreferencesWrapperFactory(application, sharedPreferencesWrapper)
+        DodecaAndroidViewModelWithOptionsManagerFactory(application, sharedPreferencesWrapper)
     }
     private val model by lazy {
         ViewModelProviders.of(this).get(MainViewModel::class.java)

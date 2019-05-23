@@ -25,9 +25,9 @@ import kotlin.properties.Delegates
 
 class DodecaViewModel(
     application: Application,
-    sharedPreferencesWrapper: SharedPreferencesWrapper
+    optionsManager: OptionsManager
 ) :
-    DodecaAndroidViewModelWithSharedPreferencesWrapper(application, sharedPreferencesWrapper),
+    DodecaAndroidViewModelWithOptionsManager(application, optionsManager),
     DduRepresentation.StatHolder, // by statUpdater
     DduRepresentation.ToastEmitter
 {
@@ -49,16 +49,9 @@ class DodecaViewModel(
     val dTime: LiveData<Float> = _dTime
     val statTimeDelta: Int = statUpdater.statTimeDelta
 
-    private val _gestureDetector: MutableLiveData<DodecaGestureDetector> = MutableLiveData()
-    val gestureDetector: LiveData<DodecaGestureDetector> = _gestureDetector
+    val gestureDetector: DodecaGestureDetector = DodecaGestureDetector(context)
 
     init {
-        gestureDetector.observeForever { detector ->
-            dduRepresentation.value?.let {
-                detector.registerScrollListener(it)
-                detector.registerScaleListener(it)
-            }
-        }
         shape.observeForever { shape: Shape ->
             dduRepresentation.value?.shape = shape
         }
@@ -67,7 +60,7 @@ class DodecaViewModel(
             loadDdu(initialDdu)
         }
         registerOptionsObservers()
-        sharedPreferencesWrapper.fetchAll()
+        optionsManager.fetchAll()
     }
 
     fun loadDdu(ddu: Ddu) {
@@ -76,11 +69,9 @@ class DodecaViewModel(
         DduRepresentation(ddu).let { dduRepresentation: DduRepresentation ->
             dduRepresentation.connectStatHolder(this)
             dduRepresentation.connectToastEmitter(this)
-            dduRepresentation.sharedPreferencesWrapper = sharedPreferencesWrapper
-            gestureDetector.value?.apply {
-                registerScrollListener(dduRepresentation)
-                registerScaleListener(dduRepresentation)
-            }
+            dduRepresentation.connectOptionsManager(optionsManager)
+            gestureDetector.registerScrollListener(dduRepresentation)
+            gestureDetector.registerScaleListener(dduRepresentation)
             updateDduAttributesFrom(dduRepresentation)
             _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
         }
@@ -94,10 +85,6 @@ class DodecaViewModel(
             val ddu: Ddu = Ddu.fromFile(file)
             loadDdu(ddu)
         }
-    }
-
-    fun registerGestureDetector(detector: DodecaGestureDetector) {
-        _gestureDetector.value = detector
     }
 
     private fun registerOptionsObservers() {
@@ -129,7 +116,7 @@ class DodecaViewModel(
     }
 
     private fun <T : Any> setSharedPreference(sharedPreference: SharedPreference<T>, value: T) {
-        sharedPreferencesWrapper.set(sharedPreference, value)
+        optionsManager.set(sharedPreference, value)
     }
 
     private suspend fun getInitialDdu(): Ddu =
@@ -141,7 +128,7 @@ class DodecaViewModel(
         }
 
     private fun getRecentDduFile(): File {
-        sharedPreferencesWrapper.fetch(options.recentDdu)
+        optionsManager.fetch(options.recentDdu)
         val recentFromAbsolutePath = File(values.recentDdu) // new format
         val recentInDduDir = File(context.dduDir, values.recentDdu) // deprecated format
         return if (recentFromAbsolutePath.exists())
@@ -324,4 +311,3 @@ class DodecaViewModel(
             1000L * SKIP_N_TIMEOUT_SECONDS
     }
 }
-
