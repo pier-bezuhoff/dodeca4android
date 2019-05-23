@@ -57,15 +57,14 @@ class DodecaView(
 
     private fun onFirstRun() {
         initialized = true
+        model.gestureDetector.registerAsOnTouchListenerFor(this)
         registerObservers()
     }
 
     private fun registerObservers() {
         model.dduRepresentation.observeHere {
             it.connectPresenter(this)
-        }
-        model.gestureDetector.observeHere { detector ->
-            detector.registerAsOnTouchListenerFor(this)
+            // TODO: disconnect on destroy!
         }
         mainModel.bottomBarShown.observeHere {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
