@@ -43,8 +43,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:selectedItemPosition="@={Shape.toOrdinal(dodecaViewModel.shape)}"
-                android:onItemSelected="@{(parent, view, position, id) -> model.__log(`model.showBottomBar()`)}"
-                android:onNothingSelected="@{(parent) -> model.__log(`model.showBottomBar()`)}"
+                android:onItemSelected="@{(parent, view, position, id) -> model.showBottomBar()}"
                 app:description="@{@string/shape_spinner_title}"
         />
         <ImageButton
