@@ -82,7 +82,6 @@ class MainActivity : AppCompatActivityWithCoroutineContext(),
         get() = model.dir.value ?: dduDir
     private val dduFileRepository =
         DduFileRepository.get(this)
-    private lateinit var dodecaGestureDetector: DodecaGestureDetector
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,11 +96,10 @@ class MainActivity : AppCompatActivityWithCoroutineContext(),
         binding.dodecaViewModel = dodecaViewModel
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
-        dodecaGestureDetector = DodecaGestureDetector(applicationContext).also {
-            // MAYBE: memory leak (activity -> detector -> viewModel)
-            it.registerSingleTapListener(this)
-            dodecaViewModel.registerGestureDetector(it)
-        }
+        DodecaGestureDetector(applicationContext)
+            .onSingleTapSubscription
+            .subscribeFrom(this)
+            .unsubscribeOnDestroy(this)
         handleLaunchFromImplicitIntent()
         setupToolbar()
         model.showBottomBar()
@@ -329,7 +327,6 @@ class MainActivity : AppCompatActivityWithCoroutineContext(),
     }
 
     override fun onDestroy() {
-        dodecaGestureDetector.removeSingleTapListener()
         model.sendOnDestroy()
         super.onDestroy()
     }

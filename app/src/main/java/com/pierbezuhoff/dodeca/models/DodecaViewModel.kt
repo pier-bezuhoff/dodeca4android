@@ -67,11 +67,11 @@ class DodecaViewModel(
         maybeAutosave() // async
         statUpdater.reset()
         DduRepresentation(ddu).let { dduRepresentation: DduRepresentation ->
-            dduRepresentation.connectStatHolder(this)
-            dduRepresentation.connectToastEmitter(this)
+            dduRepresentation.statHolderSubscription.subscribeFrom(this)
+            dduRepresentation.toastEmitterSubscription.subscribeFrom(this)
             dduRepresentation.connectOptionsManager(optionsManager)
-            gestureDetector.registerScrollListener(dduRepresentation)
-            gestureDetector.registerScaleListener(dduRepresentation)
+            gestureDetector.onScrollSubscription.subscribeFrom(dduRepresentation)
+            gestureDetector.onScaleSubscription.subscribeFrom(dduRepresentation)
             updateDduAttributesFrom(dduRepresentation)
             _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
         }
@@ -98,8 +98,8 @@ class DodecaViewModel(
             dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
                 if (skipN > 0) {
                     Log.i(TAG, "skipping $skipN updates")
-                    pause()
                     viewModelScope.launch {
+                        pause()
                         withTimeoutOrNull(SKIP_N_TIMEOUT_MILLISECONDS) {
                             dduRepresentation.updateTimes(skipN)
                             setSharedPreference(options.skipN, 0)

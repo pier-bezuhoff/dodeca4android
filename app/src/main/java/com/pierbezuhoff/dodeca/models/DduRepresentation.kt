@@ -22,6 +22,7 @@ import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
+import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Just
 import com.pierbezuhoff.dodeca.utils.Once
 import com.pierbezuhoff.dodeca.utils.Sleeping
@@ -58,12 +59,13 @@ class DduRepresentation(override val ddu: Ddu) :
         fun toast(message: CharSequence)
         fun formatToast(@StringRes id: Int, vararg args: Any)
     }
-
-    // inject 4
-    private var optionsManager: OptionsManager? = null
     private var presenter: Presenter? = null
-    private var statHolder: StatHolder? = null
-    private var toastEmitter: ToastEmitter? = null
+    private val statHolderConnection = Connection<StatHolder>()
+    private val toastEmitterConnection = Connection<ToastEmitter>()
+    val statHolderSubscription = statHolderConnection.subscription
+    val toastEmitterSubscription = toastEmitterConnection.subscription
+
+    var optionsManager: OptionsManager? = null // inject by setter
 
     private val updateScheduler: UpdateScheduler = UpdateScheduler()
     private val drawer: Drawer = Drawer()
@@ -86,9 +88,7 @@ class DduRepresentation(override val ddu: Ddu) :
 
     private val presenterDisconnector: LifecycleObserver = object : LifecycleObserver {
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-        fun disconnectPresenter() {
-            this@DduRepresentation.presenter = null
-        }
+        fun disconnectPresenter() { this@DduRepresentation.presenter = null }
     }
 
     fun connectPresenter(presenter: Presenter) {
@@ -118,14 +118,6 @@ class DduRepresentation(override val ddu: Ddu) :
 
     fun connectOptionsManager(optionsManager: OptionsManager) {
         this.optionsManager = optionsManager
-    }
-
-    fun connectStatHolder(statHolder: StatHolder) {
-        this.statHolder = statHolder
-    }
-
-    fun connectToastEmitter(toastEmitter: ToastEmitter) {
-        this.toastEmitter = toastEmitter
     }
 
     private fun setBestCenter() {
@@ -335,11 +327,15 @@ class DduRepresentation(override val ddu: Ddu) :
                         if (canvasFactor > 1) {
                             val nextFactor = canvasFactor - 1
                             Log.w(TAG, "too large canvasFactor: $canvasFactor -> $nextFactor")
-                            toastEmitter?.formatToast(R.string.canvas_factor_oom_toast, canvasFactor, nextFactor)
+                            toastEmitterConnection.send {
+                                formatToast(R.string.canvas_factor_oom_toast, canvasFactor, nextFactor)
+                            }
                             canvasFactor = nextFactor
                         } else {
                             Log.e(TAG, "min canvasFactor  $canvasFactor is too large! Retrying...")
-                            toastEmitter?.formatToast(R.string.minimal_canvas_factor_oom_toast, canvasFactor)
+                            toastEmitterConnection.send {
+                                formatToast(R.string.minimal_canvas_factor_oom_toast, canvasFactor)
+                            }
                         }
                     }
                 }
@@ -352,7 +348,7 @@ class DduRepresentation(override val ddu: Ddu) :
             if (updating && updateScheduler.timeToUpdate()) {
                 val times = values.speed.roundToInt()
                 drawer.drawTimes(times)
-                statHolder?.updateStat(times)
+                statHolderConnection.send { updateStat(times) }
                 updateScheduler.doUpdate()
             }
             drawer.drawUpdatedCanvas(canvas)

@@ -8,7 +8,6 @@ import android.view.View
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
@@ -26,7 +25,8 @@ class DodecaView(
 ) : View(context, attributeSet),
     LifecycleOwner,
     CoroutineScope,
-    DduRepresentation.Presenter
+    DduRepresentation.Presenter,
+    MainViewModel.OnDestroyMainActivity
 {
     lateinit var mainModel: MainViewModel // inject
     lateinit var model: DodecaViewModel // inject
@@ -57,26 +57,14 @@ class DodecaView(
 
     private fun onFirstRun() {
         initialized = true
-        model.gestureDetector.registerAsOnTouchListenerFor(this)
-        registerObservers()
-    }
-
-    private fun registerObservers() {
-        model.dduRepresentation.observeHere {
-            it.connectPresenter(this)
-            // TODO: disconnect on destroy!
-        }
-        mainModel.bottomBarShown.observeHere {
+        mainModel.onDestroyMainActivitySubscription.subscribeFrom(this)
+        mainModel.bottomBarShown.observe(this, Observer {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
-        }
-        // bestowing death
-        mainModel.onDestroy.observeHere {
-            onDestroy()
-        }
-    }
-
-    private fun <T> LiveData<T>.observeHere(action: (T) -> Unit) {
-        observe(this@DodecaView, Observer(action))
+        })
+        model.gestureDetector.registerAsOnTouchListenerFor(this)
+        model.dduRepresentation.observe(this, Observer {
+            it.connectPresenter(this)
+        })
     }
 
     override fun getLifecycle(): Lifecycle =
@@ -101,7 +89,7 @@ class DodecaView(
         postInvalidate()
     }
 
-    private fun onDestroy() {
+    override fun onDestroyMainActivity() {
         job.cancel()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         model.maybeAutosave()
