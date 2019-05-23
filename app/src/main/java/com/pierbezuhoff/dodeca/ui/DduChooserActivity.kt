@@ -18,7 +18,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.withStyledAttributes
 import androidx.documentfile.provider.DocumentFile
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -44,9 +43,6 @@ import com.pierbezuhoff.dodeca.utils.stripDdu
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.android.synthetic.main.activity_dduchooser.*
 import kotlinx.android.synthetic.main.dir_row.view.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
 import org.jetbrains.anko.alert
@@ -58,19 +54,15 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import org.jetbrains.anko.yesButton
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 
 // TODO: refactor with databindings, viewmodel and coroutines
 // MAYBE: action bar: search by name
 // MAYBE: store in sharedPreferences last dir
 // MAYBE: link to external folder
-class DduChooserActivity : AppCompatActivity(), CoroutineScope {
+class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
     lateinit var dir: File // current
     private val dduFileRepository =
         DduFileRepository.get(this)
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.Main
-    private lateinit var job: Job
     private lateinit var dduAdapter: DduAdapter
     private lateinit var dirAdapter: DirAdapter
     private var requestedDduFile: File? = null
@@ -78,7 +70,6 @@ class DduChooserActivity : AppCompatActivity(), CoroutineScope {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        job = Job()
         dir = dduDir
         intent.getStringExtra("dirPath")?.let { dir = File(it) }
         setContentView(R.layout.activity_dduchooser)
@@ -161,11 +152,6 @@ class DduChooserActivity : AppCompatActivity(), CoroutineScope {
             }
         }
         return isSet1 || isSet2 || super.onContextItemSelected(item)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        job.cancel()
     }
 
     private fun renameDduFile(file: File, position: Int) {

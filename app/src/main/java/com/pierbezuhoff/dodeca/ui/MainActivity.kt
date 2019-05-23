@@ -16,7 +16,6 @@ import android.widget.BaseAdapter
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.databinding.DataBindingUtil
@@ -30,9 +29,10 @@ import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.db.DduFileRepository
+import com.pierbezuhoff.dodeca.models.DodecaAndroidViewModelWithSharedPreferencesWrapperFactory
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
-import com.pierbezuhoff.dodeca.models.SharedPreferencesModel
+import com.pierbezuhoff.dodeca.models.SharedPreferencesWrapper
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
@@ -41,9 +41,7 @@ import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
 import kotlinx.android.synthetic.main.toolbar2.*
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -62,37 +60,34 @@ import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 
 @RuntimePermissions
-class MainActivity : AppCompatActivity(),
-    CoroutineScope,
+class MainActivity : AppCompatActivityWithCoroutineContext(),
     ChooseColorDialog.ChooseColorListener,
     DodecaGestureDetector.SingleTapListener
 {
+    private val sharedPreferencesWrapper by lazy {
+        SharedPreferencesWrapper(defaultSharedPreferences)
+    }
+    private val dodecaFactory by lazy {
+        DodecaAndroidViewModelWithSharedPreferencesWrapperFactory(application, sharedPreferencesWrapper)
+    }
     private val model by lazy {
         ViewModelProviders.of(this).get(MainViewModel::class.java)
     }
     private val dodecaViewModel by lazy {
-        ViewModelProviders.of(this).get(DodecaViewModel::class.java)
-    }
-    private val sharedPreferencesModel by lazy {
-        SharedPreferencesModel(defaultSharedPreferences)
+        ViewModelProviders.of(this, dodecaFactory).get(DodecaViewModel::class.java)
     }
     private val dir: File
         get() = model.dir.value ?: dduDir
     private val dduFileRepository =
         DduFileRepository.get(this)
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.Main
-    private lateinit var job: Job
+    private lateinit var dodecaGestureDetector: DodecaGestureDetector
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        job = Job()
         // TODO: migrate to OptionsViewModel
         Options(resources).init() // init options.* and values.*
-        dodecaViewModel.setSharedPreferencesModel(sharedPreferencesModel)
         checkUpgrade()
         setupWindow()
         val binding: ActivityMainBinding =
@@ -100,14 +95,13 @@ class MainActivity : AppCompatActivity(),
         binding.lifecycleOwner = this
         binding.model = model
         binding.dodecaViewModel = dodecaViewModel
-        binding.sharedPreferencesModel = sharedPreferencesModel
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
-        DodecaGestureDetector(applicationContext).let {
+        dodecaGestureDetector = DodecaGestureDetector(applicationContext).also {
+            // MAYBE: memory leak (activity -> detector -> viewModel)
             it.registerSingleTapListener(this)
             dodecaViewModel.registerGestureDetector(it)
         }
-        Log.i(TAG, "Dodeca started${if (intent.action == Intent.ACTION_VIEW) " from implicit intent: ${intent.data?.path ?: "-"}" else ""}")
         handleLaunchFromImplicitIntent()
         setupToolbar()
         model.showBottomBar()
@@ -124,14 +118,14 @@ class MainActivity : AppCompatActivity(),
 
     private fun checkUpgrade() {
         val currentVersionCode = BuildConfig.VERSION_CODE
-        val oldVersionCode = sharedPreferencesModel.fetched(options.versionCode)
+        val oldVersionCode = sharedPreferencesWrapper.fetched(options.versionCode)
         if (oldVersionCode != currentVersionCode) {
             val upgrading: Boolean = oldVersionCode < currentVersionCode
             val upgradingOrDegrading: String = if (upgrading) "Upgrading" else "Degrading"
             val currentVersionName: String = BuildConfig.VERSION_NAME
             val versionCodeChange: String = "$oldVersionCode -> $currentVersionCode"
             Log.i(TAG,"$upgradingOrDegrading to $currentVersionName ($versionCodeChange)")
-            sharedPreferencesModel.set(options.versionCode, currentVersionCode)
+            sharedPreferencesWrapper.set(options.versionCode, currentVersionCode)
             onUpgrade()
         }
     }
@@ -322,7 +316,7 @@ class MainActivity : AppCompatActivity(),
                         }
                     }
                 }
-                sharedPreferencesModel.fetchAll()
+                sharedPreferencesWrapper.fetchAll()
             }
             HELP_CODE -> Unit
         }
@@ -335,8 +329,8 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onDestroy() {
+        dodecaGestureDetector.removeSingleTapListener()
         model.sendOnDestroy()
-        job.cancel()
         super.onDestroy()
     }
 
@@ -449,7 +443,7 @@ class MainActivity : AppCompatActivity(),
         const val DDU_CODE = 1
         const val APPLY_SETTINGS_CODE = 2
         const val HELP_CODE = 3
-        // distraction free
+        // distraction free mode
         const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
 }
