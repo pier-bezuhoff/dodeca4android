@@ -1,0 +1,38 @@
+package com.pierbezuhoff.dodeca.utils
+
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.OnLifecycleEvent
+import java.lang.ref.WeakReference
+
+class Connection<ListenerInterface> {
+    private var listener: WeakReference<ListenerInterface>? = null
+    val subscription: Subscription = Subscription()
+
+    fun send(act: ListenerInterface.() -> Unit) {
+        listener?.get()?.act()
+    }
+
+    inner class Subscription {
+        fun subscribeFrom(listener: ListenerInterface): Output {
+            this@Connection.listener = WeakReference(listener)
+            return Output()
+        }
+    }
+
+    inner class Output {
+        fun unsubscribe() {
+            listener = null
+        }
+
+        fun unsubscribeOnDestroy(lifecycleOwner: LifecycleOwner) {
+            lifecycleOwner.lifecycle.addObserver(object : LifecycleObserver {
+                @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+                fun onDestroy() { unsubscribe() }
+            })
+        }
+    }
+}
+
+

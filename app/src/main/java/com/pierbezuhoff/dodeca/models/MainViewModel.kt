@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.data.options
+import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.dduDir
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -13,16 +14,18 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class MainViewModel(application: Application) : DodecaAndroidViewModel(application) {
+    interface OnDestroyMainActivity { fun onDestroyMainActivity() }
+    private val onDestroyMainActivityConnection = Connection<OnDestroyMainActivity>()
+    val onDestroyMainActivitySubscription = onDestroyMainActivityConnection.subscription
+
     private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData(true)
     private val _dir: MutableLiveData<File> = MutableLiveData()
     private val _showStat: MutableLiveData<Boolean> = MutableLiveData(false)
-    private val _onDestroy: MutableLiveData<Unit> = MutableLiveData()
     private var bottomBarHidingJob: Job? = null
 
     val bottomBarShown: LiveData<Boolean> = _bottomBarShown
     val dir: LiveData<File> = _dir
     val showStat: LiveData<Boolean> = _showStat
-    val onDestroy: LiveData<Unit> = _onDestroy
 
     init {
         _bottomBarShown.observeForever {
@@ -66,7 +69,7 @@ class MainViewModel(application: Application) : DodecaAndroidViewModel(applicati
     }
 
     fun sendOnDestroy() {
-        _onDestroy.value = Unit
+        onDestroyMainActivityConnection.send { onDestroyMainActivity() }
     }
 
     fun changeDir(dir: File) {
