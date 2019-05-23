@@ -1,12 +1,22 @@
 package com.pierbezuhoff.dodeca.models
 
-class Connection<T> {
-    private var listener: T? = null
-    val input: Input = Input()
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.OnLifecycleEvent
+
+typealias ConnectionOutput = Connection<*>.Output
+
+class Connection<ListenerInterface> {
+    private var listener: ListenerInterface? = null
     val subscription: Subscription = Subscription()
 
+    fun send(act: ListenerInterface.() -> Unit) {
+        listener?.act()
+    }
+
     inner class Subscription {
-        fun subscribe(listener: T): Output {
+        fun subscribeFrom(listener: ListenerInterface): Output {
             this@Connection.listener = listener
             return Output()
         }
@@ -17,32 +27,41 @@ class Connection<T> {
             listener = null
         }
     }
-
-    inner class Input {
-        fun send(act: T.() -> Unit) {
-            listener?.act()
-        }
-    }
 }
 
+fun <T> Connection<T>.Subscription.subsribeFromLifecycleOwner(
+    listener: T
+): Connection<T>.Output where T : LifecycleOwner =
+    subscribeFrom(listener).also { output ->
+        listener.lifecycle.addObserver(object : LifecycleObserver {
+            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+            fun onDestroy() {
+                output.unsubscribe()
+            }
+        })
+    }
+
 class Sender {
-    interface Listener { fun onSend() }
+    interface Listener { fun onSend(); fun onSendStaff(s: String, i: Int) }
     private val connection = Connection<Listener>()
-    private val input = connection.input
     val subscription = connection.subscription
 
     fun run() {
-        input.send { onSend() }
+        connection.send { onSend() }
     }
 }
 
 class Receiver : Sender.Listener {
     private lateinit var output: Connection<*>.Output
     fun receive(sender: Sender) {
-        output = sender.subscription.subscribe(this)
+        output = sender.subscription.subscribeFrom(this)
     }
     override fun onSend() {
         print("received")
+    }
+
+    override fun onSendStaff(s: String, i: Int) {
+        print("received $s $i")
     }
 
     fun onDestroy() {
