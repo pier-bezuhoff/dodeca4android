@@ -1,9 +1,6 @@
 package com.pierbezuhoff.dodeca.models
 
 import android.app.Application
-import android.content.Context
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -15,10 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private val context: Context
-        get() = getApplication<Application>().applicationContext
-
+class MainViewModel(application: Application) : DodecaAndroidViewModel(application) {
     private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData(true)
     private val _dir: MutableLiveData<File> = MutableLiveData()
     private val _showStat: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -77,11 +71,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun changeDir(dir: File) {
         _dir.value = dir
-    }
-
-    // for debug
-    fun __log(message: String) {
-        Log.i(TAG, message)
     }
 
     companion object {

@@ -6,7 +6,8 @@ import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.fetch
 import com.pierbezuhoff.dodeca.data.options
 
-class SharedPreferencesModel(
+/** Handy wrapper, does not hold any data except [SharedPreferences] instance; depends on [options] */
+class SharedPreferencesWrapper(
     private val sharedPreferences: SharedPreferences
 ) {
 

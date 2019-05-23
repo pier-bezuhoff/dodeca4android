@@ -59,7 +59,7 @@ class DduRepresentation(override val ddu: Ddu) :
         fun formatToast(@StringRes id: Int, vararg args: Any)
     }
 
-    internal lateinit var sharedPreferencesModel: SharedPreferencesModel // inject
+    internal lateinit var sharedPreferencesWrapper: SharedPreferencesWrapper // inject
     private var presenter: Presenter? = null
     private var statHolder: StatHolder? = null
     private var toastEmitter: ToastEmitter? = null
@@ -339,7 +339,7 @@ class DduRepresentation(override val ddu: Ddu) :
                     }
                 }
                 if (canvasFactor != values.canvasFactor)
-                    sharedPreferencesModel.set(options.canvasFactor, canvasFactor)
+                    sharedPreferencesWrapper.set(options.canvasFactor, canvasFactor)
             }
         }
 

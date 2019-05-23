@@ -9,7 +9,6 @@
     <data>
         <variable name="model" type="com.pierbezuhoff.dodeca.models.MainViewModel"/>
         <variable name="dodecaViewModel" type="com.pierbezuhoff.dodeca.models.DodecaViewModel"/>
-        <variable name="sharedPreferencesModel" type="com.pierbezuhoff.dodeca.models.SharedPreferencesModel"/>
     </data>
     <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"

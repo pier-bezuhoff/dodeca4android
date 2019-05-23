@@ -1,10 +1,8 @@
 package com.pierbezuhoff.dodeca.models
 
 import android.app.Application
-import android.content.Context
 import android.graphics.Canvas
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -16,7 +14,6 @@ import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
-import com.pierbezuhoff.dodeca.db.DduFileRepository
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
@@ -26,17 +23,14 @@ import org.jetbrains.anko.toast
 import java.io.File
 import kotlin.properties.Delegates
 
-class DodecaViewModel(application: Application) :
-    AndroidViewModel(application),
+class DodecaViewModel(
+    application: Application,
+    sharedPreferencesWrapper: SharedPreferencesWrapper
+) :
+    DodecaAndroidViewModelWithSharedPreferencesWrapper(application, sharedPreferencesWrapper),
     DduRepresentation.StatHolder, // by statUpdater
     DduRepresentation.ToastEmitter
 {
-    private lateinit var sharedPreferencesModel: SharedPreferencesModel // inject
-    private val context: Context
-        get() = getApplication<Application>().applicationContext
-    private val dduFileRepository: DduFileRepository =
-        DduFileRepository.get(context)
-
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
     private val _updating: MutableLiveData<Boolean> = MutableLiveData()
     private val _drawTrace: MutableLiveData<Boolean> = MutableLiveData()
@@ -73,11 +67,7 @@ class DodecaViewModel(application: Application) :
             loadDdu(initialDdu)
         }
         registerOptionsObservers()
-    }
-
-    fun setSharedPreferencesModel(sharedPreferencesModel: SharedPreferencesModel) {
-        this.sharedPreferencesModel = sharedPreferencesModel
-        sharedPreferencesModel.fetchAll()
+        sharedPreferencesWrapper.fetchAll()
     }
 
     fun loadDdu(ddu: Ddu) {
@@ -86,7 +76,7 @@ class DodecaViewModel(application: Application) :
         DduRepresentation(ddu).let { dduRepresentation: DduRepresentation ->
             dduRepresentation.connectStatHolder(this)
             dduRepresentation.connectToastEmitter(this)
-            dduRepresentation.sharedPreferencesModel = sharedPreferencesModel
+            dduRepresentation.sharedPreferencesWrapper = sharedPreferencesWrapper
             gestureDetector.value?.apply {
                 registerScrollListener(dduRepresentation)
                 registerScaleListener(dduRepresentation)
@@ -139,7 +129,7 @@ class DodecaViewModel(application: Application) :
     }
 
     private fun <T : Any> setSharedPreference(sharedPreference: SharedPreference<T>, value: T) {
-        sharedPreferencesModel.set(sharedPreference, value)
+        sharedPreferencesWrapper.set(sharedPreference, value)
     }
 
     private suspend fun getInitialDdu(): Ddu =
@@ -151,7 +141,7 @@ class DodecaViewModel(application: Application) :
         }
 
     private fun getRecentDduFile(): File {
-        sharedPreferencesModel.fetch(options.recentDdu)
+        sharedPreferencesWrapper.fetch(options.recentDdu)
         val recentFromAbsolutePath = File(values.recentDdu) // new format
         val recentInDduDir = File(context.dduDir, values.recentDdu) // deprecated format
         return if (recentFromAbsolutePath.exists())

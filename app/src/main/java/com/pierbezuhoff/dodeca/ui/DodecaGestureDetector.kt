@@ -25,6 +25,9 @@ class DodecaGestureDetector(context: Context) : GestureDetector.SimpleOnGestureL
     fun registerSingleTapListener(listener: SingleTapListener) { singleTapListener = listener }
     fun registerScrollListener(listener: ScrollListener) { scrollListener = listener }
     fun registerScaleListener(listener: ScaleListener) { scaleGestureListener.registerScaleListener(listener) }
+    fun removeSingleTapListener() { singleTapListener = null }
+    fun removeScrollListener() { scrollListener = null }
+    fun removeScaleListener() { scaleGestureListener.removeScaleListener() }
 
     fun registerAsOnTouchListenerFor(view: View) {
         view.setOnTouchListener(this)
@@ -59,6 +62,7 @@ internal class ScaleGestureListener : ScaleGestureDetector.SimpleOnScaleGestureL
     fun registerScaleListener(listener: DodecaGestureDetector.ScaleListener) {
         scaleListener = listener
     }
+    fun removeScaleListener() { scaleListener = null }
 
     override fun onScale(detector: ScaleGestureDetector?): Boolean {
         detector?.apply {
