@@ -70,7 +70,7 @@ class ChooseColorDialog(
         }
         val dialog = builder.apply {
             setMessage(R.string.choose_circle_dialog_message)
-            setPositiveButton(R.string.choose_circle_dialog_edit) { _, _ -> Unit } // will be set later
+            setPositiveButton(R.string.choose_circle_dialog_edit) { _, _ -> Unit } // will be setToIn later
             setNegativeButton(R.string.choose_circle_dialog_cancel) { _, _ -> chooseColorListener.onChooseColorClosed() }
         }.create()
         dialog.setOnDismissListener { chooseColorListener.onChooseColorClosed() }

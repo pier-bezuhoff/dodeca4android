@@ -13,28 +13,20 @@ import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.DodecaViewModel
 import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import org.apache.commons.math3.complex.Complex
-import kotlin.coroutines.CoroutineContext
 
 class DodecaView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet),
     LifecycleOwner,
-    CoroutineScope,
     DduRepresentation.Presenter,
     MainViewModel.OnDestroyMainActivity
 {
     lateinit var mainModel: MainViewModel // inject
     lateinit var model: DodecaViewModel // inject
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.Main
     private val lifecycleRegistry: LifecycleRegistry =
         LifecycleRegistry(this)
-    private val job: Job = Job()
 
     private var initialized = false
 
@@ -90,7 +82,6 @@ class DodecaView @JvmOverloads constructor(
     }
 
     override fun onDestroyMainActivity() {
-        job.cancel()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         model.maybeAutosave()
         Log.i(TAG, "onDestroy")

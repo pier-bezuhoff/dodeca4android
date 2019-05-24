@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.content.res.Resources
 import android.util.DisplayMetrics
 import androidx.annotation.BoolRes
+import androidx.annotation.StringRes
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.pierbezuhoff.dodeca.R
@@ -15,42 +16,48 @@ import kotlin.reflect.KProperty
 lateinit var options: Options private set
 lateinit var values: Values private set
 
-abstract class SharedPreference<T>(val default: T) where T : Any {
+abstract class Option<T>(val default: T) where T : Any {
     var value = default
-        set(value) { field = value; _liveData.value = value }
+        protected set(value) {
+            val oldValue = field
+            field = value
+            if (value != oldValue)
+                _liveData.value = value
+        }
     private val _liveData: MutableLiveData<T> = MutableLiveData(value)
     val liveData: LiveData<T> = _liveData
 
-    abstract fun peek(sharedPreferences: SharedPreferences): T
+    abstract fun peekFrom(sharedPreferences: SharedPreferences): T
 
-    fun fetch(sharedPreferences: SharedPreferences) {
+    fun fetchFrom(sharedPreferences: SharedPreferences) {
         try {
-            val newValue = peek(sharedPreferences)
+            val newValue = peekFrom(sharedPreferences)
             value = newValue
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    abstract fun put(editor: SharedPreferences.Editor)
+    abstract fun putIn(editor: SharedPreferences.Editor)
 
-    fun set(newValue: T? = null, editor: SharedPreferences.Editor? = null) {
+    fun setToIn(newValue: T? = null, editor: SharedPreferences.Editor? = null) {
         value = newValue ?: default
-        editor?.let { put(editor) }
+        editor?.let { putIn(editor) }
     }
 
-    abstract fun remove(editor: SharedPreferences.Editor)
+    abstract fun removeFrom(editor: SharedPreferences.Editor)
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T =
+        value
 }
 
-open class Option<T>(val key: String, default: T) : SharedPreference<T>(default) where T : Any {
-    override fun equals(other: Any?): Boolean = other is Option<*> && other.key == key
+open class KeyOption<T>(val key: String, default: T) : Option<T>(default) where T : Any {
+    override fun equals(other: Any?): Boolean = other is KeyOption<*> && other.key == key
     override fun hashCode(): Int = key.hashCode()
-    override fun toString(): String = "Option '$key': $value (default $default)"
+    override fun toString(): String = "KeyOption '$key': $value (default $default)"
 
     @Suppress("UNCHECKED_CAST")
-    override fun peek(sharedPreferences: SharedPreferences): T = when (default) {
+    override fun peekFrom(sharedPreferences: SharedPreferences): T = when (default) {
         is Boolean -> sharedPreferences.getBoolean(key, default) as T
         is String -> sharedPreferences.getString(key, default) as T
         is Float -> sharedPreferences.getFloat(key, default) as T
@@ -59,7 +66,7 @@ open class Option<T>(val key: String, default: T) : SharedPreference<T>(default)
         else -> throw Exception("Unsupported type: ${default.javaClass.name}")
     }
 
-    override fun put(editor: SharedPreferences.Editor) {
+    override fun putIn(editor: SharedPreferences.Editor) {
         when (value) {
             is Boolean -> editor.putBoolean(key, value as Boolean)
             is String -> editor.putString(key, value as String)
@@ -70,70 +77,55 @@ open class Option<T>(val key: String, default: T) : SharedPreference<T>(default)
         }
     }
 
-    override fun remove(editor: SharedPreferences.Editor) {
+    override fun removeFrom(editor: SharedPreferences.Editor) {
         editor.remove(key)
     }
 }
 
-class ParsedIntOption(key: String, default: Int) : Option<Int>(key, default) {
-    override fun peek(sharedPreferences: SharedPreferences): Int =
+class ParsedIntKeyOption(key: String, default: Int) : KeyOption<Int>(key, default) {
+    override fun peekFrom(sharedPreferences: SharedPreferences): Int =
         sharedPreferences.getString(key, default.toString())?.toInt() ?: default
-    override fun put(editor: SharedPreferences.Editor) {
+    override fun putIn(editor: SharedPreferences.Editor) {
         editor.putString(key, value.toString())
     }
 }
 
-class ParsedFloatOption(key: String, default: Float) : Option<Float>(key, default) {
-    override fun peek(sharedPreferences: SharedPreferences): Float =
+class ParsedFloatKeyOption(key: String, default: Float) : KeyOption<Float>(key, default) {
+    override fun peekFrom(sharedPreferences: SharedPreferences): Float =
         sharedPreferences.getString(key, default.toString())?.toFloat() ?: default
-    override fun put(editor: SharedPreferences.Editor) {
+    override fun putIn(editor: SharedPreferences.Editor) {
         editor.putString(key, value.toString())
     }
 }
 
+@Suppress("FunctionName")
 class Options(val resources: Resources) {
-    @Suppress("FunctionName")
-    private fun BooleanOption(key: String, @BoolRes id: Int): Option<Boolean> =
-        Option(key, resources.getBoolean(id))
-    val redrawTraceOnMove = BooleanOption("redraw_trace", R.bool.redraw_trace)
-    val showAllCircles = BooleanOption("show_all_circles", R.bool.show_all_circles)
-    // val showCenters = Option("show_centers", false)
-    val reverseMotion = BooleanOption("reverse_motion", R.bool.reverse_motion)
-    // val rotateShapes = Option("rotate_shapes", false)
-    val autosave = BooleanOption("autosave", R.bool.autosave)
-    val saveAs = BooleanOption("save_as", R.bool.save_as)
-    val autocenterAlways = BooleanOption("autocenter_always", R.bool.autocenter_always)
-    val speed = ParsedFloatOption(
-        "speed",
-        resources.getString(R.string.speed).toFloat()
-    )
-    val skipN = ParsedIntOption(
-        "skip_n",
-        resources.getString(R.string.skip_n).toInt()
-    )
-    val canvasFactor = ParsedIntOption(
-        "canvas_factor",
-        resources.getString(R.string.canvas_factor).toInt()
-    )
-    val showStat = BooleanOption("show_stat", R.bool.show_stat)
+    private fun BooleanKeyOption(key: String, @BoolRes id: Int): KeyOption<Boolean> =
+        KeyOption(key, resources.getBoolean(id))
+    private fun ParsedIntKeyOption(key: String, @StringRes id: Int): ParsedIntKeyOption =
+        ParsedIntKeyOption(key, default = resources.getString(id).toInt())
+    private fun ParsedFloatKeyOption(key: String, @StringRes id: Int): ParsedFloatKeyOption =
+        ParsedFloatKeyOption(key, resources.getString(id).toFloat())
+    
+    val redrawTraceOnMove = BooleanKeyOption("redraw_trace", R.bool.redraw_trace)
+    val showAllCircles = BooleanKeyOption("show_all_circles", R.bool.show_all_circles)
+    // val showCenters = KeyOption("show_centers", false)
+    val reverseMotion = BooleanKeyOption("reverse_motion", R.bool.reverse_motion)
+    // val rotateShapes = KeyOption("rotate_shapes", false)
+    val autosave = BooleanKeyOption("autosave", R.bool.autosave)
+    val saveAs = BooleanKeyOption("save_as", R.bool.save_as)
+    val autocenterAlways = BooleanKeyOption("autocenter_always", R.bool.autocenter_always)
+    val speed = ParsedFloatKeyOption("speed", R.string.speed)
+    val skipN = ParsedIntKeyOption("skip_n", R.string.skip_n)
+    val canvasFactor = ParsedIntKeyOption("canvas_factor", R.string.canvas_factor)
+    val showStat = BooleanKeyOption("show_stat", R.bool.show_stat)
     // preview size in pixels, yet to be converted to dp
-    val previewSize = ParsedIntOption(
-        "preview_size",
-        resources.getString(R.string.preview_size).toInt()
-    )
-    val autocenterPreview = BooleanOption("autocenter_preview", R.bool.autocenter_preview)
-    val nPreviewUpdates = ParsedIntOption(
-        "n_preview_updates",
-        resources.getString(R.string.n_preview_updates).toInt()
-    )
-    val previewSmartUpdates = BooleanOption("preview_smart_updates",
-        R.bool.preview_smart_updates
-    )
-    val recentDdu: Option<Filename> = Option("recent_ddu", resources.getString(R.string.first_ddu))
-    val versionCode = Option(
-        "version_code",
-        resources.getInteger(R.integer.version_code)
-    )
+    val previewSize = ParsedIntKeyOption("preview_size", R.string.preview_size)
+    val autocenterPreview = BooleanKeyOption("autocenter_preview", R.bool.autocenter_preview)
+    val nPreviewUpdates = ParsedIntKeyOption("n_preview_updates", R.string.n_preview_updates)
+    val previewSmartUpdates = BooleanKeyOption("preview_smart_updates", R.bool.preview_smart_updates)
+    val recentDdu: KeyOption<Filename> = KeyOption("recent_ddu", resources.getString(R.string.first_ddu))
+    val versionCode = KeyOption("version_code", resources.getInteger(R.integer.version_code))
 
     fun init() {
         if (!::options.isInitialized) {
@@ -143,7 +135,6 @@ class Options(val resources: Resources) {
     }
 }
 
-// NOTE: may be moved toplevel
 class Values(private val options: Options) {
     val redrawTraceOnMove: Boolean by options.redrawTraceOnMove
     val showAllCircles: Boolean by options.showAllCircles
@@ -164,19 +155,9 @@ class Values(private val options: Options) {
     val versionCode: Int by options.versionCode
 }
 
-internal fun Resources.dp2px(dp: Int): Int =
+private fun Resources.dp2px(dp: Int): Int =
     dp * displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
 
-internal fun Resources.px2dp(px: Int): Int =
+private fun Resources.px2dp(px: Int): Int =
     px * DisplayMetrics.DENSITY_DEFAULT / displayMetrics.densityDpi
 
-inline fun <T : Any> SharedPreferences.fetch(preference: SharedPreference<T>) =
-    preference.fetch(this)
-
-inline fun <T : Any> SharedPreferences.Editor.put(preference: SharedPreference<T>) =
-    preference.put(this)
-inline fun <T : Any> SharedPreferences.Editor.set(preference: SharedPreference<T>, value: T? = null) =
-    preference.set(value, this)
-inline fun <T : Any> SharedPreferences.Editor.remove(preference: SharedPreference<T>) {
-    preference.remove(this)
-}

@@ -18,8 +18,10 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.withStyledAttributes
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
@@ -59,7 +61,7 @@ import java.io.File
 // MAYBE: action bar: search by name
 // MAYBE: store in sharedPreferences last dir
 // MAYBE: link to external folder
-class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
+class DduChooserActivity : AppCompatActivity() {
     lateinit var dir: File // current
     private val dduFileRepository =
         DduFileRepository.get(this)
@@ -86,7 +88,7 @@ class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
 //        progressBar.hide()
         ddu_recycler_view.apply {
             adapter = dduAdapter
-            // colors and thickness are set from styles.xml
+            // colors and thickness are setToIn from styles.xml
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.HORIZONTAL))
             itemAnimator = DefaultItemAnimator()
@@ -155,7 +157,7 @@ class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
     }
 
     private fun renameDduFile(file: File, position: Int) {
-        launch {
+        lifecycleScope.launch {
             val name: FileName = file.nameWithoutExtension
             var input: EditText? = null
             val originalFilename: Filename? = dduFileRepository.getOriginalFilename(file.name)
@@ -168,7 +170,7 @@ class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
                     input = editText(name)
                 }
                 positiveButton(getString(R.string.ddu_rename)) {
-                    launch {
+                    lifecycleScope.launch {
                         input?.text?.toString()?.trim()?.let { newName: FileName ->
                             val newFilename = "$newName.ddu"
                             val newFile = File(file.parentFile.absolutePath, newFilename)
@@ -196,7 +198,7 @@ class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
 
     private fun deleteDduFile(file: File, position: Int) {
         toast(getString(R.string.ddu_delete_toast, file.nameWithoutExtension))
-        launch {
+        lifecycleScope.launch {
             dduFileRepository.delete(file.name)
         }
         file.delete()
@@ -206,7 +208,7 @@ class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
 
     private fun restoreDduFile(file: File) {
         // TODO: restore imported files by original path
-        launch {
+        lifecycleScope.launch {
             val original: Filename? = extract1Ddu(
                 file.name, dduDir, dduFileRepository,
                 TAG
@@ -230,7 +232,7 @@ class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
     }
 
     private fun deleteDir(dir: File) {
-        launch {
+        lifecycleScope.launch {
             dir.walkTopDown().iterator().forEach {
                 if (it.isDdu) dduFileRepository.delete(it.name)
             }
@@ -334,7 +336,7 @@ class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
             R.string.delete_all_alert_title
         ) {
             yesButton {
-                launch {
+                lifecycleScope.launch {
                     dir.walkTopDown().iterator().forEach {
                         if (it.isDdu) dduFileRepository.delete(it.name)
                     }
@@ -393,7 +395,7 @@ class DduChooserActivity : AppCompatActivityWithCoroutineContext() {
     }
 
     private fun exportDduFileForDodecaLook(uri: Uri) {
-        launch {
+        lifecycleScope.launch {
             requestedDduFile?.let { file ->
                 contentResolver.openOutputStream(uri)?.let { outputStream ->
                     Log.i(TAG, "exporting file \"${file.name}\" in DodecaLook-compatible format")
@@ -538,7 +540,7 @@ class DduAdapter(
     init {
         // maybe: in async task; show ContentLoadingProgressBar or ProgressDialog
         // ISSUE: may lead to OutOfMemoryError (fast return to after opening a ddu)
-        activity.launch {
+        activity.lifecycleScope.launch {
             dduFileRepository.getAllDduFiles().forEach {
                 previews[it.filename] = it.preview
             }
@@ -584,7 +586,7 @@ class DduAdapter(
         if (fileName !in buildings.keys) {
             buildings[fileName] = holder
             doAsync {
-                activity.launch {
+                activity.lifecycleScope.launch {
                     val ddu = Ddu.fromFile(file)
                     // val size: Int = (0.4 * width).roundToInt() // width == height
                     val size = values.previewSizePx

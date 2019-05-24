@@ -15,10 +15,12 @@ import android.widget.BaseAdapter
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.lifecycleScope
 import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
@@ -62,7 +64,7 @@ import java.io.IOException
 
 @RuntimePermissions
 class MainActivity :
-    AppCompatActivityWithCoroutineContext(),
+    AppCompatActivity(),
     ChooseColorDialog.ChooseColorListener
 {
     private val sharedPreferencesWrapper by lazy {
@@ -116,7 +118,7 @@ class MainActivity :
             val upgrading: Boolean = oldVersionCode < currentVersionCode
             val upgradingOrDegrading: String = if (upgrading) "Upgrading" else "Degrading"
             val currentVersionName: String = BuildConfig.VERSION_NAME
-            val versionCodeChange: String = "$oldVersionCode -> $currentVersionCode"
+            val versionCodeChange = "$oldVersionCode -> $currentVersionCode"
             Log.i(TAG,"$upgradingOrDegrading to $currentVersionName ($versionCodeChange)")
             sharedPreferencesWrapper.set(options.versionCode, currentVersionCode)
             onUpgrade()
@@ -190,7 +192,7 @@ class MainActivity :
             R.id.trace_button -> dodecaViewModel.toggleDrawTrace()
             R.id.choose_color_button -> {
                 dodecaViewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
-                    temporaryPause()
+                    temporaryPause() // BUG: timer job cancellation does not work
                     ChooseColorDialog(
                         this,
                         chooseColorListener = this,
@@ -213,7 +215,7 @@ class MainActivity :
         if (!values.saveAs) {
             dodecaViewModel.requestSaveDdu()
         } else {
-            temporaryPause()
+            temporaryPause() // BUG: timer job cancellation does not work
             buildSaveAsDialog().show()
         }
     }
@@ -299,7 +301,7 @@ class MainActivity :
                         }
                     }
                     having("discard_previews") {
-                        launch(coroutineContext) {
+                        lifecycleScope.launch {
                             dduFileRepository.getAllDduFiles().forEach { dduFile ->
                                 dduFileRepository.dropPreview(dduFile)
                             }
