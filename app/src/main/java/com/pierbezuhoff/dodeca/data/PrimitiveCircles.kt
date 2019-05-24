@@ -94,7 +94,10 @@ internal class PrimitiveCircles(
         }
     }
 
-    override fun updateTimes(times: Int, reverse: Boolean) {
+    override fun updateTimes(times: Int, reverse: Boolean) =
+        _updateTimes(times, reverse)
+
+    private inline fun _updateTimes(times: Int, reverse: Boolean) {
         repeat(times) {
             _update(reverse)
         }
@@ -108,8 +111,8 @@ internal class PrimitiveCircles(
 
     override suspend fun suspendableUpdateTimes(times: Int, reverse: Boolean) {
         // TODO: optimize
-        repeat(times) {
-            withContext(Dispatchers.Default) { _update(reverse) }
+        withContext(Dispatchers.Default) {
+            _updateTimes(times, reverse)
         }
     }
 

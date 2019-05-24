@@ -166,6 +166,7 @@ class DduRepresentation(override val ddu: Ddu) :
         drawer.drawTimes(batch)
         updateOnce = true
         presenter?.redraw()
+        statHolderConnection.send { updateStat(batch) }
     }
 
     fun requestUpdateOnce() {
