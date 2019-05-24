@@ -1,6 +1,7 @@
 package com.pierbezuhoff.dodeca.models
 
 import android.app.Application
+import android.util.Log
 import android.view.MotionEvent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -61,6 +62,7 @@ class MainViewModel(
         _bottomBarShown.postValue(false)
 
     private fun hideBottomBarAfterTimeout() {
+        Log.i(TAG, "hideBottomBarAfterTimeout")
         bottomBarHidingJob?.cancel()
         bottomBarHidingJob = viewModelScope.launch(Dispatchers.Default) {
             delay(BOTTOM_BAR_HIDE_DELAY_IN_MILLISECONDS)
@@ -69,6 +71,7 @@ class MainViewModel(
     }
 
     fun cancelBottomBarHidingJob() {
+        Log.i(TAG, "cancelBottomBarHidingJob")
         bottomBarHidingJob?.cancel()
     }
 

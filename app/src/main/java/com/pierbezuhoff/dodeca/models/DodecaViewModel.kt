@@ -95,14 +95,25 @@ class DodecaViewModel(
         // TODO: skipN --> request, wait until done
         options.skipN.observe { skipN: Int ->
             dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
+                // TODO: do on cloned CircleGroup
                 if (skipN > 0) {
-                    Log.i(TAG, "skipping $skipN updates")
                     viewModelScope.launch {
+                        Log.i(TAG, "Skipping $skipN updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
+                        toast("Skipping $skipN updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
                         pause()
+                        val startTime = System.currentTimeMillis()
                         withTimeoutOrNull(SKIP_N_TIMEOUT_MILLISECONDS) {
                             dduRepresentation.updateTimes(skipN)
+                            updateStat(skipN)
                             setSharedPreference(options.skipN, 0)
-                        } ?: Log.w(TAG, "skipN aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s)")
+                            val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
+                            Log.i(TAG, "Skipped $skipN updates within $skippingTime s")
+                            toast("Skipped $skipN updates within $skippingTime s")
+                        } ?: run {
+                            val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
+                            Log.w(TAG, "Skipping aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s > $skippingTime s)")
+                            toast("Skipping aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s)")
+                        }
                         resume()
                     }
                 }
