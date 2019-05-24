@@ -28,13 +28,13 @@ fun tintEnabled(view: View, enabled: Boolean) {
     )
 }
 
-@BindingAdapter(value = ["switchImageWhen", "trueDrawable", "falseDrawable"])
+@BindingAdapter(value = ["switchImageWhen", "trueDrawable", "falseDrawable"], requireAll = true)
 fun switchImageWhen(imageView: ImageView, enabled: Boolean, trueDrawable: Drawable, falseDrawable: Drawable) {
     imageView.setImageDrawable(if (enabled) trueDrawable else falseDrawable)
 }
 
-@BindingAdapter("description")
-fun description(view: View, description: String) {
-    TooltipCompat.setTooltipText(view, description)
-    view.contentDescription = description
+@BindingAdapter("android:contentDescription")
+fun setContentDescription(view: View, contentDescription: String) {
+    TooltipCompat.setTooltipText(view, contentDescription)
+    view.contentDescription = contentDescription
 }

@@ -22,7 +22,7 @@
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:description="@{@string/choose_color_button_title}"
+                android:contentDescription="@{@string/choose_color_button_title}"
         />
         <ImageButton
                 android:id="@+id/trace_button"
@@ -32,7 +32,7 @@
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:description="@{@string/trace_button_title}"
+                android:contentDescription="@{@string/trace_button_title}"
                 app:tintEnabled="@{safeUnbox(dodecaViewModel.drawTrace)}"
         />
         <Spinner
@@ -44,7 +44,7 @@
                 android:layout_height="match_parent"
                 android:selectedItemPosition="@={Shape.toOrdinal(dodecaViewModel.shape)}"
                 android:onItemSelected="@{(parent, view, position, id) -> model.showBottomBar()}"
-                app:description="@{@string/shape_spinner_title}"
+                android:contentDescription="@{@string/shape_spinner_title}"
         />
         <ImageButton
                 android:id="@+id/clear_button"
@@ -54,7 +54,7 @@
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:description="@{@string/clear_button_title}"
+                android:contentDescription="@{@string/clear_button_title}"
         />
         <ImageButton
                 android:id="@+id/autocenter_button"
@@ -64,7 +64,7 @@
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:description="@{@string/autocenter_button_title}"
+                android:contentDescription="@{@string/autocenter_button_title}"
         />
     </LinearLayout>
 </layout>

@@ -103,10 +103,10 @@ class DduRepresentation(override val ddu: Ddu) :
             centerizeTo(it)
         }
         clearTrace()
-        // drawing main loop
+        // main loop
         with(presenter) {
             launch(coroutineContext) {
-                delay(INITIAL_DELAY)
+                delay(INITIAL_DELAY_IN_MILLISECONDS)
                 while (isActive) {
                     if (updating)
                         redraw()
@@ -142,8 +142,8 @@ class DduRepresentation(override val ddu: Ddu) :
             values.canvasFactor == 1 &&
             1 - 1e-4 < scale && scale < 1 + 1e-1
         ) {
-            trace?.let {
-                scroll(-it.motion.dx, -it.motion.dy)
+            trace?.motion?.run {
+                scroll(-dx, -dy)
             }
         } else { // BUG: sometimes skip to else
             presenter?.getCenter()?.let { center ->
@@ -178,9 +178,9 @@ class DduRepresentation(override val ddu: Ddu) :
     override fun onScroll(dx: Float, dy: Float) =
         scroll(-dx, -dy)
 
-    private fun scroll(ddx: Float, ddy: Float) =
+    private fun scroll(dx: Float, dy: Float) =
         transform {
-            postTranslate(ddx, ddy)
+            postTranslate(dx, dy)
         }
 
     private fun scale(dscale: Float, focusX: Float, focusY: Float) =
@@ -230,21 +230,25 @@ class DduRepresentation(override val ddu: Ddu) :
         motion.move(z)
 
     override fun onShowAllCircles(showAllCircles: Boolean) {
+        Log.i(TAG, "onShowAllCircles $showAllCircles")
         presenter?.redraw()
     }
 
     override fun onAutocenterAlways(autocenterAlways: Boolean) {
+        Log.i(TAG, "onAutocenterAlways $autocenterAlways")
         // MAYBE: invoke only when changed
         if (autocenterAlways)
             autocenterize()
     }
 
     override fun onCanvasFactor(canvasFactor: Int) {
+        Log.i(TAG, "onCanvasFactor $canvasFactor")
         if (canvasFactor != trace?.currentCanvasFactor)
             clearTrace()
     }
 
     override fun onSpeed(speed: Float) {
+        Log.i(TAG, "onSpeed $speed")
         updateScheduler.setSpeed(speed)
     }
 
@@ -422,8 +426,9 @@ class DduRepresentation(override val ddu: Ddu) :
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
         private const val FPS = 60 // empirical
-        private const val DT_IN_MILLISECONDS: Long = (1000f / FPS).toLong() // interval between presenter.redraw() calls
-        private const val INITIAL_DELAY: Long = 1
+        /** Interval between presenter.redraw() calls */
+        private const val DT_IN_MILLISECONDS: Long = (1000f / FPS).toLong()
+        private const val INITIAL_DELAY_IN_MILLISECONDS: Long = 1
     }
 }
 

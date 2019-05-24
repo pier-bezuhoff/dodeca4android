@@ -1,10 +1,12 @@
 package com.pierbezuhoff.dodeca.models
 
 import android.app.Application
+import android.view.MotionEvent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.data.options
+import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.dduDir
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +15,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
-class MainViewModel(application: Application) : DodecaAndroidViewModel(application) {
+class MainViewModel(
+    application: Application
+) : DodecaAndroidViewModel(application),
+    DodecaGestureDetector.SingleTapListener
+{
     interface OnDestroyMainActivity { fun onDestroyMainActivity() }
     private val onDestroyMainActivityConnection = Connection<OnDestroyMainActivity>()
     val onDestroyMainActivitySubscription = onDestroyMainActivityConnection.subscription
@@ -28,6 +34,9 @@ class MainViewModel(application: Application) : DodecaAndroidViewModel(applicati
     val showStat: LiveData<Boolean> = _showStat
 
     init {
+        DodecaGestureDetector.get(context)
+            .onSingleTapSubscription
+            .subscribeFrom(this)
         _bottomBarShown.observeForever {
             when(it) {
                 true -> hideBottomBarAfterTimeout()
@@ -39,6 +48,10 @@ class MainViewModel(application: Application) : DodecaAndroidViewModel(applicati
         }
         if (_dir.value == null)
             _dir.value = context.dduDir
+    }
+
+    override fun onSingleTap(e: MotionEvent?) {
+        toggleBottomBar()
     }
 
     fun showBottomBar() =

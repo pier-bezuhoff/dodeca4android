@@ -1,58 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
->
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+    </data>
     <LinearLayout
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
+            android:layout_height="match_parent"
     >
-        <CheckBox
-                android:id="@+id/all_circles_checkbox"
-                android:layout_width="wrap_content"
+        <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
-                android:layout_marginStart="0dp"
-                android:layout_marginEnd="56dp"
-                android:contentDescription="@string/all_circles_checkbox_description"
-        />
-        <ToggleButton
-                android:id="@+id/sort_by_color"
-                android:background="@null"
-                android:button="@drawable/sort_order"
-                android:layout_width="24dp"
+        >
+            <CheckBox
+                    android:id="@+id/all_circles_checkbox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:layout_marginStart="0dp"
+                    android:layout_marginEnd="56dp"
+                    android:contentDescription="@{@string/all_circles_checkbox_description}"
+            />
+            <ToggleButton
+                    android:id="@+id/sort_by_color"
+                    android:background="@null"
+                    android:button="@drawable/sort_order"
+                    android:layout_width="24dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="24dp"
+                    android:checked="true"
+                    android:padding="8dp"
+                    android:textOn=""
+                    android:textOff=""
+                    android:contentDescription="@{@string/sort_by_color_description}"
+            />
+            <ToggleButton
+                    android:id="@+id/sort_by_name"
+                    android:background="@null"
+                    android:button="@drawable/sort_order"
+                    android:layout_width="24dp"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:textOn=""
+                    android:textOff=""
+                    android:contentDescription="@{@string/sort_by_name_description}"
+            />
+        </LinearLayout>
+        <View style="@style/dividerHorizontal"/>
+        <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/circle_rows"
+                android:scrollbars="vertical"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="24dp"
-                android:checked="true"
-                android:padding="8dp"
-                android:textOn=""
-                android:textOff=""
-                android:contentDescription="@string/sort_by_color_description"
+                android:layout_margin="8dp"
         />
-        <ToggleButton
-                android:id="@+id/sort_by_name"
-                android:background="@null"
-                android:button="@drawable/sort_order"
-                android:layout_width="24dp"
-                android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:textOn=""
-                android:textOff=""
-                android:contentDescription="@string/sort_by_name_description"
-        />
-    </LinearLayout>
-    <View style="@style/dividerHorizontal"/>
-    <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/circle_rows"
-            android:scrollbars="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-    />
-    <View style="@style/dividerHorizontal"/>
+        <View style="@style/dividerHorizontal"/>
 
-</LinearLayout>
+    </LinearLayout>
+</layout>
