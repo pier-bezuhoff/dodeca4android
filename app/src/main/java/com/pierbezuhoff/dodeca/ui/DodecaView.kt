@@ -19,7 +19,7 @@ import kotlinx.coroutines.Job
 import org.apache.commons.math3.complex.Complex
 import kotlin.coroutines.CoroutineContext
 
-class DodecaView(
+class DodecaView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet),

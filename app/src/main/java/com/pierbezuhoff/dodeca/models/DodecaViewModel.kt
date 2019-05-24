@@ -49,7 +49,7 @@ class DodecaViewModel(
     val dTime: LiveData<Float> = _dTime
     val statTimeDelta: Int = statUpdater.statTimeDelta
 
-    val gestureDetector: DodecaGestureDetector = DodecaGestureDetector(context)
+    val gestureDetector: DodecaGestureDetector = DodecaGestureDetector.get(context)
 
     init {
         shape.observeForever { shape: Shape ->
@@ -88,13 +88,13 @@ class DodecaViewModel(
     }
 
     private fun registerOptionsObservers() {
+        // ISSUE: none of observers does work
         options.showAllCircles.observe { dduRepresentation.value?.onShowAllCircles(it) }
         options.autocenterAlways.observe { dduRepresentation.value?.onAutocenterAlways(it) }
         options.canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
         options.speed.observe { dduRepresentation.value?.onSpeed(it) }
         // TODO: skipN --> request, wait until done
         options.skipN.observe { skipN: Int ->
-            // BUG: does not work
             dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
                 if (skipN > 0) {
                     Log.i(TAG, "skipping $skipN updates")
@@ -214,7 +214,6 @@ class DodecaViewModel(
     }
 
     fun resume() {
-        Log.i(TAG, "resume: oldUpdating = $oldUpdating")
         val newUpdating = oldUpdating ?: DEFAULT_UPDATING
         setUpdating(newUpdating)
     }

@@ -11,6 +11,7 @@ class Connection<ListenerInterface> {
     val subscription: Subscription = Subscription()
 
     fun send(act: ListenerInterface.() -> Unit) {
+        // callsInPlace(act, InvocationKind.AT_MOST_ONCE)
         listener?.get()?.act()
     }
 

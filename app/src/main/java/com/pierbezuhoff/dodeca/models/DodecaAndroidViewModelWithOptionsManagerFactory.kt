@@ -11,7 +11,7 @@ class DodecaAndroidViewModelWithOptionsManagerFactory(
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        require(modelClass.isAssignableFrom(DodecaAndroidViewModelWithOptionsManager::class.java))
+        require(DodecaAndroidViewModelWithOptionsManager::class.java.isAssignableFrom(modelClass))
         val constructor =
             modelClass.getConstructor(Application::class.java, OptionsManager::class.java)
         return constructor.newInstance(application, optionsManager)

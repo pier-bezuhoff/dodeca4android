@@ -8,7 +8,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -62,9 +61,9 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 @RuntimePermissions
-class MainActivity : AppCompatActivityWithCoroutineContext(),
-    ChooseColorDialog.ChooseColorListener,
-    DodecaGestureDetector.SingleTapListener
+class MainActivity :
+    AppCompatActivityWithCoroutineContext(),
+    ChooseColorDialog.ChooseColorListener
 {
     private val sharedPreferencesWrapper by lazy {
         OptionsManager(defaultSharedPreferences)
@@ -96,10 +95,6 @@ class MainActivity : AppCompatActivityWithCoroutineContext(),
         binding.dodecaViewModel = dodecaViewModel
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
-        DodecaGestureDetector(applicationContext)
-            .onSingleTapSubscription
-            .subscribeFrom(this)
-            .unsubscribeOnDestroy(this)
         handleLaunchFromImplicitIntent()
         setupToolbar()
         model.showBottomBar()
@@ -141,9 +136,6 @@ class MainActivity : AppCompatActivityWithCoroutineContext(),
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         )
     }
-
-    override fun onSingleTap(e: MotionEvent?) =
-        model.toggleBottomBar()
 
     private fun onUpgrade() {
         // extracting assets
