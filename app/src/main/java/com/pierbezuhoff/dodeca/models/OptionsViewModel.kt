@@ -6,9 +6,9 @@ import android.util.DisplayMetrics
 import androidx.annotation.BoolRes
 import androidx.lifecycle.AndroidViewModel
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.Option
-import com.pierbezuhoff.dodeca.data.ParsedFloatOption
-import com.pierbezuhoff.dodeca.data.ParsedIntOption
+import com.pierbezuhoff.dodeca.data.KeyOption
+import com.pierbezuhoff.dodeca.data.ParsedFloatKeyOption
+import com.pierbezuhoff.dodeca.data.ParsedIntKeyOption
 import com.pierbezuhoff.dodeca.utils.Filename
 
 class OptionsViewModel(application: Application) : AndroidViewModel(application) {
@@ -17,61 +17,61 @@ class OptionsViewModel(application: Application) : AndroidViewModel(application)
 
     val values: Values = Values(this)
 
-    internal fun dp2px(dp: Int): Int =
+    private fun dp2px(dp: Int): Int =
         dp * resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
 
-    internal fun px2dp(px: Int): Int =
+    private fun px2dp(px: Int): Int =
         px * DisplayMetrics.DENSITY_DEFAULT / resources.displayMetrics.densityDpi
 
     @Suppress("FunctionName")
-    private fun BooleanOption(key: String, @BoolRes id: Int): Option<Boolean> =
-        Option(key, resources.getBoolean(id))
+    private fun BooleanOption(key: String, @BoolRes id: Int): KeyOption<Boolean> =
+        KeyOption(key, resources.getBoolean(id))
 
     val redrawTraceOnMove =
         BooleanOption("redraw_trace", R.bool.redraw_trace)
     val showAllCircles =
         BooleanOption("show_all_circles", R.bool.show_all_circles)
-    // val showCenters = Option("show_centers", false)
+    // val showCenters = KeyOption("show_centers", false)
     val reverseMotion =
         BooleanOption("reverse_motion", R.bool.reverse_motion)
-    // val rotateShapes = Option("rotate_shapes", false)
+    // val rotateShapes = KeyOption("rotate_shapes", false)
     val autosave =
         BooleanOption("autosave", R.bool.autosave)
     val saveAs =
         BooleanOption("save_as", R.bool.save_as)
     val autocenterAlways =
         BooleanOption("autocenter_always", R.bool.autocenter_always)
-    val speed = ParsedFloatOption(
+    val speed = ParsedFloatKeyOption(
         "speed",
         resources.getString(R.string.speed).toFloat()
     )
-    val skipN = ParsedIntOption(
+    val skipN = ParsedIntKeyOption(
         "skip_n",
         resources.getString(R.string.skip_n).toInt()
     )
-    val canvasFactor = ParsedIntOption(
+    val canvasFactor = ParsedIntKeyOption(
         "canvas_factor",
         resources.getString(R.string.canvas_factor).toInt()
     )
     val showStat =
         BooleanOption("show_stat", R.bool.show_stat)
     // preview size in pixels, yet to be converted to dp
-    val previewSize = ParsedIntOption(
+    val previewSize = ParsedIntKeyOption(
         "preview_size",
         resources.getString(R.string.preview_size).toInt()
     )
     val autocenterPreview =
         BooleanOption("autocenter_preview", R.bool.autocenter_preview)
-    val nPreviewUpdates = ParsedIntOption(
+    val nPreviewUpdates = ParsedIntKeyOption(
         "n_preview_updates",
         resources.getString(R.string.n_preview_updates).toInt()
     )
     val previewSmartUpdates =
         BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)
-    val recentDdu: Option<Filename> =
-        Option("recent_ddu", resources.getString(R.string.first_ddu))
+    val recentDdu: KeyOption<Filename> =
+        KeyOption("recent_ddu", resources.getString(R.string.first_ddu))
     val versionCode =
-        Option("version_code", resources.getInteger(R.integer.version_code))
+        KeyOption("version_code", resources.getInteger(R.integer.version_code))
 
     class Values(private val options: OptionsViewModel) {
         val redrawTraceOnMove: Boolean by options.redrawTraceOnMove

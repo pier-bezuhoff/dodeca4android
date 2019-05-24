@@ -5,13 +5,12 @@ import android.graphics.Canvas
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
+import com.pierbezuhoff.dodeca.data.Option
 import com.pierbezuhoff.dodeca.data.Shape
-import com.pierbezuhoff.dodeca.data.SharedPreference
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
@@ -21,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.anko.toast
 import java.io.File
+import kotlin.math.abs
 import kotlin.properties.Delegates
 
 class DodecaViewModel(
@@ -52,6 +52,8 @@ class DodecaViewModel(
     val gestureDetector: DodecaGestureDetector = DodecaGestureDetector.get(context)
 
     init {
+        registerOptionsObservers()
+        optionsManager.fetchAll()
         shape.observeForever { shape: Shape ->
             dduRepresentation.value?.shape = shape
         }
@@ -59,8 +61,6 @@ class DodecaViewModel(
             val initialDdu: Ddu = getInitialDdu()
             loadDdu(initialDdu)
         }
-        registerOptionsObservers()
-        optionsManager.fetchAll()
     }
 
     fun loadDdu(ddu: Ddu) {
@@ -88,7 +88,6 @@ class DodecaViewModel(
     }
 
     private fun registerOptionsObservers() {
-        // ISSUE: none of observers does work
         options.showAllCircles.observe { dduRepresentation.value?.onShowAllCircles(it) }
         options.autocenterAlways.observe { dduRepresentation.value?.onAutocenterAlways(it) }
         options.canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
@@ -111,12 +110,12 @@ class DodecaViewModel(
         }
     }
 
-    private inline fun <T : Any> SharedPreference<T>.observe(crossinline action: (T) -> Unit) {
-        liveData.observeForever { Observer<T> { action(it) } }
+    private inline fun <T : Any> Option<T>.observe(crossinline action: (T) -> Unit) {
+        liveData.observeForever { action(it) }
     }
 
-    private fun <T : Any> setSharedPreference(sharedPreference: SharedPreference<T>, value: T) {
-        optionsManager.set(sharedPreference, value)
+    private fun <T : Any> setSharedPreference(option: Option<T>, value: T) {
+        optionsManager.set(option, value)
     }
 
     private suspend fun getInitialDdu(): Ddu =
@@ -281,7 +280,7 @@ class DodecaViewModel(
             val dNUpdates: Int = delta * (if (values.reverseMotion) -1 else 1)
             nUpdates += dNUpdates
             if (values.showStat) {
-                val overhead: Long = nUpdates - lastTimedUpdate
+                val overhead: Long = abs(nUpdates - lastTimedUpdate)
                 if (overhead >= statTimeDelta) {
                     dTime = (lastUpdateTime - lastTimedUpdateTime) / (overhead / statTimeDelta.toFloat()) / 1000f
                     lastTimedUpdate = nUpdates

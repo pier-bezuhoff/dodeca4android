@@ -2,8 +2,7 @@ package com.pierbezuhoff.dodeca.models
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import com.pierbezuhoff.dodeca.data.SharedPreference
-import com.pierbezuhoff.dodeca.data.fetch
+import com.pierbezuhoff.dodeca.data.Option
 import com.pierbezuhoff.dodeca.data.options
 
 /** Handy wrapper, does not hold any data except [SharedPreferences] instance; depends on [options] */
@@ -12,54 +11,53 @@ class OptionsManager(
 ) {
 
     fun fetchAll() {
-        allPreferences.forEach {
+        ALL_OPTIONS.forEach {
             fetch(it)
         }
     }
 
-    fun <T : Any> fetch(sharedPreference: SharedPreference<T>) {
-        sharedPreferences.fetch(sharedPreference)
+    fun <T : Any> fetch(option: Option<T>) {
+        option.fetchFrom(sharedPreferences)
     }
 
-    fun <T : Any> fetched(sharedPreference: SharedPreference<T>): T {
-        sharedPreferences.fetch(sharedPreference)
-        return sharedPreference.value
+    fun <T : Any> fetched(option: Option<T>): T {
+        option.fetchFrom(sharedPreferences)
+        return option.value
     }
 
-    fun <T: Any> set(sharedPreference: SharedPreference<T>, value: T) {
+    fun <T: Any> set(option: Option<T>, value: T) {
         sharedPreferences.edit {
-            sharedPreference.set(value, this) // NOTE: set(sharedPreference, value) means recursion
+            option.setToIn(value, this) // NOTE: setToIn(option, value) means recursion
         }
     }
 
-    fun toggle(sharedPreference: SharedPreference<Boolean>) {
+    fun toggle(option: Option<Boolean>) {
         sharedPreferences.edit {
-            sharedPreference.set(!sharedPreference.value, this)
+            option.setToIn(!option.value, this)
         }
     }
 
     companion object {
-        private val effectivePreferences: Set<SharedPreference<*>> =
+        private val ALL_OPTIONS: Set<Option<*>> = options.run {
             setOf(
-                options.showAllCircles,
-                options.autocenterAlways,
-                options.speed,
-                options.skipN,
-                options.canvasFactor
+                redrawTraceOnMove,
+                showAllCircles,
+                reverseMotion,
+                autosave,
+                saveAs,
+                autocenterAlways,
+                speed,
+                skipN,
+                canvasFactor,
+                showStat,
+                previewSize,
+                autocenterPreview,
+                nPreviewUpdates,
+                previewSmartUpdates,
+                recentDdu,
+                versionCode
             )
-        private val secondaryPreferences: Set<SharedPreference<*>> =
-            setOf(
-                options.redrawTraceOnMove,
-                options.reverseMotion,
-                options.autosave,
-                options.saveAs,
-                options.previewSize,
-                options.previewSmartUpdates,
-                options.nPreviewUpdates,
-                options.recentDdu
-            )
-        private val allPreferences: Set<SharedPreference<*>> =
-            effectivePreferences + secondaryPreferences
-     }
+        }
+    }
 }
 

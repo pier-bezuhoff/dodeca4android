@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.lifecycleScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.Ddu
@@ -33,7 +34,6 @@ import com.pierbezuhoff.dodeca.utils.mean
 import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.move
 import com.pierbezuhoff.dodeca.utils.sx
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -48,7 +48,7 @@ class DduRepresentation(override val ddu: Ddu) :
     DduOptionsChangeListener,
     DduAttributesHolder
 {
-    interface Presenter : LifecycleOwner, CoroutineScope {
+    interface Presenter : LifecycleOwner {
         fun getCenter(): Complex?
         /** return (width, height) or null */
         fun getSize(): Pair<Int, Int>?
@@ -105,7 +105,7 @@ class DduRepresentation(override val ddu: Ddu) :
         clearTrace()
         // main loop
         with(presenter) {
-            launch(coroutineContext) {
+            lifecycleScope.launch {
                 delay(INITIAL_DELAY_IN_MILLISECONDS)
                 while (isActive) {
                     if (updating)
@@ -230,25 +230,20 @@ class DduRepresentation(override val ddu: Ddu) :
         motion.move(z)
 
     override fun onShowAllCircles(showAllCircles: Boolean) {
-        Log.i(TAG, "onShowAllCircles $showAllCircles")
         presenter?.redraw()
     }
 
     override fun onAutocenterAlways(autocenterAlways: Boolean) {
-        Log.i(TAG, "onAutocenterAlways $autocenterAlways")
-        // MAYBE: invoke only when changed
         if (autocenterAlways)
             autocenterize()
     }
 
     override fun onCanvasFactor(canvasFactor: Int) {
-        Log.i(TAG, "onCanvasFactor $canvasFactor")
         if (canvasFactor != trace?.currentCanvasFactor)
             clearTrace()
     }
 
     override fun onSpeed(speed: Float) {
-        Log.i(TAG, "onSpeed $speed")
         updateScheduler.setSpeed(speed)
     }
 
