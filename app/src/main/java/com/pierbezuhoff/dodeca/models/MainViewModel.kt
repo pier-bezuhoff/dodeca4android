@@ -94,7 +94,7 @@ class MainViewModel(
 
     companion object {
         private const val TAG = "MainViewModel"
-        private const val BOTTOM_BAR_HIDE_DELAY_IN_SECONDS = 30
+        private const val BOTTOM_BAR_HIDE_DELAY_IN_SECONDS = 5 // 30
         private const val BOTTOM_BAR_HIDE_DELAY_IN_MILLISECONDS: Long =
             1000L * BOTTOM_BAR_HIDE_DELAY_IN_SECONDS
     }
