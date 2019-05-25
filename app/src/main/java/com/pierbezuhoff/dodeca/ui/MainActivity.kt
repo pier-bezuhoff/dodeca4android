@@ -203,6 +203,7 @@ class MainActivity :
             R.id.clear_button -> dodecaViewModel.requestClear()
             R.id.autocenter_button -> dodecaViewModel.requestAutocenter()
             R.id.settings_button -> {
+                model.cancelBottomBarHidingJob()
                 startActivityForResult(
                     Intent(this@MainActivity, SettingsActivity::class.java),
                     APPLY_SETTINGS_CODE

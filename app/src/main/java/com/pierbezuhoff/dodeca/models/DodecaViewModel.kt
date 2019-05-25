@@ -92,31 +92,9 @@ class DodecaViewModel(
         options.autocenterAlways.observe { dduRepresentation.value?.onAutocenterAlways(it) }
         options.canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
         options.speed.observe { dduRepresentation.value?.onSpeed(it) }
-        // TODO: skipN --> request, wait until done
         options.skipN.observe { skipN: Int ->
             dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
-                // TODO: do on cloned CircleGroup
-                if (skipN > 0) {
-                    viewModelScope.launch {
-                        Log.i(TAG, "Skipping $skipN updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
-                        toast("Skipping $skipN updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
-                        pause()
-                        val startTime = System.currentTimeMillis()
-                        withTimeoutOrNull(SKIP_N_TIMEOUT_MILLISECONDS) {
-                            dduRepresentation.updateTimes(skipN)
-                            updateStat(skipN)
-                            setSharedPreference(options.skipN, 0)
-                            val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
-                            Log.i(TAG, "Skipped $skipN updates within $skippingTime s")
-                            toast("Skipped $skipN updates within $skippingTime s")
-                        } ?: run {
-                            val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
-                            Log.w(TAG, "Skipping aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s > $skippingTime s)")
-                            toast("Skipping aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s)")
-                        }
-                        resume()
-                    }
-                }
+                doSkipN(dduRepresentation, skipN)
             }
         }
     }
@@ -127,6 +105,32 @@ class DodecaViewModel(
 
     private fun <T : Any> setSharedPreference(option: Option<T>, value: T) {
         optionsManager.set(option, value)
+    }
+
+    private fun doSkipN(dduRepresentation: DduRepresentation, n: Int) {
+        // TODO: do on cloned CircleGroup
+        // FIX: update stat when partial skip
+        if (n > 0) {
+            viewModelScope.launch {
+                Log.i(TAG, "Skipping $n updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
+                toast("Skipping $n updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
+                pause()
+                val startTime = System.currentTimeMillis()
+                withTimeoutOrNull(SKIP_N_TIMEOUT_MILLISECONDS) {
+                    dduRepresentation.updateTimes(n)
+                    updateStat(n)
+                    val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
+                    Log.i(TAG, "Skipped $n updates within $skippingTime s")
+                    toast("Skipped $n updates within $skippingTime s")
+                } ?: run {
+                    val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
+                    Log.w(TAG, "Skipping aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s > $skippingTime s)")
+                    toast("Skipping aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s)")
+                }
+                setSharedPreference(options.skipN, 0)
+                resume()
+            }
+        }
     }
 
     private suspend fun getInitialDdu(): Ddu =

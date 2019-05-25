@@ -111,8 +111,13 @@ internal class PrimitiveCircles(
 
     override suspend fun suspendableUpdateTimes(times: Int, reverse: Boolean) {
         // TODO: optimize
-        withContext(Dispatchers.Default) {
-            _updateTimes(times, reverse)
+        // NOTE: not using _updateTimes in order to make coroutine cancellable-cooperative
+        // NOTE: _updateTimes ~ 2 times faster
+        // MAYBE: use batch of some fixed size
+        repeat(times) {
+            withContext(Dispatchers.Default) {
+                _update(reverse)
+            }
         }
     }
 
@@ -184,9 +189,12 @@ internal class PrimitiveCircles(
         showAllCircles: Boolean
     ) {
         // TODO: optimize
+        // NOTE: not using _drawTimes in order to make coroutine cancellable-cooperative
         repeat(times) {
-            withContext(Dispatchers.Default) { _draw(canvas, shape, showAllCircles) }
-            withContext(Dispatchers.Default) { _update(reverse) }
+            withContext(Dispatchers.Default) {
+                _draw(canvas, shape, showAllCircles)
+                _update(reverse)
+            }
         }
         withContext(Dispatchers.Default) { _draw(canvas, shape, showAllCircles) }
     }
