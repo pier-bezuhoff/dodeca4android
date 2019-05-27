@@ -20,13 +20,11 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProviders
-import androidx.lifecycle.lifecycleScope
-import com.pierbezuhoff.dodeca.BuildConfig
+import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Options
 import com.pierbezuhoff.dodeca.data.Shape
-import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.db.DduFileRepository
@@ -36,16 +34,16 @@ import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
+import com.pierbezuhoff.dodeca.utils.copyStream
 import com.pierbezuhoff.dodeca.utils.dduDir
-import com.pierbezuhoff.dodeca.utils.extract1Ddu
+import com.pierbezuhoff.dodeca.utils.fileName
+import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar1.*
 import kotlinx.android.synthetic.main.toolbar2.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
@@ -67,14 +65,14 @@ class MainActivity :
     AppCompatActivity(),
     ChooseColorDialog.ChooseColorListener
 {
-    private val sharedPreferencesWrapper by lazy {
+    private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
     }
     private val dodecaFactory by lazy {
-        DodecaAndroidViewModelWithOptionsManagerFactory(application, sharedPreferencesWrapper)
+        DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
     }
     private val model by lazy {
-        ViewModelProviders.of(this).get(MainViewModel::class.java)
+        ViewModelProviders.of(this, dodecaFactory).get(MainViewModel::class.java)
     }
     private val dodecaViewModel by lazy {
         ViewModelProviders.of(this, dodecaFactory).get(DodecaViewModel::class.java)
@@ -88,41 +86,18 @@ class MainActivity :
         super.onCreate(savedInstanceState)
         // TODO: migrate to OptionsViewModel
         Options(resources).init() // init options.* and values.*
-        checkUpgrade()
+        model.checkUpgrade()
         setupWindow()
         val binding: ActivityMainBinding =
             DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.lifecycleOwner = this
         binding.model = model
-        binding.dodecaViewModel = dodecaViewModel
+        binding.dodecaViewModel = dodecaViewModel // NOTE: dodecaViewModel must be initialized after model.checkUpgrade
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         handleLaunchFromImplicitIntent()
         setupToolbar()
         model.showBottomBar()
-    }
-
-    private fun handleLaunchFromImplicitIntent() {
-        if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
-                intent.type?.endsWith("ddu", ignoreCase = true) == true ||
-                intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)
-        ) {
-            intent.data?.let { readUriWithPermissionCheck(it) }
-        }
-    }
-
-    private fun checkUpgrade() {
-        val currentVersionCode = BuildConfig.VERSION_CODE
-        val oldVersionCode = sharedPreferencesWrapper.fetched(options.versionCode)
-        if (oldVersionCode != currentVersionCode) {
-            val upgrading: Boolean = oldVersionCode < currentVersionCode
-            val upgradingOrDegrading: String = if (upgrading) "Upgrading" else "Degrading"
-            val currentVersionName: String = BuildConfig.VERSION_NAME
-            val versionCodeChange = "$oldVersionCode -> $currentVersionCode"
-            Log.i(TAG,"$upgradingOrDegrading to $currentVersionName ($versionCodeChange)")
-            sharedPreferencesWrapper.set(options.versionCode, currentVersionCode)
-            onUpgrade()
-        }
     }
 
     private fun setupWindow() {
@@ -139,26 +114,12 @@ class MainActivity :
         )
     }
 
-    private fun onUpgrade() {
-        // extracting assets
-        runBlocking(Dispatchers.IO) {
-            try {
-                if (!dduDir.exists()) {
-                    Log.i(TAG, "Extracting all assets into $dduDir")
-                    dduDir.mkdir()
-                    extractDduFromAssets()
-                } else {
-                    // TODO: check it
-                    // try to export new ddus
-                    Log.i(TAG, "Adding new ddu assets into $dduDir")
-                    val existedDdus = dduDir.listFiles().map { it.name }.toSet()
-                    assets.list(getString(R.string.ddu_asset_dir))?.filter { it !in existedDdus }?.forEach { name ->
-                        extract1Ddu(name, dduDir)
-                    }
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
+    private fun handleLaunchFromImplicitIntent() {
+        if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
+                intent.type?.endsWith("ddu", ignoreCase = true) == true ||
+                intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)
+        ) {
+            intent.data?.let { readUriWithPermissionCheck(it) }
         }
     }
 
@@ -223,16 +184,16 @@ class MainActivity :
 
     private fun buildSaveAsDialog() =
         alert(R.string.save_as_message) {
-            val initialFileName: FileName = dodecaViewModel.getDduFile()?.nameWithoutExtension ?: ""
+            val initialFileName: FileName = dodecaViewModel.getDduFile()?.fileName ?: FileName("")
             lateinit var fileNameEditText: EditText
             customView {
-                fileNameEditText = editText(initialFileName)
+                fileNameEditText = editText(initialFileName.toString())
             }
             positiveButton(R.string.save_as_button_title) {
                 // TODO: check if exists, not blank, etc.
                 try {
-                    val filename: Filename = "${fileNameEditText.text}.ddu"
-                    val file = File(dir, filename)
+                    val filename = Filename("${fileNameEditText.text}.ddu")
+                    val file = filename.toFile(parent = dir)
                     dodecaViewModel.requestSaveDduAt(file)
                 } catch (e: IOException) {
                     e.printStackTrace()
@@ -272,6 +233,7 @@ class MainActivity :
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
             DDU_CODE ->
+                // TODO: should change MutableLiveData in MainViewModel
                 if (resultCode == Activity.RESULT_OK) {
                     data?.getStringExtra("dirPath")?.let { newDir ->
                         model.changeDir(File(newDir)) }
@@ -281,39 +243,49 @@ class MainActivity :
                 }
             APPLY_SETTINGS_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
-                    fun having(param: String, action: () -> Unit) {
-                        if (data?.getBooleanExtra(param, false) == true)
-                            action()
-                    }
-                    having("default_ddu") {
-                        dodecaViewModel.getDduFile()?.let { file: File ->
-                            runBlocking {
-                                extract1Ddu(file.name)
-                                dodecaViewModel.loadDduFrom(file)
-                            }
-                        }
-                    }
-                    having("default_ddus") {
-                        runBlocking {
-                            extractDduFromAssets(overwrite = true)
-                            dodecaViewModel.getDduFile()?.let { file: File ->
-                                dodecaViewModel.loadDduFrom(file)
-                            }
-                        }
-                    }
-                    having("discard_previews") {
-                        lifecycleScope.launch {
-                            dduFileRepository.getAllDduFiles().forEach { dduFile ->
-                                dduFileRepository.dropPreview(dduFile)
-                            }
-                        }
-                    }
+                    fun have(param: String): Boolean =
+                        data?.getBooleanExtra(param, false) == true
+                    applyInstantSettings(
+                        revertCurrentDdu = have("default_ddu"),
+                        revertAllDdus = have("default_ddus"),
+                        discardAllPreviews = have("discard_previews")
+                    )
                 }
-                sharedPreferencesWrapper.fetchAll()
+                optionsManager.fetchAll()
             }
             HELP_CODE -> Unit
         }
         model.showBottomBar()
+    }
+
+    private fun applyInstantSettings(
+        revertCurrentDdu: Boolean = false,
+        revertAllDdus: Boolean = false,
+        discardAllPreviews: Boolean = false
+    ) {
+        model.viewModelScope.launch {
+            if (revertCurrentDdu) revertCurrentDdu()
+            if (revertAllDdus) revertAllDdus()
+            if (discardAllPreviews) discardAllPreviews()
+        }
+    }
+
+    private suspend fun revertCurrentDdu() {
+        dodecaViewModel.getDduFile()?.let { file: File ->
+            model.extractDduFrom(file.filename)
+            dodecaViewModel.loadDduFrom(file)
+        }
+    }
+
+    private suspend fun revertAllDdus() {
+        model.extractDdusFromAssets(overwrite = true)
+        dodecaViewModel.getDduFile()?.let { file: File ->
+            dodecaViewModel.loadDduFrom(file)
+        }
+    }
+
+    private suspend fun discardAllPreviews() {
+        dduFileRepository.dropAllPreviews()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -328,13 +300,9 @@ class MainActivity :
 
     @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
     fun readPath(path: String) {
-        Log.i(TAG, "reading ddu from path $path...")
-        try {
-            val file = File(path)
+        val file = File(path)
+        dodecaViewModel.viewModelScope.launch {
             dodecaViewModel.loadDduFrom(file)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            toast(getString(R.string.bad_ddu_format_toast) + " $path")
         }
     }
 
@@ -343,24 +311,18 @@ class MainActivity :
         if (!haveWriteExternalStoragePermission()) {
             Log.i(TAG, "permission WRITE_EXTERNAL_STORAGE not granted yet!")
         }
-        Log.i(TAG, "reading ddu from uri $uri")
-        try {
-            val name: Filename = File(uri.path).name
-            val targetFile = withUniquePostfix(File(dduDir, name))
+        val name: Filename = File(uri.path).filename
+        dodecaViewModel.viewModelScope.launch(Dispatchers.IO) {
+            val targetFile = withUniquePostfix(name.toFile(parent = dduDir))
             // NOTE: when 'file' scheme (namely from ZArchiver) WRITE_EXTERNAL_STORAGE permission is obligatory
             val inputStream = contentResolver.openInputStream(uri)
             inputStream?.let {
-                it.use { input ->
-                    FileOutputStream(targetFile).use { output ->
-                        input.copyTo(output, DEFAULT_BUFFER_SIZE) }
-                }
-                Log.i(TAG, "imported ddu \"$name\"")
-                toast(getString(R.string.imported_ddu_toast) + " $name")
+                copyStream(it, FileOutputStream(targetFile))
+                Log.i(TAG, "imported ddu-file \"$name\"")
+                // TODO: check if it's possible to show toast from here (IO thread?)
+                toast(getString(R.string.imported_ddu_toast, name))
                 dodecaViewModel.loadDduFrom(targetFile)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            toast(getString(R.string.bad_ddu_format_toast) + " ${uri.path}")
         }
     }
 
@@ -390,19 +352,7 @@ class MainActivity :
         }.show()
     }
 
-    private suspend fun extractDduFromAssets(overwrite: Boolean = false) {
-        withContext(Dispatchers.IO) {
-            val targetDir = dduDir
-            assets.list(getString(R.string.ddu_asset_dir))?.forEach { name ->
-                extract1Ddu(name, targetDir, overwrite)
-            }
-        }
-    }
-
-    private suspend fun extract1Ddu(filename: Filename, dir: File = dduDir, overwrite: Boolean = false) =
-        extract1Ddu(filename, dir, dduFileRepository, TAG, overwrite)
-
-    class ShapeSpinnerAdapter(private val context: Context) : BaseAdapter() {
+    private class ShapeSpinnerAdapter(private val context: Context) : BaseAdapter() {
         private val shapeDrawableResources: Map<Shape, Int> = mapOf(
             Shape.CIRCLE to R.drawable.ic_circle,
             Shape.SQUARE to R.drawable.ic_square,
@@ -418,10 +368,11 @@ class MainActivity :
         override fun getCount(): Int = shapes.size
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-            val itemView: View = convertView ?:
-            context.layoutInflater.inflate(R.layout.shape_spinner_row, parent, false).apply {
-                tag = SpinnerViewHolder(findViewById(R.id.shape_spinner_image))
-            }
+            val itemView: View = convertView
+                ?: context.layoutInflater
+                    .inflate(R.layout.shape_spinner_row, parent, false).apply {
+                        tag = SpinnerViewHolder(findViewById(R.id.shape_spinner_image))
+                    }
             val shapeDrawableResource: Int = shapeDrawableResources.getValue(shapes[position])
             (itemView.tag as SpinnerViewHolder).imageView.setImageDrawable(
                 ContextCompat.getDrawable(context, shapeDrawableResource))
@@ -430,13 +381,14 @@ class MainActivity :
     }
 
     companion object {
-        const val TAG = "MainActivity"
+        private const val TAG = "MainActivity"
         const val LIMITED_VERSION = false
-        const val DDU_CODE = 1
-        const val APPLY_SETTINGS_CODE = 2
-        const val HELP_CODE = 3
-        // distraction free mode
-        const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        // requestCode-s for onActivityResult
+        private const val DDU_CODE = 1
+        private const val APPLY_SETTINGS_CODE = 2
+        private const val HELP_CODE = 3
+        /** Distraction free mode */
+        private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
 }
 

@@ -6,19 +6,27 @@ import android.view.MotionEvent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.pierbezuhoff.dodeca.BuildConfig
+import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Connection
+import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
+import com.pierbezuhoff.dodeca.utils.extractDduFrom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 
 class MainViewModel(
-    application: Application
-) : DodecaAndroidViewModel(application),
+    application: Application,
+    optionsManager: OptionsManager
+) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager),
     DodecaGestureDetector.SingleTapListener
 {
     interface OnDestroyMainActivity { fun onDestroyMainActivity() }
@@ -26,7 +34,8 @@ class MainViewModel(
     val onDestroyMainActivitySubscription = onDestroyMainActivityConnection.subscription
 
     private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData(true)
-    private val _dir: MutableLiveData<File> = MutableLiveData()
+    private val _dir: MutableLiveData<File> = MutableLiveData(context.dduDir)
+    private val currentDir: File get() = dir.value!!
     private val _showStat: MutableLiveData<Boolean> = MutableLiveData(false)
     private var bottomBarHidingJob: Job? = null
 
@@ -53,6 +62,24 @@ class MainViewModel(
 
     override fun onSingleTap(e: MotionEvent?) {
         toggleBottomBar()
+    }
+
+    fun checkUpgrade() {
+        val currentVersionCode = BuildConfig.VERSION_CODE
+        val oldVersionCode = optionsManager.fetched(options.versionCode)
+        if (oldVersionCode != currentVersionCode) {
+            val upgrading: Boolean = oldVersionCode < currentVersionCode
+            val upgradingOrDegrading: String = if (upgrading) "Upgrading" else "Degrading"
+            val currentVersionName: String = BuildConfig.VERSION_NAME
+            val versionCodeChange = "$oldVersionCode -> $currentVersionCode"
+            Log.i(TAG,"$upgradingOrDegrading to $currentVersionName ($versionCodeChange)")
+            optionsManager.set(options.versionCode, currentVersionCode)
+            runBlocking {
+                viewModelScope.launch {
+                    onUpgrade()
+                }
+            }
+        }
     }
 
     fun showBottomBar() =
@@ -91,6 +118,46 @@ class MainViewModel(
     fun changeDir(dir: File) {
         _dir.value = dir
     }
+
+    private suspend fun onUpgrade() {
+        // extracting assets
+        withContext(Dispatchers.IO) {
+            try {
+                if (!currentDir.exists()) {
+                    Log.i(TAG, "Extracting all assets into $currentDir")
+                    currentDir.mkdir()
+                    extractDdusFromAssets()
+                } else {
+                    // TODO: check it
+                    // try to export new ddus
+                    Log.i(TAG, "Adding new ddu assets into $currentDir")
+                    val existedDdus = currentDir.listFiles().map { it.name }.toSet()
+                    context.assets
+                        .list(context.getString(R.string.ddu_asset_dir))
+                        ?.filter { it !in existedDdus }
+                        ?.forEach { name ->
+                            extractDduFrom(Filename(name), currentDir)
+                        }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    suspend fun extractDdusFromAssets(overwrite: Boolean = false) {
+        withContext(Dispatchers.IO) {
+            val targetDir = currentDir
+            context.assets
+                .list(context.getString(R.string.ddu_asset_dir))
+                ?.forEach { name ->
+                    extractDduFrom(Filename(name), targetDir, overwrite)
+                }
+        }
+    }
+
+    suspend fun extractDduFrom(filename: Filename, dir: File = currentDir, overwrite: Boolean = false) =
+        context.extractDduFrom(filename, dir, dduFileRepository, TAG, overwrite)
 
     companion object {
         private const val TAG = "MainViewModel"

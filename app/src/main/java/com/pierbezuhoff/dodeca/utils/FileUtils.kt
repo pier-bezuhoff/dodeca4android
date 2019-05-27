@@ -5,55 +5,98 @@ import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
-typealias FileName = String // without extension
-typealias Filename = String // with extension
-val Filename.isDDU: Boolean get() = endsWith(".ddu", ignoreCase = true)
-fun Filename.stripDdu(): FileName = this.removeSuffix(".ddu").removeSuffix(".Ddu")
-val File.isDdu: Boolean get() = extension.toLowerCase() == "ddu"
-val DocumentFile.isDDU: Boolean get() = name?.isDDU ?: false
+/** File name (without extension) */
+data class FileName(private val fileName: String) {
+    override fun toString(): String = fileName
+    companion object {
+        fun of(file: File): FileName =
+            FileName(file.nameWithoutExtension)
+    }
+}
+val File.fileName: FileName get() = FileName.of(this)
 
-fun copyStream(inputStream: InputStream, outputStream: OutputStream) =
+/** File name (with extension) */
+data class Filename(private val filename: String) {
+    val fileName: FileName get() = FileName.of(File(filename))
+    val extension: String get() = File(filename).extension
+    val isDdu: Boolean get() = extension.toLowerCase() == "ddu"
+    override fun toString(): String = filename
+    fun toFile(parent: File? = null): File =
+        File(parent, filename)
+    companion object {
+        fun of(file: File): Filename =
+            Filename(file.name)
+        fun of(file: DocumentFile): Filename? =
+            file.name?.let { Filename(it) }
+    }
+}
+val File.filename: Filename get() = Filename.of(this)
+val File.absoluteFilename: Filename get() = Filename(absolutePath)
+val DocumentFile.filename: Filename? get() = Filename.of(this)
+
+val File.isDdu: Boolean get() = filename.isDdu
+val DocumentFile.isDdu: Boolean? get() = filename?.isDdu
+
+suspend fun copyStream(
+    inputStream: InputStream,
+    outputStream: OutputStream
+): Long = withContext(Dispatchers.IO) {
     inputStream.use { input -> outputStream.use { input.copyTo(it, DEFAULT_BUFFER_SIZE) } }
-
-fun copyFile(source: File, target: File) {
-    copyStream(source.inputStream(), target.apply { createNewFile() }.outputStream())
 }
 
-fun copyFile(contentResolver: ContentResolver, source: DocumentFile, target: File) {
-    contentResolver.openInputStream(source.uri)?.let { inputStream ->
-        copyStream(inputStream, target.apply { createNewFile() }.outputStream())
+suspend fun copyFile(source: File, target: File) {
+    withContext(Dispatchers.IO) {
+        copyStream(source.inputStream(), target.apply { createNewFile() }.outputStream())
     }
 }
 
-fun copyDirectory(source: File, target: File) {
-    target.mkdir()
-    source.listFiles().forEach {
-        if (it.isFile)
-            copyFile(it, File(target, it.name))
-        else if (it.isDirectory)
-            copyDirectory(it, File(target, it.name))
+suspend fun ContentResolver.copyFile(source: DocumentFile, target: File) {
+    withContext(Dispatchers.IO) {
+        openInputStream(source.uri)?.let { inputStream ->
+            copyStream(inputStream, target.apply { createNewFile() }.outputStream())
+        }
     }
 }
 
-fun copyDirectory(contentResolver: ContentResolver, source: DocumentFile, target: File) {
-    target.mkdir()
-    source.listFiles().forEach {
-        if (it.isFile)
-            copyFile(contentResolver, it, File(target, it.name))
-        else if (it.isDirectory)
-            copyDirectory(contentResolver, it, File(target, it.name))
+suspend fun copyDirectory(source: File, target: File) {
+    withContext(Dispatchers.IO) {
+        target.mkdir()
+        source.listFiles().forEach {
+            if (it.isFile)
+                copyFile(it, File(target, it.name))
+            else if (it.isDirectory)
+                copyDirectory(it, File(target, it.name))
+        }
     }
 }
 
-/* add digital postfix if [file] already exists */
-fun withUniquePostfix(file: File, allFiles: List<File> = file.siblings()): File {
-    val fileName = file.nameWithoutExtension
-    val part1 = Regex("^(.*)-(\\d*)$")
-    fun namePart1(s: String): String = part1.find(s)?.groupValues?.let { it[1] } ?: s
+suspend fun ContentResolver.copyDirectory(source: DocumentFile, target: File) {
+    withContext(Dispatchers.IO) {
+        target.mkdir()
+        source.listFiles().forEach {
+            if (it.isFile)
+                this@copyDirectory.copyFile(it, File(target, it.name))
+            else if (it.isDirectory)
+                this@copyDirectory.copyDirectory(source = it, target = File(target, it.name))
+        }
+    }
+}
+
+/** Add unique digital postfix if [file] already exists */
+suspend fun withUniquePostfix(file: File): File = withContext(Dispatchers.IO) {
+    val allFiles: List<File> = file.siblings()
+    val fileName = file.fileName
+    val part1 = Regex("^(.*)-(\\d*)$") // parse file name as "[namePart1]-[digital postfix]"
+    /** namePart1("<name>-<digital postfix>") = "<name>" */
+    fun namePart1(fileName: FileName): String = fileName.toString().let { s ->
+        part1.find(s)?.groupValues?.let { it[1] } ?: s
+    }
     val name = namePart1(fileName)
     val postfixes: Set<Int> = allFiles
         .asSequence()
@@ -64,6 +107,8 @@ fun withUniquePostfix(file: File, allFiles: List<File> = file.siblings()): File 
                     ?.let { it[1] to it[2].toInt() }
                     ?: name to null
             }
+            // result: Sequence<Pair<String, Int?>>
+            // result = Sequence of ((namePart1, digitalPostfix) or (name, null))
         }
         .filter { (_name, postfix) -> _name == name && postfix != null }
         .map { it.second!! }
@@ -72,10 +117,12 @@ fun withUniquePostfix(file: File, allFiles: List<File> = file.siblings()): File 
         .filter { it !in postfixes }
         .first()
     val newFileName = "$name-$newPostfix"
-    return File(file.parentFile, "$newFileName.ddu")
+    return@withContext File(file.parentFile, "$newFileName.ddu")
 }
 
-fun File.siblings(): List<File> = parentFile.listFiles().toList()
+suspend fun File.siblings(): List<File> = withContext(Dispatchers.IO) {
+    parentFile.listFiles().toList()
+}
 
 // source: https://developer.android.com/guide/topics/providers/document-provider.html#metadata
 fun ContentResolver.getDisplayName(uri: Uri): Filename? {
@@ -85,7 +132,9 @@ fun ContentResolver.getDisplayName(uri: Uri): Filename? {
         if (it.moveToFirst()) {
             val displayName: String? =
                 it.getString(it.getColumnIndex(OpenableColumns.DISPLAY_NAME))
-            filename = displayName
+            displayName?.let {
+                filename = Filename(it)
+            }
         }
     }
     return filename

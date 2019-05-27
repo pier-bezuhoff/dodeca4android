@@ -18,3 +18,4 @@ class BitmapConverter {
         if (success) stream.toByteArray() else null
     }
 }
+
