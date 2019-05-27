@@ -38,7 +38,7 @@ import com.pierbezuhoff.dodeca.utils.copyDirectory
 import com.pierbezuhoff.dodeca.utils.copyFile
 import com.pierbezuhoff.dodeca.utils.copyStream
 import com.pierbezuhoff.dodeca.utils.dduDir
-import com.pierbezuhoff.dodeca.utils.extract1Ddu
+import com.pierbezuhoff.dodeca.utils.extractDduFrom
 import com.pierbezuhoff.dodeca.utils.getDisplayName
 import com.pierbezuhoff.dodeca.utils.isDdu
 import com.pierbezuhoff.dodeca.utils.stripDdu
@@ -209,7 +209,7 @@ class DduChooserActivity : AppCompatActivity() {
     private fun restoreDduFile(file: File) {
         // TODO: restore imported files by original path
         lifecycleScope.launch {
-            val original: Filename? = extract1Ddu(
+            val original: Filename? = extractDduFrom(
                 file.name, dduDir, dduFileRepository,
                 TAG
             )
@@ -541,8 +541,8 @@ class DduAdapter(
         // maybe: in async task; show ContentLoadingProgressBar or ProgressDialog
         // ISSUE: may lead to OutOfMemoryError (fast return to after opening a ddu)
         activity.lifecycleScope.launch {
-            dduFileRepository.getAllDduFiles().forEach {
-                previews[it.filename] = it.preview
+            dduFileRepository.getAllDduFilenamesAndPreviews().forEach { (filename, preview) ->
+                previews[filename] = preview
             }
         }
     }

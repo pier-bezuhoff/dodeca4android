@@ -16,7 +16,7 @@ fun Context.dduPath(file: File): String =
     file.absolutePath.substringAfter(dduDir.absolutePath).trim('/')
 
 // TODO: refactor!
-suspend fun Context.extract1Ddu(
+suspend fun Context.extractDduFrom(
     filename: Filename, dir: File,
     dduFileRepository: DduFileRepository,
     TAG: String,
@@ -39,19 +39,20 @@ suspend fun Context.extract1Ddu(
                 }
             }
         }
-        inputStream?.let {
-            val targetFile0 = File(dir, source)
+        val targetFile: File? = inputStream?.let {
+            val targetFile0 = source.toFile(parent = dir)
             val targetFile =
                 if (!overwrite && targetFile0.exists()) withUniquePostfix(targetFile0)
                 else targetFile0
             targetFile.createNewFile()
             Log.i(TAG, "Copying asset $source to ${targetFile.path}")
             copyStream(inputStream, FileOutputStream(targetFile))
-            dduFileRepository.dropPreviewAndSetOriginalFilenameInserting(targetFile.name, newOriginalFilename = source)
-            targetFile.name
+            dduFileRepository.dropPreviewAndSetOriginalFilenameInserting(targetFile.filename, newOriginalFilename = source)
+            targetFile
         } ?: null.also {
             Log.w(TAG, "Cannot find asset $filename ($source)")
         }
+        return@withContext targetFile?.filename
     }
 
 

@@ -32,7 +32,7 @@
     <string name="one_step_button_title">Пошагово: один шаг</string>
     <string name="change_color_button_title">Поменять цвет</string>
     <string name="please_pick_color_toast">Двойное нажатие, чтобы выбрать цвет</string>
-    <string name="bad_ddu_format_toast">Неправильный формат ddu</string>
+    <string name="bad_ddu_format_toast">Неправильный формат ddu-файла \"%s\"</string>
     <string name="error_ddu_save_no_file_toast">Ошибка во время сохранения ddu: ddu не привязано к файлу</string>
     <string name="error_ddu_save_toast">Ошибка во время сохранения ddu: см. лог</string>
     <string name="restore_defaults_title">Восстановить настройки по умолчанию</string>
@@ -40,7 +40,7 @@
     <string name="restore_default_ddu_title">Восстановить исходную версию данной ddu-картины</string>
     <string name="ddu_saved_toast">ddu-картина сохранена как \"%s\"</string>
     <string name="imported_ddu_overwrites_original_toast">Исходная ddu-картина была перезаписана импортом</string>
-    <string name="imported_ddu_toast">Импортирована новая ddu-картина:</string>
+    <string name="imported_ddu_toast">Импортирована новая ddu-картина: \"%s\"</string>
     <string name="permission_rationale_dialog_allow">Разрешить</string>
     <string name="permission_rationale_dialog_deny">Отклонить</string>
     <string name="permission_storage_message">Пожалуйста, разрешите доступ к файлам на устройстве, чтобы импортировать данную ddu-картину</string>

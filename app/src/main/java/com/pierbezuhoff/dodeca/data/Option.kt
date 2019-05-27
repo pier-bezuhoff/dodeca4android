@@ -82,26 +82,27 @@ open class KeyOption<T>(val key: String, default: T) : Option<T>(default) where 
     }
 }
 
-class ParsedIntKeyOption(key: String, default: Int) : KeyOption<Int>(key, default) {
-    override fun peekFrom(sharedPreferences: SharedPreferences): Int =
-        sharedPreferences.getString(key, default.toString())?.toInt() ?: default
+open class ParsedKeyOption<T>(
+    key: String,
+    default: T,
+    val parse: String.() -> T?
+) : KeyOption<T>(key, default) where T : Any {
+    override fun peekFrom(sharedPreferences: SharedPreferences): T =
+        sharedPreferences.getString(key, default.toString())?.parse() ?: default
     override fun putIn(editor: SharedPreferences.Editor) {
         editor.putString(key, value.toString())
     }
 }
 
-class ParsedFloatKeyOption(key: String, default: Float) : KeyOption<Float>(key, default) {
-    override fun peekFrom(sharedPreferences: SharedPreferences): Float =
-        sharedPreferences.getString(key, default.toString())?.toFloat() ?: default
-    override fun putIn(editor: SharedPreferences.Editor) {
-        editor.putString(key, value.toString())
-    }
-}
+class ParsedIntKeyOption(key: String, default: Int) : ParsedKeyOption<Int>(key, default, String::toIntOrNull)
+class ParsedFloatKeyOption(key: String, default: Float) : ParsedKeyOption<Float>(key, default, String::toFloatOrNull)
 
 @Suppress("FunctionName")
 class Options(val resources: Resources) {
     private fun BooleanKeyOption(key: String, @BoolRes id: Int): KeyOption<Boolean> =
         KeyOption(key, resources.getBoolean(id))
+    private fun <T : Any> ParsedKeyOption(key: String, @StringRes id: Int, parse: String.() -> T?): ParsedKeyOption<T> =
+        ParsedKeyOption(key, resources.getString(id).parse()!!, parse)
     private fun ParsedIntKeyOption(key: String, @StringRes id: Int): ParsedIntKeyOption =
         ParsedIntKeyOption(key, default = resources.getString(id).toInt())
     private fun ParsedFloatKeyOption(key: String, @StringRes id: Int): ParsedFloatKeyOption =
@@ -124,7 +125,7 @@ class Options(val resources: Resources) {
     val autocenterPreview = BooleanKeyOption("autocenter_preview", R.bool.autocenter_preview)
     val nPreviewUpdates = ParsedIntKeyOption("n_preview_updates", R.string.n_preview_updates)
     val previewSmartUpdates = BooleanKeyOption("preview_smart_updates", R.bool.preview_smart_updates)
-    val recentDdu: KeyOption<Filename> = KeyOption("recent_ddu", resources.getString(R.string.first_ddu))
+    val recentDdu = ParsedKeyOption("recent_ddu", R.string.first_ddu) { Filename(this) }
     val versionCode = KeyOption("version_code", resources.getInteger(R.integer.version_code))
 
     fun init() {

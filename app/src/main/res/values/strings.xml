@@ -30,12 +30,12 @@
 
     <!-- Toasts -->
     <string name="please_pick_color_toast">Double tap to pick color</string>
-    <string name="bad_ddu_format_toast">Bad ddu format:</string>
+    <string name="bad_ddu_format_toast">Bad format of ddu-file \"%s\"</string>
     <string name="error_ddu_save_no_file_toast">Error while saving ddu: ddu has no file</string>
     <string name="error_ddu_save_toast">Error while saving ddu, see log</string>
     <string name="ddu_saved_toast">ddu-picture saved as \"%s\"</string>
     <string name="imported_ddu_overwrites_original_toast">Original ddu-picture was overwritten by imported one</string>
-    <string name="imported_ddu_toast">New ddu-picture was imported:</string>
+    <string name="imported_ddu_toast">New ddu-picture was imported: \"%s\"</string>
     <string name="canvas_factor_oom_toast">Canvas factor %d is too large: it caused out of memory error! Trying smaller
         factor %d…
     </string>

@@ -14,8 +14,10 @@ import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
+import com.pierbezuhoff.dodeca.utils.absoluteFilename
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
+import com.pierbezuhoff.dodeca.utils.filename
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.anko.toast
@@ -76,14 +78,17 @@ class DodecaViewModel(
             _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
         }
         ddu.file?.let { file: File ->
-            setSharedPreference(options.recentDdu, file.absolutePath)
+            setSharedPreference(options.recentDdu, file.absoluteFilename)
         }
     }
 
-    fun loadDduFrom(file: File) {
-        viewModelScope.launch {
+    suspend fun loadDduFrom(file: File) {
+        try {
             val ddu: Ddu = Ddu.fromFile(file)
             loadDdu(ddu)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            formatToast(R.string.bad_ddu_format_toast, file.path)
         }
     }
 
@@ -143,8 +148,8 @@ class DodecaViewModel(
 
     private fun getRecentDduFile(): File {
         optionsManager.fetch(options.recentDdu)
-        val recentFromAbsolutePath = File(values.recentDdu) // new format
-        val recentInDduDir = File(context.dduDir, values.recentDdu) // deprecated format
+        val recentFromAbsolutePath = values.recentDdu.toFile() // new format
+        val recentInDduDir = values.recentDdu.toFile(parent = context.dduDir) // deprecated format
         return if (recentFromAbsolutePath.exists())
             recentFromAbsolutePath
         else
@@ -182,7 +187,7 @@ class DodecaViewModel(
         dduRepresentation.value?.requestUpdateOnce()
     }
 
-    /** async, maybe schedule ddu saving */
+    /** Async, maybe schedule ddu saving, capture dduRepresentation */
     fun maybeAutosave() {
         if (values.autosave && dduRepresentation.value?.ddu?.file != null)
             viewModelScope.launch {
@@ -211,7 +216,7 @@ class DodecaViewModel(
                 Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
                 ddu.saveToFile(file)
                 context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
-                dduFileRepository.dropPreviewInserting(file.name)
+                dduFileRepository.dropPreviewInserting(file.filename)
             } catch (e: Throwable) {
                 e.printStackTrace()
                 context.toast(context.getString(R.string.error_ddu_save_toast))

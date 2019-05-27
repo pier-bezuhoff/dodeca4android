@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
     entities = [DduFile::class],
     version = 3
 )
-@TypeConverters(BitmapConverter::class)
+@TypeConverters(BitmapConverter::class, FilenameConverter::class)
 abstract class DduFileDatabase : RoomDatabase() {
     abstract fun dduFileDao(): DduFileDao
 }

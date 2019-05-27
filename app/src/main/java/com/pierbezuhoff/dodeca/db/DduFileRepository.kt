@@ -18,8 +18,20 @@ class DduFileRepository private constructor(context: Context) {
         db.dduFileDao()
     }
 
-    suspend fun getAllDduFiles(): List<DduFile> =
+    private suspend fun getAllDduFiles(): List<DduFile> =
         dduFileDao.getAll()
+
+    suspend fun getAllDduFilenames(): List<Filename> =
+        getAllDduFiles().map { it.filename }
+
+    suspend fun getAllDduFilenamesAndPreviews(): Map<Filename, Bitmap?> =
+        getAllDduFiles().map { it.filename to it.preview }.toMap()
+
+    suspend fun dropAllPreviews() {
+        getAllDduFiles().forEach {
+            dropPreview(it)
+        }
+    }
 
     suspend fun delete(filename: Filename) =
         getDduFile(filename)?.let {
@@ -29,7 +41,7 @@ class DduFileRepository private constructor(context: Context) {
     private suspend fun getDduFile(filename: Filename): DduFile? =
         dduFileDao.findByFilename(filename)
 
-    private suspend fun applyInserting(filename: Filename, action: DduFile.() -> Unit) {
+    private suspend inline fun applyInserting(filename: Filename, crossinline action: DduFile.() -> Unit) {
         val maybeDduFile: DduFile? = getDduFile(filename)
         if (maybeDduFile == null) {
             val newDduFile = DduFile.fromFilename(filename)
@@ -51,7 +63,7 @@ class DduFileRepository private constructor(context: Context) {
         }
     }
 
-    suspend fun dropPreview(dduFile: DduFile) {
+    private suspend fun dropPreview(dduFile: DduFile) {
         dduFile.preview = null
         dduFileDao.update(dduFile)
     }
