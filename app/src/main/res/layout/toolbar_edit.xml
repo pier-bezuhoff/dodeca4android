@@ -4,7 +4,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
 >
     <data>
-        <variable name="model" type="com.pierbezuhoff.dodeca.models.DodecaEditViewModel"/>
+        <variable name="model" type="com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditViewModel"/>
     </data>
     <LinearLayout
             android:orientation="horizontal"

@@ -22,7 +22,7 @@ import com.pierbezuhoff.dodeca.data.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
-import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
+import com.pierbezuhoff.dodeca.ui.dodeca.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Just
 import com.pierbezuhoff.dodeca.utils.Once

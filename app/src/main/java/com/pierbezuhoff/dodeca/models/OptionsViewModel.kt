@@ -55,7 +55,7 @@ class OptionsViewModel(application: Application) : AndroidViewModel(application)
     )
     val showStat =
         BooleanOption("show_stat", R.bool.show_stat)
-    // preview size in pixels, yet to be converted to dp
+    // buildPreview size in pixels, yet to be converted to dp
     val previewSize = ParsedIntKeyOption(
         "preview_size",
         resources.getString(R.string.preview_size).toInt()

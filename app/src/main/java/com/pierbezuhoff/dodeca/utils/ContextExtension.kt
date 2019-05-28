@@ -3,7 +3,7 @@ package com.pierbezuhoff.dodeca.utils
 import android.content.Context
 import android.util.Log
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.db.DduFileRepository
+import com.pierbezuhoff.dodeca.models.DduFileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

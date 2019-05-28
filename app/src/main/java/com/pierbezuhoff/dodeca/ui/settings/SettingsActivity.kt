@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.settings
 
 import android.app.Activity
 import android.content.Intent

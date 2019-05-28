@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.dodeca
 
 import android.app.Dialog
 import android.content.Context
@@ -506,7 +506,12 @@ class CircleAdapter(
 
 internal data class Equivalence(val visible: Boolean, val color: Int, val fill: Boolean, val borderColor: Int?)
 
-internal val CircleFigure.equivalence get() = Equivalence(show, color, fill, borderColor)
+internal val CircleFigure.equivalence get() = Equivalence(
+    show,
+    color,
+    fill,
+    borderColor
+)
 
 sealed class Row(
     var position: Int? = null, // position in adapter

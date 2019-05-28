@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.models
+package com.pierbezuhoff.dodeca.ui.dodeca
 
 import android.app.Application
 import android.graphics.Canvas
@@ -13,7 +13,9 @@ import com.pierbezuhoff.dodeca.data.Option
 import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
-import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
+import com.pierbezuhoff.dodeca.models.DduRepresentation
+import com.pierbezuhoff.dodeca.models.OptionsManager
+import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.absoluteFilename
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
@@ -68,7 +70,8 @@ class DodecaViewModel(
     fun loadDdu(ddu: Ddu) {
         maybeAutosave() // async
         statUpdater.reset()
-        DduRepresentation(ddu).let { dduRepresentation: DduRepresentation ->
+        DduRepresentation(ddu)
+            .let { dduRepresentation: DduRepresentation ->
             dduRepresentation.statHolderSubscription.subscribeFrom(this)
             dduRepresentation.toastEmitterSubscription.subscribeFrom(this)
             dduRepresentation.connectOptionsManager(optionsManager)

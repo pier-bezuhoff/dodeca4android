@@ -39,7 +39,7 @@ class Ddu(
     val complexity: Int get() = circles.sumBy { it.rule?.length ?: 0 }
     private val nSmartUpdates: Int
         get() = (MIN_PREVIEW_UPDATES + values.nPreviewUpdates * 20 / sqrt(1.0 + complexity)).roundToInt()
-    private val nUpdates: Int // for preview
+    private val nUpdates: Int // for buildPreview
         get() = if (values.previewSmartUpdates) nSmartUpdates else values.nPreviewUpdates
 
     // NOTE: copy(newRule = null) resolves overload ambiguity
@@ -72,7 +72,7 @@ class Ddu(
     suspend fun saveToStreamForDodecaLook(outputStream: OutputStream) =
         DDUWriter(this).writeForDodecaLook(outputStream)
 
-    fun preview(width: Int, height: Int): Bitmap {
+    suspend fun buildPreview(width: Int, height: Int): Bitmap = withContext(Dispatchers.Default) {
         // used RGB_565 instead of ARGB_8888 for performance (visually indistinguishable)
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
         val canvas = Canvas(bitmap)
@@ -92,7 +92,7 @@ class Ddu(
                 circleGroup.draw(canvas, shape = shape)
             }
         }
-        return bitmap
+        return@withContext bitmap
     }
 
     companion object {

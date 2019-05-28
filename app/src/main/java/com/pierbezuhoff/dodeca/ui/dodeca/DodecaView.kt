@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.dodeca
 
 import android.content.Context
 import android.graphics.Canvas
@@ -10,8 +10,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.Observer
 import com.pierbezuhoff.dodeca.models.DduRepresentation
-import com.pierbezuhoff.dodeca.models.DodecaViewModel
-import com.pierbezuhoff.dodeca.models.MainViewModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
 import org.apache.commons.math3.complex.Complex
 

@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.models
+package com.pierbezuhoff.dodeca.ui.dodecaedit
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

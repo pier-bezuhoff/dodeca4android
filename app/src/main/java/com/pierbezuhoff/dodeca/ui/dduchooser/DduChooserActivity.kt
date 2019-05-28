@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.dduchooser
 
 import android.app.Activity
 import android.content.Context
@@ -21,7 +21,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.withStyledAttributes
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.observe
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
@@ -30,7 +32,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.values
-import com.pierbezuhoff.dodeca.db.DduFileRepository
+import com.pierbezuhoff.dodeca.models.DduFileRepository
+import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
+import com.pierbezuhoff.dodeca.ui.dodeca.MainViewModel
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.Sleeping
@@ -39,6 +44,8 @@ import com.pierbezuhoff.dodeca.utils.copyFile
 import com.pierbezuhoff.dodeca.utils.copyStream
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.extractDduFrom
+import com.pierbezuhoff.dodeca.utils.fileName
+import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.getDisplayName
 import com.pierbezuhoff.dodeca.utils.isDdu
 import com.pierbezuhoff.dodeca.utils.stripDdu
@@ -50,6 +57,7 @@ import org.apache.commons.io.FileUtils
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
+import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.editText
 import org.jetbrains.anko.toast
@@ -57,12 +65,23 @@ import org.jetbrains.anko.uiThread
 import org.jetbrains.anko.yesButton
 import java.io.File
 
-// TODO: refactor with databindings, viewmodel and coroutines
+// TODO: refactor with databindings, viewmodel and coroutines|paging + DI (koin)
 // MAYBE: action bar: search by name
 // MAYBE: store in sharedPreferences last dir
 // MAYBE: link to external folder
 class DduChooserActivity : AppCompatActivity() {
-    lateinit var dir: File // current
+    private val optionsManager by lazy {
+        OptionsManager(defaultSharedPreferences)
+    }
+    private val dodecaFactory by lazy {
+        DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
+    }
+    private val mainViewModel by lazy {
+        ViewModelProviders.of(this, dodecaFactory).get(MainViewModel::class.java)
+    }
+    private val model by lazy {
+        ViewModelProviders.of(this).get(DduChooserViewModel::class.java)
+    }
     private val dduFileRepository =
         DduFileRepository.get(this)
     private lateinit var dduAdapter: DduAdapter
@@ -72,8 +91,6 @@ class DduChooserActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        dir = dduDir
-        intent.getStringExtra("dirPath")?.let { dir = File(it) }
         setContentView(R.layout.activity_dduchooser)
         dirAdapter = DirAdapter(this, dduDir)
         dir_recycler_view.apply {
@@ -93,6 +110,15 @@ class DduChooserActivity : AppCompatActivity() {
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.HORIZONTAL))
             itemAnimator = DefaultItemAnimator()
             setHasFixedSize(true)
+        }
+    }
+
+    private fun initAdapter() {
+        val adapter = DduFileAdapter()
+        ddu_recycler_view.adapter = adapter
+        model.dduFiles.observe(this) {
+            // MAYBE: handle empty list case
+            adapter.submitList(it)
         }
     }
 
@@ -158,16 +184,16 @@ class DduChooserActivity : AppCompatActivity() {
 
     private fun renameDduFile(file: File, position: Int) {
         lifecycleScope.launch {
-            val name: FileName = file.nameWithoutExtension
+            val name: FileName = file.fileName
             var input: EditText? = null
-            val originalFilename: Filename? = dduFileRepository.getOriginalFilename(file.name)
+            val originalFilename: Filename? = dduFileRepository.getOriginalFilename(file.filename)
             val appendix =
-                if (originalFilename != null && originalFilename != file.name)
-                    " " + getString(R.string.rename_dialog_original_name, originalFilename.stripDdu())
+                if (originalFilename != null && originalFilename != file.filename)
+                    " " + getString(R.string.rename_dialog_original_name, originalFilename.fileName)
                 else ""
             alert(getString(R.string.rename_dialog_message, name, appendix)) {
                 customView {
-                    input = editText(name)
+                    input = editText(name.toString())
                 }
                 positiveButton(getString(R.string.ddu_rename)) {
                     lifecycleScope.launch {
@@ -269,7 +295,9 @@ class DduChooserActivity : AppCompatActivity() {
             type = "*/*"
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         }
-        startActivityForResult(intent, IMPORT_DDUS_REQUEST_CODE)
+        startActivityForResult(intent,
+            IMPORT_DDUS_REQUEST_CODE
+        )
 //        startActivityForResult(Intent.createChooser(intent, "Select ddu-files"), IMPORT_DDUS_REQUEST_CODE)
     }
 
@@ -369,7 +397,9 @@ class DduChooserActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_TITLE, file.name)
         }
         requestedDduFile = file
-        startActivityForResult(intent, EXPORT_DDU_REQUEST_CODE)
+        startActivityForResult(intent,
+            EXPORT_DDU_REQUEST_CODE
+        )
     }
 
     private fun exportDduFile(uri: Uri) {
@@ -519,7 +549,6 @@ class DirAdapter(
     override fun getItemCount(): Int = dirs.size
 }
 
-// TODO: show folders on the top
 class DduAdapter(
     private val activity: DduChooserActivity,
     private val onChoose: (File) -> Unit
@@ -590,7 +619,7 @@ class DduAdapter(
                     val ddu = Ddu.fromFile(file)
                     // val size: Int = (0.4 * width).roundToInt() // width == height
                     val size = values.previewSizePx
-                    val bitmap = ddu.preview(size, size)
+                    val bitmap = ddu.buildPreview(size, size)
                     previews[fileName] = bitmap
                     dduFileRepository.setPreviewInserting(file.name, newPreview = bitmap)
                     buildings[fileName]?.let { currentHolder ->
@@ -603,6 +632,7 @@ class DduAdapter(
                         }
                     }
                 }
+                Unit
             }
         } else {
             buildings[fileName] = holder

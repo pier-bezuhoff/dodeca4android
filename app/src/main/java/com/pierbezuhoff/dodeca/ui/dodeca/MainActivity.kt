@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.dodeca
 
 import android.Manifest
 import android.app.Activity
@@ -27,11 +27,14 @@ import com.pierbezuhoff.dodeca.data.Options
 import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
-import com.pierbezuhoff.dodeca.db.DduFileRepository
-import com.pierbezuhoff.dodeca.models.DodecaAndroidViewModelWithOptionsManagerFactory
-import com.pierbezuhoff.dodeca.models.DodecaViewModel
-import com.pierbezuhoff.dodeca.models.MainViewModel
+import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.OptionsManager
+import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
+import com.pierbezuhoff.dodeca.ui.help.HelpActivity
+import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
+import com.pierbezuhoff.dodeca.ui.onRequestPermissionsResult
+import com.pierbezuhoff.dodeca.ui.readUriWithPermissionCheck
+import com.pierbezuhoff.dodeca.ui.settings.SettingsActivity
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.copyStream
@@ -71,14 +74,14 @@ class MainActivity :
     private val dodecaFactory by lazy {
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
     }
-    private val model by lazy {
+    private val mainViewModel by lazy {
         ViewModelProviders.of(this, dodecaFactory).get(MainViewModel::class.java)
     }
     private val dodecaViewModel by lazy {
         ViewModelProviders.of(this, dodecaFactory).get(DodecaViewModel::class.java)
     }
     private val dir: File
-        get() = model.dir.value ?: dduDir
+        get() = mainViewModel.dir.value ?: dduDir
     private val dduFileRepository =
         DduFileRepository.get(this)
 
@@ -86,18 +89,18 @@ class MainActivity :
         super.onCreate(savedInstanceState)
         // TODO: migrate to OptionsViewModel
         Options(resources).init() // init options.* and values.*
-        model.checkUpgrade()
+        mainViewModel.checkUpgrade()
         setupWindow()
         val binding: ActivityMainBinding =
             DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.lifecycleOwner = this
-        binding.model = model
-        binding.dodecaViewModel = dodecaViewModel // NOTE: dodecaViewModel must be initialized after model.checkUpgrade
+        binding.model = mainViewModel
+        binding.dodecaViewModel = dodecaViewModel // NOTE: dodecaViewModel must be initialized after mainViewModel.checkUpgrade
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         handleLaunchFromImplicitIntent()
         setupToolbar()
-        model.showBottomBar()
+        mainViewModel.showBottomBar()
     }
 
     private fun setupWindow() {
@@ -105,7 +108,8 @@ class MainActivity :
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
             setOnSystemUiVisibilityChangeListener {
                 if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
-                    systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+                    systemUiVisibility =
+                        IMMERSIVE_UI_VISIBILITY
             }
         }
         window.setFlags(
@@ -136,7 +140,7 @@ class MainActivity :
     }
 
     private fun onToolbarItemClick(id: Int) {
-        model.showBottomBar()
+        mainViewModel.showBottomBar()
         when (id) {
             R.id.help_button -> {
                 val intent = Intent(this, HelpActivity::class.java)
@@ -164,7 +168,7 @@ class MainActivity :
             R.id.clear_button -> dodecaViewModel.requestClear()
             R.id.autocenter_button -> dodecaViewModel.requestAutocenter()
             R.id.settings_button -> {
-                model.cancelBottomBarHidingJob()
+                mainViewModel.cancelBottomBarHidingJob()
                 startActivityForResult(
                     Intent(this@MainActivity, SettingsActivity::class.java),
                     APPLY_SETTINGS_CODE
@@ -204,12 +208,12 @@ class MainActivity :
 
     private fun temporaryPause() {
         dodecaViewModel.pause()
-        model.cancelBottomBarHidingJob()
+        mainViewModel.cancelBottomBarHidingJob()
     }
 
     private fun resumeAfterTemporaryPause() {
         dodecaViewModel.resume()
-        model.showBottomBar()
+        mainViewModel.showBottomBar()
     }
 
     override fun onChooseColorClosed() {
@@ -220,13 +224,13 @@ class MainActivity :
     override fun onResume() {
         super.onResume()
         dodecaViewModel.resume()
-        model.restartBottomBarHidingJobIfShown()
+        mainViewModel.restartBottomBarHidingJobIfShown()
     }
 
     override fun onPause() {
         super.onPause()
         dodecaViewModel.pause()
-        model.cancelBottomBarHidingJob()
+        mainViewModel.cancelBottomBarHidingJob()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -236,7 +240,7 @@ class MainActivity :
                 // TODO: should change MutableLiveData in MainViewModel
                 if (resultCode == Activity.RESULT_OK) {
                     data?.getStringExtra("dirPath")?.let { newDir ->
-                        model.changeDir(File(newDir)) }
+                        mainViewModel.changeDir(File(newDir)) }
                     data?.getStringExtra("path")?.let {
                         readPath(it)
                     }
@@ -255,7 +259,7 @@ class MainActivity :
             }
             HELP_CODE -> Unit
         }
-        model.showBottomBar()
+        mainViewModel.showBottomBar()
     }
 
     private fun applyInstantSettings(
@@ -263,7 +267,7 @@ class MainActivity :
         revertAllDdus: Boolean = false,
         discardAllPreviews: Boolean = false
     ) {
-        model.viewModelScope.launch {
+        mainViewModel.viewModelScope.launch {
             if (revertCurrentDdu) revertCurrentDdu()
             if (revertAllDdus) revertAllDdus()
             if (discardAllPreviews) discardAllPreviews()
@@ -272,13 +276,13 @@ class MainActivity :
 
     private suspend fun revertCurrentDdu() {
         dodecaViewModel.getDduFile()?.let { file: File ->
-            model.extractDduFrom(file.filename)
+            mainViewModel.extractDduFrom(file.filename)
             dodecaViewModel.loadDduFrom(file)
         }
     }
 
     private suspend fun revertAllDdus() {
-        model.extractDdusFromAssets(overwrite = true)
+        mainViewModel.extractDdusFromAssets(overwrite = true)
         dodecaViewModel.getDduFile()?.let { file: File ->
             dodecaViewModel.loadDduFrom(file)
         }
@@ -294,7 +298,7 @@ class MainActivity :
     }
 
     override fun onDestroy() {
-        model.sendOnDestroy()
+        mainViewModel.sendOnDestroy()
         super.onDestroy()
     }
 
@@ -371,7 +375,9 @@ class MainActivity :
             val itemView: View = convertView
                 ?: context.layoutInflater
                     .inflate(R.layout.shape_spinner_row, parent, false).apply {
-                        tag = SpinnerViewHolder(findViewById(R.id.shape_spinner_image))
+                        tag = SpinnerViewHolder(
+                            findViewById(R.id.shape_spinner_image)
+                        )
                     }
             val shapeDrawableResource: Int = shapeDrawableResources.getValue(shapes[position])
             (itemView.tag as SpinnerViewHolder).imageView.setImageDrawable(
