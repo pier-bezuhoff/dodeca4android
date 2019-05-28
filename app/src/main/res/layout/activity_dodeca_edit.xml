@@ -6,14 +6,14 @@
         xmlns:bind="http://schemas.android.com/apk/res-auto"
 >
     <data>
-        <variable name="model" type="com.pierbezuhoff.dodeca.models.DodecaEditViewModel"/>
+        <variable name="model" type="com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditViewModel"/>
     </data>
     <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:context=".ui.DodecaEditActivity"
+            tools:context=".ui.dodecaedit.DodecaEditActivity"
     >
-        <com.pierbezuhoff.dodeca.ui.DodecaEditView
+        <com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditView
                 android:id="@+id/dodeca_edit_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

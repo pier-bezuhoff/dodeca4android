@@ -120,7 +120,7 @@ class Options(val resources: Resources) {
     val skipN = ParsedIntKeyOption("skip_n", R.string.skip_n)
     val canvasFactor = ParsedIntKeyOption("canvas_factor", R.string.canvas_factor)
     val showStat = BooleanKeyOption("show_stat", R.bool.show_stat)
-    // preview size in pixels, yet to be converted to dp
+    // buildPreview size in pixels, yet to be converted to dp
     val previewSize = ParsedIntKeyOption("preview_size", R.string.preview_size)
     val autocenterPreview = BooleanKeyOption("autocenter_preview", R.bool.autocenter_preview)
     val nPreviewUpdates = ParsedIntKeyOption("n_preview_updates", R.string.n_preview_updates)

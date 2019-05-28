@@ -1,9 +1,9 @@
-package com.pierbezuhoff.dodeca.models
+package com.pierbezuhoff.dodeca.ui.meta
 
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
-import com.pierbezuhoff.dodeca.db.DduFileRepository
+import com.pierbezuhoff.dodeca.models.DduFileRepository
 
 abstract class DodecaAndroidViewModel(application: Application) : AndroidViewModel(application) {
     protected val context: Context

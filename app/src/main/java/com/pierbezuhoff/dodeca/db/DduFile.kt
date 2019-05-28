@@ -12,7 +12,7 @@ import com.pierbezuhoff.dodeca.utils.Filename
 data class DduFile(
     @ColumnInfo(name = "filename") var filename: Filename,
     @ColumnInfo(name = "original_filename") var originalFilename: Filename,
-    @ColumnInfo(name = "preview" /*, typeAffinity = ColumnInfo.BLOB*/) var preview: Bitmap? = null
+    @ColumnInfo(name = "buildPreview" /*, typeAffinity = ColumnInfo.BLOB*/) var preview: Bitmap? = null
 ) {
     @PrimaryKey(autoGenerate = true) var uid: Int = 0
 

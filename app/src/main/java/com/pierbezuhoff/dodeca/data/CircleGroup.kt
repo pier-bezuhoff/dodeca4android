@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.pierbezuhoff.dodeca.data
 
 import android.graphics.Canvas
@@ -27,10 +29,8 @@ interface SuspendableCircleGroup : CircleGroup {
         canvas: Canvas, shape: Shape = Shape.CIRCLE, showAllCircles: Boolean = false)
 }
 
-@Suppress("FunctionName")
 fun CircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): CircleGroup =
     PrimitiveCircles(circleFigures, defaultPaint)
 
-@Suppress("FunctionName")
 fun SuspendableCircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): SuspendableCircleGroup =
     PrimitiveCircles(circleFigures, defaultPaint)

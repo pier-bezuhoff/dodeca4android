@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.dodeca
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -79,7 +79,8 @@ class DodecaGestureDetector private constructor(
         /** Thread-safe via double-checked locking */
         fun get(context: Context): DodecaGestureDetector =
             instance ?: synchronized(this) {
-                instance ?: DodecaGestureDetector(context).also {
+                instance
+                    ?: DodecaGestureDetector(context).also {
                     instance = it
                 }
             }

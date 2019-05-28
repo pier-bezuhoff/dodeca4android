@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.dodecaedit
 
 import android.content.Context
 import android.util.AttributeSet

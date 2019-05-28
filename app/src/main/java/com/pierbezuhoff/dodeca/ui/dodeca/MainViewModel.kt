@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.models
+package com.pierbezuhoff.dodeca.ui.dodeca
 
 import android.app.Application
 import android.util.Log
@@ -9,7 +9,8 @@ import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.options
-import com.pierbezuhoff.dodeca.ui.DodecaGestureDetector
+import com.pierbezuhoff.dodeca.models.OptionsManager
+import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
@@ -157,7 +158,8 @@ class MainViewModel(
     }
 
     suspend fun extractDduFrom(filename: Filename, dir: File = currentDir, overwrite: Boolean = false) =
-        context.extractDduFrom(filename, dir, dduFileRepository, TAG, overwrite)
+        context.extractDduFrom(filename, dir, dduFileRepository,
+            TAG, overwrite)
 
     companion object {
         private const val TAG = "MainViewModel"

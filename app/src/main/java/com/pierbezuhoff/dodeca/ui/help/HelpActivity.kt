@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.help
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

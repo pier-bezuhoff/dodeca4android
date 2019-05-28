@@ -1,5 +1,6 @@
 package com.pierbezuhoff.dodeca.db
 
+import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -12,6 +13,9 @@ import com.pierbezuhoff.dodeca.utils.Filename
 interface DduFileDao {
     @Query("SELECT * FROM ddufile")
     suspend fun getAll(): List<DduFile>
+
+    @Query("SELECT * FROM ddufile ORDER BY filename ASC")
+    fun getAllPaged(): DataSource.Factory<Int, DduFile>
 
     @Query("SELECT * FROM ddufile WHERE uid IN (:dduFileIds)")
     suspend fun loadAllByIds(dduFileIds: IntArray): List<DduFile>

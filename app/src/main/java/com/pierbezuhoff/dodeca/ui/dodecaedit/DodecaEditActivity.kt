@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.dodecaedit
 
 import android.os.Bundle
 import android.view.View
@@ -8,7 +8,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProviders
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaEditBinding
-import com.pierbezuhoff.dodeca.models.DodecaEditViewModel
 import kotlinx.android.synthetic.main.activity_dodeca_edit.*
 
 class DodecaEditActivity : AppCompatActivity() {
@@ -24,7 +23,8 @@ class DodecaEditActivity : AppCompatActivity() {
                 IMMERSIVE_UI_VISIBILITY // FULLSCREEN_UI_VISIBILITY
             setOnSystemUiVisibilityChangeListener {
                 if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
-                    systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+                    systemUiVisibility =
+                        IMMERSIVE_UI_VISIBILITY
             }
         }
         window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)

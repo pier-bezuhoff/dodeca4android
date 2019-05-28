@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui
+package com.pierbezuhoff.dodeca.ui.settings
 
 import android.os.Build
 import android.os.Bundle
@@ -10,6 +10,7 @@ import androidx.preference.PreferenceManager
 import androidx.preference.SeekBarPreference
 import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.ui.dodeca.MainActivity
 import org.jetbrains.anko.support.v4.email
 
 class SettingsFragment : PreferenceFragmentCompat() {
