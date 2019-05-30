@@ -1,13 +1,11 @@
 package com.pierbezuhoff.dodeca.ui.dduchooser
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
@@ -19,14 +17,12 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.withStyledAttributes
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
@@ -51,7 +47,6 @@ import com.pierbezuhoff.dodeca.utils.isDdu
 import com.pierbezuhoff.dodeca.utils.stripDdu
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.android.synthetic.main.activity_dduchooser.*
-import kotlinx.android.synthetic.main.dir_row.view.*
 import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
 import org.jetbrains.anko.alert
@@ -116,7 +111,7 @@ class DduChooserActivity : AppCompatActivity() {
     private fun initAdapter() {
         val adapter = DduFileAdapter()
         ddu_recycler_view.adapter = adapter
-        model.dduFiles.observe(this) {
+        model.dduEntries.observe(this) {
             // MAYBE: handle empty list case
             adapter.submitList(it)
         }
@@ -473,82 +468,7 @@ class DduChooserActivity : AppCompatActivity() {
     }
 }
 
-class AutofitGridRecyclerView @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
-) : RecyclerView(context, attrs, defStyleAttr) {
-    private val manager = GridLayoutManager(context,
-        defaultNColumns
-    )
-    private var columnWidth: Int? = null
-
-    init {
-        context.withStyledAttributes(attrs, intArrayOf(android.R.attr.columnWidth), defStyleAttr) {
-            getDimensionPixelSize(0, -1).let {
-                columnWidth = if (it == -1) null else it
-            }
-        }
-        layoutManager = manager
-    }
-
-    override fun onMeasure(widthSpec: Int, heightSpec: Int) {
-        super.onMeasure(widthSpec, heightSpec)
-        val spanCount = Math.max(minNColumns, measuredWidth / (columnWidth ?: defaultColumnWidth))
-        manager.spanCount = spanCount
-    }
-
-    companion object {
-        const val defaultNColumns = 2
-        const val minNColumns = 1 // I'd like at least 2, check on small phones
-        const val cellPadding = 8
-        val defaultColumnWidth: Int get() = 2 * cellPadding + values.previewSizePx
-    }
-}
-
-class DirAdapter(
-    private val activity: DduChooserActivity,
-    private val dduDir: File
-) : RecyclerView.Adapter<DirAdapter.DirViewHolder>() {
-    class DirViewHolder(val view: View) : RecyclerView.ViewHolder(view)
-
-    private val dir: File get() = activity.dir
-    private val sleepingDirs: Sleeping<List<File>> =
-        Sleeping { dir.listFiles { file -> file.isDirectory }.toList() }
-    val dirs: List<File> by sleepingDirs
-    var contextMenuCreatorPosition: Int? = null // track VH to act on it
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DirViewHolder =
-        DirViewHolder(
-            LayoutInflater.from(parent.context)
-                .inflate(R.layout.dir_row, parent, false)
-        )
-
-    override fun onBindViewHolder(holder: DirViewHolder, position: Int) {
-        val dir = dirs[position]
-        with(holder.view) {
-            dir_name.text = dir.name
-            setOnClickListener { downDir(dir) }
-            activity.registerForContextMenu(this)
-            setOnCreateContextMenuListener { menu, _, _ ->
-                contextMenuCreatorPosition = position
-                activity.menuInflater.inflate(R.menu.ddu_chooser_dir_context_menu, menu)
-            }
-        }
-    }
-
-    fun refreshDir() {
-        sleepingDirs.awake()
-        notifyDataSetChanged()
-    }
-
-    private fun downDir(newDir: File) {
-        activity.onDirChange(newDir)
-    }
-
-    override fun getItemCount(): Int = dirs.size
-}
-
+// TODO: migrate to DduFileAdapter
 class DduAdapter(
     private val activity: DduChooserActivity,
     private val onChoose: (File) -> Unit

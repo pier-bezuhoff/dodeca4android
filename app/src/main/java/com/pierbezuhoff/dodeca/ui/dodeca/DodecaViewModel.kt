@@ -30,10 +30,9 @@ import kotlin.properties.Delegates
 class DodecaViewModel(
     application: Application,
     optionsManager: OptionsManager
-) :
-    DodecaAndroidViewModelWithOptionsManager(application, optionsManager),
-    DduRepresentation.StatHolder, // by statUpdater
-    DduRepresentation.ToastEmitter
+) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
+    , DduRepresentation.StatHolder // by statUpdater
+    , DduRepresentation.ToastEmitter
 {
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
     private val _updating: MutableLiveData<Boolean> = MutableLiveData()

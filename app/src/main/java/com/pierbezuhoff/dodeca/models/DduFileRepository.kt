@@ -34,9 +34,6 @@ class DduFileRepository private constructor(context: Context) {
         ).build()
     }
 
-    suspend fun getAllDduFilenames(): List<Filename> =
-        getAllDduFiles().map { it.filename }
-
     suspend fun getAllDduFilenamesAndPreviews(): Map<Filename, Bitmap?> =
         getAllDduFiles().map { it.filename to it.preview }.toMap()
 

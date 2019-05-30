@@ -3,10 +3,8 @@ package com.pierbezuhoff.dodeca.ui.dduchooser
 import android.app.Application
 import android.graphics.Bitmap
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagedList
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModel
@@ -14,22 +12,31 @@ import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.isDdu
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
 class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(application) {
-    private val _dduFiles: MutableLiveData<PagedList<DduFileAdapter.DduFileEntry>> = MutableLiveData()
-    val dduFiles: LiveData<PagedList<DduFileAdapter.DduFileEntry>> = _dduFiles
+    var dduContextMenuCreatorPosition: Int? = null
+    var dirContextMenuCreatorPosition: Int? = null
 
-    fun requestFilesAt(dir: File) {
-        viewModelScope.launch {
-            val files = getFiles(dir)
-        }
+    fun requestFilesAt(dir: File): LiveData<Array<File>> = liveData {
+        val files = getFiles(dir)
+        emit(files)
     }
 
     private suspend fun getFiles(dir: File): Array<File> = withContext(Dispatchers.IO) {
         return@withContext dir.listFiles { file -> file.isDdu }
+    }
+
+    fun requestPreviewsMapOf(files: Array<File>): LiveData<Map<File, Bitmap?>> = liveData {
+        val map = getPreviewsMap(files)
+        emit(map)
+    }
+
+    private suspend fun getPreviewsMap(files: Array<File>): Map<File, Bitmap?> {
+        return files.associate { file: File ->
+            file to dduFileRepository.getPreview(file.filename)
+        }
     }
 
     fun buildPreviewOf(file: File): LiveData<Bitmap> {

@@ -16,10 +16,10 @@ import org.apache.commons.math3.complex.Complex
 class DodecaView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null
-) : View(context, attributeSet),
-    LifecycleOwner,
-    DduRepresentation.Presenter,
-    MainViewModel.OnDestroyMainActivity
+) : View(context, attributeSet)
+    , LifecycleOwner
+    , DduRepresentation.Presenter
+    , MainViewModel.OnDestroyMainActivity
 {
     lateinit var mainModel: MainViewModel // inject
     lateinit var model: DodecaViewModel // inject
