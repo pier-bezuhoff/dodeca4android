@@ -64,9 +64,9 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 @RuntimePermissions
-class MainActivity :
-    AppCompatActivity(),
-    ChooseColorDialog.ChooseColorListener
+class MainActivity
+    : AppCompatActivity()
+    , ChooseColorDialog.ChooseColorListener
 {
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)

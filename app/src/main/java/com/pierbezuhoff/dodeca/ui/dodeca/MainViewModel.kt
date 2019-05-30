@@ -27,8 +27,8 @@ import java.io.IOException
 class MainViewModel(
     application: Application,
     optionsManager: OptionsManager
-) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager),
-    DodecaGestureDetector.SingleTapListener
+) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
+    , DodecaGestureDetector.SingleTapListener
 {
     interface OnDestroyMainActivity { fun onDestroyMainActivity() }
     private val onDestroyMainActivityConnection = Connection<OnDestroyMainActivity>()

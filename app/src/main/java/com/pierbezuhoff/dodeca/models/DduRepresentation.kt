@@ -42,15 +42,15 @@ import kotlinx.coroutines.withContext
 import org.apache.commons.math3.complex.Complex
 import kotlin.math.roundToInt
 
-class DduRepresentation(override val ddu: Ddu) :
-    DodecaGestureDetector.ScrollListener,
-    DodecaGestureDetector.ScaleListener,
-    DduOptionsChangeListener,
-    DduAttributesHolder
+class DduRepresentation(override val ddu: Ddu) : Any()
+    , DduAttributesHolder
+    , DduOptionsChangeListener
+    , DodecaGestureDetector.ScrollListener
+    , DodecaGestureDetector.ScaleListener
 {
     interface Presenter : LifecycleOwner {
         fun getCenter(): Complex?
-        /** return (width, height) or null */
+        /** Return (width, height) or null */
         fun getSize(): Pair<Int, Int>?
         fun redraw()
     }

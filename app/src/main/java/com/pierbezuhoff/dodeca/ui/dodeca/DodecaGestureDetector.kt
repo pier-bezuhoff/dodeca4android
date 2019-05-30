@@ -11,8 +11,8 @@ import com.pierbezuhoff.dodeca.utils.Connection
 /** Listen to single tap, scroll and scale gestures */
 class DodecaGestureDetector private constructor(
     context: Context
-) : GestureDetector.SimpleOnGestureListener(),
-    View.OnTouchListener
+) : GestureDetector.SimpleOnGestureListener()
+    , View.OnTouchListener
 {
     interface SingleTapListener { fun onSingleTap(e: MotionEvent?) }
     interface ScrollListener { fun onScroll(dx: Float, dy: Float) }

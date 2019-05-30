@@ -1,31 +1,59 @@
 package com.pierbezuhoff.dodeca.ui.dduchooser
 
-import android.app.Activity
 import android.graphics.Bitmap
+import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.MenuRes
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.observe
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.db.DduFile
+import com.pierbezuhoff.dodeca.models.DduFileRepository
+import com.pierbezuhoff.dodeca.utils.Connection
+import com.pierbezuhoff.dodeca.utils.fileName
+import com.pierbezuhoff.dodeca.utils.filename
+import com.pierbezuhoff.dodeca.utils.isDdu
 import kotlinx.android.synthetic.main.ddu_item.view.*
 import java.io.File
 
-class DduFileAdapter : PagedListAdapter<DduFile, DduFileAdapter.DduFileViewHolder>(
-    DIFF_CALLBACK
-) {
-    private var contextMenuCreatorPosition: Int? = null
-    private lateinit var model: DduChooserViewModel
+class DduFileAdapter
+    : PagedListAdapter<DduFileAdapter.DduFileEntry, DduFileAdapter.DduFileViewHolder>(DIFF_CALLBACK)
+    , LifecycleOwner
+{
+    interface FileChooser { fun chooseFile(file: File) }
+    interface ContextMenuManager {
+        // activity.registerForContextMenu(view)
+        fun registerViewForContextMenu(view: View)
+        // activity.menuInflater.inflate(R.menu.ddu_chooser_context_menu, menu)
+        fun inflateMenu(@MenuRes menuRes: Int, menu: Menu)
+    }
+    lateinit var model: DduChooserViewModel // inject
+    private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
+    private val fileChooserConnection = Connection<FileChooser>()
+    private val contextMenuConnection = Connection<ContextMenuManager>()
+    val fileChooserSubscription = fileChooserConnection.subscription
+    val contextMenuSubscription = contextMenuConnection.subscription
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view)
     data class DduFileEntry(val file: File, val bitmap: Bitmap?)
 
     init {
-        "custom DataSource.Factory: from files in dir"
+        val dir: File = "current dir"
+        val files: Array<File> = dir.listFiles { file: File -> file.isDdu }
+        val dduFileRepository: DduFileRepository = "repo"
+        val dduFileEntries: Map<File, Bitmap?> =
+            files.associate { it to dduFileRepository.getPreview(it.filename) }
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
     }
+
+    override fun getLifecycle(): Lifecycle =
+        lifecycleRegistry
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DduFileViewHolder {
         val view = LayoutInflater
@@ -35,26 +63,23 @@ class DduFileAdapter : PagedListAdapter<DduFile, DduFileAdapter.DduFileViewHolde
     }
 
     override fun onBindViewHolder(holder: DduFileViewHolder, position: Int) {
-        val dduFile: DduFile? = getItem(position)
-        dduFile?.let {
+        val dduFileEntry: DduFileEntry? = getItem(position)
+        dduFileEntry?.let { (file: File, bitmap: Bitmap?) ->
             with(holder) {
-                view.ddu_entry.text = dduFile.filename.fileName.toString()
+                view.ddu_entry.text = file.fileName.toString()
                 view.setOnClickListener {
-                    "capture dduFile in closure"
+                    fileChooserConnection.send { chooseFile(file) }
                 }
-                val activity: Activity = "pass somehow"
-                activity.registerForContextMenu(view)
+                contextMenuConnection.send { registerViewForContextMenu(view) }
                 view.setOnCreateContextMenuListener { menu, _, _ ->
-                    contextMenuCreatorPosition = position
-                    activity.menuInflater.inflate(R.menu.ddu_chooser_context_menu, menu)
+                    model.dduContextMenuCreatorPosition = position
+                    contextMenuConnection.send { inflateMenu(R.menu.ddu_chooser_context_menu, menu) }
                 }
                 setIsRecyclable(false)
-                val bitmap: Bitmap? = dduFile.preview
                 if (bitmap == null) {
                     noPreview(holder)
-                    val file: File = "file in current dir for dduFile"
                     model.buildPreviewOf(file)
-                        .observe("custom or activity" as LifecycleOwner) { newBitmap: Bitmap ->
+                        .observe(this@DduFileAdapter) { newBitmap: Bitmap ->
                             setPreview(holder, newBitmap)
                         }
                 } else {
@@ -77,11 +102,24 @@ class DduFileAdapter : PagedListAdapter<DduFile, DduFileAdapter.DduFileViewHolde
         holder.view.preview_progress.visibility = View.GONE
     }
 
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        // NOTE: should be called only when activity destroys
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        Log.i(TAG, "onDetachedFromRecyclerView => Lifecycle.Event.ON_DESTROY")
+    }
+
     companion object {
-        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<DduFile>() {
-            override fun areItemsTheSame(oldItem: DduFile, newItem: DduFile): Boolean =
-                oldItem.uid == newItem.uid
-            override fun areContentsTheSame(oldItem: DduFile, newItem: DduFile): Boolean =
+        private const val TAG = "DduFileAdapter"
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<DduFileEntry>() {
+            override fun areItemsTheSame(oldItem: DduFileEntry, newItem: DduFileEntry): Boolean =
+                oldItem.file == newItem.file
+            override fun areContentsTheSame(oldItem: DduFileEntry, newItem: DduFileEntry): Boolean =
                 oldItem == newItem
         }
     }

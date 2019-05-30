@@ -10,11 +10,12 @@ class Connection<ListenerInterface> {
     private var listener: WeakReference<ListenerInterface>? = null
     val subscription: Subscription = Subscription()
 
-    fun send(act: ListenerInterface.() -> Unit) {
+    fun <Response> send(act: ListenerInterface.() -> Response): Response? {
         // callsInPlace(act, InvocationKind.AT_MOST_ONCE)
-        listener?.get()?.act()
+        return listener?.get()?.act()
     }
 
+    // Subscription to Connection is like LiveData to MutableLiveData
     inner class Subscription {
         fun subscribeFrom(listener: ListenerInterface): Output {
             this@Connection.listener = WeakReference(listener)
