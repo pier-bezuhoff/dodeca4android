@@ -15,16 +15,13 @@ import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.fileName
-import com.pierbezuhoff.dodeca.utils.filename
-import com.pierbezuhoff.dodeca.utils.isDdu
 import kotlinx.android.synthetic.main.ddu_item.view.*
 import java.io.File
 
 class DduFileAdapter
-    : PagedListAdapter<DduFileAdapter.DduFileEntry, DduFileAdapter.DduFileViewHolder>(DIFF_CALLBACK)
+    : PagedListAdapter<File, DduFileAdapter.DduFileViewHolder>(DIFF_CALLBACK)
     , LifecycleOwner
 {
     interface FileChooser { fun chooseFile(file: File) }
@@ -44,11 +41,6 @@ class DduFileAdapter
     data class DduFileEntry(val file: File, val bitmap: Bitmap?)
 
     init {
-        val dir: File = "current dir"
-        val files: Array<File> = dir.listFiles { file: File -> file.isDdu }
-        val dduFileRepository: DduFileRepository = "repo"
-        val dduFileEntries: Map<File, Bitmap?> =
-            files.associate { it to dduFileRepository.getPreview(it.filename) }
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
     }
 
@@ -63,8 +55,8 @@ class DduFileAdapter
     }
 
     override fun onBindViewHolder(holder: DduFileViewHolder, position: Int) {
-        val dduFileEntry: DduFileEntry? = getItem(position)
-        dduFileEntry?.let { (file: File, bitmap: Bitmap?) ->
+        val file: File? = getItem(position)
+        file?.let {
             with(holder) {
                 view.ddu_entry.text = file.fileName.toString()
                 view.setOnClickListener {
@@ -76,15 +68,11 @@ class DduFileAdapter
                     contextMenuConnection.send { inflateMenu(R.menu.ddu_chooser_context_menu, menu) }
                 }
                 setIsRecyclable(false)
-                if (bitmap == null) {
-                    noPreview(holder)
-                    model.buildPreviewOf(file)
-                        .observe(this@DduFileAdapter) { newBitmap: Bitmap ->
-                            setPreview(holder, newBitmap)
-                        }
-                } else {
-                    setPreview(holder, bitmap)
-                }
+                noPreview(holder)
+                model.getPreviewOf(file)
+                    .observe(this@DduFileAdapter) { newBitmap: Bitmap ->
+                        setPreview(holder, newBitmap)
+                    }
             }
         }
     }
@@ -116,10 +104,10 @@ class DduFileAdapter
 
     companion object {
         private const val TAG = "DduFileAdapter"
-        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<DduFileEntry>() {
-            override fun areItemsTheSame(oldItem: DduFileEntry, newItem: DduFileEntry): Boolean =
-                oldItem.file == newItem.file
-            override fun areContentsTheSame(oldItem: DduFileEntry, newItem: DduFileEntry): Boolean =
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<File>() {
+            override fun areItemsTheSame(oldItem: File, newItem: File): Boolean =
+                oldItem.fileName == newItem.fileName
+            override fun areContentsTheSame(oldItem: File, newItem: File): Boolean =
                 oldItem == newItem
         }
     }

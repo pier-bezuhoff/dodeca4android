@@ -2,9 +2,6 @@ package com.pierbezuhoff.dodeca.models
 
 import android.content.Context
 import android.graphics.Bitmap
-import androidx.lifecycle.LiveData
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
 import androidx.room.Room
 import com.pierbezuhoff.dodeca.db.DduFile
 import com.pierbezuhoff.dodeca.db.DduFileDao
@@ -26,13 +23,6 @@ class DduFileRepository private constructor(context: Context) {
 
     private suspend fun getAllDduFiles(): List<DduFile> =
         dduFileDao.getAll()
-
-    fun getAllPagedDduFiles(): LiveData<PagedList<DduFile>> {
-        val dataSourceFactory = dduFileDao.getAllPaged()
-        return LivePagedListBuilder(dataSourceFactory,
-            DB_PAGE_SIZE
-        ).build()
-    }
 
     suspend fun getAllDduFilenamesAndPreviews(): Map<Filename, Bitmap?> =
         getAllDduFiles().map { it.filename to it.preview }.toMap()
@@ -103,7 +93,6 @@ class DduFileRepository private constructor(context: Context) {
     companion object {
         @Volatile private var instance: DduFileRepository? = null
         private const val DB_NAME: String = "ddu-files"
-        private const val DB_PAGE_SIZE: Int = 20
 
         /** Thread-safe via double-checked locking */
         fun get(context: Context): DduFileRepository =
