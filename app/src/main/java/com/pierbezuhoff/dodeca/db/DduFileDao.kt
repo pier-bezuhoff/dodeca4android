@@ -1,6 +1,5 @@
 package com.pierbezuhoff.dodeca.db
 
-import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -14,19 +13,13 @@ interface DduFileDao {
     @Query("SELECT * FROM ddufile")
     suspend fun getAll(): List<DduFile>
 
-    @Query("SELECT * FROM ddufile ORDER BY filename ASC")
-    fun getAllPaged(): DataSource.Factory<Int, DduFile>
-
-    @Query("SELECT * FROM ddufile WHERE uid IN (:dduFileIds)")
-    suspend fun loadAllByIds(dduFileIds: IntArray): List<DduFile>
-
     @Query("SELECT * FROM ddufile WHERE filename LIKE :filename LIMIT 1")
     suspend fun findByFilename(filename: Filename): DduFile?
 
     @Update
     suspend fun update(dduFile: DduFile)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(vararg dduFiles: DduFile)
 
     @Delete

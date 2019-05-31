@@ -64,7 +64,10 @@ import java.io.File
 // MAYBE: action bar: search by name
 // MAYBE: store in sharedPreferences last dir
 // MAYBE: link to external folder
-class DduChooserActivity : AppCompatActivity() {
+class DduChooserActivity : AppCompatActivity()
+    , DduFileAdapter.FileChooser
+    , DduFileAdapter.ContextMenuManager
+{
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
     }
@@ -111,8 +114,8 @@ class DduChooserActivity : AppCompatActivity() {
     private fun initAdapter() {
         val adapter = DduFileAdapter()
         ddu_recycler_view.adapter = adapter
-        model.dduEntries.observe(this) {
-            // MAYBE: handle empty list case
+        model.setDir(mainViewModel.dir.value!!)
+        model.files.observe(this) {
             adapter.submitList(it)
         }
     }
