@@ -10,6 +10,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.Observer
 import com.pierbezuhoff.dodeca.models.DduRepresentation
+import com.pierbezuhoff.dodeca.ui.MainViewModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
 import org.apache.commons.math3.complex.Complex
 

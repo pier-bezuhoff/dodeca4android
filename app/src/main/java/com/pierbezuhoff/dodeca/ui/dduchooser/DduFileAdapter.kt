@@ -26,9 +26,7 @@ class DduFileAdapter
 {
     interface FileChooser { fun chooseFile(file: File) }
     interface ContextMenuManager {
-        // activity.registerForContextMenu(view)
         fun registerViewForContextMenu(view: View)
-        // activity.menuInflater.inflate(R.menu.ddu_chooser_context_menu, menu)
         fun inflateMenu(@MenuRes menuRes: Int, menu: Menu)
     }
     lateinit var model: DduChooserViewModel // inject
@@ -38,7 +36,6 @@ class DduFileAdapter
     val fileChooserSubscription = fileChooserConnection.subscription
     val contextMenuSubscription = contextMenuConnection.subscription
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view)
-    data class DduFileEntry(val file: File, val bitmap: Bitmap?)
 
     init {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)

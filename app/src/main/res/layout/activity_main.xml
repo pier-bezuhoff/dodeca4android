@@ -7,14 +7,14 @@
         xmlns:bind="http://schemas.android.com/apk/res-auto"
 >
     <data>
-        <variable name="model" type="com.pierbezuhoff.dodeca.ui.dodeca.MainViewModel"/>
+        <variable name="model" type="com.pierbezuhoff.dodeca.ui.MainViewModel"/>
         <variable name="dodecaViewModel" type="com.pierbezuhoff.dodeca.ui.dodeca.DodecaViewModel"/>
     </data>
     <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
-            tools:context=".ui.dodeca.MainActivity"
+            tools:context=".ui.MainActivity"
     >
 
         <com.pierbezuhoff.dodeca.ui.dodeca.DodecaView
@@ -58,7 +58,7 @@
         <androidx.coordinatorlayout.widget.CoordinatorLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                tools:context=".ui.dodeca.MainActivity"
+                tools:context=".ui.MainActivity"
                 app:layout_constraintBottom_toBottomOf="parent"
         >
 

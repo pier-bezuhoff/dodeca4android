@@ -7,15 +7,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModelProviders
@@ -24,17 +19,15 @@ import androidx.lifecycle.observe
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
-import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
-import com.pierbezuhoff.dodeca.ui.dodeca.MainViewModel
+import com.pierbezuhoff.dodeca.ui.MainViewModel
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
-import com.pierbezuhoff.dodeca.utils.Sleeping
+import com.pierbezuhoff.dodeca.utils.MultiConnection
 import com.pierbezuhoff.dodeca.utils.copyDirectory
 import com.pierbezuhoff.dodeca.utils.copyFile
 import com.pierbezuhoff.dodeca.utils.copyStream
@@ -53,10 +46,8 @@ import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
 import org.jetbrains.anko.defaultSharedPreferences
-import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.editText
 import org.jetbrains.anko.toast
-import org.jetbrains.anko.uiThread
 import org.jetbrains.anko.yesButton
 import java.io.File
 
@@ -68,6 +59,7 @@ class DduChooserActivity : AppCompatActivity()
     , DduFileAdapter.FileChooser
     , DduFileAdapter.ContextMenuManager
 {
+    interface DirContentChangeListener { fun onDirContentChanged() }
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
     }
@@ -82,7 +74,9 @@ class DduChooserActivity : AppCompatActivity()
     }
     private val dduFileRepository =
         DduFileRepository.get(this)
-    private lateinit var dduAdapter: DduAdapter
+    private val dir: File get() = mainViewModel.dir.value!!
+    private val dirChangedConnection = MultiConnection<DirContentChangeListener>()
+    val dirChangedSubscription = dirChangedConnection.subscription
     private lateinit var dirAdapter: DirAdapter
     private var requestedDduFile: File? = null
     private var requestedDduDir: File? = null
@@ -90,44 +84,53 @@ class DduChooserActivity : AppCompatActivity()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dduchooser)
-        dirAdapter = DirAdapter(this, dduDir)
-        dir_recycler_view.apply {
-            adapter = dirAdapter
-            layoutManager = LinearLayoutManager(this@DduChooserActivity)
-            itemAnimator = DefaultItemAnimator()
-        }
-        // TODO: move to AsyncTask
-//        val progressBar = ContentLoadingProgressBar(this)
-//        progressBar.show()
-        dduAdapter = DduAdapter(this, ::onChoose)
-//        progressBar.hide()
-        ddu_recycler_view.apply {
-            adapter = dduAdapter
-            // colors and thickness are setToIn from styles.xml
-            addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
-            addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.HORIZONTAL))
-            itemAnimator = DefaultItemAnimator()
-            setHasFixedSize(true)
-        }
+        initDirRecyclerView()
+        initDduRecyclerView()
     }
 
-    private fun initAdapter() {
+    private fun initDirRecyclerView() {
+        dirAdapter = DirAdapter(this, dduDir)
+        dir_recycler_view.adapter = dirAdapter
+        dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
+        dir_recycler_view.itemAnimator = DefaultItemAnimator()
+        dir_recycler_view.setHasFixedSize(true)
+    }
+
+    private fun initDduRecyclerView() {
         val adapter = DduFileAdapter()
         ddu_recycler_view.adapter = adapter
-        model.setDir(mainViewModel.dir.value!!)
+        // colors and thickness are set from styles.xml
+        ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
+        ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.HORIZONTAL))
+        ddu_recycler_view.itemAnimator = DefaultItemAnimator()
+        ddu_recycler_view.setHasFixedSize(true)
+        adapter.fileChooserSubscription
+            .subscribeFrom(this)
+            .unsubscribeOnDestroy(this)
+        adapter.contextMenuSubscription
+            .subscribeFrom(this)
+            .unsubscribeOnDestroy(this)
+        model.setDir(dir)
         model.files.observe(this) {
             adapter.submitList(it)
         }
     }
 
-    private fun onChoose(file: File) {
+    override fun chooseFile(file: File) {
         Log.i(TAG, "File \"${file.absolutePath}\" chosen")
         val data = Intent().apply {
-            putExtra("dirPath", dir.absolutePath)
             putExtra("path", file.absolutePath)
         }
         setResult(Activity.RESULT_OK, data)
         finish()
+    }
+
+    override fun registerViewForContextMenu(view: View) {
+        registerForContextMenu(view)
+    }
+
+    override fun inflateMenu(menuRes: Int, menu: Menu) {
+        menuInflater.inflate(menuRes, menu)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -155,7 +158,7 @@ class DduChooserActivity : AppCompatActivity()
 
     override fun onContextItemSelected(item: MenuItem?): Boolean {
         var isSet1 = true
-        dduAdapter.contextMenuCreatorPosition?.let { position ->
+        model.dduContextMenuCreatorPosition?.let { position ->
             val file = dduAdapter.files[position]
             when (item?.itemId) {
                 R.id.ddu_rename -> renameDduFile(file, position)
@@ -166,7 +169,7 @@ class DduChooserActivity : AppCompatActivity()
                 R.id.ddu_export_for_dodecalook -> requestExportDduFileForDodecaLook(file)
                 else -> isSet1 = false
             }
-            dduAdapter.contextMenuCreatorPosition = null
+            model.dduContextMenuCreatorPosition = null
         }
         var isSet2 = true
         dirAdapter.contextMenuCreatorPosition?.let { position ->
@@ -456,6 +459,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     fun onDirChange(newDir: File) {
+        dirChangedConnection.send { onDirContentChanged() }
         dir = newDir
         dduAdapter.refreshDir()
         dirAdapter.refreshDir()
@@ -471,111 +475,3 @@ class DduChooserActivity : AppCompatActivity()
     }
 }
 
-// TODO: migrate to DduFileAdapter
-class DduAdapter(
-    private val activity: DduChooserActivity,
-    private val onChoose: (File) -> Unit
-) : RecyclerView.Adapter<DduAdapter.DduViewHolder>() {
-    class DduViewHolder(val view: View) : RecyclerView.ViewHolder(view)
-
-    val dir: File get() = activity.dir
-    var contextMenuCreatorPosition: Int? = null // track VH to act on it
-    private val sleepingFiles: Sleeping<ArrayList<File>> =
-        Sleeping {
-            ArrayList(dir.listFiles().filter { it.extension.toLowerCase() == "ddu" })
-        }
-    val files: ArrayList<File> by sleepingFiles
-    private val dduFileRepository = DduFileRepository.get(activity)
-    val previews: MutableMap<Filename, Bitmap?> = mutableMapOf()
-    val buildings: MutableMap<Filename, DduViewHolder?> = mutableMapOf()
-
-    init {
-        // maybe: in async task; show ContentLoadingProgressBar or ProgressDialog
-        // ISSUE: may lead to OutOfMemoryError (fast return to after opening a ddu)
-        activity.lifecycleScope.launch {
-            dduFileRepository.getAllDduFilenamesAndPreviews().forEach { (filename, preview) ->
-                previews[filename] = preview
-            }
-        }
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DduViewHolder {
-        val textView = LayoutInflater.from(parent.context)
-            .inflate(R.layout.ddu_item, parent, false)
-        return DduViewHolder(textView)
-    }
-
-    override fun onBindViewHolder(holder: DduViewHolder, position: Int) {
-        val file = files[position]
-        val filename: Filename = file.name
-        val bitmap: Bitmap? = previews[filename]
-        with(holder.view) {
-            val fileName = file.nameWithoutExtension
-            findViewById<TextView>(R.id.ddu_entry).text = fileName
-            setOnClickListener { onItemClick(file) }
-            activity.registerForContextMenu(this)
-            setOnCreateContextMenuListener { menu, _, _ ->
-                contextMenuCreatorPosition = position
-                activity.menuInflater.inflate(R.menu.ddu_chooser_context_menu, menu)
-            }
-        }
-        holder.setIsRecyclable(false)
-        val preview: ImageView = holder.view.findViewById(R.id.ddu_preview)
-        val progressBar: ProgressBar = holder.view.findViewById(R.id.preview_progress)
-        if (bitmap != null) {
-            preview.setImageBitmap(bitmap)
-            progressBar.visibility = View.GONE
-        } else {
-            progressBar.visibility = View.VISIBLE
-            preview.visibility = View.GONE
-            buildPreviewAsync(file, holder)
-        }
-    }
-
-    private fun buildPreviewAsync(file: File, holder: DduViewHolder) {
-        // maybe: use some sync primitives
-        val fileName = file.name
-        if (fileName !in buildings.keys) {
-            buildings[fileName] = holder
-            doAsync {
-                activity.lifecycleScope.launch {
-                    val ddu = Ddu.fromFile(file)
-                    // val size: Int = (0.4 * width).roundToInt() // width == height
-                    val size = values.previewSizePx
-                    val bitmap = ddu.buildPreview(size, size)
-                    previews[fileName] = bitmap
-                    dduFileRepository.setPreviewInserting(file.name, newPreview = bitmap)
-                    buildings[fileName]?.let { currentHolder ->
-                        uiThread {
-                            val preview: ImageView = currentHolder.view.findViewById(R.id.ddu_preview)
-                            val progressBar: ProgressBar = currentHolder.view.findViewById(R.id.preview_progress)
-                            preview.setImageBitmap(bitmap)
-                            preview.visibility = View.VISIBLE
-                            progressBar.visibility = View.GONE
-                        }
-                    }
-                }
-                Unit
-            }
-        } else {
-            buildings[fileName] = holder
-        }
-    }
-
-    fun refreshDir() {
-        sleepingFiles.awake()
-        notifyDataSetChanged()
-    }
-
-    override fun getItemCount(): Int = files.size
-
-    private fun onItemClick(item: File) {
-        if (item.isDirectory) {
-            // impossible now
-//            dir = item
-//            refreshDir()
-        } else {
-            onChoose(item)
-        }
-    }
-}

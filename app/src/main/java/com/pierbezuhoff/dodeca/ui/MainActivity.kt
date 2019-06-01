@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui.dodeca
+package com.pierbezuhoff.dodeca.ui
 
 import android.Manifest
 import android.app.Activity
@@ -30,10 +30,10 @@ import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
+import com.pierbezuhoff.dodeca.ui.dodeca.ChooseColorDialog
+import com.pierbezuhoff.dodeca.ui.dodeca.DodecaViewModel
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
-import com.pierbezuhoff.dodeca.ui.onRequestPermissionsResult
-import com.pierbezuhoff.dodeca.ui.readUriWithPermissionCheck
 import com.pierbezuhoff.dodeca.ui.settings.SettingsActivity
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
@@ -64,8 +64,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 @RuntimePermissions
-class MainActivity
-    : AppCompatActivity()
+class MainActivity : AppCompatActivity()
     , ChooseColorDialog.ChooseColorListener
 {
     private val optionsManager by lazy {

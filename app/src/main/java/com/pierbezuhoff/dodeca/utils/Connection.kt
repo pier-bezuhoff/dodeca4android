@@ -16,14 +16,14 @@ class Connection<ListenerInterface> {
     }
 
     // Subscription to Connection is like LiveData to MutableLiveData
-    inner class Subscription {
+    inner class Subscription internal constructor() {
         fun subscribeFrom(listener: ListenerInterface): Output {
             this@Connection.listener = WeakReference(listener)
             return Output()
         }
     }
 
-    inner class Output {
+    inner class Output internal constructor() {
         fun unsubscribe() {
             listener = null
         }

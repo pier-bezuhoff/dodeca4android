@@ -6,15 +6,18 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.utils.Sleeping
+import kotlinx.android.synthetic.main.dir_row.view.*
 import java.io.File
 
 class DirAdapter(
     private val activity: DduChooserActivity,
     private val dduDir: File
 ) : RecyclerView.Adapter<DirAdapter.DirViewHolder>() {
+    interface DirChangeListener { fun onDirChange(dir: File) }
     class DirViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
-    private val dir: File get() = activity.dir
+    lateinit var model: DduChooserViewModel
+    private val dir: File get() = model.
     private val sleepingDirs: Sleeping<List<File>> =
         Sleeping { dir.listFiles { file -> file.isDirectory }.toList() }
     val dirs: List<File> by sleepingDirs
