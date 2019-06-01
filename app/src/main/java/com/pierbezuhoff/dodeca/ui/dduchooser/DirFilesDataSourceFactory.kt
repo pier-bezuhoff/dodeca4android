@@ -39,9 +39,9 @@ class DirFilesDataSourceFactory(private val dir: File) : DataSource.Factory<Int,
             val requestedStartPosition = params.requestedStartPosition
             GlobalScope.launch {
                 loadFiles()
-                val startPosition = min(requestedStartPosition, size)
-                val endPosition = min(startPosition + params.requestedLoadSize, size)
-                val loadedFiles = files.subList(startPosition, endPosition)
+                val startPosition = computeInitialLoadPosition(params, size)
+                val loadSize = computeInitialLoadSize(params, startPosition, size)
+                val loadedFiles = files.subList(startPosition, startPosition + loadSize)
                 callback.onResult(loadedFiles, startPosition, size)
             }
         }

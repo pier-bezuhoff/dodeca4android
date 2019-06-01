@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui.dodeca
+package com.pierbezuhoff.dodeca.ui
 
 import android.app.Application
 import android.util.Log
@@ -10,6 +10,7 @@ import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.models.OptionsManager
+import com.pierbezuhoff.dodeca.ui.dodeca.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Filename
@@ -36,7 +37,7 @@ class MainViewModel(
 
     private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData(true)
     private val _dir: MutableLiveData<File> = MutableLiveData(context.dduDir)
-    private val currentDir: File get() = dir.value!!
+    val currentDir: File get() = dir.value!!
     private val _showStat: MutableLiveData<Boolean> = MutableLiveData(false)
     private var bottomBarHidingJob: Job? = null
 
