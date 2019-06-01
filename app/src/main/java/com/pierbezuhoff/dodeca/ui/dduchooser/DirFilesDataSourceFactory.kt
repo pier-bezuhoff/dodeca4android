@@ -2,21 +2,24 @@ package com.pierbezuhoff.dodeca.ui.dduchooser
 
 import androidx.paging.DataSource
 import androidx.paging.PositionalDataSource
-import com.pierbezuhoff.dodeca.utils.isDdu
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileFilter
 import kotlin.math.min
 import kotlin.properties.Delegates
 
-class DirFilesDataSourceFactory(private var dir: File) : DataSource.Factory<Int, File>() {
+class DirFilesDataSourceFactory(
+    private var dir: File,
+    private val fileFilter: FileFilter
+    ) : DataSource.Factory<Int, File>() {
     private val validDataSources: MutableList<DataSource<Int, File>> =
         mutableListOf()
 
     override fun create(): DataSource<Int, File> {
-        return DirFilesDataSource(dir).also {
+        return DirFilesDataSource(dir, fileFilter).also {
             validDataSources.add(it)
         }
     }
@@ -27,13 +30,16 @@ class DirFilesDataSourceFactory(private var dir: File) : DataSource.Factory<Int,
         validDataSources.clear()
     }
 
-    private class DirFilesDataSource(private val dir: File) : PositionalDataSource<File>() {
+    private class DirFilesDataSource(
+        private val dir: File,
+        private val fileFilter: FileFilter
+    ) : PositionalDataSource<File>() {
         private lateinit var files: List<File>
         private var size: Int by Delegates.notNull()
 
         private suspend fun loadFiles() = withContext(Dispatchers.IO) {
             files = dir
-                .listFiles { file -> file.isDdu }
+                .listFiles(fileFilter)
                 .toList()
             size = files.size
         }
@@ -46,8 +52,6 @@ class DirFilesDataSourceFactory(private var dir: File) : DataSource.Factory<Int,
         }
 
         override fun loadInitial(params: LoadInitialParams, callback: LoadInitialCallback<File>) {
-            val requestedSize = params.requestedLoadSize
-            val requestedStartPosition = params.requestedStartPosition
             GlobalScope.launch {
                 loadFiles()
                 val startPosition = computeInitialLoadPosition(params, size)

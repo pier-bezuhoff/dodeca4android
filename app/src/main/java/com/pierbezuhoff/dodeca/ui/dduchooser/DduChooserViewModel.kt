@@ -13,11 +13,15 @@ import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModel
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.filename
+import com.pierbezuhoff.dodeca.utils.isDdu
 import org.jetbrains.anko.toast
 import java.io.File
+import java.io.FileFilter
 
 class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(application) {
     private var dirFilesDataSourceFactory: DirFilesDataSourceFactory? = null
+    private var dirsDataSourceFactory: DirFilesDataSourceFactory? = null
+    // TODO: dirs factory
     private var __files: LiveData<PagedList<File>> = MutableLiveData()
         set(value) {
             _files.removeSource(field)
@@ -30,7 +34,8 @@ class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(app
     val files: LiveData<PagedList<File>> = _files
 
     fun setInitialDir(dir: File) {
-        dirFilesDataSourceFactory = DirFilesDataSourceFactory(dir)
+        dirFilesDataSourceFactory = DirFilesDataSourceFactory(dir, FileFilter { it.isDdu })
+        dirsDataSourceFactory = DirFilesDataSourceFactory(dir, FileFilter { it.isDirectory })
         __files = LivePagedListBuilder<Int, File>(dirFilesDataSourceFactory!!, PAGED_LIST_CONFIG)
             .build()
     }
