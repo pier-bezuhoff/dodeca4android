@@ -3,8 +3,6 @@ package com.pierbezuhoff.dodeca.ui.dduchooser
 import android.app.Application
 import android.graphics.Bitmap
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.liveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
@@ -21,30 +19,25 @@ import java.io.FileFilter
 class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(application) {
     private var dirFilesDataSourceFactory: DirFilesDataSourceFactory? = null
     private var dirsDataSourceFactory: DirFilesDataSourceFactory? = null
-    // TODO: dirs factory
-    private var __files: LiveData<PagedList<File>> = MutableLiveData()
-        set(value) {
-            _files.removeSource(field)
-            _files.addSource(value) { pagedList ->
-                _files.postValue(pagedList)
-            }
-            field = value
-        }
-    private val _files: MediatorLiveData<PagedList<File>> = MediatorLiveData()
-    val files: LiveData<PagedList<File>> = _files
+    lateinit var files: LiveData<PagedList<File>> private set
+    lateinit var dirs: LiveData<PagedList<File>> private set
 
     fun setInitialDir(dir: File) {
         dirFilesDataSourceFactory = DirFilesDataSourceFactory(dir, FileFilter { it.isDdu })
         dirsDataSourceFactory = DirFilesDataSourceFactory(dir, FileFilter { it.isDirectory })
-        __files = LivePagedListBuilder<Int, File>(dirFilesDataSourceFactory!!, PAGED_LIST_CONFIG)
+        files = LivePagedListBuilder<Int, File>(dirFilesDataSourceFactory!!, PAGED_LIST_CONFIG)
+            .build()
+        dirs = LivePagedListBuilder<Int, File>(dirsDataSourceFactory!!, PAGED_LIST_CONFIG)
             .build()
     }
 
     fun setDir(dir: File) {
-        if (dirFilesDataSourceFactory == null)
+        if (dirFilesDataSourceFactory == null || dirsDataSourceFactory == null) {
             setInitialDir(dir)
-        else
+        } else {
             dirFilesDataSourceFactory!!.changeDir(dir)
+            dirsDataSourceFactory!!.changeDir(dir)
+        }
     }
 
     fun getPreviewOf(file: File): LiveData<Bitmap> = liveData {
