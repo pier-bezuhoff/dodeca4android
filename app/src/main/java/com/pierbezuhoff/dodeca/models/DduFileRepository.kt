@@ -7,6 +7,8 @@ import com.pierbezuhoff.dodeca.db.DduFile
 import com.pierbezuhoff.dodeca.db.DduFileDao
 import com.pierbezuhoff.dodeca.db.DduFileDatabase
 import com.pierbezuhoff.dodeca.utils.Filename
+import com.pierbezuhoff.dodeca.utils.filename
+import java.io.File
 
 // TODO: refactor usage
 class DduFileRepository private constructor(context: Context) {
@@ -37,6 +39,9 @@ class DduFileRepository private constructor(context: Context) {
         getDduFile(filename)?.let {
             dduFileDao.delete(it)
         }
+
+    suspend fun delete(file: File) =
+        delete(file.filename)
 
     private suspend fun getDduFile(filename: Filename): DduFile? =
         dduFileDao.findByFilename(filename)
