@@ -10,7 +10,6 @@ import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.filename
 import java.io.File
 
-// TODO: refactor usage
 class DduFileRepository private constructor(context: Context) {
     private val db: DduFileDatabase by lazy {
         Room.databaseBuilder(
@@ -25,9 +24,6 @@ class DduFileRepository private constructor(context: Context) {
 
     private suspend fun getAllDduFiles(): List<DduFile> =
         dduFileDao.getAll()
-
-    suspend fun getAllDduFilenamesAndPreviews(): Map<Filename, Bitmap?> =
-        getAllDduFiles().map { it.filename to it.preview }.toMap()
 
     suspend fun dropAllPreviews() {
         getAllDduFiles().forEach {

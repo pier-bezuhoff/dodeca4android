@@ -22,7 +22,16 @@ class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(app
     lateinit var files: LiveData<PagedList<File>> private set
     lateinit var dirs: LiveData<PagedList<File>> private set
 
-    fun setInitialDir(dir: File) {
+    fun setDir(dir: File) {
+        if (dirFilesDataSourceFactory == null || dirsDataSourceFactory == null) {
+            setInitialDir(dir)
+        } else {
+            dirFilesDataSourceFactory!!.changeDir(dir)
+            dirsDataSourceFactory!!.changeDir(dir)
+        }
+    }
+
+    private fun setInitialDir(dir: File) {
         dirFilesDataSourceFactory = DirFilesDataSourceFactory(dir, FileFilter { it.isDdu })
         dirsDataSourceFactory = DirFilesDataSourceFactory(dir, FileFilter { it.isDirectory })
         files = LivePagedListBuilder<Int, File>(dirFilesDataSourceFactory!!, PAGED_LIST_CONFIG)
@@ -31,13 +40,9 @@ class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(app
             .build()
     }
 
-    fun setDir(dir: File) {
-        if (dirFilesDataSourceFactory == null || dirsDataSourceFactory == null) {
-            setInitialDir(dir)
-        } else {
-            dirFilesDataSourceFactory!!.changeDir(dir)
-            dirsDataSourceFactory!!.changeDir(dir)
-        }
+    fun clearFactories() {
+        dirFilesDataSourceFactory = null
+        dirsDataSourceFactory = null
     }
 
     fun getPreviewOf(file: File): LiveData<Bitmap> = liveData {

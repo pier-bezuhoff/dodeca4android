@@ -25,6 +25,7 @@ import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.MainViewModel
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
+import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.copyDirectory
@@ -58,6 +59,7 @@ class DduChooserActivity : AppCompatActivity()
     , DirAdapter.DirChangeListener
     , ContextMenuManager
 {
+    interface DduFileChooser { fun chooseDduFile(file: File) }
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
     }
@@ -76,6 +78,8 @@ class DduChooserActivity : AppCompatActivity()
     private var createdContextMenu: ContextMenuSource? = null
     private var requestedDduFile: File? = null
     private var requestedDduDir: File? = null
+    private val dduFileChooserConnection = Connection<DduFileChooser>()
+    val dduFileChooserSubscription = dduFileChooserConnection.subscription
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,6 +89,9 @@ class DduChooserActivity : AppCompatActivity()
         mainViewModel.dir.observe(this) {
             model.setDir(it)
         }
+        dduFileChooserSubscription
+            .subscribeFrom(mainViewModel)
+            .unsubscribeOnDestroy(this)
     }
 
     private fun initDirRecyclerView() {
@@ -95,6 +102,9 @@ class DduChooserActivity : AppCompatActivity()
         dir_recycler_view.setHasFixedSize(true)
         adapter.dirChangeSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
+        model.dirs.observe(this) {
+            adapter.submitList(it)
+        }
     }
 
     private fun initDduRecyclerView() {
@@ -115,10 +125,8 @@ class DduChooserActivity : AppCompatActivity()
 
     override fun chooseFile(file: File) {
         Log.i(TAG, "File \"${file.absolutePath}\" chosen")
-        val data = Intent().apply {
-            putExtra("path", file.absolutePath)
-        }
-        setResult(Activity.RESULT_OK, data)
+        dduFileChooserConnection.send { chooseDduFile(file) }
+        setResult(Activity.RESULT_OK, Intent())
         finish()
     }
 
@@ -433,7 +441,7 @@ class DduChooserActivity : AppCompatActivity()
             putExtra(Intent.EXTRA_TITLE, file.name)
         }
         requestedDduFile = file
-        startActivityForResult(intent, EXPORT_DDU_FOR_DODECALOOK_REQUEST_CODE)
+        startActivityForResult(intent, EXPORT_DDU_FOR_DODECA_LOOK_REQUEST_CODE)
     }
 
     private fun exportDduFileForDodecaLook(uri: Uri) {
@@ -465,7 +473,7 @@ class DduChooserActivity : AppCompatActivity()
                         ?.let { uris -> importDdus(uris) }
                 EXPORT_DDU_REQUEST_CODE ->
                     maybeUri?.let { uri -> exportDduFile(uri) }
-                EXPORT_DDU_FOR_DODECALOOK_REQUEST_CODE ->
+                EXPORT_DDU_FOR_DODECA_LOOK_REQUEST_CODE ->
                     maybeUri?.let { uri -> exportDduFileForDodecaLook(uri) }
                 EXPORT_DIR_REQUEST_CODE ->
                     maybeUri?.let { uri -> exportDduDir(uri) }
@@ -479,7 +487,7 @@ class DduChooserActivity : AppCompatActivity()
         private const val IMPORT_DDUS_REQUEST_CODE = 2
         private const val EXPORT_DIR_REQUEST_CODE = 3
         private const val EXPORT_DDU_REQUEST_CODE = 5
-        private const val EXPORT_DDU_FOR_DODECALOOK_REQUEST_CODE = 6
+        private const val EXPORT_DDU_FOR_DODECA_LOOK_REQUEST_CODE = 6
         private val DEFAULT_DDU_FILENAME = Filename("untitled.ddu")
     }
 }

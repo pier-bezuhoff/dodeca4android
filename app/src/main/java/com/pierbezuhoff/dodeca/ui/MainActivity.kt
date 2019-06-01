@@ -30,6 +30,7 @@ import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
+import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserViewModel
 import com.pierbezuhoff.dodeca.ui.dodeca.ChooseColorDialog
 import com.pierbezuhoff.dodeca.ui.dodeca.DodecaViewModel
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
@@ -78,6 +79,9 @@ class MainActivity : AppCompatActivity()
     }
     private val dodecaViewModel by lazy {
         ViewModelProviders.of(this, dodecaFactory).get(DodecaViewModel::class.java)
+    }
+    private val dduChooserViewModel by lazy {
+        ViewModelProviders.of(this).get(DduChooserViewModel::class.java)
     }
     private val dir: File
         get() = mainViewModel.dir.value ?: dduDir
@@ -235,15 +239,14 @@ class MainActivity : AppCompatActivity()
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
-            DDU_CODE ->
-                // TODO: should change MutableLiveData in MainViewModel
+            DDU_CODE -> {
+                dduChooserViewModel.clearFactories()
                 if (resultCode == Activity.RESULT_OK) {
-                    data?.getStringExtra("dirPath")?.let { newDir ->
-                        mainViewModel.changeDir(File(newDir)) }
-                    data?.getStringExtra("path")?.let {
-                        readPath(it)
+                    mainViewModel.chosenDduFile?.let { file ->
+                        readPath(file.absolutePath)
                     }
                 }
+            }
             APPLY_SETTINGS_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
                     fun have(param: String): Boolean =
