@@ -54,13 +54,11 @@ import org.jetbrains.anko.yesButton
 import java.io.File
 
 // TODO: refactor with databindings, viewmodel and coroutines|paging + DI (koin)
-// MAYBE: action bar: search by name
 // MAYBE: store in sharedPreferences last dir
-// MAYBE: link to external folder
 class DduChooserActivity : AppCompatActivity()
     , DduFileAdapter.FileChooser
-    , ContextMenuManager
     , DirAdapter.DirChangeListener
+    , ContextMenuManager
 {
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
@@ -92,7 +90,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun initDirRecyclerView() {
-        val adapter = DirAdapter() // inject mainViewModel, model
+        val adapter = DirAdapter()
         dir_recycler_view.adapter = adapter
         dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
         dir_recycler_view.itemAnimator = DefaultItemAnimator()
@@ -102,9 +100,10 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun initDduRecyclerView() {
-        val adapter = DduFileAdapter() // inject model
+        val adapter = DduFileAdapter()
+        adapter.model = model
         ddu_recycler_view.adapter = adapter
-        // NOTE: colors and thickness are set from styles.xml
+        // NOTE: colors and thickness of dividers are set from styles.xml
         ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
         ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.HORIZONTAL))
         ddu_recycler_view.itemAnimator = DefaultItemAnimator()
@@ -167,7 +166,7 @@ class DduChooserActivity : AppCompatActivity()
         createdContextMenu?.let { source ->
             when (source) {
                 is ContextMenuSource.DduFile -> {
-                    val (file: File) = source
+                    val file: File = source.file
                     when (item?.itemId) {
                         R.id.ddu_rename -> renameDduFile(file)
                         R.id.ddu_delete -> deleteDduFile(file)
@@ -179,7 +178,7 @@ class DduChooserActivity : AppCompatActivity()
                     }
                 }
                 is ContextMenuSource.Dir -> {
-                    val (dir: File) = source
+                    val dir: File = source.dir
                     when (item?.itemId) {
                         R.id.dir_delete -> deleteDir(dir)
                         R.id.dir_export -> requestExportDduDir(dir)

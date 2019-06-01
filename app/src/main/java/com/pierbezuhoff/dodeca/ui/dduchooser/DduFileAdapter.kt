@@ -24,12 +24,14 @@ class DduFileAdapter
     , LifecycleOwner
 {
     interface FileChooser { fun chooseFile(file: File) }
+
     lateinit var model: DduChooserViewModel // inject
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
     private val fileChooserConnection = Connection<FileChooser>()
     val fileChooserSubscription = fileChooserConnection.subscription
     private val contextMenuConnection = Connection<ContextMenuManager>()
     val contextMenuSubscription = contextMenuConnection.subscription
+
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     init {

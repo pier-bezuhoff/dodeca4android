@@ -16,15 +16,13 @@ import java.io.File
 class DirAdapter
     : PagedListAdapter<File, DirAdapter.DirViewHolder>(DIFF_CALLBACK) {
     interface DirChangeListener { fun onDirChanged(dir: File) }
-    interface DirContextMenuPositionListener { fun onDirContextMenuAt(position: Int) }
-    class DirViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     private val dirChangeConnection = Connection<DirChangeListener>()
     val dirChangeSubscription = dirChangeConnection.subscription
     private val contextMenuConnection = Connection<ContextMenuManager>()
     val contextMenuSubscription = contextMenuConnection.subscription
-    private val dirContextMenuPositionConnection = Connection<DirContextMenuPositionListener>()
-    val dirContextMenuPositionSubscription = dirContextMenuPositionConnection.subscription
+
+    class DirViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DirViewHolder {
         val view = LayoutInflater
