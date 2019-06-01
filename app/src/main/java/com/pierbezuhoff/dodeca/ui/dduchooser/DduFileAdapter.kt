@@ -3,7 +3,6 @@ package com.pierbezuhoff.dodeca.ui.dduchooser
 import android.graphics.Bitmap
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.MenuRes
@@ -25,15 +24,11 @@ class DduFileAdapter
     , LifecycleOwner
 {
     interface FileChooser { fun chooseFile(file: File) }
-    interface ContextMenuManager {
-        fun registerViewForContextMenu(view: View)
-        fun inflateMenu(@MenuRes menuRes: Int, menu: Menu)
-    }
     lateinit var model: DduChooserViewModel // inject
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
     private val fileChooserConnection = Connection<FileChooser>()
-    private val contextMenuConnection = Connection<ContextMenuManager>()
     val fileChooserSubscription = fileChooserConnection.subscription
+    private val contextMenuConnection = Connection<ContextMenuManager>()
     val contextMenuSubscription = contextMenuConnection.subscription
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
@@ -59,10 +54,12 @@ class DduFileAdapter
                 view.setOnClickListener {
                     fileChooserConnection.send { chooseFile(file) }
                 }
-                contextMenuConnection.send { registerViewForContextMenu(view) }
-                view.setOnCreateContextMenuListener { menu, _, _ ->
-                    model.dduContextMenuCreatorPosition = position
-                    contextMenuConnection.send { inflateMenu(R.menu.ddu_chooser_context_menu, menu) }
+                contextMenuConnection.send {
+                    registerForContextMenu(
+                        view,
+                        menuRes = CONTEXT_MENU_RES,
+                        contextMenuSource = ContextMenuSource.DduFile(file)
+                    )
                 }
                 setIsRecyclable(false)
                 noPreview(holder)
@@ -101,6 +98,7 @@ class DduFileAdapter
 
     companion object {
         private const val TAG = "DduFileAdapter"
+        @MenuRes private const val CONTEXT_MENU_RES = R.menu.ddu_chooser_context_menu
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<File>() {
             override fun areItemsTheSame(oldItem: File, newItem: File): Boolean =
                 oldItem.fileName == newItem.fileName

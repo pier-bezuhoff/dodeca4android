@@ -17,8 +17,7 @@ import org.jetbrains.anko.toast
 import java.io.File
 
 class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(application) {
-    var dduContextMenuCreatorPosition: Int? = null
-    var dirContextMenuCreatorPosition: Int? = null
+    private var dirFilesDataSourceFactory: DirFilesDataSourceFactory? = null
     private var __files: LiveData<PagedList<File>> = MutableLiveData()
         set(value) {
             _files.removeSource(field)
@@ -30,9 +29,17 @@ class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(app
     private val _files: MediatorLiveData<PagedList<File>> = MediatorLiveData()
     val files: LiveData<PagedList<File>> = _files
 
+    fun setInitialDir(dir: File) {
+        dirFilesDataSourceFactory = DirFilesDataSourceFactory(dir)
+        __files = LivePagedListBuilder<Int, File>(dirFilesDataSourceFactory!!, PAGED_LIST_CONFIG)
+            .build()
+    }
+
     fun setDir(dir: File) {
-        val factory = DirFilesDataSourceFactory(dir)
-        __files = LivePagedListBuilder<Int, File>(factory, PAGED_LIST_CONFIG).build()
+        if (dirFilesDataSourceFactory == null)
+            setInitialDir(dir)
+        else
+            dirFilesDataSourceFactory!!.changeDir(dir)
     }
 
     fun getPreviewOf(file: File): LiveData<Bitmap> = liveData {
