@@ -10,6 +10,7 @@ import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.models.OptionsManager
+import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
 import com.pierbezuhoff.dodeca.ui.dodeca.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.Connection
@@ -30,6 +31,7 @@ class MainViewModel(
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , DodecaGestureDetector.SingleTapListener
+    , DduChooserActivity.DduFileChooser
 {
     interface OnDestroyMainActivity { fun onDestroyMainActivity() }
     private val onDestroyMainActivityConnection = Connection<OnDestroyMainActivity>()
@@ -40,6 +42,9 @@ class MainViewModel(
     val currentDir: File get() = dir.value!!
     private val _showStat: MutableLiveData<Boolean> = MutableLiveData(false)
     private var bottomBarHidingJob: Job? = null
+    var chosenDduFile: File? = null
+        get() = field?.also { field = null }
+        private set
 
     val bottomBarShown: LiveData<Boolean> = _bottomBarShown
     val dir: LiveData<File> = _dir
@@ -64,6 +69,10 @@ class MainViewModel(
 
     override fun onSingleTap(e: MotionEvent?) {
         toggleBottomBar()
+    }
+
+    override fun chooseDduFile(file: File) {
+        chosenDduFile = file
     }
 
     fun checkUpgrade() {
