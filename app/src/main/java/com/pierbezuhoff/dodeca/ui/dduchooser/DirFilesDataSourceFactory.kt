@@ -11,9 +11,20 @@ import java.io.File
 import kotlin.math.min
 import kotlin.properties.Delegates
 
-class DirFilesDataSourceFactory(private val dir: File) : DataSource.Factory<Int, File>() {
+class DirFilesDataSourceFactory(private var dir: File) : DataSource.Factory<Int, File>() {
+    private val validDataSources: MutableList<DataSource<Int, File>> =
+        mutableListOf()
+
     override fun create(): DataSource<Int, File> {
-        return DirFilesDataSource(dir)
+        return DirFilesDataSource(dir).also {
+            validDataSources.add(it)
+        }
+    }
+
+    fun changeDir(dir: File) {
+        this.dir = dir
+        validDataSources.forEach { it.invalidate() }
+        validDataSources.clear()
     }
 
     private class DirFilesDataSource(private val dir: File) : PositionalDataSource<File>() {

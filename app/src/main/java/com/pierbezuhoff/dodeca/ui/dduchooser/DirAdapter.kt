@@ -3,53 +3,64 @@ package com.pierbezuhoff.dodeca.ui.dduchooser
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.MenuRes
+import androidx.paging.PagedListAdapter
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.utils.Sleeping
+import com.pierbezuhoff.dodeca.utils.Connection
+import com.pierbezuhoff.dodeca.utils.fileName
 import kotlinx.android.synthetic.main.dir_row.view.*
 import java.io.File
 
-class DirAdapter(
-    private val activity: DduChooserActivity,
-    private val dduDir: File
-) : RecyclerView.Adapter<DirAdapter.DirViewHolder>() {
-    interface DirChangeListener { fun onDirChange(dir: File) }
+class DirAdapter
+    : PagedListAdapter<File, DirAdapter.DirViewHolder>(DIFF_CALLBACK) {
+    interface DirChangeListener { fun onDirChanged(dir: File) }
+    interface DirContextMenuPositionListener { fun onDirContextMenuAt(position: Int) }
     class DirViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
-    lateinit var model: DduChooserViewModel
-    private val dir: File get() = model.
-    private val sleepingDirs: Sleeping<List<File>> =
-        Sleeping { dir.listFiles { file -> file.isDirectory }.toList() }
-    val dirs: List<File> by sleepingDirs
-    var contextMenuCreatorPosition: Int? = null // track VH to act on it
+    private val dirChangeConnection = Connection<DirChangeListener>()
+    val dirChangeSubscription = dirChangeConnection.subscription
+    private val contextMenuConnection = Connection<ContextMenuManager>()
+    val contextMenuSubscription = contextMenuConnection.subscription
+    private val dirContextMenuPositionConnection = Connection<DirContextMenuPositionListener>()
+    val dirContextMenuPositionSubscription = dirContextMenuPositionConnection.subscription
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DirViewHolder =
-        DirViewHolder(
-            LayoutInflater.from(parent.context)
-                .inflate(R.layout.dir_row, parent, false)
-        )
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DirViewHolder {
+        val view = LayoutInflater
+            .from(parent.context)
+            .inflate(R.layout.dir_row, parent, false)
+        return DirViewHolder(view)
+    }
 
     override fun onBindViewHolder(holder: DirViewHolder, position: Int) {
-        val dir = dirs[position]
-        with(holder.view) {
-            dir_name.text = dir.name
-            setOnClickListener { downDir(dir) }
-            activity.registerForContextMenu(this)
-            setOnCreateContextMenuListener { menu, _, _ ->
-                contextMenuCreatorPosition = position
-                activity.menuInflater.inflate(R.menu.ddu_chooser_dir_context_menu, menu)
+        val dir = getItem(position)
+        dir?.let {
+            with(holder) {
+                view.dir_name.text = dir.name
+                view.setOnClickListener {
+                    dirChangeConnection.send { onDirChanged(dir) }
+                }
+                contextMenuConnection.send {
+                    registerForContextMenu(
+                        view,
+                        menuRes = CONTEXT_MENU_RES,
+                        contextMenuSource = ContextMenuSource.Dir(dir)
+                    )
+                }
             }
         }
     }
 
-    fun refreshDir() {
-        sleepingDirs.awake()
-        notifyDataSetChanged()
+    companion object {
+        private const val TAG = "DduFileAdapter"
+        @MenuRes private const val CONTEXT_MENU_RES = R.menu.ddu_chooser_dir_context_menu
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<File>() {
+            override fun areItemsTheSame(oldItem: File, newItem: File): Boolean =
+                oldItem.fileName == newItem.fileName
+            override fun areContentsTheSame(oldItem: File, newItem: File): Boolean =
+                oldItem == newItem
+        }
     }
-
-    private fun downDir(newDir: File) {
-        activity.onDirChange(newDir)
-    }
-
-    override fun getItemCount(): Int = dirs.size
 }
+
