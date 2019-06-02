@@ -243,7 +243,7 @@ class MainActivity : AppCompatActivity()
                 dduChooserViewModel.clearFactories()
                 if (resultCode == Activity.RESULT_OK) {
                     mainViewModel.chosenDduFile?.let { file ->
-                        readPath(file.absolutePath)
+                        readFile(file)
                     }
                 }
             }
@@ -305,8 +305,7 @@ class MainActivity : AppCompatActivity()
     }
 
     @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-    fun readPath(path: String) {
-        val file = File(path)
+    fun readFile(file: File) {
         dodecaViewModel.viewModelScope.launch {
             dodecaViewModel.loadDduFrom(file)
         }

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "05aeab6a5c15c5e2b18245c8170ebaa0",
+    "identityHash": "a757708343ececa5a4f1b8be58f9de83",
     "entities": [
       {
         "tableName": "DduFile",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `filename` TEXT NOT NULL, `original_filename` TEXT NOT NULL, `preview` BLOB)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `filename` TEXT NOT NULL, `original_filename` TEXT NOT NULL, `buildPreview` BLOB)",
         "fields": [
           {
             "fieldPath": "uid",
@@ -28,7 +28,7 @@
           },
           {
             "fieldPath": "preview",
-            "columnName": "preview",
+            "columnName": "buildPreview",
             "affinity": "BLOB",
             "notNull": false
           }
@@ -55,7 +55,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"05aeab6a5c15c5e2b18245c8170ebaa0\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"a757708343ececa5a4f1b8be58f9de83\")"
     ]
   }
 }

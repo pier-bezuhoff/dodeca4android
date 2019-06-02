@@ -84,6 +84,7 @@ class DduChooserActivity : AppCompatActivity()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dduchooser)
+        model.setDir(dir)
         initDirRecyclerView()
         initDduRecyclerView()
         mainViewModel.dir.observe(this) {

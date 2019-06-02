@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca.ui.dduchooser
 
 import android.app.Application
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.liveData
 import androidx.paging.LivePagedListBuilder
@@ -23,6 +24,7 @@ class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(app
     lateinit var dirs: LiveData<PagedList<File>> private set
 
     fun setDir(dir: File) {
+        Log.i(TAG, "setDir($dir)")
         if (dirFilesDataSourceFactory == null || dirsDataSourceFactory == null) {
             setInitialDir(dir)
         } else {
@@ -32,6 +34,7 @@ class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(app
     }
 
     private fun setInitialDir(dir: File) {
+        Log.i(TAG, "setInitialDir($dir)")
         dirFilesDataSourceFactory = DirFilesDataSourceFactory(dir, FileFilter { it.isDdu })
         dirsDataSourceFactory = DirFilesDataSourceFactory(dir, FileFilter { it.isDirectory })
         files = LivePagedListBuilder<Int, File>(dirFilesDataSourceFactory!!, PAGED_LIST_CONFIG)
@@ -41,13 +44,16 @@ class DduChooserViewModel(application: Application) : DodecaAndroidViewModel(app
     }
 
     fun clearFactories() {
+        Log.i(TAG, "clearFactories")
         dirFilesDataSourceFactory = null
         dirsDataSourceFactory = null
     }
 
     fun getPreviewOf(file: File): LiveData<Bitmap> = liveData {
+        Log.i(TAG, "gettingPreviewOf($file)")
         val cachedBitmap = dduFileRepository.getPreview(file.filename)
         val bitmap = cachedBitmap ?: tryBuildPreviewOf(file)
+        Log.i(TAG, "preview built")
         bitmap?.let { emit(it) }
     }
 
