@@ -16,7 +16,10 @@ class DduFileRepository private constructor(context: Context) {
             context.applicationContext,
             DduFileDatabase::class.java,
             DB_NAME
-        ).build()
+        )
+            .addMigrations(DduFileDatabase.MIGRATION_3_4)
+//            .fallbackToDestructiveMigration()
+            .build()
     }
     private val dduFileDao: DduFileDao by lazy {
         db.dduFileDao()

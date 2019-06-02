@@ -9,7 +9,6 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.KeyOption
 import com.pierbezuhoff.dodeca.data.ParsedFloatKeyOption
 import com.pierbezuhoff.dodeca.data.ParsedIntKeyOption
-import com.pierbezuhoff.dodeca.utils.Filename
 
 class OptionsViewModel(application: Application) : AndroidViewModel(application) {
     private val resources: Resources
@@ -68,8 +67,8 @@ class OptionsViewModel(application: Application) : AndroidViewModel(application)
     )
     val previewSmartUpdates =
         BooleanOption("preview_smart_updates", R.bool.preview_smart_updates)
-    val recentDdu: KeyOption<Filename> =
-        KeyOption("recent_ddu", resources.getString(R.string.first_ddu))
+//    val recentDdu: KeyOption<Filename> =
+//        KeyOption("recent_ddu", resources.getString(R.string.first_ddu))
     val versionCode =
         KeyOption("version_code", resources.getInteger(R.integer.version_code))
 
@@ -89,7 +88,7 @@ class OptionsViewModel(application: Application) : AndroidViewModel(application)
         val previewSizePx: Int get() = options.dp2px(previewSize)
         val nPreviewUpdates: Int by options.nPreviewUpdates
         val previewSmartUpdates: Boolean by options.previewSmartUpdates
-        val recentDdu: Filename by options.recentDdu
+//        val recentDdu: Filename by options.recentDdu
         val versionCode: Int by options.versionCode
     }
 }
