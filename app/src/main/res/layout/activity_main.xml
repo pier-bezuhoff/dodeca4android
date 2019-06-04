@@ -18,7 +18,6 @@
     >
 
         <com.pierbezuhoff.dodeca.ui.dodeca.DodecaView
-                android:id="@+id/dodecaView"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -30,7 +29,6 @@
         />
 
         <LinearLayout
-                android:id="@+id/stat"
                 android:orientation="vertical"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_marginEnd="8dp"
@@ -40,7 +38,7 @@
                 android:background="@color/translucentLightBackground"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:showWhen="@{safeUnbox(model.showStat)}"
+                app:showWhen="@{model.showStat}"
         >
             <TextView
                     android:text="@{@string/stat_n_updates_text(dodecaViewModel.nUpdates)}"
@@ -75,7 +73,7 @@
                     app:contentInsetStartWithNavigation="0dp"
                     app:contentInsetEnd="0dp"
                     app:contentInsetEndWithActions="0dp"
-                    app:showWhen="@{safeUnbox(model.bottomBarShown)}"
+                    app:showWhen="@{model.bottomBarShown}"
             >
                 <LinearLayout
                         android:orientation="vertical"
