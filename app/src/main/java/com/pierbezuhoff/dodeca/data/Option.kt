@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.utils.Filename
+import java.io.File
 import kotlin.reflect.KProperty
 
 // TODO: migrate to OptionsViewModel
@@ -16,7 +17,7 @@ import kotlin.reflect.KProperty
 lateinit var options: Options private set
 lateinit var values: Values private set
 
-abstract class Option<T>(val default: T) where T : Any {
+abstract class Option<T>(val default: T) {
     var value = default
         protected set(value) {
             val oldValue = field
@@ -51,7 +52,7 @@ abstract class Option<T>(val default: T) where T : Any {
         value
 }
 
-open class KeyOption<T>(val key: String, default: T) : Option<T>(default) where T : Any {
+open class KeyOption<T>(val key: String, default: T) : Option<T>(default) {
     override fun equals(other: Any?): Boolean = other is KeyOption<*> && other.key == key
     override fun hashCode(): Int = key.hashCode()
     override fun toString(): String = "KeyOption '$key': $value (default $default)"
@@ -63,7 +64,7 @@ open class KeyOption<T>(val key: String, default: T) : Option<T>(default) where 
         is Float -> sharedPreferences.getFloat(key, default) as T
         is Int -> sharedPreferences.getInt(key, default) as T
         is Long -> sharedPreferences.getLong(key, default) as T
-        else -> throw Exception("Unsupported type: ${default.javaClass.name}")
+        else -> throw Exception("Unsupported type of $default")
     }
 
     override fun putIn(editor: SharedPreferences.Editor) {
@@ -73,7 +74,7 @@ open class KeyOption<T>(val key: String, default: T) : Option<T>(default) where 
             is Float -> editor.putFloat(key, value as Float)
             is Int -> editor.putInt(key, value as Int)
             is Long -> editor.putLong(key, value as Long)
-            else -> throw Exception("Unsupported type: ${value.javaClass.name}")
+            else -> throw Exception("Unsupported type of $value")
         }
     }
 
@@ -86,7 +87,7 @@ open class ParsedKeyOption<T>(
     key: String,
     default: T,
     val parse: String.() -> T?
-) : KeyOption<T>(key, default) where T : Any {
+) : KeyOption<T>(key, default) {
     override fun peekFrom(sharedPreferences: SharedPreferences): T =
         sharedPreferences.getString(key, default.toString())?.parse() ?: default
     override fun putIn(editor: SharedPreferences.Editor) {
@@ -125,7 +126,9 @@ class Options(val resources: Resources) {
     val autocenterPreview = BooleanKeyOption("autocenter_preview", R.bool.autocenter_preview)
     val nPreviewUpdates = ParsedIntKeyOption("n_preview_updates", R.string.n_preview_updates)
     val previewSmartUpdates = BooleanKeyOption("preview_smart_updates", R.bool.preview_smart_updates)
+    /** Absolute path of the most recent ddu-file */
     val recentDdu = ParsedKeyOption("recent_ddu", R.string.first_ddu) { Filename(this) }
+    val recentDir = ParsedKeyOption<File?>("recent_dir", null) { File(this) }
     val versionCode = KeyOption("version_code", resources.getInteger(R.integer.version_code))
 
     fun init() {
@@ -152,7 +155,9 @@ class Values(private val options: Options) {
     val previewSizePx: Int get() = options.resources.dp2px(values.previewSize)
     val nPreviewUpdates: Int by options.nPreviewUpdates
     val previewSmartUpdates: Boolean by options.previewSmartUpdates
-    val recentDdu: Filename by options.recentDdu
+    /** Absolute path of the most recent ddu-file */
+    val recentDdu: Filename by options.recentDdu // TODO: Filename -> File
+    val recentDir: File? by options.recentDir
     val versionCode: Int by options.versionCode
 }
 

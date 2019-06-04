@@ -52,8 +52,7 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
 import java.io.File
 
-// TODO: refactor with databindings, viewmodel and coroutines|paging + DI (koin)
-// MAYBE: store in sharedPreferences last dir
+// MAYBE: store in sharedPreferences last dir + store last pos
 class DduChooserActivity : AppCompatActivity()
     , DduFileAdapter.FileChooser
     , DirAdapter.DirChangeListener
@@ -63,14 +62,11 @@ class DduChooserActivity : AppCompatActivity()
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
     }
-    private val dodecaFactory by lazy {
+    private val factory by lazy {
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
     }
-    private val mainViewModel by lazy {
-        ViewModelProviders.of(this, dodecaFactory).get(MainViewModel::class.java)
-    }
     private val model by lazy {
-        ViewModelProviders.of(this).get(DduChooserViewModel::class.java)
+        ViewModelProviders.of(this, factory).get(DduChooserViewModel::class.java)
     }
     private val dduFileRepository =
         DduFileRepository.get(this)
@@ -88,6 +84,9 @@ class DduChooserActivity : AppCompatActivity()
         initDirRecyclerView()
         initDduRecyclerView()
         mainViewModel.dir.observe(this) {
+            // NOTE: well, setDir(...) will be called twice now
+            // but call from observe is not guaranteed to be performed "now"
+            // MAYBE: store dir in model
             model.setDir(it)
         }
         dduFileChooserSubscription

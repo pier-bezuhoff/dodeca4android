@@ -11,8 +11,8 @@ import androidx.databinding.BindingAdapter
 import com.pierbezuhoff.dodeca.R
 
 @BindingAdapter("showWhen")
-fun showWhen(view: View, shown: Boolean) {
-    view.visibility = if (shown) View.VISIBLE else View.GONE
+fun showWhen(view: View, shown: Boolean?) {
+    view.visibility = if (shown != false) View.VISIBLE else View.GONE
 }
 
 @BindingAdapter("tintEnabled")

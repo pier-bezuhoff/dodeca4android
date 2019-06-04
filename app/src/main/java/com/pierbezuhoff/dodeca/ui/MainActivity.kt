@@ -30,7 +30,6 @@ import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
-import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserViewModel
 import com.pierbezuhoff.dodeca.ui.dodeca.ChooseColorDialog
 import com.pierbezuhoff.dodeca.ui.dodeca.DodecaViewModel
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
@@ -71,20 +70,17 @@ class MainActivity : AppCompatActivity()
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
     }
-    private val dodecaFactory by lazy {
+    private val factory by lazy {
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
     }
     private val mainViewModel by lazy {
-        ViewModelProviders.of(this, dodecaFactory).get(MainViewModel::class.java)
+        ViewModelProviders.of(this, factory).get(MainViewModel::class.java)
     }
     private val dodecaViewModel by lazy {
-        ViewModelProviders.of(this, dodecaFactory).get(DodecaViewModel::class.java)
-    }
-    private val dduChooserViewModel by lazy {
-        ViewModelProviders.of(this).get(DduChooserViewModel::class.java)
+        ViewModelProviders.of(this, factory).get(DodecaViewModel::class.java)
     }
     private val dir: File
-        get() = mainViewModel.dir.value ?: dduDir
+        get() = mainViewModel.currentDir
     private val dduFileRepository =
         DduFileRepository.get(this)
 
@@ -145,14 +141,9 @@ class MainActivity : AppCompatActivity()
     private fun onToolbarItemClick(id: Int) {
         mainViewModel.showBottomBar()
         when (id) {
-            R.id.help_button -> {
-                val intent = Intent(this, HelpActivity::class.java)
-                startActivityForResult(intent, HELP_CODE)
-            }
+            R.id.help_button -> goToActivity(HelpActivity::class.java, HELP_CODE)
             R.id.load_button -> {
-                val intent = Intent(this, DduChooserActivity::class.java)
-                intent.putExtra("dirPath", dir.absolutePath)
-                startActivityForResult(intent, DDU_CODE)
+                goToActivity(DduChooserActivity::class.java, DDU_CODE)
             }
             R.id.save_button -> saveDdu()
             R.id.play_button -> dodecaViewModel.toggleUpdating()
@@ -170,14 +161,16 @@ class MainActivity : AppCompatActivity()
             }
             R.id.clear_button -> dodecaViewModel.requestClear()
             R.id.autocenter_button -> dodecaViewModel.requestAutocenter()
-            R.id.settings_button -> {
-                mainViewModel.cancelBottomBarHidingJob()
-                startActivityForResult(
-                    Intent(this@MainActivity, SettingsActivity::class.java),
-                    APPLY_SETTINGS_CODE
-                )
-            }
+            R.id.settings_button -> goToActivity(SettingsActivity::class.java, APPLY_SETTINGS_CODE)
         }
+    }
+
+    private fun <T : AppCompatActivity> goToActivity(cls: Class<T>, resultCode: Int) {
+        mainViewModel.cancelBottomBarHidingJob()
+        startActivityForResult(
+            Intent(this, cls),
+            resultCode
+        )
     }
 
     private fun saveDdu() {
@@ -240,10 +233,10 @@ class MainActivity : AppCompatActivity()
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
             DDU_CODE -> {
-                dduChooserViewModel.clearFactories()
+                mainViewModel.updateDir()
                 if (resultCode == Activity.RESULT_OK) {
-                    mainViewModel.chosenDduFile?.let { file ->
-                        readFile(file)
+                    data?.getStringExtra("path")?.let { path ->
+                        readFile(File(path))
                     }
                 }
             }

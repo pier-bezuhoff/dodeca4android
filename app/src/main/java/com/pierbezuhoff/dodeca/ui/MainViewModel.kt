@@ -10,7 +10,6 @@ import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.models.OptionsManager
-import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
 import com.pierbezuhoff.dodeca.ui.dodeca.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.Connection
@@ -31,20 +30,16 @@ class MainViewModel(
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , DodecaGestureDetector.SingleTapListener
-    , DduChooserActivity.DduFileChooser
 {
     interface OnDestroyMainActivity { fun onDestroyMainActivity() }
     private val onDestroyMainActivityConnection = Connection<OnDestroyMainActivity>()
     val onDestroyMainActivitySubscription = onDestroyMainActivityConnection.subscription
 
-    private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData(true)
-    private val _dir: MutableLiveData<File> = MutableLiveData(context.dduDir)
+    private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData()
+    private val _dir: MutableLiveData<File> = MutableLiveData()
     val currentDir: File get() = dir.value!!
-    private val _showStat: MutableLiveData<Boolean> = MutableLiveData(false)
+    private val _showStat: MutableLiveData<Boolean> = MutableLiveData()
     private var bottomBarHidingJob: Job? = null
-    var chosenDduFile: File? = null
-        get() = field?.also { field = null }
-        private set
 
     val bottomBarShown: LiveData<Boolean> = _bottomBarShown
     val dir: LiveData<File> = _dir
@@ -63,16 +58,18 @@ class MainViewModel(
         options.showStat.liveData.observeForever {
             _showStat.postValue(it)
         }
-        if (_dir.value == null)
-            _dir.value = context.dduDir
+        val recentDir = optionsManager.fetched(options.recentDir)
+        if (recentDir == null) {
+            val dduDir = context.dduDir
+            optionsManager.set(options.recentDir, dduDir)
+            _dir.value = dduDir
+        } else {
+            _dir.value = recentDir
+        }
     }
 
     override fun onSingleTap(e: MotionEvent?) {
         toggleBottomBar()
-    }
-
-    override fun chooseDduFile(file: File) {
-        chosenDduFile = file
     }
 
     fun checkUpgrade() {
@@ -122,12 +119,12 @@ class MainViewModel(
         _bottomBarShown.value = !(_bottomBarShown.value ?: false)
     }
 
-    fun sendOnDestroy() {
-        onDestroyMainActivityConnection.send { onDestroyMainActivity() }
+    fun updateDir() {
+        _dir.value = optionsManager.fetched(options.recentDir) ?: _dir.value
     }
 
-    fun changeDir(dir: File) {
-        _dir.value = dir
+    fun sendOnDestroy() {
+        onDestroyMainActivityConnection.send { onDestroyMainActivity() }
     }
 
     private suspend fun onUpgrade() {
@@ -173,7 +170,7 @@ class MainViewModel(
 
     companion object {
         private const val TAG = "MainViewModel"
-        private const val BOTTOM_BAR_HIDE_DELAY_IN_SECONDS = 30
+        private const val BOTTOM_BAR_HIDE_DELAY_IN_SECONDS = 5 // 30
         private const val BOTTOM_BAR_HIDE_DELAY_IN_MILLISECONDS: Long =
             1000L * BOTTOM_BAR_HIDE_DELAY_IN_SECONDS
     }
