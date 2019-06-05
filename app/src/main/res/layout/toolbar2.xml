@@ -4,7 +4,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
 >
     <data>
-        <variable name="model" type="com.pierbezuhoff.dodeca.ui.MainViewModel"/>
+        <variable name="mainViewModel" type="com.pierbezuhoff.dodeca.ui.MainViewModel"/>
         <variable name="dodecaViewModel" type="com.pierbezuhoff.dodeca.ui.dodeca.DodecaViewModel"/>
     </data>
     <LinearLayout

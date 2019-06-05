@@ -9,6 +9,7 @@ import androidx.annotation.MenuRes
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.observe
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -24,13 +25,15 @@ class DduFileAdapter
     , LifecycleOwner
 {
     interface FileChooser { fun chooseFile(file: File) }
+    interface PreviewSupplier { fun getPreviewOf(file: File): LiveData<Bitmap> }
 
-    lateinit var model: DduChooserViewModel // inject
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
     private val fileChooserConnection = Connection<FileChooser>()
     val fileChooserSubscription = fileChooserConnection.subscription
     private val contextMenuConnection = Connection<ContextMenuManager>()
     val contextMenuSubscription = contextMenuConnection.subscription
+    private val previewSupplierConnection = Connection<PreviewSupplier>()
+    val previewSupplierSubscription = previewSupplierConnection.subscription
 
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
@@ -65,10 +68,11 @@ class DduFileAdapter
                 }
                 setIsRecyclable(false)
                 noPreview(holder)
-                model.getPreviewOf(file)
-                    .observe(this@DduFileAdapter) { newBitmap: Bitmap ->
-                        setPreview(holder, newBitmap)
-                    }
+                previewSupplierConnection.send {
+                    getPreviewOf(file)
+                }?.observe(this@DduFileAdapter) { newBitmap: Bitmap ->
+                    setPreview(holder, newBitmap)
+                }
             }
         }
     }

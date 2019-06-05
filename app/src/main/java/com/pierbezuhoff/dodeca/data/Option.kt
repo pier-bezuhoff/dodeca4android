@@ -9,7 +9,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.utils.Filename
-import java.io.File
 import kotlin.reflect.KProperty
 
 // TODO: migrate to OptionsViewModel
@@ -17,7 +16,7 @@ import kotlin.reflect.KProperty
 lateinit var options: Options private set
 lateinit var values: Values private set
 
-abstract class Option<T>(val default: T) {
+abstract class Option<T : Any>(val default: T) {
     var value = default
         protected set(value) {
             val oldValue = field
@@ -41,8 +40,8 @@ abstract class Option<T>(val default: T) {
 
     abstract fun putIn(editor: SharedPreferences.Editor)
 
-    fun setToIn(newValue: T? = null, editor: SharedPreferences.Editor? = null) {
-        value = newValue ?: default
+    fun setToIn(newValue: T, editor: SharedPreferences.Editor? = null) {
+        value = newValue
         editor?.let { putIn(editor) }
     }
 
@@ -52,7 +51,7 @@ abstract class Option<T>(val default: T) {
         value
 }
 
-open class KeyOption<T>(val key: String, default: T) : Option<T>(default) {
+open class KeyOption<T : Any>(val key: String, default: T) : Option<T>(default) {
     override fun equals(other: Any?): Boolean = other is KeyOption<*> && other.key == key
     override fun hashCode(): Int = key.hashCode()
     override fun toString(): String = "KeyOption '$key': $value (default $default)"
@@ -83,7 +82,7 @@ open class KeyOption<T>(val key: String, default: T) : Option<T>(default) {
     }
 }
 
-open class ParsedKeyOption<T>(
+open class ParsedKeyOption<T : Any>(
     key: String,
     default: T,
     val parse: String.() -> T?
@@ -128,7 +127,6 @@ class Options(val resources: Resources) {
     val previewSmartUpdates = BooleanKeyOption("preview_smart_updates", R.bool.preview_smart_updates)
     /** Absolute path of the most recent ddu-file */
     val recentDdu = ParsedKeyOption("recent_ddu", R.string.first_ddu) { Filename(this) }
-    val recentDir = ParsedKeyOption<File?>("recent_dir", null) { File(this) }
     val versionCode = KeyOption("version_code", resources.getInteger(R.integer.version_code))
 
     fun init() {
@@ -157,7 +155,6 @@ class Values(private val options: Options) {
     val previewSmartUpdates: Boolean by options.previewSmartUpdates
     /** Absolute path of the most recent ddu-file */
     val recentDdu: Filename by options.recentDdu // TODO: Filename -> File
-    val recentDir: File? by options.recentDir
     val versionCode: Int by options.versionCode
 }
 

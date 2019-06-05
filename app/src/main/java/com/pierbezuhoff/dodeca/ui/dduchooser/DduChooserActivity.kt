@@ -23,9 +23,7 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.OptionsManager
-import com.pierbezuhoff.dodeca.ui.MainViewModel
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
-import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.copyDirectory
@@ -55,43 +53,38 @@ import java.io.File
 // MAYBE: store in sharedPreferences last dir + store last pos
 class DduChooserActivity : AppCompatActivity()
     , DduFileAdapter.FileChooser
-    , DirAdapter.DirChangeListener
     , ContextMenuManager
 {
-    interface DduFileChooser { fun chooseDduFile(file: File) }
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
     }
     private val factory by lazy {
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
     }
-    private val model by lazy {
+    private val viewModel by lazy {
         ViewModelProviders.of(this, factory).get(DduChooserViewModel::class.java)
     }
     private val dduFileRepository =
         DduFileRepository.get(this)
-    private val dir: File get() = mainViewModel.currentDir
+    private val dir: File get() = viewModel.dir.value ?: dduDir
     private var createdContextMenu: ContextMenuSource? = null
     private var requestedDduFile: File? = null
     private var requestedDduDir: File? = null
-    private val dduFileChooserConnection = Connection<DduFileChooser>()
-    val dduFileChooserSubscription = dduFileChooserConnection.subscription
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dduchooser)
-        model.setDir(dir)
+        setInitialDir()
         initDirRecyclerView()
         initDduRecyclerView()
-        mainViewModel.dir.observe(this) {
-            // NOTE: well, setDir(...) will be called twice now
-            // but call from observe is not guaranteed to be performed "now"
-            // MAYBE: store dir in model
-            model.setDir(it)
-        }
-        dduFileChooserSubscription
-            .subscribeFrom(mainViewModel)
-            .unsubscribeOnDestroy(this)
+    }
+
+    private fun setInitialDir() {
+        val initialDir = intent.getStringExtra("dir_path")
+            ?.let { dirPath ->
+                File(dirPath)
+            } ?: dduDir
+        viewModel.setInitialDir(initialDir)
     }
 
     private fun initDirRecyclerView() {
@@ -100,16 +93,15 @@ class DduChooserActivity : AppCompatActivity()
         dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
         dir_recycler_view.itemAnimator = DefaultItemAnimator()
         dir_recycler_view.setHasFixedSize(true)
-        adapter.dirChangeSubscription.subscribeFrom(this)
+        adapter.dirChangeSubscription.subscribeFrom(viewModel)
         adapter.contextMenuSubscription.subscribeFrom(this)
-        model.dirs.observe(this) {
+        viewModel.dirs.observe(this) {
             adapter.submitList(it)
         }
     }
 
     private fun initDduRecyclerView() {
         val adapter = DduFileAdapter()
-        adapter.model = model
         ddu_recycler_view.adapter = adapter
         // NOTE: colors and thickness of dividers are set from styles.xml
         ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
@@ -118,20 +110,19 @@ class DduChooserActivity : AppCompatActivity()
         ddu_recycler_view.setHasFixedSize(true)
         adapter.fileChooserSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
-        model.files.observe(this) {
+        adapter.previewSupplierSubscription.subscribeFrom(viewModel)
+        viewModel.files.observe(this) {
             adapter.submitList(it)
         }
     }
 
     override fun chooseFile(file: File) {
         Log.i(TAG, "File \"${file.absolutePath}\" chosen")
-        dduFileChooserConnection.send { chooseDduFile(file) }
-        setResult(Activity.RESULT_OK, Intent())
+        val intent = Intent()
+        intent.putExtra("path", file.absolutePath)
+        intent.putExtra("dir_path", dir.absolutePath)
+        setResult(Activity.RESULT_OK, intent)
         finish()
-    }
-
-    override fun onDirChanged(dir: File) {
-        mainViewModel.changeDir(dir)
     }
 
     override fun registerViewForContextMenu(view: View) {
@@ -155,7 +146,8 @@ class DduChooserActivity : AppCompatActivity()
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var isSet = true
         when (item.itemId) {
-            R.id.to_parent_dir -> if (dir.absolutePath != dduDir.absolutePath) onDirChanged(dir.parentFile)
+            R.id.to_parent_dir -> if (dir.absolutePath != dduDir.absolutePath)
+                viewModel.onDirChanged(dir.parentFile)
             R.id.import_ddus -> requestImportDdus()
             R.id.export_ddus -> requestExportDduDir()
             R.id.import_dir -> requestImportDduDir()
@@ -197,7 +189,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun refreshDir() {
-        model.setDir(dir)
+        viewModel.onDirChanged(dir)
     }
 
     private fun renameDduFile(file: File) {
@@ -352,13 +344,6 @@ class DduChooserActivity : AppCompatActivity()
                 // Documents.FLAG_DIR_SUPPORTS_CREATE
             }
             startActivityForResult(intent, EXPORT_DIR_REQUEST_CODE)
-        } else {
-            toast("TODO: import directory $targetDir (for now works on Android 5.0+)")
-            // TODO: find other way around
-/*                Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                putExtra(Intent.EXTRA_TITLE, targetDir.name)
-                addCategory(Intent.CATEGORY_ALTERNATIVE)
-            }*/
         }
     }
 

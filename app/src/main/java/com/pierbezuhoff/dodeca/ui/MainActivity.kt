@@ -63,6 +63,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
+// FIX: first run: upgrade and loading first ddu happened async => first ddu not found
+// ISSUE: add progress while loading new ddu (for now it continues last one)
+// ISSUE: what if go to choose ddus before extracting 'em all: add progress dialog!
 @RuntimePermissions
 class MainActivity : AppCompatActivity()
     , ChooseColorDialog.ChooseColorListener
@@ -79,8 +82,7 @@ class MainActivity : AppCompatActivity()
     private val dodecaViewModel by lazy {
         ViewModelProviders.of(this, factory).get(DodecaViewModel::class.java)
     }
-    private val dir: File
-        get() = mainViewModel.currentDir
+    private val dir: File get() = mainViewModel.currentDir
     private val dduFileRepository =
         DduFileRepository.get(this)
 
@@ -93,7 +95,7 @@ class MainActivity : AppCompatActivity()
         val binding: ActivityMainBinding =
             DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.lifecycleOwner = this
-        binding.model = mainViewModel
+        binding.mainViewModel = mainViewModel
         binding.dodecaViewModel = dodecaViewModel // NOTE: dodecaViewModel must be initialized after mainViewModel.checkUpgrade
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -142,9 +144,11 @@ class MainActivity : AppCompatActivity()
         mainViewModel.showBottomBar()
         when (id) {
             R.id.help_button -> goToActivity(HelpActivity::class.java, HELP_CODE)
-            R.id.load_button -> {
-                goToActivity(DduChooserActivity::class.java, DDU_CODE)
-            }
+            R.id.load_button -> goToActivity(
+                DduChooserActivity::class.java,
+                DDU_CODE,
+                "dir_path" to dir.absolutePath
+            )
             R.id.save_button -> saveDdu()
             R.id.play_button -> dodecaViewModel.toggleUpdating()
             R.id.next_step_button -> dodecaViewModel.requestOneStep()
@@ -165,10 +169,13 @@ class MainActivity : AppCompatActivity()
         }
     }
 
-    private fun <T : AppCompatActivity> goToActivity(cls: Class<T>, resultCode: Int) {
+    private fun <T : AppCompatActivity> goToActivity(cls: Class<T>, resultCode: Int, vararg extraArgs: Pair<String, String>) {
         mainViewModel.cancelBottomBarHidingJob()
+        val intent = Intent(this, cls)
+        for ((key, arg) in extraArgs)
+            intent.putExtra(key, arg)
         startActivityForResult(
-            Intent(this, cls),
+            intent,
             resultCode
         )
     }
@@ -233,8 +240,10 @@ class MainActivity : AppCompatActivity()
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
             DDU_CODE -> {
-                mainViewModel.updateDir()
                 if (resultCode == Activity.RESULT_OK) {
+                    data?.getStringExtra("dir_path")?.let { dirPath ->
+                        mainViewModel.updateDir(File(dirPath))
+                    }
                     data?.getStringExtra("path")?.let { path ->
                         readFile(File(path))
                     }
