@@ -25,19 +25,20 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 
+// TODO: move (bottom bar) timer to separate class
 class MainViewModel(
     application: Application,
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , DodecaGestureDetector.SingleTapListener
 {
-    interface OnDestroyMainActivity { fun onDestroyMainActivity() }
-    private val onDestroyMainActivityConnection = Connection<OnDestroyMainActivity>()
+    interface MainActivityOnDestroyListener { fun mainActivityOnDestroy() }
+    private val onDestroyMainActivityConnection = Connection<MainActivityOnDestroyListener>()
     val onDestroyMainActivitySubscription = onDestroyMainActivityConnection.subscription
 
     private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData()
     private val _dir: MutableLiveData<File> = MutableLiveData()
-    val currentDir: File get() = dir.value!!
+    val currentDir: File get() = dir.value ?: context.dduDir
     private val _showStat: MutableLiveData<Boolean> = MutableLiveData()
     private var bottomBarHidingJob: Job? = null
 
@@ -58,14 +59,14 @@ class MainViewModel(
         options.showStat.liveData.observeForever {
             _showStat.postValue(it)
         }
-        val recentDir = optionsManager.fetched(options.recentDir)
-        if (recentDir == null) {
-            val dduDir = context.dduDir
-            optionsManager.set(options.recentDir, dduDir)
-            _dir.value = dduDir
-        } else {
-            _dir.value = recentDir
-        }
+        setInitialDir()
+    }
+
+    private fun setInitialDir() {
+        val recentFile = optionsManager.fetched(options.recentDdu)
+            .toFile(parent = context.dduDir)
+        val recentDir = recentFile.absoluteFile.parentFile ?: context.dduDir
+        _dir.value = recentDir
     }
 
     override fun onSingleTap(e: MotionEvent?) {
@@ -119,12 +120,12 @@ class MainViewModel(
         _bottomBarShown.value = !(_bottomBarShown.value ?: false)
     }
 
-    fun updateDir() {
-        _dir.value = optionsManager.fetched(options.recentDir) ?: _dir.value
+    fun updateDir(newDir: File) {
+        _dir.value = newDir
     }
 
     fun sendOnDestroy() {
-        onDestroyMainActivityConnection.send { onDestroyMainActivity() }
+        onDestroyMainActivityConnection.send { mainActivityOnDestroy() }
     }
 
     private suspend fun onUpgrade() {
@@ -170,7 +171,7 @@ class MainViewModel(
 
     companion object {
         private const val TAG = "MainViewModel"
-        private const val BOTTOM_BAR_HIDE_DELAY_IN_SECONDS = 5 // 30
+        private const val BOTTOM_BAR_HIDE_DELAY_IN_SECONDS = 30
         private const val BOTTOM_BAR_HIDE_DELAY_IN_MILLISECONDS: Long =
             1000L * BOTTOM_BAR_HIDE_DELAY_IN_SECONDS
     }

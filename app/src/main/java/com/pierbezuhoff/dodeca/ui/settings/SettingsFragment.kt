@@ -88,7 +88,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             |Device OS: Android
             |Device OS version: ${Build.VERSION.RELEASE}
             |Device brand: ${Build.BRAND}
-            |Device model: ${Build.MODEL}
+            |Device dodecaViewModel: ${Build.MODEL}
             |Device manufacturer: ${Build.MANUFACTURER}
         """.trimMargin()
         email(address, subject, body)

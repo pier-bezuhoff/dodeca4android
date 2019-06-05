@@ -16,7 +16,7 @@ import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
-import com.pierbezuhoff.dodeca.utils.absoluteFilename
+import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
 import com.pierbezuhoff.dodeca.utils.filename
@@ -80,7 +80,7 @@ class DodecaViewModel(
             _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
         }
         ddu.file?.let { file: File ->
-            setSharedPreference(options.recentDdu, file.absoluteFilename)
+            setSharedPreference(options.recentDdu, Filename(context.dduPath(file)))
         }
     }
 
@@ -148,15 +148,9 @@ class DodecaViewModel(
             Ddu.EXAMPLE_DDU
         }
 
-    private fun getRecentDduFile(): File {
-        optionsManager.fetch(options.recentDdu)
-        val recentFromAbsolutePath = values.recentDdu.toFile() // new format
-        val recentInDduDir = values.recentDdu.toFile(parent = context.dduDir) // deprecated format
-        return if (recentFromAbsolutePath.exists())
-            recentFromAbsolutePath
-        else
-            recentInDduDir
-    }
+    private fun getRecentDduFile(): File =
+        optionsManager.fetched(options.recentDdu)
+            .toFile(parent = context.dduDir)
 
     fun requestOneStep() {
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->

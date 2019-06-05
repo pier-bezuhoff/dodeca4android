@@ -12,6 +12,7 @@ import java.io.IOException
 import java.io.InputStream
 
 val Context.dduDir get() =  File(filesDir, "ddu")
+/** path, relative to dduDir */
 fun Context.dduPath(file: File): String =
     file.absolutePath.substringAfter(dduDir.absolutePath).trim('/')
 

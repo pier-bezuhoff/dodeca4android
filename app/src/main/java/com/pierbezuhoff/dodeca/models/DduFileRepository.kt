@@ -10,6 +10,7 @@ import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.filename
 import java.io.File
 
+/** Singleton repo */
 class DduFileRepository private constructor(context: Context) {
     private val db: DduFileDatabase by lazy {
         Room.databaseBuilder(
@@ -60,13 +61,6 @@ class DduFileRepository private constructor(context: Context) {
     suspend fun dropPreviewInserting(filename: Filename) =
         applyInserting(filename) { preview = null }
 
-    suspend fun dropPreview(filename: Filename) {
-        getDduFile(filename)?.let { dduFile ->
-            dduFile.preview = null
-            dduFileDao.update(dduFile)
-        }
-    }
-
     private suspend fun dropPreview(dduFile: DduFile) {
         dduFile.preview = null
         dduFileDao.update(dduFile)
@@ -98,7 +92,7 @@ class DduFileRepository private constructor(context: Context) {
         @Volatile private var instance: DduFileRepository? = null
         private const val DB_NAME: String = "ddu-files"
 
-        /** Thread-safe via double-checked locking */
+        /** Returns singleton repo, thread-safe via double-checked locking */
         fun get(context: Context): DduFileRepository =
             instance ?: synchronized(this) {
                 instance

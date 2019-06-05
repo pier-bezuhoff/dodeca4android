@@ -19,11 +19,11 @@ class DodecaView @JvmOverloads constructor(
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet)
     , LifecycleOwner
+    , MainViewModel.MainActivityOnDestroyListener
     , DduRepresentation.Presenter
-    , MainViewModel.OnDestroyMainActivity
 {
-    lateinit var mainModel: MainViewModel // inject
-    lateinit var model: DodecaViewModel // inject
+    lateinit var mainViewModel: MainViewModel // inject
+    lateinit var dodecaViewModel: DodecaViewModel // inject
     private val lifecycleRegistry: LifecycleRegistry =
         LifecycleRegistry(this)
 
@@ -48,12 +48,12 @@ class DodecaView @JvmOverloads constructor(
 
     private fun onFirstRun() {
         initialized = true
-        mainModel.onDestroyMainActivitySubscription.subscribeFrom(this)
-        mainModel.bottomBarShown.observe(this, Observer {
+        mainViewModel.onDestroyMainActivitySubscription.subscribeFrom(this)
+        mainViewModel.bottomBarShown.observe(this, Observer {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
         })
-        model.gestureDetector.registerAsOnTouchListenerFor(this)
-        model.dduRepresentation.observe(this, Observer {
+        dodecaViewModel.gestureDetector.registerAsOnTouchListenerFor(this)
+        dodecaViewModel.dduRepresentation.observe(this, Observer {
             it.connectPresenter(this)
         })
     }
@@ -72,7 +72,7 @@ class DodecaView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         canvas?.let {
-            model.onDraw(canvas)
+            dodecaViewModel.onDraw(canvas)
         }
     }
 
@@ -80,9 +80,9 @@ class DodecaView @JvmOverloads constructor(
         postInvalidate()
     }
 
-    override fun onDestroyMainActivity() {
+    override fun mainActivityOnDestroy() {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-        model.maybeAutosave()
+        dodecaViewModel.maybeAutosave()
         Log.i(TAG, "onDestroy")
     }
 

@@ -40,6 +40,22 @@ val File.filename: Filename get() = Filename.of(this)
 val File.absoluteFilename: Filename get() = Filename(absolutePath)
 val DocumentFile.filename: Filename? get() = Filename.of(this)
 
+/** Absolute file path */
+data class FilePath(private val path: String) {
+    val fileName: FileName get() = filename.fileName
+    val extension: String get() = filename.extension
+    val filename: Filename get() = Filename.of(toFile())
+    val isDdu: Boolean get() = filename.isDdu
+    override fun toString(): String = path
+    fun toFile(): File =
+        File(path)
+    companion object {
+        fun of(file: File): FilePath =
+            FilePath(file.absolutePath)
+    }
+}
+val File.filePath: FilePath get() = FilePath.of(this)
+
 val File.isDdu: Boolean get() = filename.isDdu
 val DocumentFile.isDdu: Boolean? get() = filename?.isDdu
 

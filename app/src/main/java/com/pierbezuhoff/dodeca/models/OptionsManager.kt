@@ -5,7 +5,7 @@ import androidx.core.content.edit
 import com.pierbezuhoff.dodeca.data.Option
 import com.pierbezuhoff.dodeca.data.options
 
-/** Handy wrapper, does not hold any data except [SharedPreferences] instance; depends on [options] */
+/** Handy wrapper, does not hold any data (except [SharedPreferences] instance); depends on [options] */
 class OptionsManager(
     private val sharedPreferences: SharedPreferences
 ) {
@@ -16,16 +16,16 @@ class OptionsManager(
         }
     }
 
-    fun <T> fetch(option: Option<T>) {
+    fun <T : Any> fetch(option: Option<T>) {
         option.fetchFrom(sharedPreferences)
     }
 
-    fun <T> fetched(option: Option<T>): T {
+    fun <T : Any> fetched(option: Option<T>): T {
         option.fetchFrom(sharedPreferences)
         return option.value
     }
 
-    fun <T> set(option: Option<T>, value: T) {
+    fun <T : Any> set(option: Option<T>, value: T) {
         sharedPreferences.edit {
             option.setToIn(value, this) // NOTE: setToIn(option, value) means recursion
         }

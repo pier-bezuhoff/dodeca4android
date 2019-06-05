@@ -7,7 +7,7 @@
         xmlns:bind="http://schemas.android.com/apk/res-auto"
 >
     <data>
-        <variable name="model" type="com.pierbezuhoff.dodeca.ui.MainViewModel"/>
+        <variable name="mainViewModel" type="com.pierbezuhoff.dodeca.ui.MainViewModel"/>
         <variable name="dodecaViewModel" type="com.pierbezuhoff.dodeca.ui.dodeca.DodecaViewModel"/>
     </data>
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -24,8 +24,8 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:mainModel="@{model}"
-                app:model="@{dodecaViewModel}"
+                app:mainViewModel="@{mainViewModel}"
+                app:dodecaViewModel="@{dodecaViewModel}"
         />
 
         <LinearLayout
@@ -38,7 +38,7 @@
                 android:background="@color/translucentLightBackground"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:showWhen="@{model.showStat}"
+                app:showWhen="@{mainViewModel.showStat}"
         >
             <TextView
                     android:text="@{@string/stat_n_updates_text(dodecaViewModel.nUpdates)}"
@@ -73,16 +73,16 @@
                     app:contentInsetStartWithNavigation="0dp"
                     app:contentInsetEnd="0dp"
                     app:contentInsetEndWithActions="0dp"
-                    app:showWhen="@{model.bottomBarShown}"
+                    app:showWhen="@{mainViewModel.bottomBarShown}"
             >
                 <LinearLayout
                         android:orientation="vertical"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                 >
-                    <include layout="@layout/toolbar1" bind:model="@{model}" bind:dodecaViewModel="@{dodecaViewModel}"/>
+                    <include layout="@layout/toolbar1" bind:mainViewModel="@{mainViewModel}" bind:dodecaViewModel="@{dodecaViewModel}"/>
                     <View style="@style/dividerHorizontal"/>
-                    <include layout="@layout/toolbar2" bind:model="@{model}" bind:dodecaViewModel="@{dodecaViewModel}"/>
+                    <include layout="@layout/toolbar2" bind:mainViewModel="@{mainViewModel}" bind:dodecaViewModel="@{dodecaViewModel}"/>
                 </LinearLayout>
             </androidx.appcompat.widget.Toolbar>
 
