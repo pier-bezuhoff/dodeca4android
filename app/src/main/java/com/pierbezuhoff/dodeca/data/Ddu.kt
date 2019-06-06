@@ -113,6 +113,7 @@ class Ddu(
             DduReader(stream.reader()).read()
         }
 
+        val BLANK_DDU: Ddu = Ddu()
         val EXAMPLE_DDU: Ddu = run {
             val circle = CircleFigure(300.0, 400.0, 200.0, Color.BLUE, rule = "12")
             val circle1 = CircleFigure(450.0, 850.0, 300.0, Color.LTGRAY)
@@ -127,7 +128,7 @@ class Ddu(
                 circle1.inverted(circle),
                 CircleFigure(600.0, 900.0, 10.0, Color.RED, fill = true)
             )
-            Ddu(Color.WHITE, circles = circles)
+            Ddu(backgroundColor = Color.WHITE, circles = circles)
         }
     }
 }

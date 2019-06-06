@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.BaseAdapter
 import android.widget.EditText
 import android.widget.ImageButton
@@ -63,7 +62,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-// FIX: first run: upgrade and loading first ddu happened async => first ddu not found
 // ISSUE: add progress while loading new ddu (for now it continues last one)
 // ISSUE: what if go to choose ddus before extracting 'em all: add progress dialog!
 @RuntimePermissions
@@ -90,18 +88,24 @@ class MainActivity : AppCompatActivity()
         super.onCreate(savedInstanceState)
         // TODO: migrate to OptionsViewModel
         Options(resources).init() // init options.* and values.*
-        mainViewModel.checkUpgrade()
         setupWindow()
         val binding: ActivityMainBinding =
             DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.lifecycleOwner = this
         binding.mainViewModel = mainViewModel
-        binding.dodecaViewModel = dodecaViewModel // NOTE: dodecaViewModel must be initialized after mainViewModel.checkUpgrade
+        binding.dodecaViewModel = dodecaViewModel
         setSupportActionBar(bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
-        handleLaunchFromImplicitIntent()
         setupToolbar()
         mainViewModel.showBottomBar()
+        mainViewModel.viewModelScope.launch {
+            // MAYBE: show progress dialog
+            if (mainViewModel.shouldUpgrade()) {
+                mainViewModel.doUpgrade()
+            }
+            if (!handleLaunchFromImplicitIntent())
+                dodecaViewModel.loadInitialDdu()
+        }
     }
 
     private fun setupWindow() {
@@ -112,19 +116,6 @@ class MainActivity : AppCompatActivity()
                     systemUiVisibility =
                         IMMERSIVE_UI_VISIBILITY
             }
-        }
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-        )
-    }
-
-    private fun handleLaunchFromImplicitIntent() {
-        if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
-                intent.type?.endsWith("ddu", ignoreCase = true) == true ||
-                intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)
-        ) {
-            intent.data?.let { readUriWithPermissionCheck(it) }
         }
     }
 
@@ -138,6 +129,17 @@ class MainActivity : AppCompatActivity()
         with(shape_spinner) {
             adapter = ShapeSpinnerAdapter(context)
         }
+    }
+
+    private fun handleLaunchFromImplicitIntent(): Boolean {
+        if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
+                intent.type?.endsWith("ddu", ignoreCase = true) == true ||
+                intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)
+        ) {
+            intent.data?.let { readUriWithPermissionCheck(it) }
+            return true
+        }
+        return false
     }
 
     private fun onToolbarItemClick(id: Int) {

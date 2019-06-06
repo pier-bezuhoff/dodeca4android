@@ -41,6 +41,7 @@ class DodecaViewModel(
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
 
     private var oldUpdating: Boolean? = null
+    private var dduLoaded = false // mark that MainActivity should not repeat loadInitialDdu
 
     val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
     val updating: LiveData<Boolean> = _updating
@@ -60,25 +61,32 @@ class DodecaViewModel(
         shape.observeForever { shape: Shape ->
             dduRepresentation.value?.shape = shape
         }
-        viewModelScope.launch {
-            val initialDdu: Ddu = getInitialDdu()
-            loadDdu(initialDdu)
+    }
+
+    fun loadInitialDdu() {
+        if (!dduLoaded) {
+            dduLoaded = true
+            viewModelScope.launch {
+                val initialDdu: Ddu = getInitialDdu()
+                loadDdu(initialDdu)
+            }
         }
     }
 
     fun loadDdu(ddu: Ddu) {
-        maybeAutosave() // async
+        dduLoaded = true
+        maybeAutosave() // async, but capture current dduRepresentation
         statUpdater.reset()
         DduRepresentation(ddu)
             .let { dduRepresentation: DduRepresentation ->
-            dduRepresentation.statHolderSubscription.subscribeFrom(this)
-            dduRepresentation.toastEmitterSubscription.subscribeFrom(this)
-            dduRepresentation.connectOptionsManager(optionsManager)
-            gestureDetector.onScrollSubscription.subscribeFrom(dduRepresentation)
-            gestureDetector.onScaleSubscription.subscribeFrom(dduRepresentation)
-            updateDduAttributesFrom(dduRepresentation)
-            _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
-        }
+                dduRepresentation.statHolderSubscription.subscribeFrom(this)
+                dduRepresentation.toastEmitterSubscription.subscribeFrom(this)
+                dduRepresentation.connectOptionsManager(optionsManager)
+                gestureDetector.onScrollSubscription.subscribeFrom(dduRepresentation)
+                gestureDetector.onScaleSubscription.subscribeFrom(dduRepresentation)
+                updateDduAttributesFrom(dduRepresentation)
+                _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
+            }
         ddu.file?.let { file: File ->
             setSharedPreference(options.recentDdu, Filename(context.dduPath(file)))
         }
