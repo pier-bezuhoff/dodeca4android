@@ -31,10 +31,6 @@ class MainViewModel(
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , DodecaGestureDetector.SingleTapListener
 {
-    interface MainActivityOnDestroyListener { fun mainActivityOnDestroy() }
-    private val onDestroyMainActivityConnection = Connection<MainActivityOnDestroyListener>()
-    val onDestroyMainActivitySubscription = onDestroyMainActivityConnection.subscription
-
     private val _bottomBarShown: MutableLiveData<Boolean> = MutableLiveData()
     private val _dir: MutableLiveData<File> = MutableLiveData()
     val currentDir: File get() = dir.value ?: context.dduDir

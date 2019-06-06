@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -303,9 +304,9 @@ class MainActivity : AppCompatActivity()
         onRequestPermissionsResult(requestCode, grantResults)
     }
 
-    override fun onDestroy() {
-        mainViewModel.sendOnDestroy()
-        super.onDestroy()
+    override fun onSaveInstanceState(outState: Bundle?, outPersistentState: PersistableBundle?) {
+        super.onSaveInstanceState(outState, outPersistentState)
+        dodecaViewModel.maybeAutosave()
     }
 
     @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
