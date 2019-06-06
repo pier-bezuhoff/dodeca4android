@@ -87,6 +87,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     private var updateOnce: Boolean by Once()
 
     private val presenterDisconnector: LifecycleObserver = object : LifecycleObserver {
+        @Suppress("unused")
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         fun disconnectPresenter() { this@DduRepresentation.presenter = null }
     }
@@ -260,7 +261,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             presenter?.redraw()
     }
 
-    private fun changeShape(newShape: Shape) {
+    private fun changeShape(@Suppress("UNUSED_PARAMETER") newShape: Shape) {
         presenter?.redraw()
     }
 

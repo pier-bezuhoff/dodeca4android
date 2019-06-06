@@ -3,12 +3,11 @@ package com.pierbezuhoff.dodeca.ui.dodeca
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.Observer
+import androidx.lifecycle.observe
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.ui.MainViewModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
@@ -21,11 +20,11 @@ class DodecaView @JvmOverloads constructor(
     , LifecycleOwner
     , DduRepresentation.Presenter
 {
-    lateinit var mainViewModel: MainViewModel // inject
-    lateinit var dodecaViewModel: DodecaViewModel // inject
-    private val lifecycleRegistry: LifecycleRegistry =
-        LifecycleRegistry(this)
+    lateinit var mainViewModel: MainViewModel // injected via DataBinding
+    lateinit var dodecaViewModel: DodecaViewModel // injected via DataBinding
 
+    private var _lifecycle: Lifecycle = LifecycleRegistry(this)
+    private var lifecycleInherited: Boolean = false
     private var initialized = false
 
     private val centerX: Float get() = x + width / 2
@@ -33,33 +32,28 @@ class DodecaView @JvmOverloads constructor(
 
     private val knownSize: Boolean get() = width > 0 || height > 0
 
-    init {
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-    }
-
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (!initialized) {
-            lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
             onFirstRun()
         }
     }
 
     private fun onFirstRun() {
         initialized = true
-        // move to onStart/onStop or smth
-        mainViewModel.onDestroyMainActivitySubscription.subscribeFrom(this)
-        mainViewModel.bottomBarShown.observe(this, Observer {
-            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
-        })
         dodecaViewModel.gestureDetector.registerAsOnTouchListenerFor(this)
-        dodecaViewModel.dduRepresentation.observe(this, Observer {
-            it.connectPresenter(this)
-        })
+        setupObservers()
     }
 
-    override fun getLifecycle(): Lifecycle =
-        lifecycleRegistry
+    private fun setupObservers() {
+        require(lifecycleInherited)
+        mainViewModel.bottomBarShown.observe(this) {
+            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+        }
+        dodecaViewModel.dduRepresentation.observe(this) {
+            it.connectPresenter(this)
+        }
+    }
 
     override fun getCenter(): Complex? =
         if (knownSize && initialized) ComplexFF(centerX, centerY)
@@ -80,8 +74,14 @@ class DodecaView @JvmOverloads constructor(
         postInvalidate()
     }
 
-    override fun mainActivityOnDestroy() {
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    override fun getLifecycle(): Lifecycle =
+        _lifecycle
+
+    /** Inherit lifecycle (of MainActivity) */
+    fun inheritLifecycle(lifecycleOwner: LifecycleOwner) {
+        require(!lifecycleInherited)
+        _lifecycle = lifecycleOwner.lifecycle
+        lifecycleInherited = true
     }
 
     companion object {

@@ -12,7 +12,6 @@ import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dodeca.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
-import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.extractDduFrom
@@ -99,10 +98,6 @@ class MainViewModel(
 
     fun updateDir(newDir: File) {
         _dir.value = newDir
-    }
-
-    fun sendOnDestroy() {
-        onDestroyMainActivityConnection.send { mainActivityOnDestroy() }
     }
 
     fun shouldUpgrade(): Boolean {
