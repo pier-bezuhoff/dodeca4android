@@ -146,7 +146,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             trace?.motion?.run {
                 scroll(-dx, -dy)
             }
-        } else { // BUG: sometimes skip to else
+        } else { // BUG: ?sometimes skip to else
             presenter?.getCenter()?.let { center ->
                 val shownCircles: List<CircleFigure> = circleGroup.figures.filter(CircleFigure::show)
                 val visibleCenter = shownCircles.map { visible(it.center) }.mean()
