@@ -50,7 +50,7 @@ class DduChooserViewModel(
 
     override fun onDirChanged(dir: File) {
         Log.i(TAG, "onDirChanged($dir)")
-        _dir.value = dir
+        _dir.postValue(dir)
         previews.clear()
         dirFilesDataSourceFactory!!.changeDir(dir)
         dirsDataSourceFactory!!.changeDir(dir)

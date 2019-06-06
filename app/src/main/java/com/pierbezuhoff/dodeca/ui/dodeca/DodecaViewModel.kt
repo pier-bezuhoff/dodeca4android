@@ -294,7 +294,7 @@ class DodecaViewModel(
         }
         private var lastUpdateTime: Long = 0
         private var lastTimedUpdate: Long = 0
-        private var lastTimedUpdateTime: Long = 0
+        private var lastTimedUpdateTime: Long = System.currentTimeMillis()
         private var dTime: Float? by Delegates.observable<Float?>(null) { _, _, newDTime: Float? ->
             _dTime.value = newDTime
         }
@@ -317,7 +317,7 @@ class DodecaViewModel(
             nUpdates = 0
             lastUpdateTime = 0
             lastTimedUpdate = 0
-            lastTimedUpdateTime = 0
+            lastTimedUpdateTime = System.currentTimeMillis()
             dTime = null
 
         }

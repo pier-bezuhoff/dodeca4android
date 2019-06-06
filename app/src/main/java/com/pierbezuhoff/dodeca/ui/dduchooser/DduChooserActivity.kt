@@ -50,6 +50,7 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
 import java.io.File
 
+// FIX: rename, etc. don't work properly
 // MAYBE: store in sharedPreferences last dir + store last pos
 class DduChooserActivity : AppCompatActivity()
     , DduFileAdapter.FileChooser
