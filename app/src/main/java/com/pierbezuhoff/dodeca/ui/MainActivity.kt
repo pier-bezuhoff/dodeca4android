@@ -63,8 +63,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-// ISSUE: add progress while loading new ddu (for now it continues last one)
+// ISSUE: add progress [ddu] while loading new ddu (for now it continues last one)
 // ISSUE: what if go to choose ddus before extracting 'em all: add progress dialog!
+// FIX: temporaryPause
 @RuntimePermissions
 class MainActivity : AppCompatActivity()
     , ChooseColorDialog.ChooseColorListener
@@ -100,13 +101,14 @@ class MainActivity : AppCompatActivity()
         setupToolbar()
         mainViewModel.showBottomBar()
         mainViewModel.viewModelScope.launch {
-            // MAYBE: show progress dialog
+            // MAYBE: show progress dialog/ddu
             if (mainViewModel.shouldUpgrade()) {
                 mainViewModel.doUpgrade()
             }
             if (!handleLaunchFromImplicitIntent())
                 dodecaViewModel.loadInitialDdu()
         }
+        dodeca_view.inheritLifecycle(this)
     }
 
     private fun setupWindow() {
