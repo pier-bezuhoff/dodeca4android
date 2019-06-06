@@ -25,6 +25,7 @@ object None : Maybe<Nothing>() {
 fun <A> Maybe(maybeA: A?): Maybe<A> =
     maybeA?.let { Just(it) } ?: None
 
-fun <A> justIf(a: A, condition: Boolean): Maybe<A> =
-    if (condition) Just(a)
+infix fun <A> A.justIf(condition: Boolean): Maybe<A> =
+    if (condition) Just(this)
     else None
+

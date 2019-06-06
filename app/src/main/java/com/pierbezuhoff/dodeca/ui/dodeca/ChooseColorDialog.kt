@@ -35,6 +35,7 @@ import org.jetbrains.anko.layoutInflater
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
+// TODO: refactor
 class ChooseColorDialog(
     private val context: Context,
     private val chooseColorListener: ChooseColorListener,
@@ -354,9 +355,13 @@ class CircleAdapter(
                     }
                     fillSwitch.apply {
                         isChecked = fill
-                        setOnCheckedChangeListener { _, checked -> fill = checked }
+                        setOnCheckedChangeListener { _, checked ->
+                            fill = checked
+                            borderColorSwitch.isEnabled = checked
+                        }
                     }
                     borderColorSwitch.apply {
+                        isEnabled = fill
                         isChecked = borderColor != null
                         setOnCheckedChangeListener { _, checked ->
                             if (!checked && borderColor != null) {
@@ -373,10 +378,15 @@ class CircleAdapter(
                         setOnClickListener {
                             colorPickerDialog(borderColor ?: color) { newColor ->
                                 borderColorSwitch.apply {
-                                    if (!isChecked)
+                                    if (!isChecked && fill)
                                         isChecked = true // NOTE: may change borderColor
                                 }
-                                borderColor = newColor
+                                if (!fill) {
+                                    color = newColor
+                                    colorButton.setColorFilter(newColor)
+                                } else {
+                                    borderColor = newColor
+                                }
                                 borderColorButton.setColorFilter(newColor)
                             }.show()
                         }
@@ -384,10 +394,10 @@ class CircleAdapter(
                 }
             }
             positiveButton(R.string.edit_circle_dialog_apply) { onApply(
-                justIf(shown, shownChanged),
-                justIf(color, colorChanged),
-                justIf(fill, fillChanged),
-                justIf(borderColor, borderColorChanged)
+                shown justIf shownChanged,
+                color justIf colorChanged,
+                fill justIf fillChanged,
+                borderColor justIf borderColorChanged
             ) }
             negativeButton(R.string.edit_circle_dialog_cancel) { }
         }

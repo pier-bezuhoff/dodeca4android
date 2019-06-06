@@ -20,7 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
@@ -62,41 +61,6 @@ class MainViewModel(
         setInitialDir()
     }
 
-    private fun setInitialDir() {
-        val recentFile = optionsManager.fetched(options.recentDdu)
-            .toFile(parent = context.dduDir)
-        val recentDir = recentFile.absoluteFile.parentFile ?: context.dduDir
-        _dir.value = recentDir
-    }
-
-    override fun onSingleTap(e: MotionEvent?) {
-        toggleBottomBar()
-    }
-
-    fun checkUpgrade() {
-        val currentVersionCode = BuildConfig.VERSION_CODE
-        val oldVersionCode = optionsManager.fetched(options.versionCode)
-        if (oldVersionCode != currentVersionCode) {
-            val upgrading: Boolean = oldVersionCode < currentVersionCode
-            val upgradingOrDegrading: String = if (upgrading) "Upgrading" else "Degrading"
-            val currentVersionName: String = BuildConfig.VERSION_NAME
-            val versionCodeChange = "$oldVersionCode -> $currentVersionCode"
-            Log.i(TAG,"$upgradingOrDegrading to $currentVersionName ($versionCodeChange)")
-            optionsManager.set(options.versionCode, currentVersionCode)
-            runBlocking {
-                viewModelScope.launch {
-                    onUpgrade()
-                }
-            }
-        }
-    }
-
-    fun showBottomBar() =
-        _bottomBarShown.postValue(true)
-
-    fun hideBottomBar() =
-        _bottomBarShown.postValue(false)
-
     private fun hideBottomBarAfterTimeout() {
         Log.i(TAG, "hideBottomBarAfterTimeout")
         bottomBarHidingJob?.cancel()
@@ -111,6 +75,19 @@ class MainViewModel(
         bottomBarHidingJob?.cancel()
     }
 
+    private fun setInitialDir() {
+        val recentFile = optionsManager.fetched(options.recentDdu)
+            .toFile(parent = context.dduDir)
+        val recentDir = recentFile.absoluteFile.parentFile ?: context.dduDir
+        _dir.value = recentDir
+    }
+
+    fun hideBottomBar() =
+        _bottomBarShown.postValue(false)
+
+    fun showBottomBar() =
+        _bottomBarShown.postValue(true)
+
     fun restartBottomBarHidingJobIfShown() {
         if (bottomBarShown.value == true)
             hideBottomBarAfterTimeout()
@@ -120,12 +97,36 @@ class MainViewModel(
         _bottomBarShown.value = !(_bottomBarShown.value ?: false)
     }
 
+    override fun onSingleTap(e: MotionEvent?) {
+        toggleBottomBar()
+    }
+
     fun updateDir(newDir: File) {
         _dir.value = newDir
     }
 
     fun sendOnDestroy() {
         onDestroyMainActivityConnection.send { mainActivityOnDestroy() }
+    }
+
+    fun shouldUpgrade(): Boolean {
+        val currentVersionCode = BuildConfig.VERSION_CODE
+        val oldVersionCode = optionsManager.fetched(options.versionCode)
+        return oldVersionCode != currentVersionCode
+    }
+
+    /** Upgrade ddu assets */
+    suspend fun doUpgrade() {
+        val currentVersionCode = BuildConfig.VERSION_CODE
+        val oldVersionCode = optionsManager.fetched(options.versionCode)
+        require(oldVersionCode != currentVersionCode)
+        val upgrading: Boolean = oldVersionCode < currentVersionCode
+        val upgradingOrDegrading: String = if (upgrading) "Upgrading" else "Degrading"
+        val currentVersionName: String = BuildConfig.VERSION_NAME
+        val versionCodeChange = "$oldVersionCode -> $currentVersionCode"
+        Log.i(TAG,"$upgradingOrDegrading to $currentVersionName ($versionCodeChange)")
+        optionsManager.set(options.versionCode, currentVersionCode)
+        onUpgrade()
     }
 
     private suspend fun onUpgrade() {
