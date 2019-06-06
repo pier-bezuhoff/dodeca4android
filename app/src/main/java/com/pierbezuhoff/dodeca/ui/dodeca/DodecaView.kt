@@ -19,7 +19,6 @@ class DodecaView @JvmOverloads constructor(
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet)
     , LifecycleOwner
-    , MainViewModel.MainActivityOnDestroyListener
     , DduRepresentation.Presenter
 {
     lateinit var mainViewModel: MainViewModel // inject
@@ -48,6 +47,7 @@ class DodecaView @JvmOverloads constructor(
 
     private fun onFirstRun() {
         initialized = true
+        // move to onStart/onStop or smth
         mainViewModel.onDestroyMainActivitySubscription.subscribeFrom(this)
         mainViewModel.bottomBarShown.observe(this, Observer {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
@@ -82,8 +82,6 @@ class DodecaView @JvmOverloads constructor(
 
     override fun mainActivityOnDestroy() {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-        dodecaViewModel.maybeAutosave()
-        Log.i(TAG, "onDestroy")
     }
 
     companion object {
