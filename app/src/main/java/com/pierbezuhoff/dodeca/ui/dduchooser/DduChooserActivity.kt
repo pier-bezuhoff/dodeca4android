@@ -113,7 +113,7 @@ class DduChooserActivity : AppCompatActivity()
         adapter.contextMenuSubscription.subscribeFrom(this)
         adapter.previewSupplierSubscription.subscribeFrom(viewModel)
         viewModel.files.observe(this) {
-            Log.i(TAG, "submitting files")
+            // ISSUE: rename, duplicate, etc. crash recycler view
             adapter.submitList(it)
         }
     }

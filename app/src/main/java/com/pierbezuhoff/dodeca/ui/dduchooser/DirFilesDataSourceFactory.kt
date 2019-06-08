@@ -1,26 +1,24 @@
 package com.pierbezuhoff.dodeca.ui.dduchooser
 
+import androidx.lifecycle.MutableLiveData
 import androidx.paging.DataSource
 import java.io.File
 import java.io.FileFilter
 
-class _DirFilesDataSourceFactory(
+class DirFilesDataSourceFactory(
     private var dir: File,
     private val fileFilter: FileFilter
-    ) : DataSource.Factory<Int, File>() {
-    private val validDataSources: MutableList<DataSource<Int, File>> =
-        mutableListOf()
+) : DataSource.Factory<Int, File>() {
+    private val source: MutableLiveData<DirFilesDataSource> = MutableLiveData()
 
     override fun create(): DataSource<Int, File> {
-        return DirFilesDataSource(dir, fileFilter).also {
-            validDataSources.add(it)
-        }
+        val latestSource = DirFilesDataSource(dir, fileFilter)
+        source.postValue(latestSource)
+        return latestSource
     }
 
     fun changeDir(dir: File) {
         this.dir = dir
-        validDataSources.forEach { it.invalidate() }
-        validDataSources.clear()
+        source.value?.invalidate()
     }
 }
-
