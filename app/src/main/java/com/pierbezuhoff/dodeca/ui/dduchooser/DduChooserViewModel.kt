@@ -6,8 +6,8 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.liveData
-import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
+import androidx.paging.toLiveData
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.OptionsManager
@@ -26,25 +26,23 @@ class DduChooserViewModel(
     , DduFileAdapter.PreviewSupplier
     , DirAdapter.DirChangeListener
 {
-    private var dirFilesDataSourceFactory: DirFilesDataSourceFactory? = null
-    private var dirsDataSourceFactory: DirFilesDataSourceFactory? = null
+    private lateinit var dirsDataSourceFactory: DirFilesDataSourceFactory
+    private lateinit var dirFilesDataSourceFactory: DirFilesDataSourceFactory
     // NOTE: only previews for ddu-files in current dir, should not use very much memory
     private val previews: MutableMap<File, LiveData<Bitmap>> = mutableMapOf()
     private val _dir: MutableLiveData<File> = MutableLiveData()
-    lateinit var files: LiveData<PagedList<File>> private set
     lateinit var dirs: LiveData<PagedList<File>> private set
+    lateinit var files: LiveData<PagedList<File>> private set
     val dir: LiveData<File> = _dir
 
     fun setInitialDir(newDir: File) {
         if (_dir.value == null) {
             Log.i(TAG, "setInitialDir($newDir)")
             _dir.value = newDir
-            dirFilesDataSourceFactory = DirFilesDataSourceFactory(newDir, FileFilter { it.isDdu })
             dirsDataSourceFactory = DirFilesDataSourceFactory(newDir, FileFilter { it.isDirectory })
-            files = LivePagedListBuilder<Int, File>(dirFilesDataSourceFactory!!, PAGED_LIST_CONFIG)
-                .build()
-            dirs = LivePagedListBuilder<Int, File>(dirsDataSourceFactory!!, PAGED_LIST_CONFIG)
-                .build()
+            dirFilesDataSourceFactory = DirFilesDataSourceFactory(newDir, FileFilter { it.isDdu })
+            dirs = dirsDataSourceFactory.toLiveData(config = PAGED_LIST_CONFIG)
+            files = dirFilesDataSourceFactory.toLiveData(config = PAGED_LIST_CONFIG)
         }
     }
 
@@ -52,8 +50,8 @@ class DduChooserViewModel(
         Log.i(TAG, "onDirChanged($dir)")
         _dir.postValue(dir)
         previews.clear()
-        dirFilesDataSourceFactory!!.changeDir(dir)
-        dirsDataSourceFactory!!.changeDir(dir)
+        dirsDataSourceFactory.changeDir(dir)
+        dirFilesDataSourceFactory.changeDir(dir)
     }
 
     override fun getPreviewOf(file: File): LiveData<Bitmap> {

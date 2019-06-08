@@ -51,10 +51,10 @@ import org.jetbrains.anko.yesButton
 import java.io.File
 
 // FIX: rename, etc. don't work properly
-// MAYBE: store in sharedPreferences last dir + store last pos
+// MAYBE: store last pos
 class DduChooserActivity : AppCompatActivity()
-    , DduFileAdapter.FileChooser
     , ContextMenuManager
+    , DduFileAdapter.FileChooser
 {
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
@@ -108,11 +108,12 @@ class DduChooserActivity : AppCompatActivity()
         ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
         ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.HORIZONTAL))
         ddu_recycler_view.itemAnimator = DefaultItemAnimator()
-        ddu_recycler_view.setHasFixedSize(true)
+        // ddu_recycler_view.setHasFixedSize(true) // testing
         adapter.fileChooserSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
         adapter.previewSupplierSubscription.subscribeFrom(viewModel)
         viewModel.files.observe(this) {
+            Log.i(TAG, "submitting files")
             adapter.submitList(it)
         }
     }
