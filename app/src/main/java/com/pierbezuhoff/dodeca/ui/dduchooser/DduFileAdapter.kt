@@ -66,7 +66,7 @@ class DduFileAdapter
                         contextMenuSource = ContextMenuSource.DduFile(file)
                     )
                 }
-                setIsRecyclable(false)
+//                setIsRecyclable(false) // tmp
                 noPreview(holder)
                 previewSupplierConnection.send {
                     getPreviewOf(file)
