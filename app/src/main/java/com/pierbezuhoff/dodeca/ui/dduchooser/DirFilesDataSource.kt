@@ -24,11 +24,10 @@ class DirFilesDataSource(
         size = files.size
     }
 
-    override fun loadRange(params: LoadRangeParams, callback: LoadRangeCallback<File>) {
-        val startPosition = min(params.startPosition, size)
-        val endPosition = min(startPosition + params.loadSize, size)
-        val loadedFiles = files.subList(startPosition, endPosition)
-        callback.onResult(loadedFiles)
+    private fun loadRangeInternal(requestedStartPosition: Int, loadSize: Int): List<File> {
+        val startPosition = min(requestedStartPosition, size)
+        val endPosition = min(startPosition + loadSize, size) // exclusive: [start; end)
+        return files.subList(startPosition, endPosition)
     }
 
     override fun loadInitial(params: LoadInitialParams, callback: LoadInitialCallback<File>) {
@@ -36,8 +35,12 @@ class DirFilesDataSource(
             loadFiles()
             val startPosition = computeInitialLoadPosition(params, size)
             val loadSize = computeInitialLoadSize(params, startPosition, size)
-            val loadedFiles = files.subList(startPosition, startPosition + loadSize)
-            callback.onResult(loadedFiles, startPosition, size)
+            callback.onResult(
+                loadRangeInternal(startPosition, loadSize), startPosition, size)
         }
+    }
+
+    override fun loadRange(params: LoadRangeParams, callback: LoadRangeCallback<File>) {
+        callback.onResult(loadRangeInternal(params.startPosition, params.loadSize))
     }
 }
