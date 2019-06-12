@@ -52,7 +52,7 @@ import org.jetbrains.anko.yesButton
 import java.io.File
 
 // MAYBE: better animation on delete/duplicate/...
-// MAYBE: store last pos
+// TODO: store last pos
 class DduChooserActivity : AppCompatActivity()
     , ContextMenuManager
     , DduFileAdapter.FileChooser
@@ -323,24 +323,28 @@ class DduChooserActivity : AppCompatActivity()
                     input = editText(name.toString())
                 }
                 positiveButton(getString(R.string.ddu_rename)) {
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        input?.text?.toString()?.trim()?.let { newName: String ->
-                            val newFilename = Filename("$newName.ddu")
-                            val newFile = File(file.parentFile.absolutePath, newFilename.toString())
-                            val success = file.renameTo(newFile)
-                            Log.i(TAG, "$file -> $newFile: $success")
-                            if (success) {
-                                toast(getString(R.string.ddu_rename_toast, name, newName))
-                                dduFileRepository.updateFilename(file.filename, newFilename = newFilename)
-                                refreshDir()
-                            } else {
-                                Log.w(TAG, "failed to rename $file to $newFile")
-                            }
-                        }
+                    input?.text?.toString()?.trim()?.let { newName: String ->
+                        doRename(file, newName)
                     }
                 }
                 cancelButton { }
             }.show()
+        }
+    }
+
+    private fun doRename(file: File, newName: String) {
+        lifecycleScope.launch {
+            val newFilename = Filename("$newName.ddu")
+            val newFile = File(file.parentFile.absolutePath, newFilename.toString())
+            val success = file.renameTo(newFile)
+            Log.i(TAG, "$file -> $newFile: $success")
+            if (success) {
+                toast(getString(R.string.ddu_rename_toast, file.fileName, newName))
+                dduFileRepository.updateFilename(file.filename, newFilename = newFilename)
+                refreshDir()
+            } else {
+                Log.w(TAG, "failed to rename $file to $newFile")
+            }
         }
     }
 

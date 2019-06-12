@@ -4,14 +4,13 @@ Min version: 4.4 KitKat
 Recommended version: >= 5.0 Lolipop
 ...
 # TODO
+- [ ] Progress bar on: db requests (or LiveData), restore all ddus, import/export folder
+- [ ] temporaryPause does not work
+- [ ] DduChooser: better animation when duplicate/rename/delete
 - [ ] Not infinite zoom! Ex: growing-triton.ddu
-- [ ] Room: LiveData/coroutines
-- [ ] Paging
 - [ ] Navigation
 - [ ] unit & instrumentation tests!
-- [ ] ISSUE: DduChooserActivity.kt/DDUAdapter/init may lead to OutOfMemoryError (large db, fast return to after opening a ddu)
 - [ ] check CirclesGroup without inline
-- [ ] Progress bar on: db requests (or LiveData), restore all ddus, import/export folder
 - [ ] ddu -> gif?
 - [ ] outer open folder implicit intent?
 - [ ] see ddu_files/ExampleSpirales: global 4, 4; no rules! but DodecaLook is playing them! knots?
@@ -20,7 +19,7 @@ Recommended version: >= 5.0 Lolipop
 - [ ] Rotate shapes (sq, hb, vb; with canvas.withRotation(...))
 - [ ] Arcs (with rotation)
 - [ ] On small screen: chosen shape is either *very* small or not shown at all (pre-launch reports)
-- [ ] For release: disable Log.i-s?/
+- [ ] For release: disable Log.i-s?
 - [ ] Knot (see C++)
 - [ ] Google Play: promotional video
 - [ ] Color depends on radius
