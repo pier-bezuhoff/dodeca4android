@@ -39,6 +39,8 @@ data class Filename(private val filename: String) {
 val File.filename: Filename get() = Filename.of(this)
 val File.absoluteFilename: Filename get() = Filename(absolutePath)
 val DocumentFile.filename: Filename? get() = Filename.of(this)
+operator fun File.div(filename: Filename) =
+    File(this, filename.toString())
 
 /** Absolute file path */
 data class FilePath(private val path: String) {

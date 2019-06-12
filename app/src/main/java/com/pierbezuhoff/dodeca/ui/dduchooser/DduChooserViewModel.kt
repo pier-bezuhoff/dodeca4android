@@ -56,6 +56,7 @@ class DduChooserViewModel(
     override fun getPreviewOf(file: File): LiveData<Bitmap> {
         previews[file]?.let { return it }
         val preview = liveData {
+            dduFileRepository.insertIfAbsent(file.filename)
             val cachedBitmap = dduFileRepository.getPreview(file.filename)
             val bitmap = cachedBitmap ?: tryBuildPreviewOf(file)
             bitmap?.let { emit(it) }
