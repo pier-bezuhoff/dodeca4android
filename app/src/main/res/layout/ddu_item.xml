@@ -10,6 +10,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:progressDrawable="@drawable/circular_progress_bar"
+                android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_marginEnd="8dp"
                 app:layout_constraintStart_toStartOf="parent"
@@ -19,8 +20,6 @@
                 android:layout_marginBottom="8dp"
                 app:layout_constraintBottom_toTopOf="@+id/ddu_entry"
         />
-        <!--android:visibility="gone"-->
-        <!--style="?android:attr/progressBarStyleLarge"-->
         <ImageView
                 android:id="@+id/ddu_preview"
                 android:contentDescription="@{@string/ddu_preview_title}"

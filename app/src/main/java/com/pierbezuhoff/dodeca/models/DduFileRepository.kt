@@ -26,6 +26,9 @@ class DduFileRepository private constructor(context: Context) {
         db.dduFileDao()
     }
 
+//    suspend operator fun div(filename: Filename, action: DduFile.() -> Unit) {
+//    }
+
     private suspend fun getAllDduFiles(): List<DduFile> =
         dduFileDao.getAll()
 
@@ -58,6 +61,13 @@ class DduFileRepository private constructor(context: Context) {
         }
     }
 
+    private suspend inline fun apply(filename: Filename, crossinline action: DduFile.() -> Unit) {
+        val dduFile: DduFile? = getDduFile(filename)
+        require(dduFile != null) { "File $filename not found" }
+        dduFile.action()
+        dduFileDao.update(dduFile)
+    }
+
     suspend fun dropPreviewInserting(filename: Filename) =
         applyInserting(filename) { preview = null }
 
@@ -83,10 +93,18 @@ class DduFileRepository private constructor(context: Context) {
     suspend fun getPreview(filename: Filename): Bitmap? =
         getDduFile(filename)?.preview
 
-    suspend fun setPreviewInserting(filename: Filename, newPreview: Bitmap) =
-        applyInserting(filename) {
+    suspend fun setPreview(filename: Filename, newPreview: Bitmap) =
+        apply(filename) {
             preview = newPreview
         }
+
+    suspend fun duplicate(source: Filename, target: Filename) {
+        val sourceDduFile = getDduFile(source)
+        val targetDduFile: DduFile =
+            sourceDduFile?.copy(filename = target)
+                ?: DduFile.fromFilename(target)
+        dduFileDao.insert(targetDduFile)
+    }
 
     companion object {
         @Volatile private var instance: DduFileRepository? = null

@@ -37,7 +37,6 @@ class DduChooserViewModel(
 
     fun setInitialDir(newDir: File) {
         if (_dir.value == null) {
-            Log.i(TAG, "setInitialDir($newDir)")
             _dir.value = newDir
             dirsDataSourceFactory = DirFilesDataSourceFactory(newDir, FileFilter { it.isDirectory })
             dirFilesDataSourceFactory = DirFilesDataSourceFactory(newDir, FileFilter { it.isDdu })
@@ -84,7 +83,7 @@ class DduChooserViewModel(
         val size = values.previewSizePx
         // MAYBE: progress bar (# of updates)
         val bitmap = ddu.buildPreview(size, size)
-        dduFileRepository.setPreviewInserting(filename, bitmap)
+        dduFileRepository.setPreview(filename, bitmap)
         return bitmap
     }
 

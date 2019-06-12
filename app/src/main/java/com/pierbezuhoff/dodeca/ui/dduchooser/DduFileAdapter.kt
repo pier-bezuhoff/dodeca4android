@@ -20,12 +20,10 @@ import java.io.File
 
 class DduFileAdapter
     : PagedListAdapter<File, DduFileAdapter.DduFileViewHolder>(DIFF_CALLBACK)
-    , LifecycleInheritor
+    , LifecycleInheritor by LifecycleInheritance()
 {
     interface FileChooser { fun chooseFile(file: File) }
     interface PreviewSupplier { fun getPreviewOf(file: File): LiveData<Bitmap> }
-
-    override val lifecycleInheritance = LifecycleInheritance(this)
 
     private val fileChooserConnection = Connection<FileChooser>()
     val fileChooserSubscription = fileChooserConnection.subscription
@@ -59,12 +57,12 @@ class DduFileAdapter
                     )
                 }
 //                setIsRecyclable(false) // tmp
-                noPreview(holder)
+//                noPreview(holder)
                 require(lifecycleInherited)
                 previewSupplierConnection.send {
                     getPreviewOf(file)
                 }?.observe(this@DduFileAdapter) { newBitmap: Bitmap ->
-                    setPreview(holder, newBitmap)
+//                    setPreview(holder, newBitmap)
                 }
             }
         }

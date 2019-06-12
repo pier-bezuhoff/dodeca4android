@@ -247,7 +247,7 @@ class DduChooserActivity : AppCompatActivity()
                 TAG
             )
             original?.let {
-                toast(getString(R.string.ddu_restore_toast, file.nameWithoutExtension, original.fileName))
+                toast(getString(R.string.ddu_restore_toast, file.fileName, original.fileName))
                 refreshDir()
             }
         }
@@ -257,7 +257,8 @@ class DduChooserActivity : AppCompatActivity()
         lifecycleScope.launch {
             val newFile = withUniquePostfix(file)
             copyFile(file, newFile)
-            toast(getString(R.string.ddu_duplicate_toast, file.nameWithoutExtension, newFile.nameWithoutExtension))
+            dduFileRepository.duplicate(file.filename, newFile.filename)
+            toast(getString(R.string.ddu_duplicate_toast, file.fileName, newFile.fileName))
             refreshDir()
         }
     }
@@ -495,3 +496,4 @@ sealed class ContextMenuSource {
     data class Dir(val dir: File) : ContextMenuSource()
     data class DduFile(val file: File) : ContextMenuSource()
 }
+
