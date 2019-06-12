@@ -58,7 +58,7 @@ class MainViewModel(
     }
 
     private fun hideBottomBarAfterTimeout() {
-        Log.i(TAG, "hideBottomBarAfterTimeout")
+//        Log.i(TAG, "hideBottomBarAfterTimeout")
         bottomBarHidingJob?.cancel()
         bottomBarHidingJob = viewModelScope.launch(Dispatchers.Default) {
             delay(BOTTOM_BAR_HIDE_DELAY_IN_MILLISECONDS)
@@ -67,7 +67,7 @@ class MainViewModel(
     }
 
     fun cancelBottomBarHidingJob() {
-        Log.i(TAG, "cancelBottomBarHidingJob")
+//        Log.i(TAG, "cancelBottomBarHidingJob")
         bottomBarHidingJob?.cancel()
     }
 

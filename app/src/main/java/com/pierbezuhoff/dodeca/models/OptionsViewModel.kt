@@ -10,6 +10,7 @@ import com.pierbezuhoff.dodeca.data.KeyOption
 import com.pierbezuhoff.dodeca.data.ParsedFloatKeyOption
 import com.pierbezuhoff.dodeca.data.ParsedIntKeyOption
 
+// TODO: migrate to it from options.*
 class OptionsViewModel(application: Application) : AndroidViewModel(application) {
     private val resources: Resources
         get() = getApplication<Application>().applicationContext.resources

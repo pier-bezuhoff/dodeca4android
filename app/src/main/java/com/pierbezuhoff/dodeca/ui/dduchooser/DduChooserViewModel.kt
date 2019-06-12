@@ -55,8 +55,8 @@ class DduChooserViewModel(
     }
 
     override fun getPreviewOf(file: File): LiveData<Pair<File, Bitmap>> {
-        previews[file]?.let {
-            return it.map { file to it }
+        previews[file]?.let { livePreview: LiveData<Bitmap> ->
+            return livePreview.map { file to it }
         }
         val preview = liveData {
             dduFileRepository.insertIfAbsent(file.filename)
@@ -93,6 +93,7 @@ class DduChooserViewModel(
 
     companion object {
         private const val TAG = "DduChooserViewModel"
+        // TODO: understand, why when PAGE_SIZE <= 10 rename/duplicate/... cause crash (item created in the end of the recycler view)
         private const val PAGE_SIZE = 1000 // when # of ddus > PAGE_SIZE smth bad may happen
         private val PAGED_LIST_CONFIG = PagedList.Config.Builder()
             .setPageSize(PAGE_SIZE)

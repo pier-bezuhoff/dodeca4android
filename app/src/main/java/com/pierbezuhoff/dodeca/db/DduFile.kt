@@ -17,7 +17,7 @@ data class DduFile(
     @PrimaryKey(autoGenerate = true) var uid: Int = 0
 
     companion object {
-        fun fromFilename(filename: Filename): DduFile =
-            DduFile(filename = filename, originalFilename = filename)
+        fun fromFilename(filename: Filename, originalFilename: Filename = filename): DduFile =
+            DduFile(filename = filename, originalFilename = originalFilename)
     }
 }
