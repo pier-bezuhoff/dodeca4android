@@ -112,6 +112,7 @@ class DduChooserActivity : AppCompatActivity()
         adapter.fileChooserSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
         adapter.previewSupplierSubscription.subscribeFrom(viewModel)
+        adapter.inheritLifecycleOf(this)
         viewModel.files.observe(this) {
             // ISSUE: rename, duplicate, etc. crash recycler view
             adapter.submitList(it)
