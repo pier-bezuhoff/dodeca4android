@@ -23,7 +23,7 @@ class DduFileAdapter
     , LifecycleInheritor by LifecycleInheritance()
 {
     interface FileChooser { fun chooseFile(file: File) }
-    interface PreviewSupplier { fun getPreviewOf(file: File): LiveData<Bitmap> }
+    interface PreviewSupplier { fun getPreviewOf(file: File): LiveData<Pair<File, Bitmap>> }
 
     private val fileChooserConnection = Connection<FileChooser>()
     val fileChooserSubscription = fileChooserConnection.subscription
@@ -32,7 +32,9 @@ class DduFileAdapter
     private val previewSupplierConnection = Connection<PreviewSupplier>()
     val previewSupplierSubscription = previewSupplierConnection.subscription
 
-    class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view)
+    class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+        lateinit var file: File
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DduFileViewHolder {
         val view = LayoutInflater
@@ -45,6 +47,7 @@ class DduFileAdapter
         val file: File? = getItem(position)
         file?.let {
             with(holder) {
+                holder.file = file
                 view.ddu_entry.text = file.fileName.toString()
                 view.setOnClickListener {
                     fileChooserConnection.send { chooseFile(file) }
@@ -56,19 +59,21 @@ class DduFileAdapter
                         contextMenuSource = ContextMenuSource.DduFile(file)
                     )
                 }
-//                setIsRecyclable(false) // tmp
-//                noPreview(holder)
+                showProgressBar(holder)
                 require(lifecycleInherited)
                 previewSupplierConnection.send {
                     getPreviewOf(file)
-                }?.observe(this@DduFileAdapter) { newBitmap: Bitmap ->
-//                    setPreview(holder, newBitmap)
+                } ?.observe(this@DduFileAdapter) { (file: File, newBitmap: Bitmap) ->
+                    // NOTE: view holder may be recycled and re-bind-ed while we are waiting for the preview,
+                    // NOTE: so we tag it with file
+                    if (holder.file == file)
+                        setPreview(holder, newBitmap)
                 }
             }
         }
     }
 
-    private fun noPreview(holder: DduFileViewHolder) {
+    private fun showProgressBar(holder: DduFileViewHolder) {
         holder.view.ddu_preview.visibility = View.GONE
         holder.view.preview_progress.visibility = View.VISIBLE
     }

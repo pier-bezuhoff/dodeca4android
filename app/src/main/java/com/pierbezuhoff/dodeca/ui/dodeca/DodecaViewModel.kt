@@ -222,8 +222,7 @@ class DodecaViewModel(
                 Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
                 ddu.saveToFile(file)
                 context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
-                // TODO: set original filename if inserting
-                dduFileRepository.dropPreviewInserting(file.filename)
+                dduFileRepository.saveDerivative(source = ddu.file?.filename, target = file.filename)
             } catch (e: Throwable) {
                 e.printStackTrace()
                 context.toast(context.getString(R.string.error_ddu_save_toast))
