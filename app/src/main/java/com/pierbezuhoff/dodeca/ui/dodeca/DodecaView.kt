@@ -4,27 +4,25 @@ import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.View
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.observe
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.ui.MainViewModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
+import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
+import com.pierbezuhoff.dodeca.utils.LifecycleInheritor
 import org.apache.commons.math3.complex.Complex
 
 class DodecaView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet)
-    , LifecycleOwner
+    , LifecycleInheritor // inherited from MainActivity
     , DduRepresentation.Presenter
 {
     lateinit var mainViewModel: MainViewModel // injected via DataBinding
     lateinit var dodecaViewModel: DodecaViewModel // injected via DataBinding
 
-    private var _lifecycle: Lifecycle = LifecycleRegistry(this)
-    private var lifecycleInherited: Boolean = false
+    override val lifecycleInheritance = LifecycleInheritance(this)
     private var initialized = false
 
     private val centerX: Float get() = x + width / 2
@@ -72,16 +70,6 @@ class DodecaView @JvmOverloads constructor(
 
     override fun redraw() {
         postInvalidate()
-    }
-
-    override fun getLifecycle(): Lifecycle =
-        _lifecycle
-
-    /** Inherit lifecycle (of MainActivity) */
-    fun inheritLifecycle(lifecycleOwner: LifecycleOwner) {
-        require(!lifecycleInherited)
-        _lifecycle = lifecycleOwner.lifecycle
-        lifecycleInherited = true
     }
 
     companion object {

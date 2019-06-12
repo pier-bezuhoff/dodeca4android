@@ -1,14 +1,10 @@
 package com.pierbezuhoff.dodeca.ui.dduchooser
 
 import android.graphics.Bitmap
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.MenuRes
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.observe
 import androidx.paging.PagedListAdapter
@@ -16,18 +12,21 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.utils.Connection
+import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
+import com.pierbezuhoff.dodeca.utils.LifecycleInheritor
 import com.pierbezuhoff.dodeca.utils.fileName
 import kotlinx.android.synthetic.main.ddu_item.view.*
 import java.io.File
 
 class DduFileAdapter
     : PagedListAdapter<File, DduFileAdapter.DduFileViewHolder>(DIFF_CALLBACK)
-    , LifecycleOwner
+    , LifecycleInheritor
 {
     interface FileChooser { fun chooseFile(file: File) }
     interface PreviewSupplier { fun getPreviewOf(file: File): LiveData<Bitmap> }
 
-    private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
+    override val lifecycleInheritance = LifecycleInheritance(this)
+
     private val fileChooserConnection = Connection<FileChooser>()
     val fileChooserSubscription = fileChooserConnection.subscription
     private val contextMenuConnection = Connection<ContextMenuManager>()
@@ -36,13 +35,6 @@ class DduFileAdapter
     val previewSupplierSubscription = previewSupplierConnection.subscription
 
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view)
-
-    init {
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-    }
-
-    override fun getLifecycle(): Lifecycle =
-        lifecycleRegistry
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DduFileViewHolder {
         val view = LayoutInflater
@@ -68,6 +60,7 @@ class DduFileAdapter
                 }
 //                setIsRecyclable(false) // tmp
                 noPreview(holder)
+                require(lifecycleInherited)
                 previewSupplierConnection.send {
                     getPreviewOf(file)
                 }?.observe(this@DduFileAdapter) { newBitmap: Bitmap ->
@@ -88,18 +81,6 @@ class DduFileAdapter
             setImageBitmap(bitmap)
         }
         holder.view.preview_progress.visibility = View.GONE
-    }
-
-    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
-        super.onAttachedToRecyclerView(recyclerView)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
-    }
-
-    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView)
-        // NOTE: should be called only when activity destroys
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-        Log.i(TAG, "onDetachedFromRecyclerView => Lifecycle.Event.ON_DESTROY")
     }
 
     companion object {

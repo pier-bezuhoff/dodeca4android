@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity()
             if (!handleLaunchFromImplicitIntent())
                 dodecaViewModel.loadInitialDdu()
         }
-        dodeca_view.inheritLifecycle(this)
+        dodeca_view.inheritLifecycleOf(this)
     }
 
     private fun setupWindow() {
