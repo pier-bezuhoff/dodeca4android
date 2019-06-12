@@ -42,14 +42,17 @@ suspend fun Context.extractDduFrom(
             }
         }
         val targetFile: File? = inputStream?.let {
-            val targetFile0 = source.toFile(parent = dir)
+            val targetFile0: File = dir/source
             val targetFile =
                 if (!overwrite && targetFile0.exists()) withUniquePostfix(targetFile0)
                 else targetFile0
             targetFile.createNewFile()
             Log.i(TAG, "Copying asset $source to ${targetFile.path}")
             copyStream(inputStream, FileOutputStream(targetFile))
-            dduFileRepository.dropPreviewAndSetOriginalFilenameInserting(targetFile.filename, newOriginalFilename = source)
+            val absent = dduFileRepository.insertIfAbsent(targetFile.filename)
+            if (!absent) {
+                dduFileRepository.dropPreviewAndSetOriginalFilename(targetFile.filename, newOriginalFilename = source)
+            }
             targetFile
         } ?: null.also {
             Log.w(TAG, "Cannot find asset $filename ($source)")

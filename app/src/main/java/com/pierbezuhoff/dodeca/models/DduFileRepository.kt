@@ -7,8 +7,6 @@ import com.pierbezuhoff.dodeca.db.DduFile
 import com.pierbezuhoff.dodeca.db.DduFileDao
 import com.pierbezuhoff.dodeca.db.DduFileDatabase
 import com.pierbezuhoff.dodeca.utils.Filename
-import com.pierbezuhoff.dodeca.utils.filename
-import java.io.File
 
 /** Singleton repo */
 class DduFileRepository private constructor(context: Context) {
@@ -38,13 +36,13 @@ class DduFileRepository private constructor(context: Context) {
         }
     }
 
-    suspend fun delete(filename: Filename) =
-        getDduFile(filename)?.let {
+    suspend fun deleteIfExists(filename: Filename): Boolean {
+        val dduFile = getDduFile(filename)
+        dduFile?.let {
             dduFileDao.delete(it)
         }
-
-    suspend fun delete(file: File) =
-        delete(file.filename)
+        return dduFile != null
+    }
 
     private suspend fun getDduFile(filename: Filename): DduFile? =
         dduFileDao.findByFilename(filename)
@@ -79,14 +77,14 @@ class DduFileRepository private constructor(context: Context) {
     suspend fun getOriginalFilename(filename: Filename): Filename? =
         getDduFile(filename)?.originalFilename
 
-    suspend fun dropPreviewAndSetOriginalFilenameInserting(filename: Filename, newOriginalFilename: Filename) =
-        applyInserting(filename) {
+    suspend fun dropPreviewAndSetOriginalFilename(filename: Filename, newOriginalFilename: Filename) =
+        apply(filename) {
             preview = null
             originalFilename = newOriginalFilename
         }
 
-    suspend fun updateFilenameInserting(filename: Filename, newFilename: Filename) =
-        applyInserting(filename) {
+    suspend fun updateFilename(filename: Filename, newFilename: Filename) =
+        apply(filename) {
             this.filename = newFilename
         }
 
@@ -97,6 +95,16 @@ class DduFileRepository private constructor(context: Context) {
         apply(filename) {
             preview = newPreview
         }
+
+    suspend fun insertIfAbsent(filename: Filename): Boolean {
+        val dduFile = getDduFile(filename)
+        return if (dduFile == null) {
+            dduFileDao.insert(DduFile.fromFilename(filename))
+            true
+        } else {
+            false
+        }
+    }
 
     suspend fun duplicate(source: Filename, target: Filename) {
         val sourceDduFile = getDduFile(source)

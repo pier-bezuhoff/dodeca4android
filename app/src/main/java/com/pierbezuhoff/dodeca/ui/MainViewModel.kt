@@ -14,6 +14,7 @@ import com.pierbezuhoff.dodeca.ui.dodeca.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
+import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.extractDduFrom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -71,8 +72,7 @@ class MainViewModel(
     }
 
     private fun setInitialDir() {
-        val recentFile = optionsManager.fetched(options.recentDdu)
-            .toFile(parent = context.dduDir)
+        val recentFile: File = context.dduDir/optionsManager.fetched(options.recentDdu)
         val recentDir = recentFile.absoluteFile.parentFile ?: context.dduDir
         _dir.value = recentDir
     }

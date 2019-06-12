@@ -39,6 +39,7 @@ import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.copyStream
 import com.pierbezuhoff.dodeca.utils.dduDir
+import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.fileName
 import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
@@ -205,7 +206,7 @@ class MainActivity : AppCompatActivity()
                 // TODO: check if exists, not blank, etc.
                 try {
                     val filename = Filename("${fileNameEditText.text}.ddu")
-                    val file = filename.toFile(parent = dir)
+                    val file: File = dir/filename
                     dodecaViewModel.requestSaveDduAt(file)
                 } catch (e: IOException) {
                     e.printStackTrace()
@@ -325,7 +326,7 @@ class MainActivity : AppCompatActivity()
         }
         val name: Filename = File(uri.path).filename
         dodecaViewModel.viewModelScope.launch(Dispatchers.IO) {
-            val targetFile = withUniquePostfix(name.toFile(parent = dduDir))
+            val targetFile = withUniquePostfix(dduDir/name)
             // NOTE: when 'file' scheme (namely from ZArchiver) WRITE_EXTERNAL_STORAGE permission is obligatory
             val inputStream = contentResolver.openInputStream(uri)
             inputStream?.let {

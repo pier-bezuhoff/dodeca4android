@@ -19,6 +19,7 @@ import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
+import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.filename
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -157,8 +158,7 @@ class DodecaViewModel(
         }
 
     private fun getRecentDduFile(): File =
-        optionsManager.fetched(options.recentDdu)
-            .toFile(parent = context.dduDir)
+        context.dduDir/optionsManager.fetched(options.recentDdu)
 
     fun requestOneStep() {
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->

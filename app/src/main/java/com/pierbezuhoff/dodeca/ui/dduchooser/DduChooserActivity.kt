@@ -30,6 +30,7 @@ import com.pierbezuhoff.dodeca.utils.copyDirectory
 import com.pierbezuhoff.dodeca.utils.copyFile
 import com.pierbezuhoff.dodeca.utils.copyStream
 import com.pierbezuhoff.dodeca.utils.dduDir
+import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.extractDduFrom
 import com.pierbezuhoff.dodeca.utils.fileName
 import com.pierbezuhoff.dodeca.utils.filename
@@ -195,6 +196,123 @@ class DduChooserActivity : AppCompatActivity()
         viewModel.onDirChanged(dir)
     }
 
+    private fun requestImportDdus() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+        }
+        startActivityForResult(intent, IMPORT_DDUS_REQUEST_CODE)
+//        startActivityForResult(Intent.createChooser(intent, "Select ddu-files"), IMPORT_DDUS_REQUEST_CODE)
+    }
+
+    private fun importDdus(uris: List<Uri>) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            uris.forEach { uri ->
+                DocumentFile.fromSingleUri(this@DduChooserActivity, uri)?.let { file ->
+                    val displayName: Filename? by lazy {
+                        contentResolver.getDisplayName(uri)?.toString()
+                            ?.let {
+                                Filename(if ('.' !in it) "$it.ddu" else it)
+                            }
+                    }
+                    val filename: Filename =
+                        file.filename ?: displayName ?: DEFAULT_DDU_FILENAME
+                    val target0: File = dir/filename
+                    val target: File =
+                        if (target0.exists()) withUniquePostfix(target0)
+                        else target0
+                    Log.i(TAG, "importing file \"${target.name}\" from \"${file.uri}\"")
+                    contentResolver.copyFile(file, target)
+                }
+            }
+            refreshDir()
+        }
+    }
+
+    private fun requestExportDduDir(targetDir: File = dir) {
+        requestedDduDir = targetDir
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+            startActivityForResult(intent, EXPORT_DIR_REQUEST_CODE)
+        }
+    }
+
+    private fun exportDduDir(uri: Uri) {
+        requestedDduDir?.let { dir ->
+            Log.i(TAG, "exporting dir \"${dir.name}\"")
+            toast(getString(R.string.dir_exporting_toast, dir.name))
+            // maybe: use File.walkTopDown()
+            // TODO: show progress bar or smth
+            lifecycleScope.launch(Dispatchers.IO) {
+                DocumentFile.fromTreeUri(this@DduChooserActivity, uri)
+                    ?.let { targetDir ->
+                        exportDduDocumentFile(dir, targetDir)
+                    }
+            }
+            requestedDduDir = null
+        }
+    }
+
+    private suspend fun exportDduDocumentFile(source: File, targetDir: DocumentFile) {
+        withContext(Dispatchers.IO) {
+            when {
+                source.isDirectory -> targetDir.createDirectory(source.name)?.let { newDir ->
+                    source.listFiles().forEach { exportDduDocumentFile(it, newDir) }
+                }
+                source.isDdu -> targetDir.createFile("*/*", source.name)?.let { newFile ->
+                    contentResolver.openOutputStream(newFile.uri)?.let { outputStream ->
+                        copyStream(source.inputStream(), outputStream)
+                    }
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    private fun requestImportDduDir() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+            startActivityForResult(intent, IMPORT_DIR_REQUEST_CODE)
+        } // NOTE: Android < 5 has no Intent.ACTION_OPEN_DOCUMENT_TREE
+    }
+
+    private fun importDduDir(source: DocumentFile) {
+        Log.i(TAG, "importing dir \"${source.name}\"")
+        toast(getString(R.string.dir_importing_toast, source.name))
+        lifecycleScope.launch(Dispatchers.IO) {
+            val target = File(dir, source.name)
+            contentResolver.copyDirectory(source, target)
+            refreshDir()
+        }
+    }
+
+    private fun deleteAll() {
+        alert(
+            R.string.delete_all_alert_message,
+            R.string.delete_all_alert_title
+        ) {
+            yesButton {
+                lifecycleScope.launch {
+                    dir.walkTopDown().iterator().forEach {
+                        if (it.isDdu) dduFileRepository.deleteIfExists(it.filename)
+                    }
+                    FileUtils.cleanDirectory(dir)
+                    refreshDir()
+                }
+            }
+            cancelButton { }
+        }.show()
+    }
+
+    private fun toggleFolders() {
+        dir_recycler_view.visibility = when(dir_recycler_view.visibility) {
+            View.GONE -> View.VISIBLE
+            View.VISIBLE -> View.GONE
+            else -> dir_recycler_view.visibility
+        }
+    }
+
     private fun renameDduFile(file: File) {
         lifecycleScope.launch {
             val name: FileName = file.fileName
@@ -217,7 +335,7 @@ class DduChooserActivity : AppCompatActivity()
                             Log.i(TAG, "$file -> $newFile: $success")
                             if (success) {
                                 toast(getString(R.string.ddu_rename_toast, name, newName))
-                                dduFileRepository.updateFilenameInserting(file.filename, newFilename = newFilename)
+                                dduFileRepository.updateFilename(file.filename, newFilename = newFilename)
                                 refreshDir()
                             } else {
                                 Log.w(TAG, "failed to rename $file to $newFile")
@@ -233,7 +351,7 @@ class DduChooserActivity : AppCompatActivity()
     private fun deleteDduFile(file: File) {
         toast(getString(R.string.ddu_delete_toast, file.nameWithoutExtension))
         lifecycleScope.launch {
-            dduFileRepository.delete(file.filename)
+            dduFileRepository.deleteIfExists(file.filename)
             file.delete()
             refreshDir()
         }
@@ -242,10 +360,11 @@ class DduChooserActivity : AppCompatActivity()
     private fun restoreDduFile(file: File) {
         // TODO: restore imported files by original path
         lifecycleScope.launch {
-            val original: Filename? = extractDduFrom(
-                file.filename, dduDir, dduFileRepository,
-                TAG
-            )
+            val original: Filename? =
+                extractDduFrom(
+                    file.filename, dduDir, dduFileRepository,
+                    TAG
+                )
             original?.let {
                 toast(getString(R.string.ddu_restore_toast, file.fileName, original.fileName))
                 refreshDir()
@@ -260,144 +379,6 @@ class DduChooserActivity : AppCompatActivity()
             dduFileRepository.duplicate(file.filename, newFile.filename)
             toast(getString(R.string.ddu_duplicate_toast, file.fileName, newFile.fileName))
             refreshDir()
-        }
-    }
-
-    private fun deleteDir(dir: File) {
-        lifecycleScope.launch {
-            dir.walkTopDown().iterator().forEach {
-                if (it.isDdu) dduFileRepository.delete(it.filename)
-            }
-            val success = dir.deleteRecursively()
-            if (!success)
-                Log.w(TAG, "failed to delete directory \"$dir\"")
-            refreshDir()
-        }
-    }
-
-    private fun toggleFolders() {
-        dir_recycler_view.visibility = when(dir_recycler_view.visibility) {
-            View.GONE -> View.VISIBLE
-            View.VISIBLE -> View.GONE
-            else -> dir_recycler_view.visibility
-        }
-    }
-
-    private fun requestImportDduDir() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-//                putExtra("android.content.extra.SHOW_ADVANCED", true)
-//                putExtra("android.content.extra.FANCY", true)
-            }
-            startActivityForResult(intent,
-                IMPORT_DIR_REQUEST_CODE
-            )
-        } // NOTE: Android < 5 has no Intent.ACTION_OPEN_DOCUMENT_TREE
-    }
-
-    private fun requestImportDdus() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-        }
-        startActivityForResult(intent,
-            IMPORT_DDUS_REQUEST_CODE
-        )
-//        startActivityForResult(Intent.createChooser(intent, "Select ddu-files"), IMPORT_DDUS_REQUEST_CODE)
-    }
-
-    private fun importDduDir(source: DocumentFile) { // unused now
-        Log.i(TAG, "importing dir \"${source.name}\"")
-        toast(getString(R.string.dir_importing_toast, source.name))
-        lifecycleScope.launch(Dispatchers.IO) {
-            val target = File(dir, source.name)
-            contentResolver.copyDirectory(source, target)
-            refreshDir()
-        }
-    }
-
-    private fun importDdus(uris: List<Uri>) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            uris.forEach { uri ->
-                DocumentFile.fromSingleUri(this@DduChooserActivity, uri)?.let { file ->
-                    val displayName: Filename? by lazy {
-                        contentResolver.getDisplayName(uri)?.toString()
-                            ?.let {
-                                Filename(if ('.' !in it) "$it.ddu" else it)
-                            }
-                    }
-                    val filename: Filename =
-                        file.filename ?: displayName ?: DEFAULT_DDU_FILENAME
-                    val target0 = filename.toFile(parent = dir)
-                    val target: File =
-                        if (target0.exists()) withUniquePostfix(target0)
-                        else target0
-                    Log.i(TAG, "importing file \"${target.name}\" from \"${file.uri}\"")
-                    contentResolver.copyFile(file, target)
-                }
-            }
-            refreshDir()
-        }
-    }
-
-    private fun requestExportDduDir(targetDir: File = dir) {
-        requestedDduDir = targetDir
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                // Documents.FLAG_DIR_SUPPORTS_CREATE
-            }
-            startActivityForResult(intent, EXPORT_DIR_REQUEST_CODE)
-        }
-    }
-
-    private fun exportDduDir(uri: Uri) {
-        requestedDduDir?.let { dir ->
-            Log.i(TAG, "exporting dir \"${dir.name}\"")
-            toast(getString(R.string.dir_exporting_toast, dir.name))
-            // maybe: use File.walkTopDown()
-            // TODO: show progress bar or smth
-            lifecycleScope.launch(Dispatchers.IO) {
-                DocumentFile.fromTreeUri(this@DduChooserActivity, uri)
-                    ?.let { targetDir ->
-                        exportDduDocumentFile(dir, targetDir)
-                    }
-            }
-            requestedDduDir = null
-        }
-    }
-
-    private fun deleteAll() {
-        alert(
-            R.string.delete_all_alert_message,
-            R.string.delete_all_alert_title
-        ) {
-            yesButton {
-                lifecycleScope.launch {
-                    dir.walkTopDown().iterator().forEach {
-                        if (it.isDdu) dduFileRepository.delete(it)
-                    }
-                    FileUtils.cleanDirectory(dir)
-                    refreshDir()
-                }
-            }
-            cancelButton { }
-        }.show()
-    }
-
-    private suspend fun exportDduDocumentFile(source: File, targetDir: DocumentFile) {
-        withContext(Dispatchers.IO) {
-            when {
-                source.isDirectory -> targetDir.createDirectory(source.name)?.let { newDir ->
-                    source.listFiles().forEach { exportDduDocumentFile(it, newDir) }
-                }
-                source.isDdu -> targetDir.createFile("*/*", source.name)?.let { newFile ->
-                    contentResolver.openOutputStream(newFile.uri)?.let { outputStream ->
-                        copyStream(source.inputStream(), outputStream)
-                    }
-                }
-                else -> Unit
-            }
         }
     }
 
@@ -442,6 +423,18 @@ class DduChooserActivity : AppCompatActivity()
                 }
                 requestedDduFile = null
             }
+        }
+    }
+
+    private fun deleteDir(dir: File) {
+        lifecycleScope.launch {
+            dir.walkTopDown().iterator().forEach {
+                if (it.isDdu) dduFileRepository.deleteIfExists(it.filename)
+            }
+            val success = dir.deleteRecursively()
+            if (!success)
+                Log.w(TAG, "failed to delete directory \"$dir\"")
+            refreshDir()
         }
     }
 

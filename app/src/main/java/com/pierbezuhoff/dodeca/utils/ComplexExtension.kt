@@ -50,7 +50,7 @@ internal fun scrollToCentroid(center: Complex, zs: List<Complex>) : Complex {
 //    val mu3 = mean(deltas.map { it * it * it }) // 3-rd central moment
 //    val xAsymK = mu3.real / sqrt(mu2.real.absoluteValue).pow(3) // skewness
 //    val yAsymK = mu3.imaginary / sqrt(mu2.imaginary.absoluteValue).pow(3)
-//    val threshold = zs.size * 10.0 // maybe: delete
+//    val threshold = zs.size * 10.0 // maybe: deleteIfExists
 //    val dx = if (xAsymK.absoluteValue > threshold && !xAsymK.isNaN()) 0.0 else center.real - mean.real
 //    val dy = if (yAsymK.absoluteValue > threshold && !yAsymK.isNaN()) 0.0 else center.imaginary - mean.imaginary
 //    Log.i("scrollToCentroid", "xAsymK: $xAsymK, yAsymK: $yAsymK, threshold: $threshold\ndx: $dx, dy: $dy")
