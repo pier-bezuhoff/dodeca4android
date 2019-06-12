@@ -202,10 +202,12 @@ class DodecaViewModel(
     private suspend fun saveDdu(file: File? = null) {
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
             pause()
-            dduRepresentation.buildCurrentDdu()?.let { ddu: Ddu ->
+            // BUG: CircleGroup parmas does not save
+            val ddu: Ddu? = dduRepresentation.buildCurrentDdu()
+            resume()
+            ddu?.let {
                 save(ddu, file)
             }
-            resume()
         }
     }
 
@@ -213,13 +215,14 @@ class DodecaViewModel(
         val file: File? = outputFile ?: ddu.file
         if (file == null) {
             Log.i(TAG, "save: ddu has no file")
-            // then save as
+            // MAYBE: then save as
             context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
         } else {
             try {
                 Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
                 ddu.saveToFile(file)
                 context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
+                // TODO: set original filename if inserting
                 dduFileRepository.dropPreviewInserting(file.filename)
             } catch (e: Throwable) {
                 e.printStackTrace()

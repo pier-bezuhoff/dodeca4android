@@ -16,13 +16,12 @@ class DodecaView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet)
-    , LifecycleInheritor // inherited from MainActivity
+    , LifecycleInheritor by LifecycleInheritance() // inherited from MainActivity
     , DduRepresentation.Presenter
 {
     lateinit var mainViewModel: MainViewModel // injected via DataBinding
     lateinit var dodecaViewModel: DodecaViewModel // injected via DataBinding
 
-    override val lifecycleInheritance = LifecycleInheritance(this)
     private var initialized = false
 
     private val centerX: Float get() = x + width / 2
