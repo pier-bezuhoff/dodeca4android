@@ -51,7 +51,7 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
 import java.io.File
 
-// FIX: rename, etc. don't work properly
+// MAYBE: better animation on delete/duplicate/...
 // MAYBE: store last pos
 class DduChooserActivity : AppCompatActivity()
     , ContextMenuManager
@@ -94,7 +94,6 @@ class DduChooserActivity : AppCompatActivity()
         dir_recycler_view.adapter = adapter
         dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
         dir_recycler_view.itemAnimator = DefaultItemAnimator()
-        dir_recycler_view.setHasFixedSize(true)
         adapter.dirChangeSubscription.subscribeFrom(viewModel)
         adapter.contextMenuSubscription.subscribeFrom(this)
         viewModel.dirs.observe(this) {
@@ -115,7 +114,6 @@ class DduChooserActivity : AppCompatActivity()
         adapter.previewSupplierSubscription.subscribeFrom(viewModel)
         adapter.inheritLifecycleOf(this)
         viewModel.files.observe(this) {
-            // ISSUE: rename, duplicate, etc. crash recycler view
             adapter.submitList(it)
         }
     }
@@ -135,7 +133,7 @@ class DduChooserActivity : AppCompatActivity()
 
     override fun createMenu(menuRes: Int, menu: Menu, contextMenuSource: ContextMenuSource) {
         menuInflater.inflate(menuRes, menu)
-        this.createdContextMenu = contextMenuSource
+        createdContextMenu = contextMenuSource
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -242,7 +240,6 @@ class DduChooserActivity : AppCompatActivity()
         requestedDduDir?.let { dir ->
             Log.i(TAG, "exporting dir \"${dir.name}\"")
             toast(getString(R.string.dir_exporting_toast, dir.name))
-            // maybe: use File.walkTopDown()
             // TODO: show progress bar or smth
             lifecycleScope.launch(Dispatchers.IO) {
                 DocumentFile.fromTreeUri(this@DduChooserActivity, uri)
@@ -358,15 +355,15 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun restoreDduFile(file: File) {
-        // TODO: restore imported files by original path
+        // MAYBE: restore imported files by original path
         lifecycleScope.launch {
-            val original: Filename? =
+            val restoredOriginal: Filename? =
                 extractDduFrom(
                     file.filename, dduDir, dduFileRepository,
                     TAG
                 )
-            original?.let {
-                toast(getString(R.string.ddu_restore_toast, file.fileName, original.fileName))
+            restoredOriginal?.let {
+                toast(getString(R.string.ddu_restore_toast, file.fileName, restoredOriginal.fileName))
                 refreshDir()
             }
         }
@@ -407,7 +404,7 @@ class DduChooserActivity : AppCompatActivity()
     private fun requestExportDduFileForDodecaLook(file: File) {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*" // maybe: "text/plain"
+            type = "*/*"
             putExtra(Intent.EXTRA_TITLE, file.name)
         }
         requestedDduFile = file
@@ -451,7 +448,7 @@ class DduChooserActivity : AppCompatActivity()
                 IMPORT_DDUS_REQUEST_CODE ->
                     (data?.clipData?.let { clipData ->
                         (0 until clipData.itemCount).map { clipData.getItemAt(it).uri }
-                    } ?: maybeUri ?.let { listOf(it) })
+                    } ?: maybeUri?.let { listOf(it) })
                         ?.let { uris -> importDdus(uris) }
                 EXPORT_DDU_REQUEST_CODE ->
                     maybeUri?.let { uri -> exportDduFile(uri) }

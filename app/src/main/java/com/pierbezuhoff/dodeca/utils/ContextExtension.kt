@@ -26,16 +26,16 @@ suspend fun Context.extractDduFrom(
 ): Filename? =
     withContext(Dispatchers.IO) {
         var source: Filename = filename
-        fun streamFromDDUAsset(filename: Filename): InputStream =
+        fun streamFromDduAsset(filename: Filename): InputStream =
             assets.open("${getString(R.string.ddu_asset_dir)}/$filename")
 
         val inputStream: InputStream? = try {
-            streamFromDDUAsset(source)
+            streamFromDduAsset(source)
         } catch (e: IOException) {
             dduFileRepository.getOriginalFilename(filename)?.let { originalSource ->
                 try {
                     source = originalSource
-                    streamFromDDUAsset(originalSource)
+                    streamFromDduAsset(originalSource)
                 } catch (e: IOException) {
                     null
                 }
@@ -49,10 +49,7 @@ suspend fun Context.extractDduFrom(
             targetFile.createNewFile()
             Log.i(TAG, "Copying asset $source to ${targetFile.path}")
             copyStream(inputStream, FileOutputStream(targetFile))
-            val absent = dduFileRepository.insertIfAbsent(targetFile.filename)
-            if (!absent) {
-                dduFileRepository.dropPreviewAndSetOriginalFilename(targetFile.filename, newOriginalFilename = source)
-            }
+            dduFileRepository.extract(targetFile.filename, originalFilename = source)
             targetFile
         } ?: null.also {
             Log.w(TAG, "Cannot find asset $filename ($source)")

@@ -32,7 +32,8 @@ class DduFileRepository private constructor(context: Context) {
 
     suspend fun dropAllPreviews() {
         getAllDduFiles().forEach {
-            dropPreview(it)
+            it.preview = null
+            dduFileDao.update(it)
         }
     }
 
@@ -69,9 +70,10 @@ class DduFileRepository private constructor(context: Context) {
     suspend fun dropPreviewInserting(filename: Filename) =
         applyInserting(filename) { preview = null }
 
-    private suspend fun dropPreview(dduFile: DduFile) {
-        dduFile.preview = null
-        dduFileDao.update(dduFile)
+    suspend fun dropPreview(filename: Filename) {
+        apply(filename) {
+            preview = null
+        }
     }
 
     suspend fun getOriginalFilename(filename: Filename): Filename? =
@@ -98,20 +100,47 @@ class DduFileRepository private constructor(context: Context) {
 
     suspend fun insertIfAbsent(filename: Filename): Boolean {
         val dduFile = getDduFile(filename)
-        return if (dduFile == null) {
+        val absent = dduFile == null
+        if (absent)
             dduFileDao.insert(DduFile.fromFilename(filename))
-            true
-        } else {
-            false
-        }
+        return absent
     }
 
     suspend fun duplicate(source: Filename, target: Filename) {
+        require(getDduFile(target) == null)
         val sourceDduFile = getDduFile(source)
         val targetDduFile: DduFile =
             sourceDduFile?.copy(filename = target)
                 ?: DduFile.fromFilename(target)
         dduFileDao.insert(targetDduFile)
+    }
+
+    suspend fun saveDerivative(source: Filename? = null, target: Filename) {
+        val sourceDduFile = source?.let { getDduFile(it) }
+        val oldTargetDduFile = getDduFile(target)
+        val targetDduFile: DduFile =
+            sourceDduFile?.copy(filename = target, preview = null)
+                ?: oldTargetDduFile?.apply { preview = null }
+                ?: DduFile.fromFilename(target)
+        if (sourceDduFile == null && source != null)
+            targetDduFile.originalFilename = source
+        if (oldTargetDduFile == null)
+            dduFileDao.insert(targetDduFile)
+        else
+            dduFileDao.update(targetDduFile)
+    }
+
+    suspend fun extract(target: Filename, originalFilename: Filename) {
+        val oldTargetDduFile = getDduFile(target)
+        val targetDduFile =
+            DduFile.fromFilename(target).apply {
+                this.originalFilename = originalFilename
+            }
+        val absent = oldTargetDduFile == null
+        if (absent)
+            dduFileDao.insert(targetDduFile)
+        else
+            dduFileDao.update(targetDduFile)
     }
 
     companion object {

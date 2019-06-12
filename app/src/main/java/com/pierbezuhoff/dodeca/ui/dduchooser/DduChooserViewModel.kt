@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.liveData
+import androidx.lifecycle.map
 import androidx.paging.PagedList
 import androidx.paging.toLiveData
 import com.pierbezuhoff.dodeca.data.Ddu
@@ -53,8 +54,10 @@ class DduChooserViewModel(
         dirFilesDataSourceFactory.changeDir(dir)
     }
 
-    override fun getPreviewOf(file: File): LiveData<Bitmap> {
-        previews[file]?.let { return it }
+    override fun getPreviewOf(file: File): LiveData<Pair<File, Bitmap>> {
+        previews[file]?.let {
+            return it.map { file to it }
+        }
         val preview = liveData {
             dduFileRepository.insertIfAbsent(file.filename)
             val cachedBitmap = dduFileRepository.getPreview(file.filename)
@@ -62,7 +65,7 @@ class DduChooserViewModel(
             bitmap?.let { emit(it) }
         }
         previews[file] = preview
-        return preview
+        return preview.map { file to it }
     }
 
     private suspend fun tryBuildPreviewOf(file: File): Bitmap? {
@@ -90,7 +93,7 @@ class DduChooserViewModel(
 
     companion object {
         private const val TAG = "DduChooserViewModel"
-        private const val PAGE_SIZE = 10
+        private const val PAGE_SIZE = 1000 // when # of ddus > PAGE_SIZE smth bad may happen
         private val PAGED_LIST_CONFIG = PagedList.Config.Builder()
             .setPageSize(PAGE_SIZE)
             .setEnablePlaceholders(true)
