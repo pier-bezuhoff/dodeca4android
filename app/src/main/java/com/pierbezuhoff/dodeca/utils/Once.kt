@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca.utils
 
 import kotlin.reflect.KProperty
 
+/** Become false after every view (getValue) */
 class Once(initialValue: Boolean = false) {
     private var value: Boolean = initialValue
 

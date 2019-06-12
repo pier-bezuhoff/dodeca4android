@@ -137,7 +137,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     }
 
     fun autocenterize() {
-        // maybe: when canvasFactor * scale ~ 1 try to fit screen
+        // MAYBE: when canvasFactor * scale ~ 1 try to fit screen
         val scale: Float = motion.sx
         if (drawTrace && trace != null &&
             values.canvasFactor == 1 &&
@@ -206,22 +206,20 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     /** Scale and translate all figures in ddu according to current view creating new ddu */
     suspend fun buildCurrentDdu(): Ddu? =
         withContext(Dispatchers.Default) {
-            presenter?.getCenter()?.let { center ->
-                val currentDrawTrace = drawTrace
-                val currentShape = shape
-                ddu.copy().apply {
-                    circles.zip(circleGroup.figures) { figure, newFigure ->
-                        figure.center = visible(figure.center)
-                        figure.radius *= motion.sx
-                        return@zip figure.copy(
-                            newColor = newFigure.color, newFill = newFigure.fill,
-                            newRule = newFigure.rule, newBorderColor = Just(newFigure.borderColor)
-                        )
-                    }
-                    drawTrace = currentDrawTrace
-                    bestCenter = center
-                    shape = currentShape
+            val currentDrawTrace = drawTrace
+            val currentShape = shape
+            ddu.copy().apply {
+                circles = circles.zip(circleGroup.figures) { figure, newFigure ->
+                    figure.center = visible(figure.center)
+                    figure.radius *= motion.sx
+                    return@zip figure.copy(
+                        newColor = newFigure.color, newFill = newFigure.fill,
+                        newRule = newFigure.rule, newBorderColor = Just(newFigure.borderColor)
+                    )
                 }
+                drawTrace = currentDrawTrace
+                bestCenter = presenter?.getCenter()
+                shape = currentShape
             }
         }
 

@@ -316,6 +316,7 @@ class CircleAdapter(
         }.show()
     }
 
+    // TODO: refactor!
     private inline fun editCircleDialog(
         figure: CircleFigure,
         message: String,
@@ -357,6 +358,12 @@ class CircleAdapter(
                         isChecked = fill
                         setOnCheckedChangeListener { _, checked ->
                             fill = checked
+                            if (!checked) {
+                                color = borderColor ?: color
+                                colorButton.setColorFilter(color)
+                                borderColor = null
+                                borderColorSwitch.isChecked = false
+                            }
                             borderColorSwitch.isEnabled = checked
                         }
                     }
@@ -365,8 +372,9 @@ class CircleAdapter(
                         isChecked = borderColor != null
                         setOnCheckedChangeListener { _, checked ->
                             if (!checked && borderColor != null) {
+                                color = borderColor ?: color
+                                colorButton.setColorFilter(color)
                                 borderColor = null
-                                borderColorButton.setColorFilter(color)
                             } else if (checked) {
                                 borderColor = borderColor ?: color
                                 borderColorButton.setColorFilter(borderColor!!)
@@ -409,7 +417,6 @@ class CircleAdapter(
         crossinline onChosen: (newColor: Int) -> Unit
     ): AlertBuilder<DialogInterface> =
         context.alert(R.string.color_picker_dialog_message) {
-            // ISSUE: in landscape: ok/cancel are off screen
             val colorPicker = ColorPickerView(context)
             colorPicker.color = color
             colorPicker.showAlpha(false)
@@ -417,8 +424,10 @@ class CircleAdapter(
             customView {
                 addView(colorPicker, ViewGroup.LayoutParams.MATCH_PARENT.let { ViewGroup.LayoutParams(it, it) })
             }
+            // NOTE: in landscape: ok/cancel are off screen
             positiveButton(R.string.color_picker_dialog_ok) { onChosen(colorPicker.color) }
             negativeButton(R.string.color_picker_dialog_cancel) { }
+            onCancelled { onChosen(colorPicker.color) }
         }
 
     private inline fun editCirclesDialog(

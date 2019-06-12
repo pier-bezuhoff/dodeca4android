@@ -108,7 +108,6 @@ class DduChooserActivity : AppCompatActivity()
         ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
         ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.HORIZONTAL))
         ddu_recycler_view.itemAnimator = DefaultItemAnimator()
-        // ddu_recycler_view.setHasFixedSize(true) // testing
         adapter.fileChooserSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
         adapter.previewSupplierSubscription.subscribeFrom(viewModel)
