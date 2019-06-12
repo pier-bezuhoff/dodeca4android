@@ -161,7 +161,7 @@ class MainActivity : AppCompatActivity()
             R.id.trace_button -> dodecaViewModel.toggleDrawTrace()
             R.id.choose_color_button -> {
                 dodecaViewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
-                    temporaryPause() // BUG: timer job cancellation does not work
+                    mainViewModel.cancelBottomBarHidingJob()
                     ChooseColorDialog(
                         this,
                         chooseColorListener = this,
@@ -226,7 +226,6 @@ class MainActivity : AppCompatActivity()
     }
 
     override fun onChooseColorClosed() {
-        resumeAfterTemporaryPause()
         dodecaViewModel.requestUpdateOnce()
     }
 
