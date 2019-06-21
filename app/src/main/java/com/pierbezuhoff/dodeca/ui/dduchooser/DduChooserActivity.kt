@@ -13,9 +13,9 @@ import android.widget.EditText
 import androidx.annotation.MenuRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.observe
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -96,9 +96,9 @@ class DduChooserActivity : AppCompatActivity()
         dir_recycler_view.itemAnimator = DefaultItemAnimator()
         adapter.dirChangeSubscription.subscribeFrom(viewModel)
         adapter.contextMenuSubscription.subscribeFrom(this)
-        viewModel.dirs.observe(this) {
+        viewModel.dirs.observe(this, Observer {
             adapter.submitList(it)
-        }
+        })
     }
 
     private fun initDduRecyclerView() {
@@ -112,9 +112,9 @@ class DduChooserActivity : AppCompatActivity()
         adapter.contextMenuSubscription.subscribeFrom(this)
         adapter.previewSupplierSubscription.subscribeFrom(viewModel)
         adapter.inheritLifecycleOf(this)
-        viewModel.files.observe(this) {
+        viewModel.files.observe(this, Observer {
             adapter.submitList(it)
-        }
+        })
     }
 
     override fun chooseFile(file: File) {
@@ -489,4 +489,3 @@ sealed class ContextMenuSource {
     data class Dir(val dir: File) : ContextMenuSource()
     data class DduFile(val file: File) : ContextMenuSource()
 }
-

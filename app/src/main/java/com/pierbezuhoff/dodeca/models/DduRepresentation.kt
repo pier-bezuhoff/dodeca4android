@@ -22,7 +22,7 @@ import com.pierbezuhoff.dodeca.data.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
-import com.pierbezuhoff.dodeca.ui.dodeca.DodecaGestureDetector
+import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Just
 import com.pierbezuhoff.dodeca.utils.Once
@@ -103,7 +103,8 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         ddu.bestCenter?.let {
             centerizeTo(it)
         }
-        clearTrace()
+        if (trace == null)
+            clearTrace()
         // main loop
         with(presenter) {
             lifecycleScope.launch {
@@ -331,6 +332,8 @@ class DduRepresentation(override val ddu: Ddu) : Any()
                             }
                             canvasFactor = nextFactor
                         } else {
+                            // TODO: memory profiling
+                            // ISSUE: after many ddu loads RAM seems to be only increasing which eventually leads to OOM
                             Log.e(TAG, "min canvasFactor  $canvasFactor is too large! Retrying...")
                             toastEmitterConnection.send {
                                 formatToast(R.string.minimal_canvas_factor_oom_toast, canvasFactor)

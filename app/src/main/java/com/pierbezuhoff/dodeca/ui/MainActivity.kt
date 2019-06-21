@@ -30,8 +30,8 @@ import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
-import com.pierbezuhoff.dodeca.ui.dodeca.ChooseColorDialog
-import com.pierbezuhoff.dodeca.ui.dodeca.DodecaViewModel
+import com.pierbezuhoff.dodeca.ui.dodecaview.ChooseColorDialog
+import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewModel
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
 import com.pierbezuhoff.dodeca.ui.settings.SettingsActivity
@@ -64,6 +64,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
+// TODO: extract toolbar-related part to another activity
 // ISSUE: add progress [ddu] while loading new ddu (for now it continues last one)
 // ISSUE: what if go to choose ddus before extracting 'em all: add progress dialog!
 // FIX: temporaryPause
@@ -406,4 +407,3 @@ class MainActivity : AppCompatActivity()
         private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
 }
-

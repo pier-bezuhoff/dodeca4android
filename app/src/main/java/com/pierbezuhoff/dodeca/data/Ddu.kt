@@ -337,7 +337,6 @@ private class DDUWriter(private val ddu: Ddu) {
 
     suspend fun write(output: OutputStream) {
         withContext(Dispatchers.IO) {
-            // maybe: use buffered stream
             outputStream = output
             output.use {
                 writeLine(HEADER)
@@ -349,7 +348,7 @@ private class DDUWriter(private val ddu: Ddu) {
     }
 
     suspend fun writeForDodecaLook(output: OutputStream) {
-        // maybe: abstract DDUWriter + 2 impl-s
+        // MAYBE: abstract DDUWriter + 2 impl-s
         withContext(Dispatchers.IO) {
             outputStream = output
             output.use {

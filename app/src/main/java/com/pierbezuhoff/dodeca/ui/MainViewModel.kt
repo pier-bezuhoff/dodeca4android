@@ -10,7 +10,7 @@ import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.models.OptionsManager
-import com.pierbezuhoff.dodeca.ui.dodeca.DodecaGestureDetector
+import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.dduDir
@@ -129,7 +129,6 @@ class MainViewModel(
                     currentDir.mkdir()
                     extractDdusFromAssets()
                 } else {
-                    // TODO: check it
                     // try to export new ddus
                     Log.i(TAG, "Adding new ddu assets into $currentDir")
                     val existedDdus = currentDir.listFiles().map { it.name }.toSet()

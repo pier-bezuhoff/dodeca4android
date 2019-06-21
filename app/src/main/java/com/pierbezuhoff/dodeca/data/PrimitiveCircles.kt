@@ -112,7 +112,7 @@ internal class PrimitiveCircles(
     override suspend fun suspendableUpdateTimes(times: Int, reverse: Boolean) {
         // TODO: optimize
         // NOTE: not using _updateTimes in order to make coroutine cancellable-cooperative
-        // NOTE: _updateTimes ~ 2 times faster
+        //  _updateTimes ~ 2 times faster
         // MAYBE: use batch of some fixed size
         repeat(times) {
             withContext(Dispatchers.Default) {
@@ -260,7 +260,6 @@ internal class PrimitiveCircles(
         val y = oldYs[i].toFloat()
         val r = oldRs[i].toFloat()
         canvas.drawCircle(x, y, r, paints[i])
-        // maybe: store Boolean flag
         borderPaints.get(i)?.let { borderPaint ->
             canvas.drawCircle(x, y, r, borderPaint)
         }

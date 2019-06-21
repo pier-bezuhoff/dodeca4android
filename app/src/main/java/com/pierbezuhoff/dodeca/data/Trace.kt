@@ -12,7 +12,7 @@ class Trace(width: Int, height: Int) {
     /** (bitmap top-left corner) - (screen top-left corner) */
     private val translation: Matrix
     val motion: Matrix // visible canvas = motion . translation $ canvas = blitMatrix canvas
-    // maybe: cache blitMatrix for performance
+    // MAYBE: cache blitMatrix for performance
     private val blitMatrix
         get() = Matrix(translation).apply { postConcat(motion) }
     var currentCanvasFactor: Int = factor
