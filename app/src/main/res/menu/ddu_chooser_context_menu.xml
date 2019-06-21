@@ -5,6 +5,5 @@
     <item android:id="@+id/ddu_restore" android:title="@string/ddu_restore"/>
     <item android:id="@+id/ddu_duplicate" android:title="@string/ddu_duplicate"/>
     <item android:id="@+id/ddu_export" android:title="@string/ddu_export"/>
-    <!-- TODO: add & check -->
     <item android:id="@+id/ddu_export_for_dodecalook" android:title="@string/ddu_export_for_dodecalook"/>
 </menu>

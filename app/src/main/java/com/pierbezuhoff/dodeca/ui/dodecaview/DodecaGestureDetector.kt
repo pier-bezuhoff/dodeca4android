@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui.dodeca
+package com.pierbezuhoff.dodeca.ui.dodecaview
 
 import android.annotation.SuppressLint
 import android.content.Context

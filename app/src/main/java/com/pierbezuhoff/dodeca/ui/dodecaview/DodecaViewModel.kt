@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui.dodeca
+package com.pierbezuhoff.dodeca.ui.dodecaview
 
 import android.app.Application
 import android.graphics.Canvas
@@ -35,6 +35,7 @@ class DodecaViewModel(
     , DduRepresentation.StatHolder // by statUpdater
     , DduRepresentation.ToastEmitter
 {
+    private val _dduLoading: MutableLiveData<Boolean> = MutableLiveData(false)
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
     private val _updating: MutableLiveData<Boolean> = MutableLiveData()
     private val _drawTrace: MutableLiveData<Boolean> = MutableLiveData()
@@ -43,6 +44,7 @@ class DodecaViewModel(
 
     private var oldUpdating: Boolean? = null
     private var dduLoaded = false // mark that MainActivity should not repeat loadInitialDdu
+    val dduLoading: LiveData<Boolean> = _dduLoading
 
     val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
     val updating: LiveData<Boolean> = _updating
@@ -59,8 +61,14 @@ class DodecaViewModel(
     init {
         registerOptionsObservers()
         optionsManager.fetchAll()
+        // may be changed from MainActivity
         shape.observeForever { shape: Shape ->
             dduRepresentation.value?.shape = shape
+        }
+        // FIX: no loading on start of Dodeca Meditation
+        //tmp
+        dduLoading.observeForever {
+            Log.i(TAG, "dduLoading -> $it")
         }
     }
 
@@ -95,11 +103,16 @@ class DodecaViewModel(
 
     suspend fun loadDduFrom(file: File) {
         try {
+            stop()
+            _dduLoading.postValue(true)
             val ddu: Ddu = Ddu.fromFile(file)
             loadDdu(ddu)
         } catch (e: Exception) {
             e.printStackTrace()
             formatToast(R.string.bad_ddu_format_toast, file.path)
+        } finally {
+            _dduLoading.postValue(false)
+            resume()
         }
     }
 
@@ -131,6 +144,7 @@ class DodecaViewModel(
                 Log.i(TAG, "Skipping $n updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
                 toast("Skipping $n updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
                 pause()
+                _dduLoading.postValue(true)
                 val startTime = System.currentTimeMillis()
                 withTimeoutOrNull(SKIP_N_TIMEOUT_MILLISECONDS) {
                     dduRepresentation.updateTimes(n)
@@ -144,6 +158,7 @@ class DodecaViewModel(
                     toast("Skipping aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s)")
                 }
                 setSharedPreference(options.skipN, 0)
+                _dduLoading.postValue(false)
                 resume()
             }
         }
@@ -201,10 +216,7 @@ class DodecaViewModel(
 
     private suspend fun saveDdu(file: File? = null) {
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
-            pause()
-            // BUG: CircleGroup parmas does not save
             val ddu: Ddu? = dduRepresentation.buildCurrentDdu()
-            resume()
             ddu?.let {
                 save(ddu, file)
             }
@@ -238,17 +250,25 @@ class DodecaViewModel(
         context.toast(context.getString(id, *args))
     }
 
+    /** Resume ddu evolution after [pause] or [stop] */
     fun resume() {
         val newUpdating = oldUpdating ?: DEFAULT_UPDATING
         setUpdating(newUpdating)
     }
 
-    fun pause() {
+    /** Pause ddu evolution (no autosave) */
+    private fun _pause() {
         oldUpdating = updating.value
         setUpdating(false)
+    }
+
+    /** Pause ddu evolution and maybe autosave (can be [resume]d) */
+    fun pause() {
+        _pause()
         maybeAutosave()
     }
 
+    /** Stop ddu evolution and maybe autosave */
     fun stop() {
         oldUpdating = null
         setUpdating(false)

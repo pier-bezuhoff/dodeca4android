@@ -4,6 +4,7 @@ Min version: 4.4 KitKat
 Recommended version: >= 5.0 Lolipop
 ...
 # TODO
+- [ ] Extract from MainActivity dodeca-specific part (like bottom bar, etc.)
 - [ ] Progress bar on: db requests (or LiveData), restore all ddus, import/export folder
 - [ ] temporaryPause does not work
 - [ ] DduChooser: better animation when duplicate/rename/delete

@@ -16,6 +16,7 @@ import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.isDdu
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.anko.toast
 import java.io.File
 import java.io.FileFilter
@@ -72,6 +73,8 @@ class DduChooserViewModel(
         return try {
             val bitmap = buildPreviewOf(file)
             bitmap
+        } catch (e: CancellationException) {
+            null // NOTE: it's ok if we returned to MainActivity before preview has been built
         } catch (e: Exception) {
             Log.w(TAG, "Failed to buildPreviewOf($file)")
             e.printStackTrace()

@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui.dodeca
+package com.pierbezuhoff.dodeca.ui.dodecaview
 
 import android.app.Dialog
 import android.content.Context
