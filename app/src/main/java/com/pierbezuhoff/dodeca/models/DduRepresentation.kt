@@ -82,6 +82,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
 
     private val motion: Matrix = Matrix() // visible(z) = motion.move(z)
     private var trace: Trace? = null
+    private var currentCenter: Complex? = null // for screen rotations
 
     private var redrawTraceOnce: Boolean by Once()
     private var updateOnce: Boolean by Once()
@@ -100,22 +101,10 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         this.presenter = presenter
         presenter.lifecycle.addObserver(presenterDisconnector)
         setBestCenter()
-        ddu.bestCenter?.let {
-            centerizeTo(it)
-        }
-        if (trace == null)
+        centerizeToBestCenter()
+        if (trace == null) // do not clearTrace on screen rotation and other config. changes
             clearTrace()
-        // main loop
-        with(presenter) {
-            lifecycleScope.launch {
-                delay(INITIAL_DELAY_IN_MILLISECONDS)
-                while (isActive) {
-                    if (updating)
-                        redraw()
-                    delay(DT_IN_MILLISECONDS)
-                }
-            }
-        }
+        presenter.mainLoop()
     }
 
     fun connectOptionsManager(optionsManager: OptionsManager) {
@@ -129,11 +118,29 @@ class DduRepresentation(override val ddu: Ddu) : Any()
                 else presenter?.getCenter()
     }
 
-    private fun centerizeTo(newCenter: Complex) {
+    private fun centerizeToBestCenter() {
+        if (currentCenter == null && ddu.bestCenter != null)
+            currentCenter = visible(ddu.bestCenter!!)
+        currentCenter?.let { centerizeToVisible(it) }
+    }
+
+    private fun centerizeToVisible(newVisibleCenter: Complex) {
         presenter?.getCenter()?.let { center ->
-            val newVisibleCenter = visible(newCenter)
             val (dx, dy) = (center - newVisibleCenter).asFF()
             scroll(dx, dy)
+        }
+    }
+
+    private fun Presenter.mainLoop() {
+        with(this) {
+            lifecycleScope.launch {
+                delay(INITIAL_DELAY_IN_MILLISECONDS)
+                while (isActive) {
+                    if (updating)
+                        redraw()
+                    delay(DT_IN_MILLISECONDS)
+                }
+            }
         }
     }
 
@@ -175,11 +182,13 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         updateOnce = true
     }
 
-    override fun onScale(scale: Float, focusX: Float, focusY: Float) =
-        scale(scale, focusX, focusY)
-
-    override fun onScroll(dx: Float, dy: Float) =
+    override fun onScroll(dx: Float, dy: Float) {
         scroll(-dx, -dy)
+    }
+
+    override fun onScale(scale: Float, focusX: Float, focusY: Float) {
+        scale(scale, focusX, focusY)
+    }
 
     private fun scroll(dx: Float, dy: Float) =
         transform {
@@ -192,6 +201,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         }
 
     private inline fun transform(crossinline transformation: Matrix.() -> Unit) {
+        currentCenter = presenter?.getCenter()
         motion.transformation()
         if (drawTrace) {
             if (values.redrawTraceOnMove)
