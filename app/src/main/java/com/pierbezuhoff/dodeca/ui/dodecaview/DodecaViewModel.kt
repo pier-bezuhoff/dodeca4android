@@ -42,16 +42,17 @@ class DodecaViewModel(
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
 
-    private var oldUpdating: Boolean? = null
-    private var dduLoaded = false // mark that MainActivity should not repeat loadInitialDdu
-    val dduLoading: LiveData<Boolean> = _dduLoading
+    private var oldUpdating: Boolean? = null // [updating] before [pause]
+    private var dduLoaded = false // mark that MainActivity should not repeat [loadInitialDdu]
+    val dduLoading: LiveData<Boolean> = _dduLoading // for ProgressBar
 
     val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
     val updating: LiveData<Boolean> = _updating
     val drawTrace: LiveData<Boolean> = _drawTrace
-    val shape: MutableLiveData<Shape> = MutableLiveData(DEFAULT_SHAPE)
+    val shape: MutableLiveData<Shape> = MutableLiveData(DEFAULT_SHAPE) // [shape] may be changed from MainActivity
 
     private val statUpdater: StatUpdater = StatUpdater()
+    // following 3 are used to show stat[istics]
     val nUpdates: LiveData<Long> = _nUpdates
     val dTime: LiveData<Float> = _dTime
     val statTimeDelta: Int = statUpdater.statTimeDelta
@@ -61,14 +62,8 @@ class DodecaViewModel(
     init {
         registerOptionsObservers()
         optionsManager.fetchAll()
-        // may be changed from MainActivity
         shape.observeForever { shape: Shape ->
             dduRepresentation.value?.shape = shape
-        }
-        // FIX: no loading on start of Dodeca Meditation
-        //tmp
-        dduLoading.observeForever {
-            Log.i(TAG, "dduLoading -> $it")
         }
     }
 
@@ -164,13 +159,17 @@ class DodecaViewModel(
         }
     }
 
-    private suspend fun getInitialDdu(): Ddu =
-        try {
+    private suspend fun getInitialDdu(): Ddu {
+        _dduLoading.postValue(true)
+        val ddu = try {
             Ddu.fromFile(getRecentDduFile())
         } catch (e: Exception) {
             e.printStackTrace()
             Ddu.EXAMPLE_DDU
         }
+        _dduLoading.postValue(false)
+        return ddu
+    }
 
     private fun getRecentDduFile(): File =
         context.dduDir/optionsManager.fetched(options.recentDdu)
@@ -309,6 +308,7 @@ class DodecaViewModel(
     override fun updateStat(delta: Int) =
         statUpdater.updateStat(delta)
 
+
     private inner class StatUpdater : DduRepresentation.StatHolder {
         internal val statTimeDelta: Int = context.resources.getInteger(R.integer.stat_time_delta)
         private var nUpdates: Long by Delegates.observable(0L) { _, _, newNUpdates: Long ->
@@ -317,6 +317,7 @@ class DodecaViewModel(
         private var lastUpdateTime: Long = 0
         private var lastTimedUpdate: Long = 0
         private var lastTimedUpdateTime: Long = System.currentTimeMillis()
+        @Suppress("RemoveExplicitTypeArguments") // do not compile without it...
         private var dTime: Float? by Delegates.observable<Float?>(null) { _, _, newDTime: Float? ->
             _dTime.value = newDTime
         }
@@ -346,7 +347,7 @@ class DodecaViewModel(
     }
 
     companion object {
-        const val TAG = "DodecaViewModel"
+        private const val TAG = "DodecaViewModel"
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
         private val DEFAULT_SHAPE = Shape.CIRCLE
