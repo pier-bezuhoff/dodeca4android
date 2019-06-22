@@ -32,7 +32,6 @@ class DduFileAdapter
     private val previewSupplierConnection = Connection<PreviewSupplier>()
     val previewSupplierSubscription = previewSupplierConnection.subscription
 
-    data class Item(val file: File, val preview: Bitmap?)
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         lateinit var file: File
     }
@@ -92,10 +91,10 @@ class DduFileAdapter
         @MenuRes private const val CONTEXT_MENU_RES = R.menu.ddu_chooser_context_menu
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<File>() {
             override fun areItemsTheSame(oldItem: File, newItem: File): Boolean =
-                oldItem.absolutePath == newItem.absolutePath
+                oldItem == newItem
             // TODO: cmp previews; preview -> item: Item(file, preview)
             override fun areContentsTheSame(oldItem: File, newItem: File): Boolean =
-                oldItem.absolutePath == newItem.absolutePath
+                oldItem == newItem || "cmp bitmaps" == ""
         }
     }
 }
