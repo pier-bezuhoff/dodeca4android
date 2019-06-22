@@ -79,7 +79,7 @@ class DduChooserViewModel(
             Log.w(TAG, "Failed to buildPreviewOf($file)")
             e.printStackTrace()
             context.toast("Failed to build preview of ddu-file \"${file.filename}\"")
-            // TODO: show error icon instead of progress bar
+            // MAYBE: show error icon instead of progress bar
             null
         }
     }

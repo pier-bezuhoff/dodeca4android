@@ -20,7 +20,7 @@ interface LifecycleInheritor : LifecycleOwner {
     fun inheritLifecycleOf(lifecycleOwner: LifecycleOwner)
 }
 
-/** Helper inner object for lifecycle inheritance */
+/** Helper private object for lifecycle inheritance */
 class LifecycleInheritance : LifecycleInheritor {
     private var inherited: Boolean = false
     override val lifecycleInherited: Boolean get() = inherited
@@ -29,7 +29,6 @@ class LifecycleInheritance : LifecycleInheritor {
     override fun getLifecycle(): Lifecycle =
         _lifecycle
 
-    /** Inherit lifecycle (of DduChooserActivity) */
     override fun inheritLifecycleOf(lifecycleOwner: LifecycleOwner) {
         require(!inherited)
         _lifecycle = lifecycleOwner.lifecycle

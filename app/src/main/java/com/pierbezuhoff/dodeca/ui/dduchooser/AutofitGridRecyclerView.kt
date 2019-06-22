@@ -6,6 +6,7 @@ import androidx.core.content.withStyledAttributes
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.data.values
+import kotlin.math.max
 
 class AutofitGridRecyclerView @JvmOverloads constructor(
     context: Context,
@@ -29,7 +30,7 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
 
     override fun onMeasure(widthSpec: Int, heightSpec: Int) {
         super.onMeasure(widthSpec, heightSpec)
-        val spanCount = Math.max(minNColumns, measuredWidth / (columnWidth ?: defaultColumnWidth))
+        val spanCount = max(minNColumns, measuredWidth / (columnWidth ?: defaultColumnWidth))
         manager.spanCount = spanCount
     }
 

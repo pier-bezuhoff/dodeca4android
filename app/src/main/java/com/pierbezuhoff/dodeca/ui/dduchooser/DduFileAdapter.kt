@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.MenuRes
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.observe
+import androidx.lifecycle.Observer
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -32,6 +32,7 @@ class DduFileAdapter
     private val previewSupplierConnection = Connection<PreviewSupplier>()
     val previewSupplierSubscription = previewSupplierConnection.subscription
 
+    data class Item(val file: File, val preview: Bitmap?)
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         lateinit var file: File
     }
@@ -63,12 +64,12 @@ class DduFileAdapter
                 require(lifecycleInherited)
                 previewSupplierConnection.send {
                     getPreviewOf(file)
-                } ?.observe(this@DduFileAdapter) { (file: File, newBitmap: Bitmap) ->
+                } ?.observe(this@DduFileAdapter, Observer { (file: File, newBitmap: Bitmap) ->
                     // NOTE: view holder may be recycled and re-bind-ed while we are waiting for the preview,
                     // NOTE: so we tag it with file
                     if (holder.file == file)
                         setPreview(holder, newBitmap)
-                }
+                })
             }
         }
     }
@@ -91,9 +92,10 @@ class DduFileAdapter
         @MenuRes private const val CONTEXT_MENU_RES = R.menu.ddu_chooser_context_menu
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<File>() {
             override fun areItemsTheSame(oldItem: File, newItem: File): Boolean =
-                oldItem.fileName == newItem.fileName
+                oldItem.absolutePath == newItem.absolutePath
+            // TODO: cmp previews; preview -> item: Item(file, preview)
             override fun areContentsTheSame(oldItem: File, newItem: File): Boolean =
-                oldItem == newItem
+                oldItem.absolutePath == newItem.absolutePath
         }
     }
 }
