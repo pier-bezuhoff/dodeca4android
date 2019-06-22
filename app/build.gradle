@@ -17,8 +17,8 @@ android {
         applicationId "com.pierbezuhoff.dodeca"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 29
-        versionName "1.4.4" // <-> (values, values-ru)/strings.xml/version_name
+        versionCode 30
+        versionName "1.4.5" // <-> (values, values-ru)/strings.xml/version_name
         kapt {
             arguments {
                 arg("room.schemaLocation", "$projectDir/schemas".toString())

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
         <!ENTITY app_name "Dodeca Meditation">
-        <!ENTITY version_name "1.4.4">
+        <!ENTITY version_name "1.4.5">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
@@ -39,8 +39,7 @@
     <string name="canvas_factor_oom_toast">Canvas factor %d is too large: it caused out of memory error! Trying smaller
         factor %d…
     </string>
-    <string name="minimal_canvas_factor_oom_toast">Minimal canvas factor %d caused out of memory error! Retrying…
-    </string>
+    <string name="minimal_canvas_factor_oom_toast">Minimal canvas factor %d caused out of memory error!</string>
     <string name="ddu_rename_toast">\"%s\" renamed to \"%s\"</string>
     <string name="ddu_delete_toast">\"%s\" deleted</string>
     <string name="ddu_restore_toast">\"%s\" restored to \"%s\"</string>

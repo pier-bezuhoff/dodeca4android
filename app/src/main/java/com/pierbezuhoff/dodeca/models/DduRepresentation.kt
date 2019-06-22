@@ -82,7 +82,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
 
     private val motion: Matrix = Matrix() // visible(z) = motion.move(z)
     private var trace: Trace? = null
-    private var currentCenter: Complex? = null // for screen rotations
+    private var currentCenter: Complex? = null // for screen rotations, visible current center (almost always == presenter?.getCenter())
 
     private var redrawTraceOnce: Boolean by Once()
     private var updateOnce: Boolean by Once()
@@ -274,6 +274,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         presenter?.redraw()
     }
 
+
     private class UpdateScheduler {
         private var lastUpdateTime: Long = 0
         private var ups: Int = DEFAULT_UPS // updates per second
@@ -299,6 +300,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             private const val DEFAULT_UPS = 60 // empirical
         }
     }
+
 
     @Suppress("NOTHING_TO_INLINE")
     private inner class Drawer {
@@ -344,10 +346,11 @@ class DduRepresentation(override val ddu: Ddu) : Any()
                         } else {
                             // TODO: memory profiling
                             // ISSUE: after many ddu loads RAM seems to be only increasing which eventually leads to OOM
-                            Log.e(TAG, "min canvasFactor  $canvasFactor is too large! Retrying...")
+                            Log.e(TAG, "min canvasFactor  $canvasFactor is too large!")
                             toastEmitterConnection.send {
                                 formatToast(R.string.minimal_canvas_factor_oom_toast, canvasFactor)
                             }
+                            done = true // very bad
                         }
                     }
                 }

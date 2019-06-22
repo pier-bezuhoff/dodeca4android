@@ -217,7 +217,7 @@ class DodecaViewModel(
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
             val ddu: Ddu? = dduRepresentation.buildCurrentDdu()
             ddu?.let {
-                save(ddu, file)
+                save(it, file)
             }
         }
     }
