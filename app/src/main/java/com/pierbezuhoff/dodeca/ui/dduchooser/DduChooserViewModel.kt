@@ -8,7 +8,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.map
 import androidx.paging.PagedList
-import androidx.paging.toLiveData
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.OptionsManager
@@ -26,7 +25,9 @@ class DduChooserViewModel(
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , DduFileAdapter.PreviewSupplier
+    , OldDduFileAdapter.PreviewSupplier
     , DirAdapter.DirChangeListener
+    , OldDirAdapter.DirChangeListener
 {
     private lateinit var dirsDataSourceFactory: DirFilesDataSourceFactory
     private lateinit var dirFilesDataSourceFactory: DirFilesDataSourceFactory
@@ -35,15 +36,18 @@ class DduChooserViewModel(
     private val _dir: MutableLiveData<File> = MutableLiveData()
     lateinit var dirs: LiveData<PagedList<File>> private set
     lateinit var files: LiveData<PagedList<File>> private set
+    val oldDirs: MutableList<File> = mutableListOf()
+    val oldFiles: MutableList<File> = mutableListOf()
     val dir: LiveData<File> = _dir
 
     fun setInitialDir(newDir: File) {
         if (_dir.value == null) {
             _dir.value = newDir
-            dirsDataSourceFactory = DirFilesDataSourceFactory(newDir, FileFilter { it.isDirectory })
-            dirFilesDataSourceFactory = DirFilesDataSourceFactory(newDir, FileFilter { it.isDdu })
-            dirs = dirsDataSourceFactory.toLiveData(config = PAGED_LIST_CONFIG)
-            files = dirFilesDataSourceFactory.toLiveData(config = PAGED_LIST_CONFIG)
+//            dirsDataSourceFactory = DirFilesDataSourceFactory(newDir, DIR_FILE_FILTER)
+//            dirFilesDataSourceFactory = DirFilesDataSourceFactory(newDir, DDU_FILE_FILTER)
+//            dirs = dirsDataSourceFactory.toLiveData(config = PAGED_LIST_CONFIG)
+//            files = dirFilesDataSourceFactory.toLiveData(config = PAGED_LIST_CONFIG)
+            updateFromDir(newDir)
         }
     }
 
@@ -51,8 +55,16 @@ class DduChooserViewModel(
         Log.i(TAG, "onDirChanged($dir)")
         _dir.postValue(dir)
         previews.clear()
-        dirsDataSourceFactory.changeDir(dir)
-        dirFilesDataSourceFactory.changeDir(dir)
+//        dirsDataSourceFactory.changeDir(dir)
+//        dirFilesDataSourceFactory.changeDir(dir)
+        updateFromDir(dir)
+    }
+
+    private fun updateFromDir(dir: File) {
+        oldDirs.clear()
+        oldFiles.clear()
+        oldDirs.addAll(dir.listFiles(DIR_FILE_FILTER))
+        oldFiles.addAll(dir.listFiles(DDU_FILE_FILTER))
     }
 
     override fun getPreviewOf(file: File): LiveData<Pair<File, Bitmap>> {
@@ -96,11 +108,13 @@ class DduChooserViewModel(
 
     companion object {
         private const val TAG = "DduChooserViewModel"
-        // TODO: understand, why when PAGE_SIZE <= 10 rename/duplicate/... cause crash (item created in the end of the recycler view)
-        private const val PAGE_SIZE = 1000 // when # of ddus > PAGE_SIZE smth bad may happen
-        private val PAGED_LIST_CONFIG = PagedList.Config.Builder()
-            .setPageSize(PAGE_SIZE)
-            .setEnablePlaceholders(true)
-            .build()
+        private val DIR_FILE_FILTER: FileFilter = FileFilter { it.isDirectory }
+        private val DDU_FILE_FILTER: FileFilter = FileFilter { it.isDdu }
+//        // TODO: understand, why when PAGE_SIZE <= 10 rename/duplicate/... cause crash (item created in the end of the recycler view)
+//        private const val PAGE_SIZE = 1000 // when # of ddus > PAGE_SIZE smth bad may happen
+//        private val PAGED_LIST_CONFIG = PagedList.Config.Builder()
+//            .setPageSize(PAGE_SIZE)
+//            .setEnablePlaceholders(true)
+//            .build()
     }
 }

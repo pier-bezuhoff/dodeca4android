@@ -16,11 +16,10 @@ import com.pierbezuhoff.dodeca.utils.fileName
 import kotlinx.android.synthetic.main.ddu_item.view.*
 import java.io.File
 
-class OldDduFileAdapter(private val liveFiles: LiveData<List<File>>)
-    : RecyclerView.Adapter<OldDduFileAdapter.DduFileViewHolder>()
+class OldDduFileAdapter(private val files: List<File>)
+    : MetaRecyclerViewAdapter<OldDduFileAdapter.DduFileViewHolder>()
     , LifecycleInheritor by LifecycleInheritance()
 {
-
     interface FileChooser { fun chooseFile(file: File) }
     interface PreviewSupplier { fun getPreviewOf(file: File): LiveData<Pair<File, Bitmap>> }
 
@@ -30,10 +29,6 @@ class OldDduFileAdapter(private val liveFiles: LiveData<List<File>>)
     val contextMenuSubscription = contextMenuConnection.subscription
     private val previewSupplierConnection = Connection<PreviewSupplier>()
     val previewSupplierSubscription = previewSupplierConnection.subscription
-
-    private val files: List<File> get() = liveFiles.value ?: emptyList()
-
-    // TODO: some means to notify delete/insert/refresh
 
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         lateinit var file: File
@@ -88,10 +83,12 @@ class OldDduFileAdapter(private val liveFiles: LiveData<List<File>>)
         holder.view.preview_progress.visibility = View.GONE
     }
 
-    override fun getItemCount(): Int = files.size
+    override fun getItemCount(): Int =
+        files.size
 
     companion object {
         private const val TAG = "OldDduFileAdapter"
         @MenuRes private const val CONTEXT_MENU_RES = R.menu.ddu_chooser_context_menu
     }
 }
+
