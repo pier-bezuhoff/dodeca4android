@@ -7,7 +7,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.map
-import androidx.paging.PagedList
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.OptionsManager
@@ -25,28 +24,18 @@ class DduChooserViewModel(
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , DduFileAdapter.PreviewSupplier
-    , OldDduFileAdapter.PreviewSupplier
     , DirAdapter.DirChangeListener
-    , OldDirAdapter.DirChangeListener
 {
-    private lateinit var dirsDataSourceFactory: DirFilesDataSourceFactory
-    private lateinit var dirFilesDataSourceFactory: DirFilesDataSourceFactory
     // NOTE: only previews for ddu-files in current dir, should not use very much memory
     private val previews: MutableMap<File, LiveData<Bitmap>> = mutableMapOf()
     private val _dir: MutableLiveData<File> = MutableLiveData()
-    lateinit var dirs: LiveData<PagedList<File>> private set
-    lateinit var files: LiveData<PagedList<File>> private set
-    val oldDirs: MutableList<File> = mutableListOf()
-    val oldFiles: MutableList<File> = mutableListOf()
+    val dirs: MutableList<File> = mutableListOf()
+    val files: MutableList<File> = mutableListOf()
     val dir: LiveData<File> = _dir
 
     fun setInitialDir(newDir: File) {
         if (_dir.value == null) {
             _dir.value = newDir
-//            dirsDataSourceFactory = DirFilesDataSourceFactory(newDir, DIR_FILE_FILTER)
-//            dirFilesDataSourceFactory = DirFilesDataSourceFactory(newDir, DDU_FILE_FILTER)
-//            dirs = dirsDataSourceFactory.toLiveData(config = PAGED_LIST_CONFIG)
-//            files = dirFilesDataSourceFactory.toLiveData(config = PAGED_LIST_CONFIG)
             updateFromDir(newDir)
         }
     }
@@ -55,16 +44,14 @@ class DduChooserViewModel(
         Log.i(TAG, "onDirChanged($dir)")
         _dir.postValue(dir)
         previews.clear()
-//        dirsDataSourceFactory.changeDir(dir)
-//        dirFilesDataSourceFactory.changeDir(dir)
         updateFromDir(dir)
     }
 
     private fun updateFromDir(dir: File) {
-        oldDirs.clear()
-        oldFiles.clear()
-        oldDirs.addAll(dir.listFiles(DIR_FILE_FILTER))
-        oldFiles.addAll(dir.listFiles(DDU_FILE_FILTER))
+        dirs.clear()
+        files.clear()
+        dirs.addAll(dir.listFiles(DIR_FILE_FILTER))
+        files.addAll(dir.listFiles(DDU_FILE_FILTER))
     }
 
     override fun getPreviewOf(file: File): LiveData<Pair<File, Bitmap>> {
@@ -104,6 +91,10 @@ class DduChooserViewModel(
         val bitmap = ddu.buildPreview(size, size)
         dduFileRepository.setPreview(filename, bitmap)
         return bitmap
+    }
+
+    fun forgetPreviewOf(file: File) {
+        previews.remove(file)
     }
 
     companion object {
