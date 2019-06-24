@@ -13,7 +13,6 @@ import android.widget.EditText
 import androidx.annotation.MenuRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.documentfile.provider.DocumentFile
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -55,7 +54,6 @@ import java.io.File
 // TODO: store last pos
 class DduChooserActivity : AppCompatActivity()
     , ContextMenuManager
-    , OldDduFileAdapter.FileChooser
     , DduFileAdapter.FileChooser
 {
     private val optionsManager by lazy {
@@ -92,37 +90,9 @@ class DduChooserActivity : AppCompatActivity()
         viewModel.setInitialDir(initialDir)
     }
 
-    private fun initDirRecyclerView() {
-        val adapter = DirAdapter()
-        dir_recycler_view.adapter = adapter
-        dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
-        dir_recycler_view.itemAnimator = DefaultItemAnimator()
-        adapter.dirChangeSubscription.subscribeFrom(viewModel)
-        adapter.contextMenuSubscription.subscribeFrom(this)
-        viewModel.dirs.observe(this, Observer {
-            adapter.submitList(it)
-        })
-    }
-
-    private fun initDduRecyclerView() {
-        val adapter = DduFileAdapter()
-        ddu_recycler_view.adapter = adapter
-        // NOTE: colors and thickness of dividers are set from styles.xml
-        ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
-        ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.HORIZONTAL))
-        ddu_recycler_view.itemAnimator = DefaultItemAnimator()
-        adapter.fileChooserSubscription.subscribeFrom(this)
-        adapter.contextMenuSubscription.subscribeFrom(this)
-        adapter.previewSupplierSubscription.subscribeFrom(viewModel)
-        adapter.inheritLifecycleOf(this)
-        viewModel.files.observe(this, Observer {
-            adapter.submitList(it)
-        })
-    }
-
     private fun initOldDirRecyclerView() {
-        val adapter = OldDirAdapter(viewModel.oldDirs)
-        dirDeltaList = DeltaList(viewModel.oldDirs, adapter)
+        val adapter = DirAdapter(viewModel.dirs)
+        dirDeltaList = DeltaList(viewModel.dirs, adapter)
         dir_recycler_view.adapter = adapter
         dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
         dir_recycler_view.itemAnimator = DefaultItemAnimator()
@@ -131,8 +101,8 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun initOldDduRecyclerView() {
-        val adapter = OldDduFileAdapter(viewModel.oldFiles)
-        dduFileDeltaList = DeltaList(viewModel.oldFiles, adapter)
+        val adapter = DduFileAdapter(viewModel.files)
+        dduFileDeltaList = DeltaList(viewModel.files, adapter)
         ddu_recycler_view.adapter = adapter
         // NOTE: colors and thickness of dividers are set from styles.xml
         ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
@@ -383,6 +353,7 @@ class DduChooserActivity : AppCompatActivity()
             dduFileRepository.deleteIfExists(file.filename)
             file.delete()
             dduFileDeltaList.remove(file)
+            viewModel.forgetPreviewOf(file)
         }
     }
 
@@ -414,7 +385,7 @@ class DduChooserActivity : AppCompatActivity()
     private fun requestExportDduFile(file: File) {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*" // maybe: "text/plain"
+            type = "*/*"
             putExtra(Intent.EXTRA_TITLE, file.name)
         }
         requestedDduFile = file
