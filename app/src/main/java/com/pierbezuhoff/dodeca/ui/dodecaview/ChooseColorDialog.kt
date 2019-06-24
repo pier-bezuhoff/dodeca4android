@@ -95,6 +95,7 @@ internal typealias OnApply = (
     borderColor: Maybe<Int?>
 ) -> Unit
 
+@Suppress("NOTHING_TO_INLINE")
 class CircleAdapter(
     private val context: Context,
     private val circleGroup: CircleGroup

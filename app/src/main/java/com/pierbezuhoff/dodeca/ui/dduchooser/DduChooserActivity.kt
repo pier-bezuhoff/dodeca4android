@@ -144,8 +144,7 @@ class DduChooserActivity : AppCompatActivity()
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var isSet = true
         when (item.itemId) {
-            R.id.to_parent_dir -> if (dir.absolutePath != dduDir.absolutePath)
-                viewModel.onDirChanged(dir.parentFile)
+            R.id.to_parent_dir -> navigateToParentDir()
             R.id.import_ddus -> requestImportDdus()
             R.id.export_ddus -> requestExportDduDir()
             R.id.import_dir -> requestImportDduDir()
@@ -188,6 +187,14 @@ class DduChooserActivity : AppCompatActivity()
 
     private fun refreshDir() {
         viewModel.onDirChanged(dir)
+    }
+
+    private fun navigateToParentDir() {
+        if (dir.absolutePath != dduDir.absolutePath) {
+            viewModel.onDirChanged(dir.parentFile)
+            dirDeltaList.updateAll()
+            dduFileDeltaList.updateAll()
+        }
     }
 
     private fun requestImportDdus() {
