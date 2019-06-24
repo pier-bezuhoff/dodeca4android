@@ -51,10 +51,11 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
 import java.io.File
 
-// MAYBE: better animation on delete/duplicate/...
+// MAYBE: better animation on removeAt/duplicate/...
 // TODO: store last pos
 class DduChooserActivity : AppCompatActivity()
     , ContextMenuManager
+    , OldDduFileAdapter.FileChooser
     , DduFileAdapter.FileChooser
 {
     private val optionsManager by lazy {
@@ -72,13 +73,15 @@ class DduChooserActivity : AppCompatActivity()
     private var createdContextMenu: ContextMenuSource? = null
     private var requestedDduFile: File? = null
     private var requestedDduDir: File? = null
+    private lateinit var dirDeltaList: DeltaList<File>
+    private lateinit var dduFileDeltaList: DeltaList<File>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dduchooser)
         setInitialDir()
-        initDirRecyclerView()
-        initDduRecyclerView()
+        initOldDirRecyclerView()
+        initOldDduRecyclerView()
     }
 
     private fun setInitialDir() {
@@ -115,6 +118,30 @@ class DduChooserActivity : AppCompatActivity()
         viewModel.files.observe(this, Observer {
             adapter.submitList(it)
         })
+    }
+
+    private fun initOldDirRecyclerView() {
+        val adapter = OldDirAdapter(viewModel.oldDirs)
+        dirDeltaList = DeltaList(viewModel.oldDirs, adapter)
+        dir_recycler_view.adapter = adapter
+        dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
+        dir_recycler_view.itemAnimator = DefaultItemAnimator()
+        adapter.dirChangeSubscription.subscribeFrom(viewModel)
+        adapter.contextMenuSubscription.subscribeFrom(this)
+    }
+
+    private fun initOldDduRecyclerView() {
+        val adapter = OldDduFileAdapter(viewModel.oldFiles)
+        dduFileDeltaList = DeltaList(viewModel.oldFiles, adapter)
+        ddu_recycler_view.adapter = adapter
+        // NOTE: colors and thickness of dividers are set from styles.xml
+        ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
+        ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.HORIZONTAL))
+        ddu_recycler_view.itemAnimator = DefaultItemAnimator()
+        adapter.fileChooserSubscription.subscribeFrom(this)
+        adapter.contextMenuSubscription.subscribeFrom(this)
+        adapter.previewSupplierSubscription.subscribeFrom(viewModel)
+        adapter.inheritLifecycleOf(this)
     }
 
     override fun chooseFile(file: File) {
@@ -200,7 +227,6 @@ class DduChooserActivity : AppCompatActivity()
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         }
         startActivityForResult(intent, IMPORT_DDUS_REQUEST_CODE)
-//        startActivityForResult(Intent.createChooser(intent, "Select ddu-files"), IMPORT_DDUS_REQUEST_CODE)
     }
 
     private fun importDdus(uris: List<Uri>) {
@@ -224,6 +250,7 @@ class DduChooserActivity : AppCompatActivity()
                 }
             }
             refreshDir()
+            dduFileDeltaList.updateAll()
         }
     }
 
@@ -279,7 +306,7 @@ class DduChooserActivity : AppCompatActivity()
         lifecycleScope.launch(Dispatchers.IO) {
             val target = File(dir, source.name)
             contentResolver.copyDirectory(source, target)
-            refreshDir()
+            dirDeltaList.add(target)
         }
     }
 
@@ -295,6 +322,8 @@ class DduChooserActivity : AppCompatActivity()
                     }
                     FileUtils.cleanDirectory(dir)
                     refreshDir()
+                    dduFileDeltaList.updateAll()
+                    dirDeltaList.updateAll()
                 }
             }
             cancelButton { }
@@ -341,7 +370,7 @@ class DduChooserActivity : AppCompatActivity()
             if (success) {
                 toast(getString(R.string.ddu_rename_toast, file.fileName, newName))
                 dduFileRepository.updateFilename(file.filename, newFilename = newFilename)
-                refreshDir()
+                dduFileDeltaList.update(file, newFile)
             } else {
                 Log.w(TAG, "failed to rename $file to $newFile")
             }
@@ -353,7 +382,7 @@ class DduChooserActivity : AppCompatActivity()
         lifecycleScope.launch {
             dduFileRepository.deleteIfExists(file.filename)
             file.delete()
-            refreshDir()
+            dduFileDeltaList.remove(file)
         }
     }
 
@@ -367,7 +396,7 @@ class DduChooserActivity : AppCompatActivity()
                 )
             restoredOriginal?.let {
                 toast(getString(R.string.ddu_restore_toast, file.fileName, restoredOriginal.fileName))
-                refreshDir()
+                dduFileDeltaList.addBefore(file, dir/restoredOriginal)
             }
         }
     }
@@ -378,7 +407,7 @@ class DduChooserActivity : AppCompatActivity()
             copyFile(file, newFile)
             dduFileRepository.duplicate(file.filename, newFile.filename)
             toast(getString(R.string.ddu_duplicate_toast, file.fileName, newFile.fileName))
-            refreshDir()
+            dduFileDeltaList.addAfter(file, newFile)
         }
     }
 
@@ -433,8 +462,8 @@ class DduChooserActivity : AppCompatActivity()
             }
             val success = dir.deleteRecursively()
             if (!success)
-                Log.w(TAG, "failed to delete directory \"$dir\"")
-            refreshDir()
+                Log.w(TAG, "failed to removeAt directory \"$dir\"")
+            dirDeltaList.remove(dir)
         }
     }
 
@@ -468,8 +497,8 @@ class DduChooserActivity : AppCompatActivity()
         private const val IMPORT_DIR_REQUEST_CODE = 1
         private const val IMPORT_DDUS_REQUEST_CODE = 2
         private const val EXPORT_DIR_REQUEST_CODE = 3
-        private const val EXPORT_DDU_REQUEST_CODE = 5
-        private const val EXPORT_DDU_FOR_DODECA_LOOK_REQUEST_CODE = 6
+        private const val EXPORT_DDU_REQUEST_CODE = 4
+        private const val EXPORT_DDU_FOR_DODECA_LOOK_REQUEST_CODE = 5
         private val DEFAULT_DDU_FILENAME = Filename("untitled.ddu")
     }
 }

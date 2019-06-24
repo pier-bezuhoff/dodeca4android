@@ -56,7 +56,7 @@ class Ddu(
         |  bestCenter = $bestCenter
         |  shape = $shape
         |  file = $file
-        |  figures = $circles
+        |  circles = $circles
         |)
     """.trimMargin()
 
@@ -67,10 +67,10 @@ class Ddu(
     }
 
     suspend fun saveToStream(outputStream: OutputStream) =
-        DDUWriter(this@Ddu).write(outputStream)
+        DduWriter(this@Ddu).write(outputStream)
 
     suspend fun saveToStreamForDodecaLook(outputStream: OutputStream) =
-        DDUWriter(this).writeForDodecaLook(outputStream)
+        DduWriter(this).writeForDodecaLook(outputStream)
 
     suspend fun buildPreview(width: Int, height: Int): Bitmap = withContext(Dispatchers.Default) {
         // used RGB_565 instead of ARGB_8888 for performance (visually indistinguishable)
@@ -140,7 +140,6 @@ interface DduAttributesHolder {
     var shape: Shape
 }
 
-
 private class CircleBuilder {
     var radius: Double? = null
     var x: Double? = null
@@ -153,7 +152,7 @@ private class CircleBuilder {
     class NotEnoughBuildParametersException(message: String = DEFAULT_MESSAGE) : Exception(message) {
         companion object {
             private const val DEFAULT_MESSAGE: String =
-                "CircleBuilder must have radius, x and y in order to build CircleFigure"
+                "CircleBuilder must have [radius], [x] and [y] in order to build CircleFigure"
         }
     }
 
@@ -328,7 +327,7 @@ private class DduReader(private val reader: InputStreamReader) {
 }
 
 
-private class DDUWriter(private val ddu: Ddu) {
+private class DduWriter(private val ddu: Ddu) {
     private lateinit var outputStream: OutputStream
     private val legacyGlobals: List<String> = listOf(
         ddu.backgroundColor.fromColor(),
@@ -348,7 +347,7 @@ private class DDUWriter(private val ddu: Ddu) {
     }
 
     suspend fun writeForDodecaLook(output: OutputStream) {
-        // MAYBE: abstract DDUWriter + 2 impl-s
+        // MAYBE: abstract DduWriter + 2 impl-s
         withContext(Dispatchers.IO) {
             outputStream = output
             output.use {
