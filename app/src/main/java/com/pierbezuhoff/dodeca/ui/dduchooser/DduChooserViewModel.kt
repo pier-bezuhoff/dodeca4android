@@ -15,23 +15,27 @@ import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.isDdu
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import org.jetbrains.anko.toast
 import java.io.File
 import java.io.FileFilter
+import kotlin.coroutines.coroutineContext
 
 class DduChooserViewModel(
     application: Application,
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , DduFileAdapter.PreviewSupplier
-    , DirAdapter.DirChangeListener
 {
     // NOTE: only previews for ddu-files in current dir, should not use very much memory
     private val previews: MutableMap<File, LiveData<Bitmap>> = mutableMapOf()
+    private val previewJobs: MutableMap<File, Job> = mutableMapOf()
     private val _dir: MutableLiveData<File> = MutableLiveData()
+    private val _ddusLoading: MutableLiveData<Boolean> = MutableLiveData(false)
     val dirs: MutableList<File> = mutableListOf()
     val files: MutableList<File> = mutableListOf()
     val dir: LiveData<File> = _dir
+    val ddusLoading: LiveData<Boolean> = _ddusLoading
 
     fun setInitialDir(newDir: File) {
         if (_dir.value == null) {
@@ -40,9 +44,11 @@ class DduChooserViewModel(
         }
     }
 
-    override fun onDirChanged(dir: File) {
-        Log.i(TAG, "onDirChanged($dir)")
+    fun goToDir(dir: File) {
+        if (_dir.value != dir)
+            Log.i(TAG, "dir -> $dir")
         _dir.postValue(dir)
+        clearPreviewJobs()
         previews.clear()
         updateFromDir(dir)
     }
@@ -59,6 +65,9 @@ class DduChooserViewModel(
             return livePreview.map { file to it }
         }
         val preview = liveData {
+            coroutineContext[Job]?.let { job ->
+                previewJobs[file] = job // track job to be able to cancel it afterwards
+            }
             dduFileRepository.insertIfAbsent(file.filename)
             val cachedBitmap = dduFileRepository.getPreview(file.filename)
             val bitmap = cachedBitmap ?: tryBuildPreviewOf(file)
@@ -94,18 +103,46 @@ class DduChooserViewModel(
     }
 
     fun forgetPreviewOf(file: File) {
+        clearPreviewJob(file)
         previews.remove(file)
+    }
+
+    private fun clearPreviewJobs() {
+        previewJobs.forEach { (_, job) -> job.cancel() }
+        previewJobs.clear()
+    }
+
+    private fun clearPreviewJob(file: File) {
+        previewJobs[file]?.cancel()
+        previewJobs.remove(file)
+    }
+
+    fun startLoadingDdus() {
+        _ddusLoading.postValue(true)
+    }
+
+    fun finishLoadingDdus() {
+        _ddusLoading.postValue(false)
+    }
+
+    suspend inline fun <T> loadingDdus(crossinline action: suspend () -> T): T {
+        startLoadingDdus()
+        return try {
+            action()
+        } finally {
+            finishLoadingDdus()
+        }
+
+    }
+
+    override fun onCleared() {
+        clearPreviewJobs()
+        super.onCleared()
     }
 
     companion object {
         private const val TAG = "DduChooserViewModel"
         private val DIR_FILE_FILTER: FileFilter = FileFilter { it.isDirectory }
         private val DDU_FILE_FILTER: FileFilter = FileFilter { it.isDdu }
-//        // TODO: understand, why when PAGE_SIZE <= 10 rename/duplicate/... cause crash (item created in the end of the recycler view)
-//        private const val PAGE_SIZE = 1000 // when # of ddus > PAGE_SIZE smth bad may happen
-//        private val PAGED_LIST_CONFIG = PagedList.Config.Builder()
-//            .setPageSize(PAGE_SIZE)
-//            .setEnablePlaceholders(true)
-//            .build()
     }
 }

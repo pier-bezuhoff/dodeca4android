@@ -46,6 +46,12 @@
     <string name="ddu_duplicate_toast">Duplicate of \"%s\" saved as \"%s\"</string>
     <string name="dir_importing_toast">Importing folder \"%s\"…</string>
     <string name="dir_exporting_toast">Exporting folder \"%s\"…</string>
+    <string name="ddus_imported_toast">New ddu-pictures have been imported</string>
+    <string name="ddus_importing_toast">Importing new ddu-pictures</string>
+    <string name="dir_exported_toast">Folder \"%s\" has been exported</string>
+    <string name="dir_imported_toast">Folder \"%s\" has been imported</string>
+    <string name="ddu_exported_toast">ddu-picture \"%s\" has been exported</string>
+    <string name="ddu_exported_for_dodecalook_toast">ddu-picture \"%s\" has been exported as DodecaLook-compatible</string>
 
     <!-- Strings related to settings -->
     <string name="settings_evolution_title">Evolution</string>
