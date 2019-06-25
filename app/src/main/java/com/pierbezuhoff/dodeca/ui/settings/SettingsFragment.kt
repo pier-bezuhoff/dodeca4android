@@ -13,6 +13,7 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.ui.MainActivity
 import org.jetbrains.anko.support.v4.email
 
+@Suppress("UsePropertyAccessSyntax")
 class SettingsFragment : PreferenceFragmentCompat() {
     var settingsActivity: SettingsActivity? = null
 
@@ -51,6 +52,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
         hookClick("support") { sendFeedback() }
         SeekBarPreference(context)
+        @Suppress("ConstantConditionIf")
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach { key ->
                 val removed = findPreference<Preference>(key)?.let {

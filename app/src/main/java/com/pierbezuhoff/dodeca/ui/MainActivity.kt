@@ -48,6 +48,7 @@ import kotlinx.android.synthetic.main.toolbar1.*
 import kotlinx.android.synthetic.main.toolbar2.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
@@ -204,7 +205,7 @@ class MainActivity : AppCompatActivity()
                 fileNameEditText = editText(initialFileName.toString())
             }
             positiveButton(R.string.save_as_button_title) {
-                // TODO: check if exists, not blank, etc.
+                // MAYBE: check if exists, not blank, etc.
                 try {
                     val filename = Filename("${fileNameEditText.text}.ddu")
                     val file: File = dir/filename
@@ -333,8 +334,9 @@ class MainActivity : AppCompatActivity()
             inputStream?.let {
                 copyStream(it, FileOutputStream(targetFile))
                 Log.i(TAG, "imported ddu-file \"$name\"")
-                // TODO: check if it's possible to show toast from here (IO thread?)
-                toast(getString(R.string.imported_ddu_toast, name))
+                withContext(Dispatchers.Main) {
+                    toast(getString(R.string.imported_ddu_toast, name))
+                }
                 dodecaViewModel.loadDduFrom(targetFile)
             }
         }

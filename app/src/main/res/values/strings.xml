@@ -51,7 +51,8 @@
     <string name="dir_exported_toast">Folder \"%s\" has been exported</string>
     <string name="dir_imported_toast">Folder \"%s\" has been imported</string>
     <string name="ddu_exported_toast">ddu-picture \"%s\" has been exported</string>
-    <string name="ddu_exported_for_dodecalook_toast">ddu-picture \"%s\" has been exported as DodecaLook-compatible</string>
+    <string name="ddu_exported_for_dodecalook_toast">ddu-picture \"%s\" has been exported as DodecaLook-compatible
+    </string>
 
     <!-- Strings related to settings -->
     <string name="settings_evolution_title">Evolution</string>
