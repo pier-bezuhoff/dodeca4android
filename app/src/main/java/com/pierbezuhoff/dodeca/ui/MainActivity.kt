@@ -65,7 +65,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 // TODO: extract toolbar-related part to another activity
-// ISSUE: add progress [ddu] while loading new ddu (for now it continues last one)
 // ISSUE: what if go to choose ddus before extracting 'em all: add progress dialog!
 // FIX: temporaryPause
 @RuntimePermissions

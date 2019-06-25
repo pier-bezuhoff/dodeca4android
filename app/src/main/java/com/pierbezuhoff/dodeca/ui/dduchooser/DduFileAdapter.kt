@@ -34,6 +34,11 @@ class DduFileAdapter(private val files: List<File>)
         lateinit var file: File
     }
 
+    fun findPositionOf(file: File): Int? {
+        val ix = files.indexOf(file)
+        return if (ix == -1) null else ix
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DduFileViewHolder {
         val view = LayoutInflater
             .from(parent.context)

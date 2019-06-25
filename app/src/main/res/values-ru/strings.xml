@@ -145,4 +145,10 @@
     <string name="draw_circles_button_title">Режим рисования окружностей</string>
     <string name="stat_x_updates_per_initial">\? пересчётов за ?</string>
     <string name="stat_x_updates_per_text">%d пересчётов за %.3f секунд</string>
+    <string name="ddu_exported_for_dodecalook_toast">ddu-картина \"%s\" была экспортирована как DodecaLook-совместимая</string>
+    <string name="ddu_exported_toast">ddu-картина \"%s\" была экспортирована</string>
+    <string name="ddus_imported_toast">Новые ddu-картины были импортированы</string>
+    <string name="ddus_importing_toast">Импорт новых ddu-картин</string>
+    <string name="dir_exported_toast">Папка \"%s\" была экспортирована</string>
+    <string name="dir_imported_toast">Папка \"%s\" была импортирована</string>
 </resources>
