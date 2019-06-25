@@ -287,7 +287,7 @@ class MainActivity : AppCompatActivity()
 
     private suspend fun revertCurrentDdu() {
         dodecaViewModel.getDduFile()?.let { file: File ->
-            mainViewModel.extractDduFrom(file.filename)
+            mainViewModel.extractDduFrom(file.filename, overwrite = true)
             dodecaViewModel.loadDduFrom(file)
         }
     }
