@@ -66,6 +66,7 @@ import java.io.IOException
 
 // TODO: extract toolbar-related part to another activity
 // ISSUE: what if go to choose ddus before extracting 'em all: add progress dialog!
+// ISSUE: OOM after many repeated ddu loadings
 // FIX: temporaryPause
 @RuntimePermissions
 class MainActivity : AppCompatActivity()

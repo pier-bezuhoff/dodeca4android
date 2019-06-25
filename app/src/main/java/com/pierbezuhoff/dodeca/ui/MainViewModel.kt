@@ -122,21 +122,22 @@ class MainViewModel(
 
     private suspend fun onUpgrade() {
         // extracting assets
+        val targetDir = context.dduDir
         withContext(Dispatchers.IO) {
             try {
-                if (!currentDir.exists()) {
-                    Log.i(TAG, "Extracting all assets into $currentDir")
-                    currentDir.mkdir()
-                    extractDdusFromAssets()
+                if (!targetDir.exists()) {
+                    Log.i(TAG, "Extracting all assets into $targetDir")
+                    targetDir.mkdir()
+                    extractDdusFromAssets(targetDir = targetDir)
                 } else {
                     // try to export new ddus
-                    Log.i(TAG, "Adding new ddu assets into $currentDir")
-                    val existedDdus = currentDir.listFiles().map { it.name }.toSet()
+                    Log.i(TAG, "Adding new ddu assets into $targetDir")
+                    val existedDdus = targetDir.listFiles().map { it.name }.toSet()
                     context.assets
                         .list(context.getString(R.string.ddu_asset_dir))
                         ?.filter { it !in existedDdus }
                         ?.forEach { name ->
-                            extractDduFrom(Filename(name), currentDir)
+                            extractDduFrom(Filename(name), targetDir = targetDir)
                         }
                 }
             } catch (e: IOException) {
@@ -145,9 +146,8 @@ class MainViewModel(
         }
     }
 
-    suspend fun extractDdusFromAssets(overwrite: Boolean = false) {
+    suspend fun extractDdusFromAssets(overwrite: Boolean = false, targetDir: File = context.dduDir) {
         withContext(Dispatchers.IO) {
-            val targetDir = currentDir
             context.assets
                 .list(context.getString(R.string.ddu_asset_dir))
                 ?.forEach { name ->
@@ -156,9 +156,8 @@ class MainViewModel(
         }
     }
 
-    suspend fun extractDduFrom(filename: Filename, dir: File = currentDir, overwrite: Boolean = false) =
-        context.extractDduFrom(filename, dir, dduFileRepository,
-            TAG, overwrite)
+    suspend fun extractDduFrom(filename: Filename, targetDir: File = context.dduDir, overwrite: Boolean = false) =
+        context.extractDduFrom(filename, targetDir, dduFileRepository, TAG, overwrite)
 
     companion object {
         private const val TAG = "MainViewModel"
