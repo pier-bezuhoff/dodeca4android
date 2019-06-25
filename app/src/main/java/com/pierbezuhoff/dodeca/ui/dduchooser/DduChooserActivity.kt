@@ -275,7 +275,9 @@ class DduChooserActivity : AppCompatActivity()
                             exportDduDocumentFile(dir, targetDir)
                         }
                 }
-                toast(getString(R.string.dir_exported_toast, dir.name))
+                withContext(Dispatchers.Main) {
+                    toast(getString(R.string.dir_exported_toast, dir.name))
+                }
             }
             requestedDduDir = null
         }
@@ -459,7 +461,9 @@ class DduChooserActivity : AppCompatActivity()
                         copyStream(file.inputStream(), outputStream)
                     }
                     requestedDduFile = null
-                    toast(getString(R.string.ddu_exported_toast, file.fileName))
+                    withContext(Dispatchers.Main) {
+                        toast(getString(R.string.ddu_exported_toast, file.fileName))
+                    }
                 }
             }
         }
@@ -483,7 +487,9 @@ class DduChooserActivity : AppCompatActivity()
                         Log.i(TAG, "exporting file \"${file.name}\" in DodecaLook-compatible format")
                         Ddu.fromFile(file).saveToStreamForDodecaLook(outputStream)
                     }
-                    toast(getString(R.string.ddu_exported_for_dodecalook_toast, file.fileName))
+                    withContext(Dispatchers.Main) {
+                        toast(getString(R.string.ddu_exported_for_dodecalook_toast, file.fileName))
+                    }
                     requestedDduFile = null
                 }
             }
