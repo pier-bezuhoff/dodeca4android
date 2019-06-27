@@ -151,4 +151,6 @@
     <string name="ddus_importing_toast">Импорт новых ddu-картин</string>
     <string name="dir_exported_toast">Папка \"%s\" была экспортирована</string>
     <string name="dir_imported_toast">Папка \"%s\" была импортирована</string>
+    <string name="adding_assets_status">Добавление новых ddu-картин в \"%s\"…</string>
+    <string name="extracting_assets_status">Извлечение ddu-картин в \"%s\"…</string>
 </resources>
