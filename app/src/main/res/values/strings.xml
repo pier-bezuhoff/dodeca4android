@@ -54,6 +54,10 @@
     <string name="ddu_exported_for_dodecalook_toast">ddu-picture \"%s\" has been exported as DodecaLook-compatible
     </string>
 
+    <!-- Status strings -->
+    <string name="extracting_assets_status">Extracting ddu-pictures into \"%s\"…</string>
+    <string name="adding_assets_status">Adding new ddu-pictures into \"%s\"…</string>
+
     <!-- Strings related to settings -->
     <string name="settings_evolution_title">Evolution</string>
     <string name="reverse_motion">Reverse motion</string>
