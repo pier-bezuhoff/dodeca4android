@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
+import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDduChooserBinding
 import com.pierbezuhoff.dodeca.models.DduFileRepository
@@ -345,11 +346,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun toggleFolders() {
-        dir_recycler_view.visibility = when(dir_recycler_view.visibility) {
-            View.GONE -> View.VISIBLE
-            View.VISIBLE -> View.GONE
-            else -> dir_recycler_view.visibility
-        }
+        optionsManager.toggle(options.showFolders)
     }
 
     private fun renameDduFile(file: File) {

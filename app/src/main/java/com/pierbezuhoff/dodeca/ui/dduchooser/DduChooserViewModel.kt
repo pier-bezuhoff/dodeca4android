@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.map
 import com.pierbezuhoff.dodeca.data.Ddu
+import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
@@ -36,6 +37,7 @@ class DduChooserViewModel(
     val files: MutableList<File> = mutableListOf()
     val currentDir: LiveData<File> = _currentDir
     val ddusLoading: LiveData<Boolean> = _ddusLoading
+    val showFolders: LiveData<Boolean> = options.showFolders.liveData
 
     fun setInitialDir(newDir: File) {
         if (_currentDir.value == null) {
