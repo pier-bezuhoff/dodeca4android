@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca.ui.dodecaview
 import android.app.Application
 import android.graphics.Canvas
 import android.util.Log
+import android.view.MotionEvent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -32,6 +33,7 @@ class DodecaViewModel(
     application: Application,
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
+    , DodecaGestureDetector.SingleTapListener
     , DduRepresentation.StatHolder // by statUpdater
     , DduRepresentation.ToastEmitter
     , BottomBarHider
@@ -50,16 +52,17 @@ class DodecaViewModel(
     val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
     val updating: LiveData<Boolean> = _updating
     val drawTrace: LiveData<Boolean> = _drawTrace
-    val shape: MutableLiveData<Shape> = MutableLiveData(DEFAULT_SHAPE) // [shape] may be changed from MainActivity
+    val shape: MutableLiveData<Shape> = MutableLiveData(DEFAULT_SHAPE) // [shape] may be changed from DodecaViewActivity
 
     private val bottomBarHider: BottomBarHider = CoroutineBottomBarHider(viewModelScope)
     override val bottomBarShown: LiveData<Boolean> get() = bottomBarHider.bottomBarShown
     override fun showBottomBar() = bottomBarHider.showBottomBar()
     override fun hideBottomBar() = bottomBarHider.hideBottomBar()
 
+    val showStat: LiveData<Boolean> = options.showStat.liveData
     private val statUpdater: StatUpdater = StatUpdater()
     override fun updateStat(delta: Int) = statUpdater.updateStat(delta)
-    // following 3 are used to show stat[istics]
+    // following 3 are used to show stat[istics] in layout/activity_dodeca_view.xml
     val nUpdates: LiveData<Long> = _nUpdates
     val dTime: LiveData<Float> = _dTime
     val statTimeDelta: Int = statUpdater.statTimeDelta
@@ -72,6 +75,9 @@ class DodecaViewModel(
         shape.observeForever { shape: Shape ->
             dduRepresentation.value?.shape = shape
         }
+        DodecaGestureDetector.get(context)
+            .onSingleTapSubscription
+            .subscribeFrom(this)
     }
 
     fun loadInitialDdu() {
@@ -180,6 +186,10 @@ class DodecaViewModel(
 
     private fun getRecentDduFile(): File =
         context.dduDir/optionsManager.fetched(options.recentDdu)
+
+    override fun onSingleTap(e: MotionEvent?) {
+        toggleBottomBar()
+    }
 
     fun requestOneStep() {
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->

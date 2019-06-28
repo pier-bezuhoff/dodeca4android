@@ -4,8 +4,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
 >
     <data>
-        <variable name="mainViewModel" type="com.pierbezuhoff.dodeca.ui.MainViewModel"/>
-        <variable name="dodecaViewModel" type="com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewModel"/>
+        <variable name="viewModel" type="com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewModel"/>
         <import type="com.pierbezuhoff.dodeca.data.Shape"/>
     </data>
     <LinearLayout
@@ -33,7 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/trace_button_title}"
-                app:tintEnabled="@{safeUnbox(dodecaViewModel.drawTrace)}"
+                app:tintEnabled="@{safeUnbox(viewModel.drawTrace)}"
         />
         <Spinner
                 android:id="@+id/shape_spinner"
@@ -42,8 +41,8 @@
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:selectedItemPosition="@={Shape.toOrdinal(dodecaViewModel.shape)}"
-                android:onItemSelected="@{(parent, view, position, id) -> mainViewModel.showBottomBar()}"
+                android:selectedItemPosition="@={Shape.toOrdinal(viewModel.shape)}"
+                android:onItemSelected="@{(parent, view, position, id) -> viewModel.showBottomBar()}"
                 android:contentDescription="@{@string/shape_spinner_title}"
         />
         <ImageButton

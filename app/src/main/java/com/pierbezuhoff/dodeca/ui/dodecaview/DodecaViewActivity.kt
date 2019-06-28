@@ -59,12 +59,8 @@ import java.io.IOException
 class DodecaViewActivity : AppCompatActivity()
     , ChooseColorDialog.ChooseColorListener
     {
-        private val optionsManager by lazy {
-            OptionsManager(defaultSharedPreferences)
-        }
-        private val factory by lazy {
-            DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
-        }
+        private val optionsManager = OptionsManager(defaultSharedPreferences)
+        private val factory = DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
         private val viewModel by lazy {
             ViewModelProviders.of(this, factory).get(DodecaViewModel::class.java)
         }
@@ -81,9 +77,9 @@ class DodecaViewActivity : AppCompatActivity()
             supportActionBar?.setDisplayShowTitleEnabled(false)
             setupToolbar()
             viewModel.showBottomBar()
-            // if launched from implicit intent:
+            // if launched from implicit intent (passed from MainActivity):
             intent.getParcelableExtra<Uri>("ddu_uri")?.let { uri ->
-                readUriWithPremissionCheck(uri)
+                readUriWithPermissionCheck(uri)
             } ?: viewModel.loadInitialDdu()
             dodeca_view.inheritLifecycleOf(this)
         }
