@@ -27,27 +27,27 @@ class DduChooserViewModel(
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , DduFileAdapter.PreviewSupplier
 {
-    // NOTE: only previews for ddu-files in current dir, should not use very much memory
+    // NOTE: only previews for ddu-files in current currentDir, should not use very much memory
     private val previews: MutableMap<File, LiveData<Bitmap>> = mutableMapOf()
     private val previewJobs: MutableMap<File, Job> = mutableMapOf()
-    private val _dir: MutableLiveData<File> = MutableLiveData()
+    private val _currentDir: MutableLiveData<File> = MutableLiveData()
     private val _ddusLoading: MutableLiveData<Boolean> = MutableLiveData(false)
     val dirs: MutableList<File> = mutableListOf()
     val files: MutableList<File> = mutableListOf()
-    val dir: LiveData<File> = _dir
+    val currentDir: LiveData<File> = _currentDir
     val ddusLoading: LiveData<Boolean> = _ddusLoading
 
     fun setInitialDir(newDir: File) {
-        if (_dir.value == null) {
-            _dir.value = newDir
+        if (_currentDir.value == null) {
+            _currentDir.value = newDir
             updateFromDir(newDir)
         }
     }
 
     fun goToDir(dir: File) {
-        if (_dir.value != dir)
-            Log.i(TAG, "dir -> $dir")
-        _dir.postValue(dir)
+        if (_currentDir.value != dir)
+            Log.i(TAG, "currentDir -> $dir")
+        _currentDir.postValue(dir)
         clearPreviewJobs()
         previews.clear()
         updateFromDir(dir)

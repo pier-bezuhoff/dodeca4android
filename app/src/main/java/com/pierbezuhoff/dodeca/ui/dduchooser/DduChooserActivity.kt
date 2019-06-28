@@ -22,7 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.values
-import com.pierbezuhoff.dodeca.databinding.ActivityDduchooserBinding
+import com.pierbezuhoff.dodeca.databinding.ActivityDduChooserBinding
 import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
@@ -39,7 +39,7 @@ import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.getDisplayName
 import com.pierbezuhoff.dodeca.utils.isDdu
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
-import kotlinx.android.synthetic.main.activity_dduchooser.*
+import kotlinx.android.synthetic.main.activity_ddu_chooser.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -69,7 +69,7 @@ class DduChooserActivity : AppCompatActivity()
     }
     private val dduFileRepository =
         DduFileRepository.get(this)
-    private val dir: File get() = viewModel.dir.value ?: dduDir
+    private val dir: File get() = viewModel.currentDir.value ?: dduDir
     private var createdContextMenu: ContextMenuSource? = null
     private var requestedDduFile: File? = null
     private var requestedDduDir: File? = null
@@ -78,8 +78,8 @@ class DduChooserActivity : AppCompatActivity()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding: ActivityDduchooserBinding =
-            DataBindingUtil.setContentView(this, R.layout.activity_dduchooser)
+        val binding: ActivityDduChooserBinding =
+            DataBindingUtil.setContentView(this, R.layout.activity_ddu_chooser)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
         setInitialDir()
@@ -88,7 +88,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun setInitialDir() {
-        // MAYBE: just get viewModel.dir (from recentDdu)
+        // MAYBE: just get viewModel.currentDir (from recentDdu)
         val initialDir = intent.getStringExtra("dir_path")
             ?.let { dirPath ->
                 val newDir = File(dirPath)
@@ -265,7 +265,7 @@ class DduChooserActivity : AppCompatActivity()
 
     private fun exportDduDir(uri: Uri) {
         requestedDduDir?.let { dir ->
-            Log.i(TAG, "exporting dir \"${dir.name}\"")
+            Log.i(TAG, "exporting currentDir \"${dir.name}\"")
             toast(getString(R.string.dir_exporting_toast, dir.name))
             lifecycleScope.launch(Dispatchers.IO) {
                 viewModel.loadingDdus {
@@ -306,7 +306,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun importDduDir(source: DocumentFile) {
-        Log.i(TAG, "importing dir \"${source.name}\"")
+        Log.i(TAG, "importing currentDir \"${source.name}\"")
         toast(getString(R.string.dir_importing_toast, source.name))
         lifecycleScope.launch(Dispatchers.IO) {
             viewModel.loadingDdus {

@@ -4,8 +4,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
 >
     <data>
-        <variable name="mainViewModel" type="com.pierbezuhoff.dodeca.ui.MainViewModel"/>
-        <variable name="dodecaViewModel" type="com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewModel"/>
+        <variable name="viewModel" type="com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewModel"/>
     </data>
     <LinearLayout
             android:id="@+id/toolbar2"
@@ -52,7 +51,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/play_button_title}"
-                app:switchImageWhen="@{safeUnbox(dodecaViewModel.updating)}"
+                app:switchImageWhen="@{safeUnbox(viewModel.updating)}"
                 app:trueDrawable="@{@drawable/ic_pause}"
                 app:falseDrawable="@{@drawable/ic_play}"
         />
