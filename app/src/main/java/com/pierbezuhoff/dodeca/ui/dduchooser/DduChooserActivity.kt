@@ -88,6 +88,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun setInitialDir() {
+        // MAYBE: just get viewModel.dir (from recentDdu)
         val initialDir = intent.getStringExtra("dir_path")
             ?.let { dirPath ->
                 val newDir = File(dirPath)
@@ -135,9 +136,7 @@ class DduChooserActivity : AppCompatActivity()
     override fun chooseFile(file: File) {
         Log.i(TAG, "File \"${file.absolutePath}\" chosen")
         val intent = Intent()
-        intent.putExtra("path", file.absolutePath)
-        // ISSUE: when exiting thru "back" button [dir] is lost
-        intent.putExtra("dir_path", dir.absolutePath)
+        intent.putExtra("ddu_path", file.absolutePath)
         setResult(Activity.RESULT_OK, intent)
         finish()
     }
