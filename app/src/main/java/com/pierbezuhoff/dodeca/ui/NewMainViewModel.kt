@@ -33,7 +33,7 @@ class NewMainViewModel(
     suspend fun doUpgrade() {
         val currentVersionCode = BuildConfig.VERSION_CODE
         val oldVersionCode = optionsManager.fetched(options.versionCode)
-        require(oldVersionCode != currentVersionCode)
+        require(oldVersionCode != currentVersionCode) { "Nothing to upgrade" }
         val upgrading: Boolean = oldVersionCode < currentVersionCode
         val upgradingOrDegrading: String = if (upgrading) "Upgrading" else "Degrading"
         val currentVersionName: String = BuildConfig.VERSION_NAME

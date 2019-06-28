@@ -252,7 +252,7 @@ class MainActivity : AppCompatActivity()
                     data?.getStringExtra("dir_path")?.let { dirPath ->
                         mainViewModel.updateDir(File(dirPath))
                     }
-                    data?.getStringExtra("path")?.let { path ->
+                    data?.getStringExtra("ddu_path")?.let { path ->
                         readFile(File(path))
                     }
                 }

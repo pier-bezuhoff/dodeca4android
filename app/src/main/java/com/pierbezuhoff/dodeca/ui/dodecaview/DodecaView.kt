@@ -6,7 +6,6 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.lifecycle.Observer
 import com.pierbezuhoff.dodeca.models.DduRepresentation
-import com.pierbezuhoff.dodeca.ui.MainViewModel
 import com.pierbezuhoff.dodeca.utils.ComplexFF
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritor
@@ -19,8 +18,7 @@ class DodecaView @JvmOverloads constructor(
     , LifecycleInheritor by LifecycleInheritance() // inherited from MainActivity
     , DduRepresentation.Presenter
 {
-    lateinit var mainViewModel: MainViewModel // injected via DataBinding
-    lateinit var dodecaViewModel: DodecaViewModel // injected via DataBinding
+    lateinit var viewModel: DodecaViewModel // injected via DataBinding
 
     private var initialized = false
 
@@ -38,16 +36,16 @@ class DodecaView @JvmOverloads constructor(
 
     private fun onFirstRun() {
         initialized = true
-        dodecaViewModel.gestureDetector.registerAsOnTouchListenerFor(this)
+        viewModel.gestureDetector.registerAsOnTouchListenerFor(this)
         setupObservers()
     }
 
     private fun setupObservers() {
         require(lifecycleInherited)
-        mainViewModel.bottomBarShown.observe(this, Observer {
+        viewModel.bottomBarShown.observe(this, Observer {
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
         })
-        dodecaViewModel.dduRepresentation.observe(this, Observer {
+        viewModel.dduRepresentation.observe(this, Observer {
             it.connectPresenter(this)
         })
     }
@@ -63,7 +61,7 @@ class DodecaView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         canvas?.let {
-            dodecaViewModel.onDraw(canvas)
+            viewModel.onDraw(canvas)
         }
     }
 

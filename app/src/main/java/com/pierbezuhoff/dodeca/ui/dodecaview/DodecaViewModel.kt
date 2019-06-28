@@ -34,6 +34,7 @@ class DodecaViewModel(
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , DduRepresentation.StatHolder // by statUpdater
     , DduRepresentation.ToastEmitter
+    , BottomBarHider
 {
     private val _dduLoading: MutableLiveData<Boolean> = MutableLiveData(false)
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
@@ -51,7 +52,13 @@ class DodecaViewModel(
     val drawTrace: LiveData<Boolean> = _drawTrace
     val shape: MutableLiveData<Shape> = MutableLiveData(DEFAULT_SHAPE) // [shape] may be changed from MainActivity
 
+    private val bottomBarHider: BottomBarHider = CoroutineBottomBarHider(viewModelScope)
+    override val bottomBarShown: LiveData<Boolean> get() = bottomBarHider.bottomBarShown
+    override fun showBottomBar() = bottomBarHider.showBottomBar()
+    override fun hideBottomBar() = bottomBarHider.hideBottomBar()
+
     private val statUpdater: StatUpdater = StatUpdater()
+    override fun updateStat(delta: Int) = statUpdater.updateStat(delta)
     // following 3 are used to show stat[istics]
     val nUpdates: LiveData<Long> = _nUpdates
     val dTime: LiveData<Float> = _dTime
@@ -253,12 +260,14 @@ class DodecaViewModel(
     fun resume() {
         val newUpdating = oldUpdating ?: DEFAULT_UPDATING
         setUpdating(newUpdating)
+        showBottomBar()
     }
 
     /** Pause ddu evolution (no autosave) */
     private fun _pause() {
         oldUpdating = updating.value
         setUpdating(false)
+        hideBottomBar()
     }
 
     /** Pause ddu evolution and maybe autosave (can be [resume]d) */
@@ -305,8 +314,33 @@ class DodecaViewModel(
         shape.value = dduRepresentation.shape
     }
 
-    override fun updateStat(delta: Int) =
-        statUpdater.updateStat(delta)
+
+    fun applyInstantSettings(
+        revertCurrentDdu: Boolean = false,
+        revertAllDdus: Boolean = false,
+        discardAllPreviews: Boolean = false
+    ) {
+        suspend fun revertCurrentDdu() {
+            getDduFile()?.let { file: File ->
+                dduFileService.extractDduAsset(file.filename, overwrite = true)
+                loadDduFrom(file)
+            }
+        }
+        suspend fun revertAllDdus() {
+            dduFileService.extractDduAssets(overwrite = true)
+            getDduFile()?.let { file: File ->
+                loadDduFrom(file)
+            }
+        }
+        suspend fun discardAllPreviews() =
+            dduFileRepository.dropAllPreviews()
+
+        viewModelScope.launch {
+            if (revertCurrentDdu) revertCurrentDdu()
+            if (revertAllDdus) revertAllDdus()
+            if (discardAllPreviews) discardAllPreviews()
+        }
+    }
 
 
     private inner class StatUpdater : DduRepresentation.StatHolder {

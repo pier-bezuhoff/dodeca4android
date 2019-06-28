@@ -2,7 +2,6 @@ package com.pierbezuhoff.dodeca.ui.dodecaview
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -10,11 +9,8 @@ import android.os.Bundle
 import android.os.PersistableBundle
 import android.util.Log
 import android.view.View
-import android.view.ViewGroup
-import android.widget.BaseAdapter
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
@@ -23,13 +19,9 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
-import com.pierbezuhoff.dodeca.data.Options
-import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaViewBinding
-import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.OptionsManager
-import com.pierbezuhoff.dodeca.ui.MainViewModel
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
@@ -53,7 +45,6 @@ import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
 import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.editText
-import org.jetbrains.anko.layoutInflater
 import org.jetbrains.anko.toast
 import permissions.dispatcher.NeedsPermission
 import permissions.dispatcher.OnPermissionDenied
@@ -77,10 +68,7 @@ class DodecaViewActivity : AppCompatActivity()
         private val viewModel by lazy {
             ViewModelProviders.of(this, factory).get(DodecaViewModel::class.java)
         }
-        private val shared_mainViewModel = TODO() as MainViewModel
-        private val dir: File get() = shared_mainViewModel.currentDir
-        private val dduFileRepository =
-            DduFileRepository.get(this)
+        private val dir: File get() = viewModel.dir
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
@@ -93,10 +81,10 @@ class DodecaViewActivity : AppCompatActivity()
             supportActionBar?.setDisplayShowTitleEnabled(false)
             setupToolbar()
             viewModel.showBottomBar()
-            viewModel.viewModelScope.launch {
-                if (!handleLaunchFromImplicitIntent())
-                    viewModel.loadInitialDdu()
-            }
+            // if launched from implicit intent:
+            intent.getParcelableExtra<Uri>("ddu_uri")?.let { uri ->
+                readUriWithPremissionCheck(uri)
+            } ?: viewModel.loadInitialDdu()
             dodeca_view.inheritLifecycleOf(this)
         }
 
@@ -123,17 +111,6 @@ class DodecaViewActivity : AppCompatActivity()
             }
         }
 
-        private fun handleLaunchFromImplicitIntent(): Boolean {
-            if (intent.action == Intent.ACTION_VIEW && (intent.type == null ||
-                    intent.type?.endsWith("ddu", ignoreCase = true) == true ||
-                    intent.data?.path?.endsWith(".ddu", ignoreCase = true) == true)
-            ) {
-                intent.data?.let { readUriWithPermissionCheck(it) }
-                return true
-            }
-            return false
-        }
-
         private fun onToolbarItemClick(id: Int) {
             viewModel.showBottomBar()
             when (id) {
@@ -149,7 +126,7 @@ class DodecaViewActivity : AppCompatActivity()
                 R.id.trace_button -> viewModel.toggleDrawTrace()
                 R.id.choose_color_button -> {
                     viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
-                        temporaryPause()
+                        viewModel.pause()
                         ChooseColorDialog(
                             this,
                             chooseColorListener = this,
@@ -164,7 +141,7 @@ class DodecaViewActivity : AppCompatActivity()
         }
 
         private fun <T : AppCompatActivity> goToActivity(cls: Class<T>, resultCode: Int, vararg extraArgs: Pair<String, String>) {
-            viewModel.cancelBottomBarHidingJob()
+            viewModel.hideBottomBar()
             val intent = Intent(this, cls)
             for ((key, arg) in extraArgs)
                 intent.putExtra(key, arg)
@@ -178,7 +155,7 @@ class DodecaViewActivity : AppCompatActivity()
             if (!values.saveAs) {
                 viewModel.requestSaveDdu()
             } else {
-                temporaryPause() // BUG: timer job cancellation does not work
+                viewModel.pause() // BUG: timer job cancellation does not work
                 buildSaveAsDialog().show()
             }
         }
@@ -198,36 +175,24 @@ class DodecaViewActivity : AppCompatActivity()
                         viewModel.requestSaveDduAt(file)
                     } catch (e: IOException) {
                         e.printStackTrace()
-                    } finally { resumeAfterTemporaryPause() }
+                    } finally { viewModel.resume() }
                 }
-                cancelButton { resumeAfterTemporaryPause() }
+                cancelButton { viewModel.resume() }
             }
 
-        private fun temporaryPause() {
-            viewModel.pause()
-            viewModel.cancelBottomBarHidingJob()
-        }
-
-        private fun resumeAfterTemporaryPause() {
-            viewModel.resume()
-            viewModel.showBottomBar()
-        }
-
         override fun onChooseColorClosed() {
-            resumeAfterTemporaryPause()
+            viewModel.resume()
             viewModel.requestUpdateOnce()
         }
 
         override fun onResume() {
             super.onResume()
             viewModel.resume()
-            viewModel.restartBottomBarHidingJobIfShown()
         }
 
         override fun onPause() {
             super.onPause()
             viewModel.pause()
-            viewModel.cancelBottomBarHidingJob()
         }
 
         override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -235,10 +200,7 @@ class DodecaViewActivity : AppCompatActivity()
             when (requestCode) {
                 DDU_CODE -> {
                     if (resultCode == Activity.RESULT_OK) {
-                        data?.getStringExtra("dir_path")?.let { dirPath ->
-                            shared_mainViewModel.updateDir(File(dirPath))
-                        }
-                        data?.getStringExtra("path")?.let { path ->
+                        data?.getStringExtra("ddu_path")?.let { path ->
                             readFile(File(path))
                         }
                     }
@@ -247,7 +209,7 @@ class DodecaViewActivity : AppCompatActivity()
                     if (resultCode == Activity.RESULT_OK) {
                         fun have(param: String): Boolean =
                             data?.getBooleanExtra(param, false) == true
-                        applyInstantSettings(
+                        viewModel.applyInstantSettings(
                             revertCurrentDdu = have("default_ddu"),
                             revertAllDdus = have("default_ddus"),
                             discardAllPreviews = have("discard_previews")
@@ -258,36 +220,6 @@ class DodecaViewActivity : AppCompatActivity()
                 HELP_CODE -> Unit
             }
             viewModel.showBottomBar()
-        }
-
-        private fun applyInstantSettings(
-            revertCurrentDdu: Boolean = false,
-            revertAllDdus: Boolean = false,
-            discardAllPreviews: Boolean = false
-        ) {
-            viewModel.viewModelScope.launch {
-                if (revertCurrentDdu) revertCurrentDdu()
-                if (revertAllDdus) revertAllDdus()
-                if (discardAllPreviews) discardAllPreviews()
-            }
-        }
-
-        private suspend fun revertCurrentDdu() {
-            viewModel.getDduFile()?.let { file: File ->
-                shared_mainViewModel.extractDduFrom(file.filename, overwrite = true)
-                viewModel.loadDduFrom(file)
-            }
-        }
-
-        private suspend fun revertAllDdus() {
-            shared_mainViewModel.extractDdusFromAssets(overwrite = true)
-            viewModel.getDduFile()?.let { file: File ->
-                viewModel.loadDduFrom(file)
-            }
-        }
-
-        private suspend fun discardAllPreviews() {
-            dduFileRepository.dropAllPreviews()
         }
 
         override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -354,39 +286,8 @@ class DodecaViewActivity : AppCompatActivity()
             }.show()
         }
 
-        private class ShapeSpinnerAdapter(private val context: Context) : BaseAdapter() {
-            private val shapeDrawableResources: Map<Shape, Int> = mapOf(
-                Shape.CIRCLE to R.drawable.ic_circle,
-                Shape.SQUARE to R.drawable.ic_square,
-                Shape.CROSS to R.drawable.ic_cross,
-                Shape.VERTICAL_BAR to R.drawable.ic_vertical_bar,
-                Shape.HORIZONTAL_BAR to R.drawable.ic_horizontal_bar
-            )
-            private val shapes: Array<Shape> = Shape.values()
-            private class SpinnerViewHolder(val imageView: ImageView)
-
-            override fun getItem(position: Int): Shape = shapes[position]
-            override fun getItemId(position: Int): Long = position.toLong()
-            override fun getCount(): Int = shapes.size
-
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-                val itemView: View = convertView
-                    ?: context.layoutInflater
-                        .inflate(R.layout.shape_spinner_row, parent, false).apply {
-                            tag = SpinnerViewHolder(
-                                findViewById(R.id.shape_spinner_image)
-                            )
-                        }
-                val shapeDrawableResource: Int = shapeDrawableResources.getValue(shapes[position])
-                (itemView.tag as SpinnerViewHolder).imageView.setImageDrawable(
-                    ContextCompat.getDrawable(context, shapeDrawableResource))
-                return itemView
-            }
-        }
-
         companion object {
-        private const val TAG = "MainActivity"
-        const val LIMITED_VERSION = false
+        private const val TAG = "DodecaViewActivity"
         // requestCode-s for onActivityResult
         private const val DDU_CODE = 1
         private const val APPLY_SETTINGS_CODE = 2
@@ -395,3 +296,4 @@ class DodecaViewActivity : AppCompatActivity()
         private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
 }
+

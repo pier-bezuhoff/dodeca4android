@@ -37,7 +37,6 @@ class NewMainActivity : AppCompatActivity()
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
         viewModel.viewModelScope.launch {
-            // MAYBE: show progress dialog/ddu
             if (viewModel.shouldUpgrade()) {
                 viewModel.doUpgrade()
             }
