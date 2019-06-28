@@ -31,10 +31,12 @@ class OptionsManager(
         }
     }
 
-    fun toggle(option: Option<Boolean>) {
+    fun toggle(option: Option<Boolean>): Boolean {
+        val newValue = !option.value
         sharedPreferences.edit {
-            option.setToIn(!option.value, this)
+            option.setToIn(newValue, this)
         }
+        return newValue
     }
 
     companion object {
@@ -54,6 +56,7 @@ class OptionsManager(
                 autocenterPreview,
                 nPreviewUpdates,
                 previewSmartUpdates,
+                showFolders,
                 recentDdu,
                 versionCode
             )

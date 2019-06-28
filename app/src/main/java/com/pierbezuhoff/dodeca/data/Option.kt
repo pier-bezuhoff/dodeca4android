@@ -125,6 +125,7 @@ class Options(val resources: Resources) {
     val autocenterPreview = BooleanKeyOption("autocenter_preview", R.bool.autocenter_preview)
     val nPreviewUpdates = ParsedIntKeyOption("n_preview_updates", R.string.n_preview_updates)
     val previewSmartUpdates = BooleanKeyOption("preview_smart_updates", R.bool.preview_smart_updates)
+    val showFolders = BooleanKeyOption("show_folders", R.bool.show_folders)
     /** Absolute path of the most recent ddu-file */
     val recentDdu = ParsedKeyOption("recent_ddu", R.string.first_ddu) { Filename(this) }
     val versionCode = KeyOption("version_code", resources.getInteger(R.integer.version_code))
@@ -153,6 +154,7 @@ class Values(private val options: Options) {
     val previewSizePx: Int get() = options.resources.dp2px(values.previewSize)
     val nPreviewUpdates: Int by options.nPreviewUpdates
     val previewSmartUpdates: Boolean by options.previewSmartUpdates
+    val showFolders: Boolean by options.showFolders
     /** Absolute path of the most recent ddu-file */
     val recentDdu: Filename by options.recentDdu // TODO: Filename -> File
     val versionCode: Int by options.versionCode
