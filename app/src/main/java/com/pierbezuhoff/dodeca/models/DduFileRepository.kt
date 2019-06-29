@@ -16,6 +16,7 @@ class DduFileRepository private constructor(context: Context) {
             DduFileDatabase::class.java,
             DB_NAME
         )
+            .addMigrations(DduFileDatabase.MIGRATION_2_3)
             .addMigrations(DduFileDatabase.MIGRATION_3_4)
 //            .fallbackToDestructiveMigration()
             .build()

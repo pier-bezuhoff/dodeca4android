@@ -40,8 +40,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.math3.complex.Complex
+import java.lang.ref.WeakReference
 import kotlin.math.roundToInt
 
+@Suppress("NOTHING_TO_INLINE")
 class DduRepresentation(override val ddu: Ddu) : Any()
     , DduAttributesHolder
     , DduOptionsChangeListener
@@ -59,16 +61,18 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         fun toast(message: CharSequence)
         fun formatToast(@StringRes id: Int, vararg args: Any)
     }
-    private var presenter: Presenter? = null
+    private var _presenter: WeakReference<Presenter>? = null
+    private var presenter: Presenter?
+        get() = _presenter?.get()
+        set(value) { value?.let { _presenter = WeakReference(it) } }
     private val statHolderConnection = Connection<StatHolder>()
     private val toastEmitterConnection = Connection<ToastEmitter>()
     val statHolderSubscription = statHolderConnection.subscription
     val toastEmitterSubscription = toastEmitterConnection.subscription
 
-    var optionsManager: OptionsManager? = null // inject by setter
+    private var optionsManager: OptionsManager? = null // inject by setter
 
     private val updateScheduler: UpdateScheduler = UpdateScheduler()
-    private val drawer: Drawer = Drawer()
 
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
@@ -87,11 +91,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     private var redrawTraceOnce: Boolean by Once()
     private var updateOnce: Boolean by Once()
 
-    private val presenterDisconnector: LifecycleObserver = object : LifecycleObserver {
-        @Suppress("unused")
-        @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-        fun disconnectPresenter() { this@DduRepresentation.presenter = null }
-    }
+    private val presenterDisconnector = PresenterDisconnector(this)
 
     fun connectPresenter(presenter: Presenter) {
         if (this.presenter != null) { // should not happen
@@ -132,11 +132,12 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     }
 
     private fun Presenter.mainLoop() {
+        val dduRepresentation: WeakReference<DduRepresentation> = WeakReference(this@DduRepresentation)
         with(this) {
             lifecycleScope.launch {
                 delay(INITIAL_DELAY_IN_MILLISECONDS)
-                while (isActive) {
-                    if (updating)
+                while (isActive && dduRepresentation.get() != null) {
+                    if (dduRepresentation.get()?.updating == true)
                         redraw()
                     delay(DT_IN_MILLISECONDS)
                 }
@@ -164,15 +165,9 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         }
     }
 
-    fun draw(canvas: Canvas) =
-        drawer.draw(canvas)
-
-    fun clearTrace() =
-        drawer.clearTrace()
-
     fun oneStep() {
         val batch: Int = values.speed.roundToInt()
-        drawer.drawTimes(batch)
+        drawTimes(batch)
         updateOnce = true
         presenter?.redraw()
         statHolderConnection.send { updateStat(batch) }
@@ -274,6 +269,128 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         presenter?.redraw()
     }
 
+    fun draw(canvas: Canvas) =
+        when {
+            updating || updateOnce -> updateCanvas(canvas)
+            drawTrace -> canvas.drawTraceCanvas()
+            else -> onCanvas(canvas) {
+                drawVisible()
+            }
+        }
+
+    /** Reset trace and invalidate */
+    fun clearTrace() {
+        tryClearTrace()
+        trace?.canvas?.concat(motion)
+        redrawTraceOnce = drawTrace
+        if (!updating) {
+            onTraceCanvas {
+                drawVisible()
+            }
+        }
+        presenter?.redraw()
+    }
+
+    private fun tryClearTrace() {
+        var done = false
+        var canvasFactor = values.canvasFactor
+        presenter?.getSize()?.let { (width: Int, height: Int) ->
+            while (!done) {
+                try {
+                    trace = Trace(width, height)
+                    done = true
+                } catch (e: OutOfMemoryError) {
+                    e.printStackTrace()
+                    if (canvasFactor > 1) {
+                        val nextFactor = canvasFactor - 1
+                        Log.w(TAG, "too large canvasFactor: $canvasFactor -> $nextFactor")
+                        toastEmitterConnection.send {
+                            formatToast(R.string.canvas_factor_oom_toast, canvasFactor, nextFactor)
+                        }
+                        canvasFactor = nextFactor
+                    } else {
+                        // TODO: memory profiling
+                        // ISSUE: after many ddu loads RAM seems to be only increasing which eventually leads to OOM
+                        Log.e(TAG, "min canvasFactor  $canvasFactor is too large!")
+                        toastEmitterConnection.send {
+                            formatToast(R.string.minimal_canvas_factor_oom_toast, canvasFactor)
+                        }
+                        done = true // very bad
+                    }
+                }
+            }
+            if (canvasFactor != values.canvasFactor)
+                optionsManager?.set(options.canvasFactor, canvasFactor)
+        }
+    }
+
+    private fun updateCanvas(canvas: Canvas) {
+        if (updating && updateScheduler.timeToUpdate()) {
+            val times = values.speed.roundToInt()
+            drawTimes(times)
+            statHolderConnection.send { updateStat(times) }
+            updateScheduler.doUpdate()
+        }
+        drawUpdatedCanvas(canvas)
+    }
+
+    private fun drawTimes(times: Int = 1) {
+        if (times <= 1) {
+            circleGroup.update(reverse = values.reverseMotion)
+        } else {
+            onTraceCanvas {
+                drawCirclesTimes(times)
+            }
+        }
+    }
+
+    private fun drawUpdatedCanvas(canvas: Canvas) {
+        if (drawTrace) {
+            onTraceCanvas {
+                if (redrawTraceOnce)
+                    drawBackground()
+                drawCircles()
+            }
+            canvas.drawTraceCanvas()
+        } else {
+            onCanvas(canvas) {
+                drawVisible()
+            }
+        }
+    }
+
+    private inline fun onCanvas(canvas: Canvas, crossinline draw: Canvas.() -> Unit) =
+        canvas.withMatrix(motion) { draw() }
+
+    private inline fun onTraceCanvas(crossinline draw: Canvas.() -> Unit) =
+        trace?.canvas?.draw()
+
+    private inline fun Canvas.drawTraceCanvas() =
+        trace?.drawOn(this, paint)
+
+    /** Draw background and circles */
+    private inline fun Canvas.drawVisible() {
+        drawBackground()
+        drawCircles()
+    }
+
+    private inline fun Canvas.drawBackground() =
+        drawColor(ddu.backgroundColor)
+
+    private inline fun Canvas.drawCircles() {
+        circleGroup.draw(
+            canvas = this,
+            shape = shape, showAllCircles = values.showAllCircles
+        )
+    }
+
+    private inline fun Canvas.drawCirclesTimes(times: Int) {
+        circleGroup.drawTimes(
+            times = times, canvas = this,
+            shape = shape, showAllCircles = values.showAllCircles, reverse = values.reverseMotion
+        )
+    }
+
 
     private class UpdateScheduler {
         private var lastUpdateTime: Long = 0
@@ -301,130 +418,11 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         }
     }
 
-
-    @Suppress("NOTHING_TO_INLINE")
-    private inner class Drawer {
-        fun draw(canvas: Canvas) =
-            when {
-                updating || updateOnce -> updateCanvas(canvas)
-                drawTrace -> canvas.drawTraceCanvas()
-                else -> onCanvas(canvas) {
-                    drawVisible()
-                }
-            }
-
-        /** Reset trace and invalidate */
-        fun clearTrace() {
-            tryClearTrace()
-            trace?.canvas?.concat(motion)
-            redrawTraceOnce = drawTrace
-            if (!updating) {
-                onTraceCanvas {
-                    drawVisible()
-                }
-            }
-            presenter?.redraw()
-        }
-
-        private fun tryClearTrace() {
-            var done = false
-            var canvasFactor = values.canvasFactor
-            presenter?.getSize()?.let { (width: Int, height: Int) ->
-                while (!done) {
-                    try {
-                        trace = Trace(width, height)
-                        done = true
-                    } catch (e: OutOfMemoryError) {
-                        e.printStackTrace()
-                        if (canvasFactor > 1) {
-                            val nextFactor = canvasFactor - 1
-                            Log.w(TAG, "too large canvasFactor: $canvasFactor -> $nextFactor")
-                            toastEmitterConnection.send {
-                                formatToast(R.string.canvas_factor_oom_toast, canvasFactor, nextFactor)
-                            }
-                            canvasFactor = nextFactor
-                        } else {
-                            // TODO: memory profiling
-                            // ISSUE: after many ddu loads RAM seems to be only increasing which eventually leads to OOM
-                            Log.e(TAG, "min canvasFactor  $canvasFactor is too large!")
-                            toastEmitterConnection.send {
-                                formatToast(R.string.minimal_canvas_factor_oom_toast, canvasFactor)
-                            }
-                            done = true // very bad
-                        }
-                    }
-                }
-                if (canvasFactor != values.canvasFactor)
-                    optionsManager?.set(options.canvasFactor, canvasFactor)
-            }
-        }
-
-        private fun updateCanvas(canvas: Canvas) {
-            if (updating && updateScheduler.timeToUpdate()) {
-                val times = values.speed.roundToInt()
-                drawer.drawTimes(times)
-                statHolderConnection.send { updateStat(times) }
-                updateScheduler.doUpdate()
-            }
-            drawer.drawUpdatedCanvas(canvas)
-        }
-
-        fun drawTimes(times: Int = 1) {
-            if (times <= 1) {
-                circleGroup.update(reverse = values.reverseMotion)
-            } else {
-                onTraceCanvas {
-                    drawCirclesTimes(times)
-                }
-            }
-        }
-
-        private fun drawUpdatedCanvas(canvas: Canvas) {
-            if (drawTrace) {
-                onTraceCanvas {
-                    if (redrawTraceOnce)
-                        drawBackground()
-                    drawCircles()
-                }
-                canvas.drawTraceCanvas()
-            } else {
-                onCanvas(canvas) {
-                    drawVisible()
-                }
-            }
-        }
-
-        private inline fun onCanvas(canvas: Canvas, crossinline draw: Canvas.() -> Unit) =
-            canvas.withMatrix(motion) { draw() }
-
-        private inline fun onTraceCanvas(crossinline draw: Canvas.() -> Unit) =
-            trace?.canvas?.draw()
-
-        private inline fun Canvas.drawTraceCanvas() =
-            trace?.drawOn(this, paint)
-
-        /** Draw background and circles */
-        private inline fun Canvas.drawVisible() {
-            drawBackground()
-            drawCircles()
-        }
-
-        private inline fun Canvas.drawBackground() =
-            drawColor(ddu.backgroundColor)
-
-        private inline fun Canvas.drawCircles() {
-            circleGroup.draw(
-                canvas = this,
-                shape = shape, showAllCircles = values.showAllCircles
-            )
-        }
-
-        private inline fun Canvas.drawCirclesTimes(times: Int) {
-            circleGroup.drawTimes(
-                times = times, canvas = this,
-                shape = shape, showAllCircles = values.showAllCircles, reverse = values.reverseMotion
-            )
-        }
+    class PresenterDisconnector(dduRepresentation: DduRepresentation) : LifecycleObserver {
+        val dduRepresentation: WeakReference<DduRepresentation> = WeakReference(dduRepresentation)
+        @Suppress("unused")
+        @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        fun disconnectPresenter() { dduRepresentation.get()?.presenter = null }
     }
 
     companion object {

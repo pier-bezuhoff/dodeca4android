@@ -15,6 +15,11 @@ abstract class DduFileDatabase : RoomDatabase() {
     abstract fun dduFileDao(): DduFileDao
 
     companion object {
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // nothing to do: db was not altered
+            }
+        }
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // nothing to do: db was not altered
