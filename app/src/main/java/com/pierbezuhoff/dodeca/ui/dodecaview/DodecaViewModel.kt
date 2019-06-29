@@ -22,7 +22,9 @@ import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.dduPath
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.filename
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.anko.toast
 import java.io.File
@@ -75,7 +77,7 @@ class DodecaViewModel(
         shape.observeForever { shape: Shape ->
             dduRepresentation.value?.shape = shape
         }
-        DodecaGestureDetector.get(context)
+        gestureDetector
             .onSingleTapSubscription
             .subscribeFrom(this)
     }
@@ -114,7 +116,9 @@ class DodecaViewModel(
             stop()
             _dduLoading.postValue(true)
             val ddu: Ddu = Ddu.fromFile(file)
-            loadDdu(ddu)
+            withContext(Dispatchers.Main) {
+                loadDdu(ddu)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             formatToast(R.string.bad_ddu_format_toast, file.path)
@@ -299,7 +303,7 @@ class DodecaViewModel(
     }
 
     private fun setUpdating(newUpdating: Boolean) {
-        _updating.value = newUpdating
+        _updating.postValue(newUpdating)
         dduRepresentation.value?.updating = newUpdating
     }
 
@@ -319,9 +323,9 @@ class DodecaViewModel(
         dduRepresentation.value?.circleGroup
 
     private fun updateDduAttributesFrom(dduRepresentation: DduRepresentation) {
-        _updating.value = dduRepresentation.updating
-        _drawTrace.value = dduRepresentation.drawTrace
-        shape.value = dduRepresentation.shape
+        _updating.postValue(dduRepresentation.updating)
+        _drawTrace.postValue(dduRepresentation.drawTrace)
+        shape.postValue(dduRepresentation.shape)
     }
 
 
@@ -352,18 +356,17 @@ class DodecaViewModel(
         }
     }
 
-
     private inner class StatUpdater : DduRepresentation.StatHolder {
         internal val statTimeDelta: Int = context.resources.getInteger(R.integer.stat_time_delta)
         private var nUpdates: Long by Delegates.observable(0L) { _, _, newNUpdates: Long ->
-            _nUpdates.value = newNUpdates
+            _nUpdates.postValue(newNUpdates)
         }
         private var lastUpdateTime: Long = 0
         private var lastTimedUpdate: Long = 0
         private var lastTimedUpdateTime: Long = System.currentTimeMillis()
         @Suppress("RemoveExplicitTypeArguments") // do not compile without it...
         private var dTime: Float? by Delegates.observable<Float?>(null) { _, _, newDTime: Float? ->
-            _dTime.value = newDTime
+            _dTime.postValue(newDTime)
         }
 
         override fun updateStat(delta: Int) {

@@ -155,7 +155,7 @@ class DodecaViewActivity : AppCompatActivity()
         if (!values.saveAs) {
             viewModel.requestSaveDdu()
         } else {
-            viewModel.pause() // BUG: timer job cancellation does not work
+            viewModel.pause()
             buildSaveAsDialog().show()
         }
     }

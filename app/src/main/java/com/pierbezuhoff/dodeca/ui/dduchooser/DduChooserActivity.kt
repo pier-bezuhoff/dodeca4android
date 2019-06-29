@@ -68,8 +68,9 @@ class DduChooserActivity : AppCompatActivity()
     private val viewModel by lazy {
         ViewModelProviders.of(this, factory).get(DduChooserViewModel::class.java)
     }
-    private val dduFileRepository =
-        DduFileRepository.get(this)
+    private val dduFileRepository by lazy {
+        DduFileRepository.get(applicationContext)
+    }
     private val dir: File get() = viewModel.currentDir.value ?: dduDir
     private var createdContextMenu: ContextMenuSource? = null
     private var requestedDduFile: File? = null
