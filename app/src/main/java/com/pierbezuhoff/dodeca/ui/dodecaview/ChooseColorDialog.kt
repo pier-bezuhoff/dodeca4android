@@ -55,7 +55,7 @@ class ChooseColorDialog(
         val manager = LinearLayoutManager(context)
         rowAdapter = CircleAdapter(context, circleGroup)
         val height: Int = context.displayMetrics.heightPixels
-        val recyclerView = layout.circle_rows.apply {
+        layout.circle_rows.apply {
             layoutManager = manager
             adapter = rowAdapter
             layoutParams = LinearLayout.LayoutParams(
