@@ -9,7 +9,6 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
-import com.pierbezuhoff.dodeca.utils.dduDir
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -45,7 +44,7 @@ class MainViewModel(
 
     private suspend fun onUpgrade() {
         // extracting assets
-        val targetDir = context.dduDir
+        val targetDir = dduFileService.dduDir
         withContext(Dispatchers.IO) {
             _loading.postValue(true)
             try {

@@ -25,6 +25,7 @@ import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDduChooserBinding
 import com.pierbezuhoff.dodeca.models.DduFileRepository
+import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
 import com.pierbezuhoff.dodeca.utils.FileName
@@ -32,12 +33,9 @@ import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.copyDirectory
 import com.pierbezuhoff.dodeca.utils.copyFile
 import com.pierbezuhoff.dodeca.utils.copyStream
-import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.div
-import com.pierbezuhoff.dodeca.utils.extractDduFrom
 import com.pierbezuhoff.dodeca.utils.fileName
 import com.pierbezuhoff.dodeca.utils.filename
-import com.pierbezuhoff.dodeca.utils.getDisplayName
 import com.pierbezuhoff.dodeca.utils.isDdu
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.android.synthetic.main.activity_ddu_chooser.*
@@ -54,6 +52,7 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
 import java.io.File
 
+// TODO: extract stuff into DduFileService
 class DduChooserActivity : AppCompatActivity()
     , ContextMenuManager
     , DirAdapter.DirChangeListener
@@ -71,7 +70,10 @@ class DduChooserActivity : AppCompatActivity()
     private val dduFileRepository by lazy {
         DduFileRepository.get(applicationContext)
     }
-    private val dir: File get() = viewModel.currentDir.value ?: dduDir
+    private val dduFileService by lazy {
+        DduFileService(applicationContext)
+    }
+    private val dir: File get() = viewModel.currentDir.value ?: dduFileService.dduDir
     private var createdContextMenu: ContextMenuSource? = null
     private var requestedDduFile: File? = null
     private var requestedDduDir: File? = null
@@ -95,7 +97,7 @@ class DduChooserActivity : AppCompatActivity()
             ?.let { dirPath ->
                 val newDir = File(dirPath)
                 if (newDir.exists()) newDir else null
-            } ?: dduDir
+            } ?: dduFileService.dduDir
         viewModel.setInitialDir(initialDir)
     }
 
@@ -121,7 +123,7 @@ class DduChooserActivity : AppCompatActivity()
         adapter.contextMenuSubscription.subscribeFrom(this)
         adapter.previewSupplierSubscription.subscribeFrom(viewModel)
         adapter.inheritLifecycleOf(this)
-        val lastFile = dduDir/values.recentDdu
+        val lastFile = dduFileService.dduDir/values.recentDdu
         adapter.findPositionOf(lastFile)?.let { position: Int ->
             // NOTE: works bad when position is in the end of adapter
             //  also jumping slightly when scrolling upward
@@ -210,7 +212,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun navigateToParentDir() {
-        if (dir.absolutePath != dduDir.absolutePath) {
+        if (dir != dduFileService.dduDir) {
             viewModel.goToDir(dir.parentFile)
             dirDeltaList.updateAll()
             dduFileDeltaList.updateAll()
@@ -230,24 +232,7 @@ class DduChooserActivity : AppCompatActivity()
         lifecycleScope.launch(Dispatchers.IO) {
             toast(getString(R.string.ddus_importing_toast))
             viewModel.loadingDdus {
-                uris.forEach { uri ->
-                    DocumentFile.fromSingleUri(this@DduChooserActivity, uri)?.let { file ->
-                        val displayName: Filename? by lazy {
-                            contentResolver.getDisplayName(uri)?.toString()
-                                ?.let {
-                                    Filename(if ('.' !in it) "$it.ddu" else it)
-                                }
-                        }
-                        val filename: Filename =
-                            file.filename ?: displayName ?: DEFAULT_DDU_FILENAME
-                        val target0: File = dir/filename
-                        val target: File =
-                            if (target0.exists()) withUniquePostfix(target0)
-                            else target0
-                        Log.i(TAG, "importing file \"${target.name}\" from \"${file.uri}\"")
-                        contentResolver.copyFile(file, target)
-                    }
-                }
+                dduFileService.importByUris(uris, targetDir = dir, defaultFilename = DEFAULT_DDU_FILENAME)
             }
             refreshDir()
             withContext(Dispatchers.Main) {
@@ -410,15 +395,11 @@ class DduChooserActivity : AppCompatActivity()
     private fun restoreDduFile(file: File) {
         lifecycleScope.launch(Dispatchers.IO) {
             viewModel.loadingDdus {
-                val restoredOriginal: Filename? =
-                    extractDduFrom(
-                        file.filename, dduDir, dduFileRepository,
-                        TAG
-                    )
+                val restoredOriginal: File? = dduFileService.extractDduAsset(file.filename)
                 restoredOriginal?.let {
                     withContext(Dispatchers.Main) {
                         toast(getString(R.string.ddu_restore_toast, file.fileName, restoredOriginal.fileName))
-                        dduFileDeltaList.addBefore(file, dir / restoredOriginal)
+                        dduFileDeltaList.addBefore(file, restoredOriginal)
                     }
                 }
             }

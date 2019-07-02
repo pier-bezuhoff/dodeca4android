@@ -1,12 +1,16 @@
 package com.pierbezuhoff.dodeca.models
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
+import androidx.documentfile.provider.DocumentFile
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.utils.Filename
+import com.pierbezuhoff.dodeca.utils.copyFile
 import com.pierbezuhoff.dodeca.utils.copyStream
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.filename
+import com.pierbezuhoff.dodeca.utils.getDisplayName
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,8 +24,8 @@ class DduFileService(private val context: Context) {
     val dduDir: File = File(context.filesDir, "ddu")
 
     /** Path, relative to [dduDir] */
-    fun dduPathOf(file: File): String =
-        file.absolutePath.substringAfter(dduDir.absolutePath).trim('/')
+    fun dduPathOf(file: File): Filename =
+        Filename(file.absolutePath.substringAfter(dduDir.absolutePath).trim('/'))
 
     suspend fun extractDduAssets(
         targetDir: File = dduDir,
@@ -46,7 +50,7 @@ class DduFileService(private val context: Context) {
         onlyNew: Boolean = false
     ): File? = withContext(Dispatchers.IO) {
         openStreamFromOriginalDduAsset(filename)?.let { (source: Filename, inputStream: InputStream) ->
-            val targetFile0: File = targetDir/source
+            val targetFile0: File = targetDir / source
             if (targetFile0.exists() && onlyNew)
                 return@let null
             val targetFile =
@@ -81,6 +85,34 @@ class DduFileService(private val context: Context) {
 
     private fun openStreamFromDduAsset(filename: Filename): InputStream =
         context.assets.open("${context.getString(R.string.ddu_asset_dir)}/$filename")
+
+    suspend fun importByUris(
+        uris: List<Uri>, targetDir: File = dduDir,
+        defaultFilename: Filename = Filename("untitled")
+    ): List<File?> =
+        uris.map { importByUri(it, targetDir, defaultFilename) }
+
+    suspend fun importByUri(
+        uri: Uri, targetDir: File = dduDir,
+        defaultFilename: Filename = Filename("untitled")
+    ): File? =
+        DocumentFile.fromSingleUri(context, uri)?.let { file ->
+            val displayName: Filename? by lazy {
+                context.contentResolver.getDisplayName(uri)?.toString()
+                    ?.let {
+                        Filename(if ('.' !in it) "$it.ddu" else it)
+                    }
+            }
+            val filename: Filename =
+                file.filename ?: displayName ?: defaultFilename
+            val target0: File = targetDir / filename
+            val target: File =
+                if (target0.exists()) withUniquePostfix(target0)
+                else target0
+            Log.i(TAG, "importing file \"${target.name}\" from \"${file.uri}\"")
+            context.contentResolver.copyFile(file, target)
+            return@let target
+    }
 
     companion object {
         private const val TAG = "DduFileService"

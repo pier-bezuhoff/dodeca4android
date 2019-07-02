@@ -17,9 +17,6 @@ import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
-import com.pierbezuhoff.dodeca.utils.Filename
-import com.pierbezuhoff.dodeca.utils.dduDir
-import com.pierbezuhoff.dodeca.utils.dduPath
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.filename
 import kotlinx.coroutines.Dispatchers
@@ -107,7 +104,7 @@ class DodecaViewModel(
                 _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
             }
         ddu.file?.let { file: File ->
-            setSharedPreference(options.recentDdu, Filename(context.dduPath(file)))
+            setSharedPreference(options.recentDdu, dduFileService.dduPathOf(file))
         }
     }
 
@@ -189,7 +186,7 @@ class DodecaViewModel(
     }
 
     private fun getRecentDduFile(): File =
-        context.dduDir/optionsManager.fetched(options.recentDdu)
+        dduFileService.dduDir/optionsManager.fetched(options.recentDdu)
 
     override fun onSingleTap(e: MotionEvent?) {
         toggleBottomBar()
@@ -251,9 +248,10 @@ class DodecaViewModel(
             context.toast(context.getString(R.string.error_ddu_save_no_file_toast))
         } else {
             try {
-                Log.i(TAG, "Saving ddu at ${context.dduPath(file)}")
+                val dduFilename = dduFileService.dduPathOf(file)
+                Log.i(TAG, "Saving ddu at $dduFilename")
                 ddu.saveToFile(file)
-                context.toast(context.getString(R.string.ddu_saved_toast, context.dduPath(file)))
+                context.toast(context.getString(R.string.ddu_saved_toast, dduFilename))
                 dduFileRepository.saveDerivative(source = ddu.file?.filename, target = file.filename)
             } catch (e: Throwable) {
                 e.printStackTrace()

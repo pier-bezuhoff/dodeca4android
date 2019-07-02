@@ -21,6 +21,7 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaViewBinding
+import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
@@ -29,7 +30,6 @@ import com.pierbezuhoff.dodeca.ui.settings.SettingsActivity
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.copyStream
-import com.pierbezuhoff.dodeca.utils.dduDir
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.fileName
 import com.pierbezuhoff.dodeca.utils.filename
@@ -67,6 +67,9 @@ class DodecaViewActivity : AppCompatActivity()
     }
     private val viewModel by lazy {
         ViewModelProviders.of(this, factory).get(DodecaViewModel::class.java)
+    }
+    private val dduFileService by lazy {
+        DduFileService(applicationContext)
     }
     private val dir: File get() = viewModel.dir
 
@@ -246,7 +249,7 @@ class DodecaViewActivity : AppCompatActivity()
         }
         val name: Filename = File(uri.path).filename
         viewModel.viewModelScope.launch(Dispatchers.IO) {
-            val targetFile = withUniquePostfix(dduDir/name)
+            val targetFile = withUniquePostfix(dduFileService.dduDir/name)
             // NOTE: when 'file' scheme (namely from ZArchiver) WRITE_EXTERNAL_STORAGE permission is obligatory
             val inputStream = contentResolver.openInputStream(uri)
             inputStream?.let {
