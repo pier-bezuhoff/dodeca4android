@@ -242,6 +242,7 @@ class DodecaViewActivity : AppCompatActivity()
         }
     }
 
+    // TODO: merge with DduFileService.importByUri
     @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun readUri(uri: Uri) {
         if (!haveWriteExternalStoragePermission()) {
