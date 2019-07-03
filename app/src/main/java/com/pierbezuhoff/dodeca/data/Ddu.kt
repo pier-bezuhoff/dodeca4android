@@ -67,7 +67,7 @@ class Ddu(
     }
 
     suspend fun saveToStream(outputStream: OutputStream) =
-        DduWriter(this@Ddu).write(outputStream)
+        DduWriter(this).write(outputStream)
 
     suspend fun saveToStreamForDodecaLook(outputStream: OutputStream) =
         DduWriter(this).writeForDodecaLook(outputStream)
@@ -111,6 +111,14 @@ class Ddu(
 
         suspend fun fromStream(stream: InputStream): Ddu = withContext(Dispatchers.IO) {
             DduReader(stream.reader()).read()
+        }
+
+        fun createBlankPreview(): Bitmap {
+            val size = values.previewSizePx
+            val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
+            val canvas = Canvas(bitmap)
+            canvas.drawColor(Color.WHITE)
+            return bitmap
         }
 
         val BLANK_DDU: Ddu = Ddu()
