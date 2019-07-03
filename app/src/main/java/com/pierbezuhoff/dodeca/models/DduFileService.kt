@@ -37,7 +37,7 @@ class DduFileService(private val context: Context) {
         overwrite: Boolean = false,
         onlyNew: Boolean = false
     ) {
-        require(targetDir.isDirectory)
+        require(!targetDir.exists() || targetDir.isDirectory)
         withContext(Dispatchers.IO) {
             if (!targetDir.exists())
                 targetDir.mkdir()
@@ -74,7 +74,6 @@ class DduFileService(private val context: Context) {
     }
 
     private suspend fun openStreamFromOriginalDduAsset(filename: Filename): Pair<Filename, InputStream>? {
-        val dduFileRepository = DduFileRepository.get(context)
         var source: Filename = filename
         val inputStream: InputStream? = try {
             openStreamFromDduAsset(source)
