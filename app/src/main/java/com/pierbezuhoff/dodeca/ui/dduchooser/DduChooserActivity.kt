@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
@@ -97,7 +98,7 @@ class DduChooserActivity : AppCompatActivity()
         val adapter = DirAdapter(viewModel.dirs)
         dirDeltaList = DeltaList(viewModel.dirs, adapter)
         dir_recycler_view.adapter = adapter
-        dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
+        dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext) as RecyclerView.LayoutManager
         dir_recycler_view.itemAnimator = DefaultItemAnimator()
         adapter.dirChangeSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
