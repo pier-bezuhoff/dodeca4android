@@ -159,7 +159,8 @@ class DodecaViewActivity : AppCompatActivity()
             viewModel.requestSaveDdu()
         } else {
             viewModel.pause()
-            buildSaveAsDialog().show()
+            buildSaveAsDialog()
+                .show()
         }
     }
 

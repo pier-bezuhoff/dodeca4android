@@ -32,10 +32,10 @@ class DodecaViewModel(
     application: Application,
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
-    , DodecaGestureDetector.SingleTapListener
+    , DodecaViewGestureDetector.SingleTapListener
     , DduRepresentation.StatHolder // by statUpdater
     , DduRepresentation.ToastEmitter
-    , BottomBarHider
+    , BottomBarHider // by bottomBarHider
 {
     private val _dduLoading: MutableLiveData<Boolean> = MutableLiveData(false)
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
@@ -66,7 +66,7 @@ class DodecaViewModel(
     val dTime: LiveData<Float> = _dTime
     val statTimeDelta: Int = statUpdater.statTimeDelta
 
-    val gestureDetector: DodecaGestureDetector = DodecaGestureDetector.get(context)
+    val gestureDetector: DodecaViewGestureDetector = DodecaViewGestureDetector.get(context)
 
     init {
         registerOptionsObservers()

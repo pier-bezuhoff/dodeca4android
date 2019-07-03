@@ -9,7 +9,7 @@ import android.view.View
 import com.pierbezuhoff.dodeca.utils.Connection
 
 /** Listen to single tap, scroll and scale gestures */
-class DodecaGestureDetector private constructor(
+class DodecaViewGestureDetector private constructor(
     context: Context
 ) : GestureDetector.SimpleOnGestureListener()
     , View.OnTouchListener
@@ -73,14 +73,14 @@ class DodecaGestureDetector private constructor(
     }
 
     companion object {
-        private const val TAG = "DodecaGestureDetector"
-        @Volatile private var instance: DodecaGestureDetector? = null
+        private const val TAG = "DodecaViewGestureDetector"
+        @Volatile private var instance: DodecaViewGestureDetector? = null
 
         /** Thread-safe via double-checked locking */
-        fun get(context: Context): DodecaGestureDetector =
+        fun get(context: Context): DodecaViewGestureDetector =
             instance ?: synchronized(this) {
                 instance
-                    ?: DodecaGestureDetector(context).also {
+                    ?: DodecaViewGestureDetector(context).also {
                     instance = it
                 }
             }
