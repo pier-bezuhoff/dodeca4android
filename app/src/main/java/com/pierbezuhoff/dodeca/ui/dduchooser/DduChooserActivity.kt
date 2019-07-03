@@ -45,7 +45,6 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
 import java.io.File
 
-// TODO: extract stuff into DduFileService
 class DduChooserActivity : AppCompatActivity()
     , ContextMenuManager
     , DirAdapter.DirChangeListener
@@ -270,14 +269,13 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun importDduDir(source: DocumentFile) {
-        Log.i(TAG, "importing currentDir \"${source.name}\"")
         toast(getString(R.string.dir_importing_toast, source.name))
         lifecycleScope.launch {
             viewModel.loadingDdus {
                 val newDir = dduFileService.importDir(source, dir)
                 withContext(Dispatchers.Main) {
                     dirDeltaList.add(newDir)
-                    toast(getString(R.string.dir_imported_toast, dir.name))
+                    toast(getString(R.string.dir_imported_toast, newDir.name))
                 }
             }
         }

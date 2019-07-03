@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritor
@@ -29,6 +30,8 @@ class DduFileAdapter(private val files: List<File>)
     val contextMenuSubscription = contextMenuConnection.subscription
     private val previewSupplierConnection = Connection<PreviewSupplier>()
     val previewSupplierSubscription = previewSupplierConnection.subscription
+
+    private val blankPreview: Bitmap = Ddu.createBlankPreview()
 
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         lateinit var file: File
@@ -76,7 +79,10 @@ class DduFileAdapter(private val files: List<File>)
     }
 
     private fun showProgressBar(holder: DduFileViewHolder) {
-        holder.view.ddu_preview.visibility = View.GONE
+        holder.view.ddu_preview.apply {
+            visibility = View.VISIBLE
+            setImageBitmap(blankPreview)
+        }
         holder.view.preview_progress.visibility = View.VISIBLE
     }
 

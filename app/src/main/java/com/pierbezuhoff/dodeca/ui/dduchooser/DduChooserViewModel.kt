@@ -47,8 +47,6 @@ class DduChooserViewModel(
     }
 
     fun goToDir(dir: File) {
-        if (_currentDir.value != dir)
-            Log.i(TAG, "currentDir -> $dir")
         _currentDir.postValue(dir)
         clearPreviewJobs()
         previews.clear()
