@@ -7,7 +7,6 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import androidx.preference.SeekBarPreference
 import com.pierbezuhoff.dodeca.BuildConfig
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.ui.MainActivity
@@ -26,7 +25,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         mapOf(
             "canvas_factor" to R.string.canvas_factor_summary,
             "speed" to R.string.speed_summary,
-            "n_preview_updates" to R.string.n_preview_updates_summary
+            "n_preview_updates" to R.string.n_preview_updates_summary,
+            "skip_n_timeout" to R.string.skip_n_timeout_summary
         ).forEach { (key, summaryResource) ->
             findPreference<ListPreference>(key)?.summaryProvider =
                 Preference.SummaryProvider<ListPreference> { preference ->
@@ -51,7 +51,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
             hookChange(key) { addExtraResult("discard_previews") }
         }
         hookClick("support") { sendFeedback() }
-        SeekBarPreference(context)
         @Suppress("ConstantConditionIf")
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach { key ->
@@ -104,8 +103,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
             "autocenter_always",
             /*"show_centers",*/
             /*"rotate_shapes",*/
-            "skip_n",
-            "show_stat",
+//            "skip_n",
+//            "skip_n_timeout",
+//            "show_stat",
             "autocenter_preview",
             "preview_smart_updates"
         )

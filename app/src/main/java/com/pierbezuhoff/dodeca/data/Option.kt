@@ -118,6 +118,7 @@ class Options(val resources: Resources) {
     val autocenterAlways = BooleanKeyOption("autocenter_always", R.bool.autocenter_always)
     val speed = ParsedFloatKeyOption("speed", R.string.speed)
     val skipN = ParsedIntKeyOption("skip_n", R.string.skip_n)
+    val skipNTimeout = ParsedIntKeyOption("skip_n_timeout", R.string.skip_n_timeout)
     val canvasFactor = ParsedIntKeyOption("canvas_factor", R.string.canvas_factor)
     val showStat = BooleanKeyOption("show_stat", R.bool.show_stat)
     // buildPreview size in pixels, yet to be converted to dp
@@ -147,6 +148,7 @@ class Values(private val options: Options) {
     val autocenterAlways: Boolean by options.autocenterAlways
     val speed: Float by options.speed
     val skipN: Int by options.skipN
+    val skipNTimeout: Int by options.skipNTimeout
     val canvasFactor: Int by options.canvasFactor
     val showStat: Boolean by options.showStat
     val previewSize: Int by options.previewSize

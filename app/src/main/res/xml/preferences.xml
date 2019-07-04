@@ -20,12 +20,19 @@
         />
         <!-- TODO: add: rough primitive circles -->
         <!-- MAYBE: optimal performance -->
-        <!-- NOTE: advanced -->
         <EditTextPreference
                 android:key="skip_n"
                 android:defaultValue="@string/skip_n"
                 android:title="@string/skip_n_title"
                 android:summary="@string/skip_n_summary"
+        />
+        <ListPreference
+                android:key="skip_n_timeout"
+                android:defaultValue="@string/skip_n_timeout"
+                android:entries="@array/skip_n_timeouts"
+                android:entryValues="@array/skip_n_timeout_values"
+                android:title="@string/skip_n_timeout_title"
+                android:summary="@string/skip_n_timeout_summary"
         />
     </PreferenceCategory>
 
@@ -69,7 +76,6 @@
                 android:title="@string/canvas_factor_title"
                 android:summary="@string/canvas_factor_summary"
         />
-        <!-- NOTE: advanced -->
         <SwitchPreference
                 android:key="show_stat"
                 android:defaultValue="@bool/show_stat"

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
         <!ENTITY app_name "Dodeca Meditation">
-        <!ENTITY version_name "1.5">
+        <!ENTITY version_name "1.5.1">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
@@ -65,6 +65,8 @@
     <string name="speed_summary">Make %s updates in a row</string>
     <string name="skip_n_title">Skip n updates</string>
     <string name="skip_n_summary">Skip updates without drawing</string>
+    <string name="skip_n_timeout_title">Timeout for "skip n"</string>
+    <string name="skip_n_timeout_summary">Wait maximum %s while skipping updates, stop if timeout reached</string>
 
     <string name="settings_display_title">Display</string>
     <string name="redraw_trace_title">Redraw trace</string>
