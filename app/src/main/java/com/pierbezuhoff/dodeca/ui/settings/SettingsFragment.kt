@@ -104,7 +104,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             /*"show_centers",*/
             /*"rotate_shapes",*/
 //            "skip_n",
-//            "skip_n_timeout",
+            "skip_n_timeout",
 //            "show_stat",
             "autocenter_preview",
             "preview_smart_updates"
