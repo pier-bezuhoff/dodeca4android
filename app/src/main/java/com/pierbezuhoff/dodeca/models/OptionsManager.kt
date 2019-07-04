@@ -49,6 +49,7 @@ class OptionsManager(
                 saveAs,
                 autocenterAlways,
                 speed,
+                skipNTimeout,
                 skipN,
                 canvasFactor,
                 showStat,

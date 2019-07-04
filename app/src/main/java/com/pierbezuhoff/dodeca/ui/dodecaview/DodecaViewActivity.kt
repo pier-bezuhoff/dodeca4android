@@ -134,7 +134,8 @@ class DodecaViewActivity : AppCompatActivity()
                         this,
                         chooseColorListener = this,
                         circleGroup = circleGroup
-                    ).build().show()
+                    ).build()
+                        .show()
                 }
             }
             R.id.clear_button -> viewModel.requestClear()
