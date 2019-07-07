@@ -71,7 +71,7 @@ class ChooseColorDialog(
         }
         val dialog = builder.apply {
             setMessage(R.string.choose_circle_dialog_message)
-            setPositiveButton(R.string.choose_circle_dialog_edit) { _, _ -> Unit } // will be setToIn later
+            setPositiveButton(R.string.choose_circle_dialog_edit) { _, _ -> Unit } // will be set later
             setNegativeButton(R.string.choose_circle_dialog_cancel) { _, _ -> chooseColorListener.onChooseColorClosed() }
         }.create()
         dialog.setOnDismissListener { chooseColorListener.onChooseColorClosed() }
@@ -164,7 +164,10 @@ class CircleAdapter(
     ) {
         figure = figure.copy(
             newShown = visible,
-            newColor = color, newFill = fill, newBorderColor = borderColor)
+            newColor = color,
+            newFill = fill,
+            newBorderColor = borderColor
+        )
         persist()
     }
 
@@ -317,7 +320,6 @@ class CircleAdapter(
         }.show()
     }
 
-    // TODO: refactor!
     private inline fun editCircleDialog(
         figure: CircleFigure,
         message: String,
@@ -331,7 +333,7 @@ class CircleAdapter(
         var fill: Boolean by Delegates.observable(figure.fill) { _, _, _ -> fillChanged = true }
         var borderColorChanged = false
         var borderColor: Int? by Delegates.observable(figure.borderColor) { _, _, _ -> borderColorChanged = true }
-        val builder = context.alert(message) {
+        return context.alert(message) {
             customView {
                 include<LinearLayout>(R.layout.edit_circle).also { layout ->
                     val shownButton: Switch = layout.circle_show
@@ -343,7 +345,6 @@ class CircleAdapter(
                         isChecked = shown
                         setOnCheckedChangeListener { _, checked -> shown = checked }
                     }
-                    // maybe: disable borderColor if not fill
                     colorButton.apply {
                         setColorFilter(color)
                         setOnClickListener {
@@ -360,9 +361,8 @@ class CircleAdapter(
                         setOnCheckedChangeListener { _, checked ->
                             fill = checked
                             if (!checked) {
-                                color = borderColor ?: color
-                                colorButton.setColorFilter(color)
                                 borderColor = null
+                                // invoke borderColorSwitch.onCheckedChangeListener(_, false)
                                 borderColorSwitch.isChecked = false
                             }
                             borderColorSwitch.isEnabled = checked
@@ -373,8 +373,6 @@ class CircleAdapter(
                         isChecked = borderColor != null
                         setOnCheckedChangeListener { _, checked ->
                             if (!checked && borderColor != null) {
-                                color = borderColor ?: color
-                                colorButton.setColorFilter(color)
                                 borderColor = null
                             } else if (checked) {
                                 borderColor = borderColor ?: color
@@ -410,7 +408,6 @@ class CircleAdapter(
             ) }
             negativeButton(R.string.edit_circle_dialog_cancel) { }
         }
-        return builder
     }
 
     private inline fun colorPickerDialog(
