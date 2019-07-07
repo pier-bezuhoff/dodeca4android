@@ -99,7 +99,7 @@ class DduChooserActivity : AppCompatActivity()
         dirDeltaList = DeltaList(viewModel.dirs, adapter)
         dir_recycler_view.adapter = adapter
         dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext) as RecyclerView.LayoutManager
-        dir_recycler_view.itemAnimator = DefaultItemAnimator()
+        dir_recycler_view.itemAnimator = DefaultItemAnimator() as RecyclerView.ItemAnimator
         adapter.dirChangeSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
     }
