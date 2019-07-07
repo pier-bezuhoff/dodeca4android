@@ -64,6 +64,6 @@ class MainActivity : AppCompatActivity()
     companion object {
         private const val TAG = "MainActivity"
         @Suppress("unused")
-        const val LIMITED_VERSION = false
+        const val LIMITED_VERSION = true
     }
 }
