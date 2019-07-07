@@ -362,8 +362,8 @@ class CircleAdapter(
                             fill = checked
                             if (!checked) {
                                 borderColor = null
-                                // invoke borderColorSwitch.onCheckedChangeListener(_, false)
                                 borderColorSwitch.isChecked = false
+                                borderColorButton.setColorFilter(color)
                             }
                             borderColorSwitch.isEnabled = checked
                         }
@@ -374,6 +374,7 @@ class CircleAdapter(
                         setOnCheckedChangeListener { _, checked ->
                             if (!checked && borderColor != null) {
                                 borderColor = null
+                                borderColorButton.setColorFilter(color)
                             } else if (checked) {
                                 borderColor = borderColor ?: color
                                 borderColorButton.setColorFilter(borderColor!!)
