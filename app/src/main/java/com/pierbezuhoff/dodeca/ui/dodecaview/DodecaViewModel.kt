@@ -150,12 +150,14 @@ class DodecaViewModel(
         // FIX: update stat when partial skip
         if (n > 0) {
             viewModelScope.launch {
-                Log.i(TAG, "Skipping $n updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
-                toast("Skipping $n updates... (timeout $SKIP_N_TIMEOUT_SECONDS s)")
+                val timeoutSeconds = optionsManager.fetched(options.skipNTimeout)
+                val timeoutMilliseconds: Long = timeoutSeconds * 1000L
+                Log.i(TAG, "Skipping $n updates... (timeout $timeoutSeconds s)")
+                toast("Skipping $n updates... (timeout $timeoutSeconds s)")
                 pause()
                 _dduLoading.postValue(true)
                 val startTime = System.currentTimeMillis()
-                withTimeoutOrNull(SKIP_N_TIMEOUT_MILLISECONDS) {
+                withTimeoutOrNull(timeoutMilliseconds) {
                     dduRepresentation.updateTimes(n)
                     updateStat(n)
                     val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
@@ -163,8 +165,8 @@ class DodecaViewModel(
                     toast("Skipped $n updates within $skippingTime s")
                 } ?: run {
                     val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
-                    Log.w(TAG, "Skipping aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s > $skippingTime s)")
-                    toast("Skipping aborted due to timeout ($SKIP_N_TIMEOUT_SECONDS s)")
+                    Log.w(TAG, "Skipping aborted due to timeout ($timeoutSeconds s > $skippingTime s)")
+                    toast("Skipping aborted due to timeout ($timeoutSeconds s)")
                 }
                 setSharedPreference(options.skipN, 0)
                 _dduLoading.postValue(false)
@@ -396,8 +398,5 @@ class DodecaViewModel(
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
         private val DEFAULT_SHAPE = Shape.CIRCLE
-        private const val SKIP_N_TIMEOUT_SECONDS = 60
-        private const val SKIP_N_TIMEOUT_MILLISECONDS: Long =
-            1000L * SKIP_N_TIMEOUT_SECONDS
     }
 }
