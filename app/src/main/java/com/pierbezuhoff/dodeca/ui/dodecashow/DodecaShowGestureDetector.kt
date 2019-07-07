@@ -13,18 +13,18 @@ class DodecaShowGestureDetector private constructor(
 ) : GestureDetector.SimpleOnGestureListener()
     , View.OnTouchListener
 {
-    interface SingleTapListener { fun onSingleTap(e: MotionEvent?) }
-    interface DoubleTapListener { fun onDoubleTap(e: MotionEvent?) }
-    interface ScrollListener { fun onScroll(dx: Float, dy: Float) }
+    interface SingleTapListener { fun onSingleTap() }
+    interface DoubleTapListener { fun onDoubleTap() }
+    interface SwipeListener { fun onSwipe(velocityX: Float, velocityY: Float) }
 
     private val gestureDetector = GestureDetector(context.applicationContext, this)
 
     private val singleTapConnection = Connection<SingleTapListener>()
     private val doubleTapConnection = Connection<DoubleTapListener>()
-    private val scrollConnection = Connection<ScrollListener>()
+    private val swipeConnection = Connection<SwipeListener>()
     val onSingleTapSubscription = singleTapConnection.subscription
     val onDoubleTapSubscription = doubleTapConnection.subscription
-    val onScrollSubscription = scrollConnection.subscription
+    val onSwipeSubscription = swipeConnection.subscription
 
     fun registerAsOnTouchListenerFor(view: View) {
         view.setOnTouchListener(this)
@@ -43,17 +43,18 @@ class DodecaShowGestureDetector private constructor(
     }
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
-        singleTapConnection.send { onSingleTap(e) }
+        singleTapConnection.send { onSingleTap() }
         return super.onSingleTapConfirmed(e)
     }
 
     override fun onDoubleTap(e: MotionEvent?): Boolean {
+        doubleTapConnection.send { onDoubleTap() }
         return super.onDoubleTap(e)
     }
 
-    override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-        scrollConnection.send { onScroll(distanceX, distanceY) }
-        return super.onScroll(e1, e2, distanceX, distanceY)
+    override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
+        swipeConnection.send { onSwipe(velocityX, velocityY) }
+        return super.onFling(e1, e2, velocityX, velocityY)
     }
 
     companion object {

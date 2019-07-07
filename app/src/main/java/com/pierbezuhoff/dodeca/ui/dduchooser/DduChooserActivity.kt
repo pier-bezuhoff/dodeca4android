@@ -27,6 +27,7 @@ import com.pierbezuhoff.dodeca.databinding.ActivityDduChooserBinding
 import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
+import com.pierbezuhoff.dodeca.ui.dodecashow.DodecaShowActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
@@ -159,7 +160,10 @@ class DduChooserActivity : AppCompatActivity()
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var isSet = true
         when (item.itemId) {
-            R.id.to_parent_dir -> navigateToParentDir()
+            R.id.to_parent_dir -> {
+                navigateToDodecaShow() // tmp
+                //navigateToParentDir()
+            }
             R.id.import_ddus -> requestImportDdus()
             R.id.export_ddus -> requestExportDduDir()
             R.id.import_dir -> requestImportDduDir()
@@ -202,6 +206,12 @@ class DduChooserActivity : AppCompatActivity()
 
     private fun refreshDir() {
         viewModel.goToDir(dir)
+    }
+
+    private fun navigateToDodecaShow() {
+        val intent = Intent(this, DodecaShowActivity::class.java)
+        intent.putExtra("dir", dir)
+        startActivityForResult(intent, DODECA_SHOW_REQUEST_CODE)
     }
 
     private fun navigateToParentDir() {
@@ -477,6 +487,7 @@ class DduChooserActivity : AppCompatActivity()
         private const val EXPORT_DIR_REQUEST_CODE = 3
         private const val EXPORT_DDU_REQUEST_CODE = 4
         private const val EXPORT_DDU_FOR_DODECA_LOOK_REQUEST_CODE = 5
+        private const val DODECA_SHOW_REQUEST_CODE = 6
         private val DEFAULT_DDU_FILENAME = Filename("untitled.ddu")
     }
 }

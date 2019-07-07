@@ -15,7 +15,6 @@ import org.jetbrains.anko.defaultSharedPreferences
 import java.io.File
 
 class DodecaShowActivity : AppCompatActivity() {
-
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
     }
@@ -34,13 +33,13 @@ class DodecaShowActivity : AppCompatActivity() {
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
 //        TODO("setup actionBar (title, menu, listener)")
-        intent.getStringExtra("dir")?.let { dirName: String ->
-//            TODO("pass to viewModel")
-            intent.getStringExtra("ddu_name")?.let { name ->
-//                TODO("pass to viewModel")
+        (intent.getSerializableExtra("dir") as File).let { dir: File ->
+            viewModel.setInitialTargetDir(dir)
+            (intent.getSerializableExtra("ddu_file") as File).let { file ->
+                viewModel.setInitialTargetFile(file)
             }
         }
-//        TODO("viewModel.createRing()")
+        viewModel.createRing()
     }
 
     private fun setupWindow() {
@@ -64,12 +63,12 @@ class DodecaShowActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        TODO("viewMode.resume()")
+        viewModel.resume()
     }
 
     override fun onPause() {
         super.onPause()
-        TODO("viewModel.onPause()")
+        viewModel.pause()
     }
 
     companion object {

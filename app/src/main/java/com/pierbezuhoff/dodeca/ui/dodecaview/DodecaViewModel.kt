@@ -262,13 +262,8 @@ class DodecaViewModel(
         }
     }
 
-    override fun toast(message: CharSequence) {
-        context.toast(message)
-    }
-
-    override fun formatToast(id: Int, vararg args: Any) {
-        context.toast(context.getString(id, *args))
-    }
+    override fun toast(message: CharSequence) { context.toast(message) }
+    override fun formatToast(id: Int, vararg args: Any) { context.toast(context.getString(id, *args)) }
 
     /** Resume ddu evolution after [pause] or [stop] */
     fun resume() {

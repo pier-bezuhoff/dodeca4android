@@ -62,9 +62,9 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         fun formatToast(@StringRes id: Int, vararg args: Any)
     }
     private var _presenter: WeakReference<Presenter>? = null
-    private var presenter: Presenter?
+    var presenter: Presenter?
         get() = _presenter?.get()
-        set(value) { value?.let { _presenter = WeakReference(it) } }
+        private set(value) { value?.let { _presenter = WeakReference(it) } }
     private val statHolderConnection = Connection<StatHolder>()
     private val toastEmitterConnection = Connection<ToastEmitter>()
     val statHolderSubscription = statHolderConnection.subscription

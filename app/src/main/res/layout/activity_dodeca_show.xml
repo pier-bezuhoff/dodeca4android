@@ -10,7 +10,35 @@
     <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:context=".ui.dodecashow.DodecaShowActivity">
+            tools:context=".ui.dodecashow.DodecaShowActivity"
+    >
+
+        <com.pierbezuhoff.dodeca.ui.dodecashow.DodecaShowView
+                android:id="@+id/dodeca_show_view"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:viewModel="@{viewModel}"
+        />
+
+        <ProgressBar
+                style="?android:attr/progressBarStyle"
+                android:id="@+id/ddu_loading_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="8dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:showWhen="@{viewModel.dduLoading}"
+        />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

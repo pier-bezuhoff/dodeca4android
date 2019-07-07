@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui.dodecaview
+package com.pierbezuhoff.dodeca.ui.dodecashow
 
 import android.content.Context
 import android.graphics.Canvas
@@ -11,14 +11,14 @@ import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritor
 import org.apache.commons.math3.complex.Complex
 
-class DodecaView @JvmOverloads constructor(
+class DodecaShowView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet)
-    , LifecycleInheritor by LifecycleInheritance() // inherited from DodecaViewActivity
+    , LifecycleInheritor by LifecycleInheritance() // inherited from DodecaShowActivity
     , DduRepresentation.Presenter
 {
-    lateinit var viewModel: DodecaViewModel // injected via DataBinding
+    lateinit var viewModel: DodecaShowViewModel // injected via DataBinding
 
     private var initialized = false
 
@@ -42,9 +42,6 @@ class DodecaView @JvmOverloads constructor(
 
     private fun setupObservers() {
         require(lifecycleInherited)
-        viewModel.bottomBarShown.observe(this, Observer {
-            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
-        })
         viewModel.dduRepresentation.observe(this, Observer {
             it.connectPresenter(this)
         })
@@ -70,8 +67,7 @@ class DodecaView @JvmOverloads constructor(
     }
 
     companion object {
-        private const val TAG = "DodecaView"
-        private const val IMMERSIVE_UI_VISIBILITY = SYSTEM_UI_FLAG_LAYOUT_STABLE or SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or SYSTEM_UI_FLAG_IMMERSIVE or SYSTEM_UI_FLAG_FULLSCREEN or SYSTEM_UI_FLAG_HIDE_NAVIGATION or SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        private const val TAG = "DodecaShowView"
     }
 }
 
