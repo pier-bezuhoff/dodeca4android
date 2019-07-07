@@ -16,13 +16,11 @@ import androidx.databinding.DataBindingUtil
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDduChooserBinding
@@ -161,21 +159,7 @@ class DduChooserActivity : AppCompatActivity()
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var isSet = true
         when (item.itemId) {
-            R.id.to_parent_dir -> {
-                toast("resave")
-                viewModel.viewModelScope.launch(Dispatchers.Default) {
-                    viewModel.files.forEach { file ->
-                        val ddu = Ddu.fromFile(file)
-                        ddu.saveToFile(file)
-                    }
-                    withContext(Dispatchers.Main) {
-                        refreshDir()
-                        dduFileDeltaList.updateAll()
-                        toast("resaved")
-                    }
-                }
-//                navigateToParentDir()
-            }
+            R.id.to_parent_dir -> navigateToParentDir()
             R.id.import_ddus -> requestImportDdus()
             R.id.export_ddus -> requestExportDduDir()
             R.id.import_dir -> requestImportDduDir()
