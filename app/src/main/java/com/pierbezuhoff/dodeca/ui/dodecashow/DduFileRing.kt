@@ -1,11 +1,10 @@
 package com.pierbezuhoff.dodeca.ui.dodecashow
 
-import android.util.Log
 import com.pierbezuhoff.dodeca.data.Ddu
-import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.isDdu
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import java.io.File
 
@@ -27,14 +26,18 @@ class DduFileRing(private val dir: File, private val scope: CoroutineScope) {
     private fun shiftHeadAsync(oldHead: File, delta: Int = 0): Deferred<Ddu> {
         val head = shiftFile(oldHead, delta)
         currentHead = head
-        nowReading?.let { (file: File, deferredDdu: Deferred<Ddu>) ->
-            if (file != head)
-                deferredDdu.cancel()
+        nowReading?.let { (file: File, job: Job) ->
+            if (file != head && job.isActive) {
+                job.cancel()
+                @Suppress("DeferredResultUnused")
+                deferredDdus.remove(file)
+            }
         }
         return readFilesAsync(readingIteratorOf(head))!!
     }
 
     /** Start reading files from iterator, async return first ddu (if iterator is not empty). */
+    @Suppress("DeferredResultUnused")
     private fun readFilesAsync(iterator: Iterator<File>): Deferred<Ddu>? {
         if (iterator.hasNext()) {
             val file = iterator.next()
@@ -44,9 +47,7 @@ class DduFileRing(private val dir: File, private val scope: CoroutineScope) {
                 return oldDeferredDdu
             } else {
                 val deferredDdu = scope.async {
-                    Log.i(TAG, "reading ${file.filename}")
                     val ddu = Ddu.fromFile(file)
-                    Log.i(TAG, "read ${file.filename}")
                     readFilesAsync(iterator)
                     return@async ddu
                 }
@@ -71,6 +72,6 @@ class DduFileRing(private val dir: File, private val scope: CoroutineScope) {
     companion object {
         private const val TAG = "DduFileRing"
         // current, next, previous, second next
-        private val READ_SEQUENCE = sequenceOf(0, 1, -1, 2)
+        private val READ_SEQUENCE = sequenceOf(0, 1, -1, 2, 3)
     }
 }

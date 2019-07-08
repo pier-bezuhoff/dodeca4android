@@ -109,7 +109,6 @@ class DodecaShowViewModel(
 
     override fun onSingleTap() {
         toggleUpdating()
-        Log.i(TAG, "show play/pause sign")
     }
 
     private fun toggleUpdating() {
@@ -152,7 +151,7 @@ class DodecaShowViewModel(
     companion object {
         private const val TAG = "DodecaShowViewModel"
         // NOTE: experimental
-        private const val VERTICAL_SWIPE_RATIO_PER_SECOND = 3
-        private const val HORIZONTAL_SWIPE_RATIO_PER_SECOND = 3
+        private const val VERTICAL_SWIPE_RATIO_PER_SECOND = 2
+        private const val HORIZONTAL_SWIPE_RATIO_PER_SECOND = 2
     }
 }
