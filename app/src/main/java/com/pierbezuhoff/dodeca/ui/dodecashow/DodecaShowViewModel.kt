@@ -29,6 +29,7 @@ class DodecaShowViewModel(
 {
     private val _dduLoading: MutableLiveData<Boolean> = MutableLiveData(false)
     private val _playing: MutableLiveData<Boolean> = MutableLiveData(true)
+    private val _toolbarShown: MutableLiveData<Boolean> = MutableLiveData(true)
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
 
     private val firstTargetDir by Once(true)
@@ -37,7 +38,8 @@ class DodecaShowViewModel(
     private lateinit var dduFileRing: DduFileRing
 
     private var updating = false
-    val playing: LiveData<Boolean> = _playing // for ImageButton
+    val playing: LiveData<Boolean> = _playing // for ImageView
+    val toolbarShown: LiveData<Boolean> = _toolbarShown // TODO: change
     val dduLoading: LiveData<Boolean> = _dduLoading // for ProgressBar
 
     val file: File get() = dduFileRing.currentHead

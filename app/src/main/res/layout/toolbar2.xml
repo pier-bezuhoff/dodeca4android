@@ -15,7 +15,7 @@
         <ImageButton
                 android:id="@+id/help_button"
                 android:src="@drawable/ic_help"
-                app:backgroundTint="@color/toolbarColor"
+                app:backgroundTint="@color/toolbar_color"
                 android:padding="8dp"
                 android:layout_width="match_parent"
                 android:layout_weight="1"
@@ -25,7 +25,7 @@
         <ImageButton
                 android:id="@+id/load_button"
                 android:src="@drawable/ic_open_file"
-                app:backgroundTint="@color/toolbarColor"
+                app:backgroundTint="@color/toolbar_color"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
@@ -35,7 +35,7 @@
         <ImageButton
                 android:id="@+id/save_button"
                 android:src="@drawable/ic_save_file"
-                app:backgroundTint="@color/toolbarColor"
+                app:backgroundTint="@color/toolbar_color"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
@@ -45,7 +45,7 @@
         <ImageButton
                 android:id="@+id/play_button"
                 android:src="@drawable/ic_play"
-                app:backgroundTint="@color/toolbarColor"
+                app:backgroundTint="@color/toolbar_color"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
@@ -58,7 +58,7 @@
         <ImageButton
                 android:id="@+id/next_step_button"
                 android:src="@drawable/ic_next_step"
-                app:backgroundTint="@color/toolbarColor"
+                app:backgroundTint="@color/toolbar_color"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
@@ -68,7 +68,7 @@
         <ImageButton
                 android:id="@+id/settings_button"
                 android:src="@drawable/ic_settings"
-                app:backgroundTint="@color/toolbarColor"
+                app:backgroundTint="@color/toolbar_color"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"

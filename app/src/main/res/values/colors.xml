@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="toolbarColor">#008577</color>
-    <color name="darkerToolbarColor">#007368</color>
-    <color name="progressBarColor">#D81B60</color>
-    <!--<color name="toolbarColor">#e0008577</color>-->
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
-    <color name="translucentLightBackground">#a0ffffff</color>
-    <color name="lightGray">#00AFADAD</color>
+    <color name="color_primary">#008577</color>
+    <color name="toolbar_color">#008577</color>
+    <color name="darker_toolbar_color">#007368</color>
+    <color name="progress_bar_color">#D81B60</color>
+    <!--<color name="toolbar_color">#e0008577</color>-->
+    <color name="color_primary_dark">#00574B</color>
+    <color name="color_accent">#D81B60</color>
+    <color name="translucent_light_background">#a0ffffff</color>
+    <color name="light_gray">#00AFADAD</color>
 
     <color name="black_overlay">#66000000</color>
 </resources>

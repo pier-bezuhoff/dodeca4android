@@ -24,6 +24,27 @@
                 app:viewModel="@{viewModel}"
         />
 
+        <androidx.appcompat.widget.Toolbar
+                android:id="@+id/dodeca_show_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:layout_gravity="top"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:background="@color/toolbar_color"
+                android:elevation="4dp"
+                android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+                app:contentInsetLeft="0dp"
+                app:contentInsetRight="0dp"
+                app:contentInsetStart="0dp"
+                app:contentInsetStartWithNavigation="0dp"
+                app:contentInsetEnd="0dp"
+                app:contentInsetEndWithActions="0dp"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+                app:showWhen="@{viewModel.toolbarShown}"
+        />
+
         <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -22,8 +22,8 @@ fun tintEnabled(view: View, enabled: Boolean) {
         view,
         ColorStateList.valueOf(
             ContextCompat.getColor(view.context,
-                if (enabled) R.color.darkerToolbarColor
-                else R.color.toolbarColor
+                if (enabled) R.color.darker_toolbar_color
+                else R.color.toolbar_color
             )
         )
     )

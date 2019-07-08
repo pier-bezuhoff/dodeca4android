@@ -3,6 +3,8 @@ package com.pierbezuhoff.dodeca.ui.dodecashow
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -33,6 +35,8 @@ class DodecaShowActivity : AppCompatActivity() {
             DataBindingUtil.setContentView(this, R.layout.activity_dodeca_show)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
+        setSupportActionBar(dodeca_show_toolbar)
+        supportActionBar?.title = "x.ddu"
 //        TODO("setup actionBar (title, menu, listener)")
         dodeca_show_view.inheritLifecycleOf(this)
         // FIX: do not pass empty dirs
@@ -54,6 +58,15 @@ class DodecaShowActivity : AppCompatActivity() {
                         IMMERSIVE_UI_VISIBILITY
             }
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        var isSet = true
+        when (item.itemId) {
+            R.id.back -> Log.i(TAG, "back")
+            else -> isSet = false
+        }
+        return isSet || super.onOptionsItemSelected(item)
     }
 
     private fun chooseFile() {

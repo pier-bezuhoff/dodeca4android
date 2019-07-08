@@ -52,7 +52,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             android:gravity="top|end"
-            android:background="@color/translucentLightBackground"
+            android:background="@color/translucent_light_background"
             app:showWhen="@{viewModel.showStat}"
     >
         <TextView
@@ -81,7 +81,7 @@
                 android:layout_width="match_parent"
                 android:layout_gravity="bottom"
                 app:buttonGravity="bottom"
-                android:background="@color/toolbarColor"
+                android:background="@color/toolbar_color"
                 app:contentInsetLeft="0dp"
                 app:contentInsetRight="0dp"
                 app:contentInsetStart="0dp"

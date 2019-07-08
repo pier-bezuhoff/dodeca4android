@@ -12,9 +12,9 @@
             android:thicknessRatio="7.0"
     >
         <gradient
-                android:centerColor="@color/progressBarColor"
-                android:endColor="@color/progressBarColor"
-                android:startColor="@color/progressBarColor"
+                android:centerColor="@color/progress_bar_color"
+                android:endColor="@color/progress_bar_color"
+                android:startColor="@color/progress_bar_color"
                 android:angle="0"
                 android:type="sweep"
                 android:useLevel="false"

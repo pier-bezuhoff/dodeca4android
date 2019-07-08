@@ -28,7 +28,7 @@
                 android:layout_width="match_parent"
                 android:layout_gravity="bottom"
                 app:buttonGravity="bottom"
-                android:background="@color/toolbarColor"
+                android:background="@color/toolbar_color"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:contentInsetLeft="0dp"
                 app:contentInsetRight="0dp"

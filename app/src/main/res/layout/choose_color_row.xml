@@ -21,7 +21,7 @@
         />
         <ToggleButton
                 android:id="@+id/circle_visibility"
-                android:background="@color/lightGray"
+                android:background="@color/light_gray"
                 android:button="@drawable/circle_visibility"
                 android:checked="true"
                 android:layout_width="24dp"
@@ -91,7 +91,7 @@
         />
         <ToggleButton
                 android:id="@+id/expand_group"
-                android:background="@color/lightGray"
+                android:background="@color/light_gray"
                 android:button="@drawable/expand_group"
                 android:checked="false"
                 android:layout_width="24dp"

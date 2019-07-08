@@ -191,4 +191,7 @@
     <string name="toggle_folders">Toggle folders</string>
     <string name="settings_ddu_files_title">Revert defaults</string>
 
+    <!-- Dodeca ddu-slide-show -->
+    <string name="back_title">Back</string>
+
 </resources>
