@@ -1,87 +1,76 @@
 package com.pierbezuhoff.dodeca.ui.dodecashow
 
+import android.util.Log
 import com.pierbezuhoff.dodeca.data.Ddu
+import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.isDdu
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import java.io.File
 
-class DduFileRing(dir: File, private val scope: CoroutineScope) {
-    private lateinit var currentHead: File
-    private val files: Array<File> = dir.listFiles { file, _ -> file.isDdu }
-    private val ddus: MutableMap<File, Ddu> = mutableMapOf()
+class DduFileRing(private val dir: File, private val scope: CoroutineScope) {
+    lateinit var currentHead: File
+    val files: Array<File> = dir.listFiles { file: File -> file.isDdu }
     private val deferredDdus: MutableMap<File, Deferred<Ddu>> = mutableMapOf()
+    private var nowReading: Pair<File, Deferred<Ddu>>? = null
 
-    suspend fun setHead(head: File): Ddu {
-        require(head in files)
+    fun setHeadAsync(head: File): Deferred<Ddu> =
+        shiftHeadAsync(head)
+
+    fun nextHeadAsync(): Deferred<Ddu> =
+        shiftHeadAsync(currentHead, delta = +1)
+
+    fun previousHeadAsync(): Deferred<Ddu> =
+        shiftHeadAsync(currentHead, delta = -1)
+
+    private fun shiftHeadAsync(oldHead: File, delta: Int = 0): Deferred<Ddu> {
+        val head = shiftFile(oldHead, delta)
         currentHead = head
-        return ddus[head].also { startReadingNeighbors(head) }
-            ?: run {
-                val oldDeferredDdu = deferredDdus[head]
-                // cancel less important jobs
-                for ((file: File, job: Job) in deferredDdus)
-                    if (file != head)
-                        job.cancel()
-                deferredDdus.clear()
-                val deferredDdu: Deferred<Ddu> = oldDeferredDdu ?: readHeadAsync(head)
-                deferredDdus[head] = deferredDdu
-                val ddu = deferredDdu.await()
-                // previous async probably has not been started as [readHeadAsync], so we should [startReadingNeighbors]
-                if (oldDeferredDdu != null)
-                    startReadingNeighbors(head)
-                return@run ddu
+        nowReading?.let { (file: File, deferredDdu: Deferred<Ddu>) ->
+            if (file != head)
+                deferredDdu.cancel()
+        }
+        return readFilesAsync(readingIteratorOf(head))!!
+    }
+
+    /** Start reading files from iterator, async return first ddu (if iterator is not empty). */
+    private fun readFilesAsync(iterator: Iterator<File>): Deferred<Ddu>? {
+        if (iterator.hasNext()) {
+            val file = iterator.next()
+            val oldDeferredDdu = deferredDdus[file]
+            if (oldDeferredDdu != null) {
+                readFilesAsync(iterator)
+                return oldDeferredDdu
+            } else {
+                val deferredDdu = scope.async {
+                    Log.i(TAG, "reading ${file.filename}")
+                    val ddu = Ddu.fromFile(file)
+                    Log.i(TAG, "read ${file.filename}")
+                    readFilesAsync(iterator)
+                    return@async ddu
+                }
+                nowReading = file to deferredDdu
+                deferredDdus[file] = deferredDdu
+                return deferredDdu
             }
-    }
-
-    suspend fun nextFile(): Ddu {
-        val size = files.size
-        return if (size >= 2) {
-            val ix = files.indexOf(currentHead)
-            val nextFile = files[(ix + 1) % size]
-            setHead(nextFile)
-        } else
-            ddus[currentHead] ?: deferredDdus[currentHead]!!.await()
-    }
-
-    suspend fun previousFile(): Ddu {
-        val size = files.size
-        return if (size >= 2) {
-            val ix = files.indexOf(currentHead)
-            val previousFile = files[(ix + size - 1) % size]
-            setHead(previousFile)
-        } else
-            ddus[currentHead] ?: deferredDdus[currentHead]!!.await()
-    }
-
-    private fun readHeadAsync(head: File): Deferred<Ddu> =
-        scope.async {
-            val ddu = Ddu.fromFile(head)
-            ddus[head] = ddu
-            startReadingNeighbors(head)
-            return@async ddu
         }
-
-    private fun startReadingNeighbors(head: File) {
-        val ix = files.indexOf(head)
-        val size = files.size
-        if (size >= 2) {
-            val nextFile = files[(ix + 1) % size]
-            deferReadingDduFile(nextFile)
-        }
-        if (size >= 3) {
-            val previousFile = files[(ix + size - 1) % size]
-            deferReadingDduFile(previousFile)
-        }
+        return null
     }
 
-    private fun deferReadingDduFile(file: File) {
-        if (ddus[file] == null && deferredDdus[file] == null)
-            deferredDdus[file] = scope.async {
-                val ddu = Ddu.fromFile(file)
-                ddus[file] = ddu
-                return@async ddu
-            }
+    private fun readingIteratorOf(head: File): Iterator<File> =
+        READ_SEQUENCE
+            .map { delta -> shiftFile(head, delta) }
+            .iterator()
+
+    private fun shiftFile(file: File, delta: Int): File {
+        require(file in files)
+        return files[(files.indexOf(file) + files.size + delta) % files.size]
+    }
+
+    companion object {
+        private const val TAG = "DduFileRing"
+        // current, next, previous, second next
+        private val READ_SEQUENCE = sequenceOf(0, 1, -1, 2)
     }
 }

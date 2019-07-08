@@ -123,7 +123,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/image/ic_control_point_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/home/pierbezuhoff/Programming/Android/android-studio/plugins/android/lib/android.jar!/images/material_design_icons/av/ic_play_circle_outline_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -134,9 +134,11 @@
                         <option name="values">
                           <map>
                             <entry key="autoMirrored" value="true" />
-                            <entry key="outputName" value="ic_add_circle" />
+                            <entry key="height" value="48" />
+                            <entry key="outputName" value="ic_play_48dp" />
                             <entry key="overrideSize" value="true" />
                             <entry key="sourceFile" value="$PROJECT_DIR$/app/src/main/res/drawable/ic_trace.svg" />
+                            <entry key="width" value="48" />
                           </map>
                         </option>
                       </PersistentState>

@@ -32,6 +32,9 @@ class DduFileService(private val context: Context) {
     fun dduPathOf(file: File): Filename =
         Filename(file.absolutePath.substringAfter(dduDir.absolutePath).trim('/'))
 
+    fun dduFile(filename: Filename): File =
+        dduDir/filename
+
     suspend fun extractDduAssets(
         targetDir: File = dduDir,
         overwrite: Boolean = false,
@@ -191,8 +194,8 @@ class DduFileService(private val context: Context) {
                         copyStream(source.inputStream(), outputStream)
                     }
                 }
-                else -> Unit
             }
+            Unit
         }
     }
 

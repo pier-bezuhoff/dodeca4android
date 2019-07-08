@@ -11,6 +11,7 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaShowBinding
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
+import kotlinx.android.synthetic.main.activity_dodeca_show.*
 import org.jetbrains.anko.defaultSharedPreferences
 import java.io.File
 
@@ -33,9 +34,11 @@ class DodecaShowActivity : AppCompatActivity() {
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
 //        TODO("setup actionBar (title, menu, listener)")
-        (intent.getSerializableExtra("dir") as File).let { dir: File ->
+        dodeca_show_view.inheritLifecycleOf(this)
+        // FIX: do not pass empty dirs
+        (intent.getSerializableExtra("dir") as File?)?.also { dir: File ->
             viewModel.setInitialTargetDir(dir)
-            (intent.getSerializableExtra("ddu_file") as File).let { file ->
+            (intent.getSerializableExtra("ddu_file") as File?)?.also { file ->
                 viewModel.setInitialTargetFile(file)
             }
         }
@@ -56,7 +59,7 @@ class DodecaShowActivity : AppCompatActivity() {
     private fun chooseFile() {
 //        TODO("viewModel.file -> intent -> DodecaViewActivity")
         val intent = Intent()
-        intent.putExtra("ddu_file", "viewModel.file" as File)
+        intent.putExtra("ddu_file", viewModel.file)
         setResult(Activity.RESULT_OK, intent)
         finish()
     }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import com.pierbezuhoff.dodeca.ui.meta.MetaDodecaView
 import com.pierbezuhoff.dodeca.utils.Connection
 
 /** Listen to single tap, scroll and scale gestures, [context] should be applicationContext */
@@ -12,6 +13,7 @@ class DodecaShowGestureDetector private constructor(
     context: Context
 ) : GestureDetector.SimpleOnGestureListener()
     , View.OnTouchListener
+    , MetaDodecaView.AttachableGestureDetector
 {
     interface SingleTapListener { fun onSingleTap() }
     interface DoubleTapListener { fun onDoubleTap() }
@@ -26,7 +28,7 @@ class DodecaShowGestureDetector private constructor(
     val onDoubleTapSubscription = doubleTapConnection.subscription
     val onSwipeSubscription = swipeConnection.subscription
 
-    fun registerAsOnTouchListenerFor(view: View) {
+    override fun registerAsOnTouchListenerFor(view: View) {
         view.setOnTouchListener(this)
         gestureDetector.setOnDoubleTapListener(this)
     }
@@ -58,7 +60,7 @@ class DodecaShowGestureDetector private constructor(
     }
 
     companion object {
-        private const val TAG = "DodecaViewGestureDetector"
+        private const val TAG = "DodecaShowGD"
         @Volatile private var instance: DodecaShowGestureDetector? = null
 
         /** Thread-safe via double-checked locking */
