@@ -7,6 +7,7 @@
     <data>
         <variable name="viewModel" type="com.pierbezuhoff.dodeca.ui.dodecashow.DodecaShowViewModel"/>
     </data>
+
     <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -42,12 +43,12 @@
                 app:contentInsetEnd="0dp"
                 app:contentInsetEndWithActions="0dp"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                app:showWhen="@{viewModel.toolbarShown}"
         />
 
         <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="@string/dodeca_show_fading_action_description"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"

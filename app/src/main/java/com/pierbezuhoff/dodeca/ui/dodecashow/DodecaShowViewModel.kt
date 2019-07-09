@@ -12,10 +12,12 @@ import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.MetaDodecaView
 import com.pierbezuhoff.dodeca.utils.Once
+import com.pierbezuhoff.dodeca.utils.fileName
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.launch
 import org.jetbrains.anko.toast
 import java.io.File
+import kotlin.math.abs
 
 class DodecaShowViewModel(
     application: Application,
@@ -26,10 +28,10 @@ class DodecaShowViewModel(
     , DodecaShowGestureDetector.SwipeListener
     , DduRepresentation.ToastEmitter
     , MetaDodecaView.MetaDodecaViewModel
+    , AppBarHider // by [appBarHider]
 {
     private val _dduLoading: MutableLiveData<Boolean> = MutableLiveData(false)
     private val _playing: MutableLiveData<Boolean> = MutableLiveData(true)
-    private val _toolbarShown: MutableLiveData<Boolean> = MutableLiveData(true)
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
 
     private val firstTargetDir by Once(true)
@@ -37,9 +39,16 @@ class DodecaShowViewModel(
     private val firstTargetFile by Once(true)
     private lateinit var dduFileRing: DduFileRing
 
+    private val appBarHider: AppBarHider = CoroutineAppBarHider(viewModelScope)
+    override val appBarShown = appBarHider.appBarShown
+    override fun showAppBar(timeoutSeconds: Int?) = appBarHider.showAppBar(timeoutSeconds)
+    override fun hideAppBar() = appBarHider.hideAppBar()
+
+    private val _title: MutableLiveData<String> = MutableLiveData()
+    val title: LiveData<String> = _title
+
     private var updating = false
     val playing: LiveData<Boolean> = _playing // for ImageView
-    val toolbarShown: LiveData<Boolean> = _toolbarShown // TODO: change
     val dduLoading: LiveData<Boolean> = _dduLoading // for ProgressBar
 
     val file: File get() = dduFileRing.currentHead
@@ -89,17 +98,16 @@ class DodecaShowViewModel(
             _dduRepresentation.value = dduRepresentation
             _dduLoading.postValue(false)
             updating = true
-            Log.i(TAG, "show title ~3s")
+            _title.postValue(file.fileName.toString())
+            showAppBar(timeoutSeconds = APPBAR_SHOW_TIMEOUT_SECONDS)
         }
     }
 
     fun resume() {
-        require(!updating)
         setUpdating(true)
     }
 
     fun pause() {
-        require(updating)
         setUpdating(false)
     }
 
@@ -107,6 +115,10 @@ class DodecaShowViewModel(
         updating = newUpdating
         _playing.postValue(newUpdating)
         _dduRepresentation.value?.updating = newUpdating
+        if (updating)
+            hideAppBar()
+        else
+            showAppBar()
     }
 
     override fun onSingleTap() {
@@ -118,7 +130,7 @@ class DodecaShowViewModel(
     }
 
     override fun onDoubleTap() {
-        Log.i(TAG, "go to DodecaViewActivity")
+        // MAYBE: choose current file or smth.
     }
 
     override fun onSwipe(velocityX: Float, velocityY: Float) {
@@ -126,24 +138,30 @@ class DodecaShowViewModel(
             Log.i(TAG, "swipe: $velocityX / $width, $velocityY / $height")
             val verticalThreshold = VERTICAL_SWIPE_RATIO_PER_SECOND * height
             val horizontalThreshold = HORIZONTAL_SWIPE_RATIO_PER_SECOND * width
-            when {
-                velocityX > horizontalThreshold ->
-                    nextFile()
-                velocityX < -horizontalThreshold ->
-                    previousFile()
-                velocityY > verticalThreshold ->
-                    Log.i(TAG, "show title")
-                velocityY < -verticalThreshold ->
-                    Log.i(TAG, "hide title")
-            }
+            if (abs(velocityX) > SWIPE_DISTINGUISHING_RATIO * abs(velocityY))
+                when {
+                    velocityX > horizontalThreshold ->
+                        nextFile()
+                    velocityX < -horizontalThreshold ->
+                        previousFile()
+                }
+            if (abs(velocityY) > SWIPE_DISTINGUISHING_RATIO * abs(velocityX))
+                when {
+                    velocityY > verticalThreshold ->
+                        showAppBar().also { Log.i(TAG, "showAppBar") }
+                    velocityY < -verticalThreshold ->
+                        hideAppBar().also { Log.i(TAG, "hideAppBar") }
+                }
         }
     }
 
     private fun nextFile() {
+        Log.i(TAG, "nextFile")
         representDeferredDdu(dduFileRing.nextHeadAsync())
     }
 
     private fun previousFile() {
+        Log.i(TAG, "previousFile")
         representDeferredDdu(dduFileRing.previousHeadAsync())
     }
 
@@ -152,8 +170,10 @@ class DodecaShowViewModel(
 
     companion object {
         private const val TAG = "DodecaShowViewModel"
+        private const val APPBAR_SHOW_TIMEOUT_SECONDS = 3
         // NOTE: experimental
         private const val VERTICAL_SWIPE_RATIO_PER_SECOND = 2
         private const val HORIZONTAL_SWIPE_RATIO_PER_SECOND = 2
+        private const val SWIPE_DISTINGUISHING_RATIO = 1.5f
     }
 }

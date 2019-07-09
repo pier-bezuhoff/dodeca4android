@@ -4,14 +4,9 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
 >
     <item
-            android:id="@+id/back"
-            android:icon="@drawable/ic_arrow_back"
-            android:title="@string/back_title"
-            app:showAsAction="always"
-    />
-    <item
-            android:id="@+id/view"
-            android:title="View"
+            android:id="@+id/to_dodeca_view"
+            android:icon="@drawable/ic_open_view"
+            android:title="@string/view_title"
             app:showAsAction="always"
     />
 </menu>

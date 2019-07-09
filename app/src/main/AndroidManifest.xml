@@ -13,13 +13,13 @@
             android:label="@string/app_name"
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
-            android:theme="@style/AppTheme">
-        <activity android:name=".ui.dodecashow.DodecaShowActivity">
-        </activity>
+            android:theme="@style/AppTheme"
+    >
         <activity
                 android:name=".ui.MainActivity"
                 android:label="@string/app_name"
-                android:theme="@style/AppTheme.NoActionBar">
+                android:theme="@style/AppTheme.NoActionBar"
+        >
 
             <!-- android:configChanges="orientation|screenSize" -->
             <intent-filter>
@@ -52,10 +52,14 @@
         </activity>
         <activity
                 android:name=".ui.dodecaview.DodecaViewActivity"
-                android:theme="@style/AppTheme.NoActionBar">
-        </activity>
-        <activity android:name=".ui.dodecaedit.DodecaEditActivity">
-        </activity>
+                android:theme="@style/AppTheme.NoActionBar"
+        />
+        <activity
+                android:name=".ui.dodecashow.DodecaShowActivity"
+                android:theme="@style/AppTheme.NoActionBar"
+                android:parentActivityName=".ui.dduchooser.DduChooserActivity"
+        />
+        <activity android:name=".ui.dodecaedit.DodecaEditActivity"/>
         <activity android:name=".ui.settings.SettingsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>

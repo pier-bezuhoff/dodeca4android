@@ -134,6 +134,7 @@ class DduChooserActivity : AppCompatActivity()
     override fun chooseFile(file: File) {
         Log.i(TAG, "File \"${file.absolutePath}\" chosen")
         val intent = Intent()
+        // TODO: put file as Serializable
         intent.putExtra("ddu_path", file.absolutePath)
         setResult(Activity.RESULT_OK, intent)
         finish()
@@ -161,7 +162,8 @@ class DduChooserActivity : AppCompatActivity()
         var isSet = true
         when (item.itemId) {
             R.id.to_parent_dir -> {
-                navigateToDodecaShow() // tmp
+                // TODO: add special action button for DodecaShow
+                navigateToDodecaShow() // TMP
                 //navigateToParentDir()
             }
             R.id.import_ddus -> requestImportDdus()
@@ -476,6 +478,10 @@ class DduChooserActivity : AppCompatActivity()
                     maybeUri?.let { uri -> exportDduFileForDodecaLook(uri) }
                 EXPORT_DIR_REQUEST_CODE ->
                     maybeUri?.let { uri -> exportDduDir(uri) }
+                DODECA_SHOW_REQUEST_CODE ->
+                    (data?.getSerializableExtra("ddu_file") as File?)?.let { file: File ->
+                        chooseFile(file)
+                    }
                 else -> super.onActivityResult(requestCode, resultCode, data)
             }
     }

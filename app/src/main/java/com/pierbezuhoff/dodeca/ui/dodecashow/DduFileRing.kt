@@ -18,12 +18,12 @@ class DduFileRing(private val dir: File, private val scope: CoroutineScope) {
         shiftHeadAsync(head)
 
     fun nextHeadAsync(): Deferred<Ddu> =
-        shiftHeadAsync(currentHead, delta = +1)
+        shiftHeadAsync(delta = +1)
 
     fun previousHeadAsync(): Deferred<Ddu> =
-        shiftHeadAsync(currentHead, delta = -1)
+        shiftHeadAsync(delta = -1)
 
-    private fun shiftHeadAsync(oldHead: File, delta: Int = 0): Deferred<Ddu> {
+    fun shiftHeadAsync(oldHead: File = currentHead, delta: Int = 0): Deferred<Ddu> {
         val head = shiftFile(oldHead, delta)
         currentHead = head
         nowReading?.let { (file: File, job: Job) ->
@@ -66,12 +66,12 @@ class DduFileRing(private val dir: File, private val scope: CoroutineScope) {
 
     private fun shiftFile(file: File, delta: Int): File {
         require(file in files)
-        return files[(files.indexOf(file) + files.size + delta) % files.size]
+        val size = files.size
+        return files[(files.indexOf(file) + size + delta % size) % size]
     }
 
     companion object {
-        private const val TAG = "DduFileRing"
-        // current, next, previous, second next
+        // current, next, previous, second next, third next
         private val READ_SEQUENCE = sequenceOf(0, 1, -1, 2, 3)
     }
 }

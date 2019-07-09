@@ -192,6 +192,7 @@
     <string name="settings_ddu_files_title">Revert defaults</string>
 
     <!-- Dodeca ddu-slide-show -->
-    <string name="back_title">Back</string>
+    <string name="view_title">View</string>
+    <string name="dodeca_show_fading_action_description">Play/pause fading action</string>
 
 </resources>
