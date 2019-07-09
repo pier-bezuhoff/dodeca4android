@@ -1,7 +1,6 @@
 package com.pierbezuhoff.dodeca.ui.dodecashow
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -141,7 +140,6 @@ class DodecaShowViewModel(
 
     override fun onSwipe(velocityX: Float, velocityY: Float) {
         _dduRepresentation.value?.presenter?.getSize()?.also { (width: Int, height: Int) ->
-            Log.i(TAG, "swipe: $velocityX / $width, $velocityY / $height")
             val verticalThreshold = VERTICAL_SWIPE_RATIO_PER_SECOND * height
             val horizontalThreshold = HORIZONTAL_SWIPE_RATIO_PER_SECOND * width
             if (abs(velocityX) > SWIPE_DISTINGUISHING_RATIO * abs(velocityY))
@@ -154,20 +152,18 @@ class DodecaShowViewModel(
             if (abs(velocityY) > SWIPE_DISTINGUISHING_RATIO * abs(velocityX))
                 when {
                     velocityY > verticalThreshold ->
-                        showAppBar().also { Log.i(TAG, "showAppBar") }
+                        showAppBar()
                     velocityY < -verticalThreshold ->
-                        hideAppBar().also { Log.i(TAG, "hideAppBar") }
+                        hideAppBar()
                 }
         }
     }
 
     private fun nextFile() {
-        Log.i(TAG, "nextFile")
         representDeferredDdu(dduFileRing.nextHeadAsync())
     }
 
     private fun previousFile() {
-        Log.i(TAG, "previousFile")
         representDeferredDdu(dduFileRing.previousHeadAsync())
     }
 

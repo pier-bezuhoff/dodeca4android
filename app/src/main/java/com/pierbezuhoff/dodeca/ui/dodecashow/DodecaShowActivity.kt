@@ -20,8 +20,7 @@ import kotlinx.android.synthetic.main.activity_dodeca_show.*
 import org.jetbrains.anko.defaultSharedPreferences
 import java.io.File
 
-// TODO: app bar show/hide animation & next/previous ddu swipe animation
-// TODO: black -> white color of title
+// TODO: next/previous ddu swipe animation
 // BUG: after pause;rotation: toolbar state isn't preserved
 class DodecaShowActivity : AppCompatActivity()
     , DodecaShowViewModel.ChooseFileListener
@@ -84,7 +83,7 @@ class DodecaShowActivity : AppCompatActivity()
     override fun onSupportNavigateUp(): Boolean {
         // NOTE: default method does not finish current activity
         finish()
-        return true.also {  }
+        return true
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
