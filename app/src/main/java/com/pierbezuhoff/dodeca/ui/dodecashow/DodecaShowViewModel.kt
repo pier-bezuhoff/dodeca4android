@@ -14,6 +14,7 @@ import com.pierbezuhoff.dodeca.ui.meta.DoubleTapListener
 import com.pierbezuhoff.dodeca.ui.meta.MetaDodecaView
 import com.pierbezuhoff.dodeca.ui.meta.SingleTapListener
 import com.pierbezuhoff.dodeca.ui.meta.SwipeListener
+import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Once
 import com.pierbezuhoff.dodeca.utils.fileName
 import kotlinx.coroutines.Deferred
@@ -27,10 +28,14 @@ class DodecaShowViewModel(
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
     , MetaDodecaView.MetaDodecaViewModel
     , SingleTapListener
-    , DoubleTapListener // unused for now
+    , DoubleTapListener
     , SwipeListener
     , AppBarHider // by [appBarHider]
 {
+    interface ChooseFileListener { fun chooseFile(file: File) }
+    private val fileChooserConnection = Connection<ChooseFileListener>()
+    val chooseFileSubscription = fileChooserConnection.subscription
+
     private val _dduLoading: MutableLiveData<Boolean> = MutableLiveData(false)
     private val _playing: MutableLiveData<Boolean> = MutableLiveData(true)
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
@@ -131,7 +136,7 @@ class DodecaShowViewModel(
     }
 
     override fun onDoubleTap() {
-        // MAYBE: choose current file or smth.
+        fileChooserConnection.send { chooseFile(file) }
     }
 
     override fun onSwipe(velocityX: Float, velocityY: Float) {
@@ -170,8 +175,8 @@ class DodecaShowViewModel(
         private const val TAG = "DodecaShowViewModel"
         private const val APPBAR_SHOW_TIMEOUT_SECONDS = 3
         // NOTE: experimental
-        private const val VERTICAL_SWIPE_RATIO_PER_SECOND = 2
-        private const val HORIZONTAL_SWIPE_RATIO_PER_SECOND = 2
+        private const val VERTICAL_SWIPE_RATIO_PER_SECOND = 1
+        private const val HORIZONTAL_SWIPE_RATIO_PER_SECOND = 1
         private const val SWIPE_DISTINGUISHING_RATIO = 1.1f
     }
 }

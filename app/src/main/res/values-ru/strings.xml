@@ -158,4 +158,5 @@
     <string name="view_title">Открыть</string>
     <string name="dodeca_show_fading_action_description">Продолжить/приостановить проигрывание</string>
     <string name="to_dodeca_show_title">Режим слайд-шоу</string>
+    <string name="dir_has_no_ddus_toast">Папка \"%s\" не содержит ddu-картин!</string>
 </resources>

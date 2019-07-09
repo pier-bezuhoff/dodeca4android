@@ -118,10 +118,10 @@ class DodecaViewActivity : AppCompatActivity()
     private fun onToolbarItemClick(id: Int) {
         viewModel.showBottomBar()
         when (id) {
-            R.id.help_button -> goToActivity(HelpActivity::class.java, HELP_CODE)
+            R.id.help_button -> goToActivity(HelpActivity::class.java, HELP_REQUEST_CODE)
             R.id.load_button -> goToActivity(
                 DduChooserActivity::class.java,
-                DDU_CODE,
+                DDU_CHOOSER_REQUEST_CODE,
                 "dir" to dir
             )
             R.id.save_button -> saveDdu()
@@ -141,7 +141,7 @@ class DodecaViewActivity : AppCompatActivity()
             }
             R.id.clear_button -> viewModel.requestClear()
             R.id.autocenter_button -> viewModel.requestAutocenter()
-            R.id.settings_button -> goToActivity(SettingsActivity::class.java, APPLY_SETTINGS_CODE)
+            R.id.settings_button -> goToActivity(SettingsActivity::class.java, SETTINGS_REQUEST_CODE)
         }
     }
 
@@ -206,20 +206,16 @@ class DodecaViewActivity : AppCompatActivity()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        Log.i(
-            TAG,
-            "requestCode = $requestCode, resultCode = $resultCode (OK = ${Activity.RESULT_OK}), data = $data (with ${data?.extras})"
-        )
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
-            DDU_CODE -> {
+            DDU_CHOOSER_REQUEST_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
                     (data?.getSerializableExtra("ddu_file") as File?)?.let { file: File ->
                         readFile(file)
                     }
                 }
             }
-            APPLY_SETTINGS_CODE -> {
+            SETTINGS_REQUEST_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
                     fun have(param: String): Boolean =
                         data?.getBooleanExtra(param, false) == true
@@ -231,7 +227,7 @@ class DodecaViewActivity : AppCompatActivity()
                 }
                 optionsManager.fetchAll()
             }
-            HELP_CODE -> Unit
+            HELP_REQUEST_CODE -> Unit
         }
         viewModel.showBottomBar()
     }
@@ -304,11 +300,10 @@ class DodecaViewActivity : AppCompatActivity()
     companion object {
         private const val TAG = "DodecaViewActivity"
         // requestCode-s for onActivityResult
-        private const val DDU_CODE = 1
-        private const val APPLY_SETTINGS_CODE = 2
-        private const val HELP_CODE = 3
+        private const val DDU_CHOOSER_REQUEST_CODE = 1
+        private const val SETTINGS_REQUEST_CODE = 2
+        private const val HELP_REQUEST_CODE = 3
         /** Distraction free mode */
         private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
 }
-

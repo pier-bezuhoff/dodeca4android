@@ -63,7 +63,10 @@
                 android:name=".ui.dodecaedit.DodecaEditActivity"
                 android:theme="@style/AppTheme.NoActionBar"
         />
-        <activity android:name=".ui.settings.SettingsActivity">
+        <activity
+                android:name=".ui.settings.SettingsActivity"
+                android:parentActivityName=".ui.dodecaview.DodecaViewActivity"
+        >
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
             </intent-filter>
@@ -71,8 +74,12 @@
         <activity
                 android:name=".ui.dduchooser.DduChooserActivity"
                 android:theme="@style/AppTheme.NoActionBar"
+                android:parentActivityName=".ui.dodecaview.DodecaViewActivity"
         />
-        <activity android:name=".ui.help.HelpActivity"/>
+        <activity
+                android:name=".ui.help.HelpActivity"
+                android:parentActivityName=".ui.dodecaview.DodecaViewActivity"
+        />
     </application>
 
 </manifest>

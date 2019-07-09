@@ -34,6 +34,7 @@ import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.fileName
 import com.pierbezuhoff.dodeca.utils.filename
+import com.pierbezuhoff.dodeca.utils.isDdu
 import kotlinx.android.synthetic.main.activity_ddu_chooser.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -207,9 +208,14 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun navigateToDodecaShow() {
-        val intent = Intent(this, DodecaShowActivity::class.java)
-        intent.putExtra("dir", dir)
-        startActivityForResult(intent, DODECA_SHOW_REQUEST_CODE)
+        val dirHasDduFiles = dir.listFiles { file -> file.isDdu }.isNotEmpty()
+        if (dirHasDduFiles) {
+            val intent = Intent(this, DodecaShowActivity::class.java)
+            intent.putExtra("dir", dir)
+            startActivityForResult(intent, DODECA_SHOW_REQUEST_CODE)
+        } else {
+            toast(getString(R.string.dir_has_no_ddus_toast, dir.fileName))
+        }
     }
 
     private fun navigateToParentDir() {
@@ -454,10 +460,6 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        Log.i(
-            TAG,
-            "requestCode = $requestCode, resultCode = $resultCode (OK = ${Activity.RESULT_OK}), data = $data (with ${data?.extras})"
-        )
         val maybeUri: Uri? by lazy { data?.data }
         if (resultCode == Activity.RESULT_OK)
             when (requestCode) {

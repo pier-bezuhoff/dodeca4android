@@ -53,6 +53,7 @@
     <string name="ddu_exported_toast">ddu-picture \"%s\" has been exported</string>
     <string name="ddu_exported_for_dodecalook_toast">ddu-picture \"%s\" has been exported as DodecaLook-compatible
     </string>
+    <string name="dir_has_no_ddus_toast">No ddu-pictures to show in empty folder \"%s\"!</string>
 
     <!-- Status strings -->
     <string name="extracting_assets_status">Extracting ddu-pictures into \"%s\"…</string>

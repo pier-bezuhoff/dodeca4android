@@ -3,7 +3,6 @@ package com.pierbezuhoff.dodeca.ui.dodecashow
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -15,13 +14,16 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaShowBinding
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
+import com.pierbezuhoff.dodeca.utils.animate
 import kotlinx.android.synthetic.main.activity_dodeca_show.*
 import org.jetbrains.anko.defaultSharedPreferences
 import java.io.File
 
 // TODO: app bar show/hide animation & next/previous ddu swipe animation
+// TODO: black -> white color of title
 // BUG: after pause;rotation: toolbar state isn't preserved
 class DodecaShowActivity : AppCompatActivity()
+    , DodecaShowViewModel.ChooseFileListener
 {
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
@@ -40,9 +42,9 @@ class DodecaShowActivity : AppCompatActivity()
             DataBindingUtil.setContentView(this, R.layout.activity_dodeca_show)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
+        viewModel.chooseFileSubscription.subscribeFrom(this).unsubscribeOnDestroy(this)
         setupToolbar()
         dodeca_show_view.inheritLifecycleOf(this)
-        // FIX: do not pass empty dirs
         (intent.getSerializableExtra("dir") as File?)?.also { dir: File ->
             viewModel.setInitialTargetDir(dir)
             (intent.getSerializableExtra("ddu_file") as File?)?.also { file ->
@@ -71,16 +73,22 @@ class DodecaShowActivity : AppCompatActivity()
         })
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         viewModel.appBarShown.observe(this, Observer { shown: Boolean ->
-            if (shown)
-                supportActionBar?.show()
-            else
-                supportActionBar?.hide()
+            if (shown && supportActionBar?.isShowing != true) {
+                animate(dodeca_show_toolbar, R.anim.slide_in_and_fade_in_top) {
+                    supportActionBar?.show()
+                }
+            } else if (!shown && supportActionBar?.isShowing == true) {
+                animate(dodeca_show_toolbar, R.anim.slide_out_and_fade_out_top) {
+                    supportActionBar?.hide()
+                }
+            }
         })
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        Log.i(TAG, "onSupportNavigateUp")
-        return super.onSupportNavigateUp()
+        // NOTE: default method does not finish current activity
+        finish()
+        return true.also {  }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -91,15 +99,15 @@ class DodecaShowActivity : AppCompatActivity()
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var handled = true
         when (item.itemId) {
-            R.id.to_dodeca_view -> chooseFile()
+            R.id.to_dodeca_view -> chooseFile(viewModel.file)
             else -> handled = false
         }
         return handled || super.onOptionsItemSelected(item)
     }
 
-    private fun chooseFile() {
+    override fun chooseFile(file: File) {
         val intent = Intent()
-        intent.putExtra("ddu_file", viewModel.file)
+        intent.putExtra("ddu_file", file)
         setResult(Activity.RESULT_OK, intent)
         finish()
     }
