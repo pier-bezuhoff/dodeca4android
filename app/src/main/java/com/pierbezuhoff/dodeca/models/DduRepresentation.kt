@@ -22,7 +22,8 @@ import com.pierbezuhoff.dodeca.data.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
-import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewGestureDetector
+import com.pierbezuhoff.dodeca.ui.meta.ScaleListener
+import com.pierbezuhoff.dodeca.ui.meta.ScrollListener
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Just
 import com.pierbezuhoff.dodeca.utils.Once
@@ -47,8 +48,8 @@ import kotlin.math.roundToInt
 class DduRepresentation(override val ddu: Ddu) : Any()
     , DduAttributesHolder
     , DduOptionsChangeListener
-    , DodecaViewGestureDetector.ScrollListener
-    , DodecaViewGestureDetector.ScaleListener
+    , ScrollListener
+    , ScaleListener
 {
     interface Presenter : LifecycleOwner {
         fun getCenter(): Complex?

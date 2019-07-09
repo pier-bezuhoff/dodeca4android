@@ -80,6 +80,7 @@ class DduChooserActivity : AppCompatActivity()
             DataBindingUtil.setContentView(this, R.layout.activity_ddu_chooser)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
+        setSupportActionBar(ddu_chooser_toolbar)
         setInitialDir()
         initDirRecyclerView()
         initDduRecyclerView()
@@ -87,10 +88,9 @@ class DduChooserActivity : AppCompatActivity()
 
     private fun setInitialDir() {
         // MAYBE: just get viewModel.currentDir (from recentDdu)
-        val initialDir = intent.getStringExtra("dir_path")
-            ?.let { dirPath ->
-                val newDir = File(dirPath)
-                if (newDir.exists()) newDir else null
+        val initialDir = (intent.getSerializableExtra("dir") as File?)
+            ?.let { passedDir: File ->
+                if (passedDir.exists()) passedDir else null
             } ?: dduFileService.dduDir
         viewModel.setInitialDir(initialDir)
     }
@@ -132,10 +132,9 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     override fun chooseFile(file: File) {
-        Log.i(TAG, "File \"${file.absolutePath}\" chosen")
+        Log.i(TAG, "File \"${file.path}\" chosen")
         val intent = Intent()
-        // TODO: put file as Serializable
-        intent.putExtra("ddu_path", file.absolutePath)
+        intent.putExtra("ddu_file", file)
         setResult(Activity.RESULT_OK, intent)
         finish()
     }
@@ -159,26 +158,23 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        var isSet = true
+        var handled = true
         when (item.itemId) {
-            R.id.to_parent_dir -> {
-                // TODO: add special action button for DodecaShow
-                navigateToDodecaShow() // TMP
-                //navigateToParentDir()
-            }
+            R.id.to_parent_dir -> navigateToParentDir()
+            R.id.to_dodeca_show -> navigateToDodecaShow()
             R.id.import_ddus -> requestImportDdus()
             R.id.export_ddus -> requestExportDduDir()
             R.id.import_dir -> requestImportDduDir()
             R.id.delete_ddus -> deleteAll()
             R.id.toggle_folders -> toggleFolders()
-            else -> isSet = false
+            else -> handled = false
         }
-        return isSet || super.onOptionsItemSelected(item)
+        return handled || super.onOptionsItemSelected(item)
     }
 
     override fun onContextItemSelected(item: MenuItem?): Boolean {
-        var isSet1 = true
-        var isSet2 = true
+        var handledAsDduFile = true
+        var handledAsDir = true
         createdContextMenu?.let { source ->
             when (source) {
                 is ContextMenuSource.DduFile -> {
@@ -190,7 +186,7 @@ class DduChooserActivity : AppCompatActivity()
                         R.id.ddu_duplicate -> duplicateDduFile(file)
                         R.id.ddu_export -> requestExportDduFile(file)
                         R.id.ddu_export_for_dodecalook -> requestExportDduFileForDodecaLook(file)
-                        else -> isSet1 = false
+                        else -> handledAsDduFile = false
                     }
                 }
                 is ContextMenuSource.Dir -> {
@@ -198,12 +194,12 @@ class DduChooserActivity : AppCompatActivity()
                     when (item?.itemId) {
                         R.id.dir_delete -> deleteDir(dir)
                         R.id.dir_export -> requestExportDduDir(dir)
-                        else -> isSet2 = false
+                        else -> handledAsDir = false
                     }
                 }
             }
         }
-        return isSet1 || isSet2 || super.onContextItemSelected(item)
+        return handledAsDduFile || handledAsDir || super.onContextItemSelected(item)
     }
 
     private fun refreshDir() {
@@ -458,6 +454,10 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        Log.i(
+            TAG,
+            "requestCode = $requestCode, resultCode = $resultCode (OK = ${Activity.RESULT_OK}), data = $data (with ${data?.extras})"
+        )
         val maybeUri: Uri? by lazy { data?.data }
         if (resultCode == Activity.RESULT_OK)
             when (requestCode) {

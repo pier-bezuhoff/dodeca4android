@@ -142,6 +142,7 @@
 
     <!-- ddu chooser -->
     <string name="to_parent_dir_title">To parent folder</string>
+    <string name="to_dodeca_show_title">Slide show mode</string>
     <string name="import_ddus_title">Import ddu-pictures</string>
     <string name="export_ddus_title">Export all</string>
     <string name="import_folder_title">Import folder with ddu-pictures</string>

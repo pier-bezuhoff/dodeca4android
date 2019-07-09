@@ -7,5 +7,7 @@ import com.pierbezuhoff.dodeca.ui.meta.MetaDodecaView
 class DodecaShowView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null
-) : MetaDodecaView(context, attributeSet)
+) : MetaDodecaView(context, attributeSet) {
+    override lateinit var viewModel: DodecaShowViewModel
+}
 

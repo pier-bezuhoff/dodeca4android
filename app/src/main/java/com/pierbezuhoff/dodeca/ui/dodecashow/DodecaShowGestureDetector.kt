@@ -5,7 +5,10 @@ import android.content.Context
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import com.pierbezuhoff.dodeca.ui.meta.DoubleTapListener
 import com.pierbezuhoff.dodeca.ui.meta.MetaDodecaView
+import com.pierbezuhoff.dodeca.ui.meta.SingleTapListener
+import com.pierbezuhoff.dodeca.ui.meta.SwipeListener
 import com.pierbezuhoff.dodeca.utils.Connection
 
 /** Listen to single tap, scroll and scale gestures, [context] should be applicationContext */
@@ -15,10 +18,6 @@ class DodecaShowGestureDetector private constructor(
     , View.OnTouchListener
     , MetaDodecaView.AttachableGestureDetector
 {
-    interface SingleTapListener { fun onSingleTap() }
-    interface DoubleTapListener { fun onDoubleTap() }
-    interface SwipeListener { fun onSwipe(velocityX: Float, velocityY: Float) }
-
     private val gestureDetector = GestureDetector(context.applicationContext, this)
 
     private val singleTapConnection = Connection<SingleTapListener>()

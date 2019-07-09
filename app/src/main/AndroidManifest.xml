@@ -59,13 +59,19 @@
                 android:theme="@style/AppTheme.NoActionBar"
                 android:parentActivityName=".ui.dduchooser.DduChooserActivity"
         />
-        <activity android:name=".ui.dodecaedit.DodecaEditActivity"/>
+        <activity
+                android:name=".ui.dodecaedit.DodecaEditActivity"
+                android:theme="@style/AppTheme.NoActionBar"
+        />
         <activity android:name=".ui.settings.SettingsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
             </intent-filter>
         </activity>
-        <activity android:name=".ui.dduchooser.DduChooserActivity"/>
+        <activity
+                android:name=".ui.dduchooser.DduChooserActivity"
+                android:theme="@style/AppTheme.NoActionBar"
+        />
         <activity android:name=".ui.help.HelpActivity"/>
     </application>
 

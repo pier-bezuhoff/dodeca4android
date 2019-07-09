@@ -10,12 +10,14 @@ import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
+import com.pierbezuhoff.dodeca.ui.meta.DoubleTapListener
 import com.pierbezuhoff.dodeca.ui.meta.MetaDodecaView
+import com.pierbezuhoff.dodeca.ui.meta.SingleTapListener
+import com.pierbezuhoff.dodeca.ui.meta.SwipeListener
 import com.pierbezuhoff.dodeca.utils.Once
 import com.pierbezuhoff.dodeca.utils.fileName
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.launch
-import org.jetbrains.anko.toast
 import java.io.File
 import kotlin.math.abs
 
@@ -23,11 +25,10 @@ class DodecaShowViewModel(
     application: Application,
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
-    , DodecaShowGestureDetector.SingleTapListener
-    , DodecaShowGestureDetector.DoubleTapListener
-    , DodecaShowGestureDetector.SwipeListener
-    , DduRepresentation.ToastEmitter
     , MetaDodecaView.MetaDodecaViewModel
+    , SingleTapListener
+    , DoubleTapListener // unused for now
+    , SwipeListener
     , AppBarHider // by [appBarHider]
 {
     private val _dduLoading: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -141,9 +142,9 @@ class DodecaShowViewModel(
             if (abs(velocityX) > SWIPE_DISTINGUISHING_RATIO * abs(velocityY))
                 when {
                     velocityX > horizontalThreshold ->
-                        nextFile()
-                    velocityX < -horizontalThreshold ->
                         previousFile()
+                    velocityX < -horizontalThreshold ->
+                        nextFile()
                 }
             if (abs(velocityY) > SWIPE_DISTINGUISHING_RATIO * abs(velocityX))
                 when {
@@ -165,15 +166,12 @@ class DodecaShowViewModel(
         representDeferredDdu(dduFileRing.previousHeadAsync())
     }
 
-    override fun toast(message: CharSequence) { context.toast(message) }
-    override fun formatToast(id: Int, vararg args: Any) { context.toast(context.getString(id, *args)) }
-
     companion object {
         private const val TAG = "DodecaShowViewModel"
         private const val APPBAR_SHOW_TIMEOUT_SECONDS = 3
         // NOTE: experimental
         private const val VERTICAL_SWIPE_RATIO_PER_SECOND = 2
         private const val HORIZONTAL_SWIPE_RATIO_PER_SECOND = 2
-        private const val SWIPE_DISTINGUISHING_RATIO = 1.5f
+        private const val SWIPE_DISTINGUISHING_RATIO = 1.1f
     }
 }

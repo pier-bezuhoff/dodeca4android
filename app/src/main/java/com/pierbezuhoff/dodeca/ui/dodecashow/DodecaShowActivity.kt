@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca.ui.dodecashow
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -77,18 +78,23 @@ class DodecaShowActivity : AppCompatActivity()
         })
     }
 
+    override fun onSupportNavigateUp(): Boolean {
+        Log.i(TAG, "onSupportNavigateUp")
+        return super.onSupportNavigateUp()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.dodeca_show_appbar, menu)
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        var isSet = true
+        var handled = true
         when (item.itemId) {
             R.id.to_dodeca_view -> chooseFile()
-            else -> isSet = false
+            else -> handled = false
         }
-        return isSet || super.onOptionsItemSelected(item)
+        return handled || super.onOptionsItemSelected(item)
     }
 
     private fun chooseFile() {

@@ -54,6 +54,7 @@ import permissions.dispatcher.RuntimePermissions
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.Serializable
 
 @RuntimePermissions
 class DodecaViewActivity : AppCompatActivity()
@@ -121,7 +122,7 @@ class DodecaViewActivity : AppCompatActivity()
             R.id.load_button -> goToActivity(
                 DduChooserActivity::class.java,
                 DDU_CODE,
-                "dir_path" to dir.absolutePath
+                "dir" to dir
             )
             R.id.save_button -> saveDdu()
             R.id.play_button -> viewModel.toggleUpdating()
@@ -144,7 +145,11 @@ class DodecaViewActivity : AppCompatActivity()
         }
     }
 
-    private fun <T : AppCompatActivity> goToActivity(cls: Class<T>, resultCode: Int, vararg extraArgs: Pair<String, String>) {
+    private fun <T : AppCompatActivity> goToActivity(
+        cls: Class<T>,
+        resultCode: Int,
+        vararg extraArgs: Pair<String, Serializable>
+    ) {
         viewModel.hideBottomBar()
         val intent = Intent(this, cls)
         for ((key, arg) in extraArgs)
@@ -201,12 +206,16 @@ class DodecaViewActivity : AppCompatActivity()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        Log.i(
+            TAG,
+            "requestCode = $requestCode, resultCode = $resultCode (OK = ${Activity.RESULT_OK}), data = $data (with ${data?.extras})"
+        )
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
             DDU_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
-                    data?.getStringExtra("ddu_path")?.let { path ->
-                        readFile(File(path))
+                    (data?.getSerializableExtra("ddu_file") as File?)?.let { file: File ->
+                        readFile(file)
                     }
                 }
             }

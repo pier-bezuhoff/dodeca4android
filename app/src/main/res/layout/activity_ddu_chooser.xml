@@ -7,6 +7,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
         >
+                <androidx.appcompat.widget.Toolbar
+                        android:id="@+id/ddu_chooser_toolbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="?attr/actionBarSize"
+                        android:layout_gravity="top"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:background="@color/toolbar_color"
+                        android:elevation="4dp"
+                        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+                        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+                />
                 <LinearLayout
                         android:orientation="vertical"
                         android:layout_width="match_parent"

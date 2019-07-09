@@ -82,6 +82,7 @@
                 android:layout_gravity="bottom"
                 app:buttonGravity="bottom"
                 android:background="@color/toolbar_color"
+                android:elevation="4dp"
                 app:contentInsetLeft="0dp"
                 app:contentInsetRight="0dp"
                 app:contentInsetStart="0dp"

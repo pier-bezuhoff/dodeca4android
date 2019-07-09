@@ -71,7 +71,8 @@ class DduFileRing(private val dir: File, private val scope: CoroutineScope) {
     }
 
     companion object {
-        // current, next, previous, second next, third next
-        private val READ_SEQUENCE = sequenceOf(0, 1, -1, 2, 3)
+        private const val TAG = "DduFileRing"
+        /** read: current, next, previous, second next, third next */
+        private val READ_SEQUENCE = sequenceOf(0, +1, -1, +2, +3)
     }
 }

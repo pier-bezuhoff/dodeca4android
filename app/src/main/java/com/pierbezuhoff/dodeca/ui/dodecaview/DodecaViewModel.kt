@@ -1,9 +1,7 @@
 package com.pierbezuhoff.dodeca.ui.dodecaview
 
 import android.app.Application
-import android.graphics.Canvas
 import android.util.Log
-import android.view.MotionEvent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -17,6 +15,8 @@ import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
+import com.pierbezuhoff.dodeca.ui.meta.MetaDodecaView
+import com.pierbezuhoff.dodeca.ui.meta.SingleTapListener
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.filename
 import kotlinx.coroutines.Dispatchers
@@ -32,9 +32,9 @@ class DodecaViewModel(
     application: Application,
     optionsManager: OptionsManager
 ) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
-    , DodecaViewGestureDetector.SingleTapListener
+    , SingleTapListener
     , DduRepresentation.StatHolder // by statUpdater
-    , DduRepresentation.ToastEmitter
+    , MetaDodecaView.MetaDodecaViewModel
     , BottomBarHider // by bottomBarHider
 {
     private val _dduLoading: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -48,7 +48,7 @@ class DodecaViewModel(
     private var dduLoaded = false // mark that MainActivity should not repeat [loadInitialDdu]
     val dduLoading: LiveData<Boolean> = _dduLoading // for ProgressBar
 
-    val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
+    override val dduRepresentation: LiveData<DduRepresentation> = _dduRepresentation
     val updating: LiveData<Boolean> = _updating
     val drawTrace: LiveData<Boolean> = _drawTrace
     val shape: MutableLiveData<Shape> = MutableLiveData(DEFAULT_SHAPE) // [shape] may be changed from DodecaViewActivity
@@ -66,7 +66,7 @@ class DodecaViewModel(
     val dTime: LiveData<Float> = _dTime
     val statTimeDelta: Int = statUpdater.statTimeDelta
 
-    val gestureDetector: DodecaViewGestureDetector = DodecaViewGestureDetector.get(context)
+    override val gestureDetector: DodecaViewGestureDetector = DodecaViewGestureDetector.get(context)
 
     init {
         registerOptionsObservers()
@@ -190,7 +190,7 @@ class DodecaViewModel(
     private fun getRecentDduFile(): File =
         dduFileService.dduDir/optionsManager.fetched(options.recentDdu)
 
-    override fun onSingleTap(e: MotionEvent?) {
+    override fun onSingleTap() {
         toggleBottomBar()
     }
 
@@ -262,9 +262,6 @@ class DodecaViewModel(
         }
     }
 
-    override fun toast(message: CharSequence) { context.toast(message) }
-    override fun formatToast(id: Int, vararg args: Any) { context.toast(context.getString(id, *args)) }
-
     /** Resume ddu evolution after [pause] or [stop] */
     fun resume() {
         val newUpdating = oldUpdating ?: DEFAULT_UPDATING
@@ -307,9 +304,6 @@ class DodecaViewModel(
         _drawTrace.value = newDrawTrace
         dduRepresentation.value?.drawTrace = newDrawTrace
     }
-
-    fun onDraw(canvas: Canvas) =
-        dduRepresentation.value?.draw(canvas)
 
     fun getDduFile(): File? =
         dduRepresentation.value?.ddu?.file

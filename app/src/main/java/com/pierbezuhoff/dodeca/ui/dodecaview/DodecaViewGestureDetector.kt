@@ -6,6 +6,10 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
+import com.pierbezuhoff.dodeca.ui.meta.MetaDodecaView
+import com.pierbezuhoff.dodeca.ui.meta.ScaleListener
+import com.pierbezuhoff.dodeca.ui.meta.ScrollListener
+import com.pierbezuhoff.dodeca.ui.meta.SingleTapListener
 import com.pierbezuhoff.dodeca.utils.Connection
 
 /** Listen to single tap, scroll and scale gestures */
@@ -13,11 +17,8 @@ class DodecaViewGestureDetector private constructor(
     context: Context
 ) : GestureDetector.SimpleOnGestureListener()
     , View.OnTouchListener
+    , MetaDodecaView.AttachableGestureDetector
 {
-    interface SingleTapListener { fun onSingleTap(e: MotionEvent?) }
-    interface ScrollListener { fun onScroll(dx: Float, dy: Float) }
-    interface ScaleListener { fun onScale(scale: Float, focusX: Float, focusY: Float) }
-
     private val gestureDetector = GestureDetector(context.applicationContext, this)
     private val scaleGestureListener = ScaleGestureListener()
     private val scaleDetector = ScaleGestureDetector(context.applicationContext, scaleGestureListener)
@@ -28,7 +29,7 @@ class DodecaViewGestureDetector private constructor(
     val onScrollSubscription = scrollConnection.subscription
     val onScaleSubscription = scaleGestureListener.onScaleSubscription
 
-    fun registerAsOnTouchListenerFor(view: View) {
+    override fun registerAsOnTouchListenerFor(view: View) {
         view.setOnTouchListener(this)
         gestureDetector.setOnDoubleTapListener(this)
     }
@@ -46,7 +47,7 @@ class DodecaViewGestureDetector private constructor(
     }
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
-        singleTapConnection.send { onSingleTap(e) }
+        singleTapConnection.send { onSingleTap() }
         return super.onSingleTapConfirmed(e)
     }
 
@@ -73,7 +74,6 @@ class DodecaViewGestureDetector private constructor(
     }
 
     companion object {
-        private const val TAG = "DodecaViewGestureDetector"
         @Volatile private var instance: DodecaViewGestureDetector? = null
 
         /** Thread-safe via double-checked locking */

@@ -27,7 +27,10 @@ abstract class MetaDodecaView @JvmOverloads constructor(
         }
     }
     interface AttachableGestureDetector { fun registerAsOnTouchListenerFor(view: View) }
-    lateinit var viewModel: MetaDodecaViewModel // injected via DataBinding
+
+    /** Should be overridden by `lateinit var viewModel: CustomViewModel`
+     * where `CustomViewModel : MetaDodecaView.MetaDodecaViewModel` */
+    abstract val viewModel: MetaDodecaViewModel
 
     private var initialized = false
 
@@ -49,8 +52,8 @@ abstract class MetaDodecaView @JvmOverloads constructor(
         setupObservers()
     }
 
-    private fun setupObservers() {
-        require(lifecycleInherited)
+    protected open fun setupObservers() {
+        require(lifecycleInherited) { "As [LifecycleInheritor] you should [this.inheritLifecycleOf(LifecycleOwner)]" }
         viewModel.dduRepresentation.observe(this, Observer {
             it.connectPresenter(this)
         })

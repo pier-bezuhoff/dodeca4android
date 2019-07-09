@@ -7,7 +7,13 @@
             android:id="@+id/to_parent_dir"
             android:title="@string/to_parent_dir_title"
             android:icon="@drawable/ic_arrow_upward"
-            app:showAsAction="ifRoom"
+            app:showAsAction="always"
+    />
+    <item
+            android:id="@+id/to_dodeca_show"
+            android:title="@string/to_dodeca_show_title"
+            android:icon="@drawable/ic_collection"
+            app:showAsAction="always"
     />
     <item
             android:id="@+id/import_ddus"

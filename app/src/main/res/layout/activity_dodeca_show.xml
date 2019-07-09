@@ -36,12 +36,6 @@
                 android:background="@color/toolbar_color"
                 android:elevation="4dp"
                 android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-                app:contentInsetLeft="0dp"
-                app:contentInsetRight="0dp"
-                app:contentInsetStart="0dp"
-                app:contentInsetStartWithNavigation="0dp"
-                app:contentInsetEnd="0dp"
-                app:contentInsetEndWithActions="0dp"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         />
 
