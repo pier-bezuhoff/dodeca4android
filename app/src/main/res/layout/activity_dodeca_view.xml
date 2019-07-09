@@ -76,7 +76,7 @@
             android:id="@+id/coordinatorLayout">
 
         <androidx.appcompat.widget.Toolbar
-                android:id="@+id/bar"
+                android:id="@+id/dodeca_view_toolbar"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:layout_gravity="bottom"
@@ -89,7 +89,6 @@
                 app:contentInsetStartWithNavigation="0dp"
                 app:contentInsetEnd="0dp"
                 app:contentInsetEndWithActions="0dp"
-                app:showWhen="@{viewModel.bottomBarShown}"
         >
             <LinearLayout
                     android:orientation="vertical"

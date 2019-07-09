@@ -14,7 +14,8 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaShowBinding
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
-import com.pierbezuhoff.dodeca.utils.animate
+import com.pierbezuhoff.dodeca.utils.Once
+import com.pierbezuhoff.dodeca.utils.bindSupportActionBar
 import kotlinx.android.synthetic.main.activity_dodeca_show.*
 import org.jetbrains.anko.defaultSharedPreferences
 import java.io.File
@@ -34,6 +35,7 @@ class DodecaShowActivity : AppCompatActivity()
     private val viewModel by lazy {
         ViewModelProviders.of(this, factory).get(DodecaShowViewModel::class.java)
     }
+    private val firstResume by Once(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,23 +68,17 @@ class DodecaShowActivity : AppCompatActivity()
     }
 
     private fun setupToolbar() {
-        setSupportActionBar(dodeca_show_toolbar)
+        bindSupportActionBar(
+            toolbar = dodeca_show_toolbar,
+            toolbarShown = viewModel.appBarShown,
+            showAnimationId = R.anim.slide_in_top,
+            hideAnimationId = R.anim.slide_out_top
+        )
         supportActionBar?.title = "..."
         viewModel.title.observe(this, Observer { title: String ->
             supportActionBar?.title = title
         })
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        viewModel.appBarShown.observe(this, Observer { shown: Boolean ->
-            if (shown && supportActionBar?.isShowing != true) {
-                animate(dodeca_show_toolbar, R.anim.slide_in_and_fade_in_top) {
-                    supportActionBar?.show()
-                }
-            } else if (!shown && supportActionBar?.isShowing == true) {
-                animate(dodeca_show_toolbar, R.anim.slide_out_and_fade_out_top) {
-                    supportActionBar?.hide()
-                }
-            }
-        })
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -114,7 +110,8 @@ class DodecaShowActivity : AppCompatActivity()
 
     override fun onResume() {
         super.onResume()
-        viewModel.resume()
+        if (!firstResume) // first resume hide;show toolbar too fast
+            viewModel.resume()
     }
 
     override fun onPause() {

@@ -29,6 +29,7 @@ import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerF
 import com.pierbezuhoff.dodeca.ui.settings.SettingsActivity
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
+import com.pierbezuhoff.dodeca.utils.bindSupportActionBar
 import com.pierbezuhoff.dodeca.utils.copyStream
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.fileName
@@ -81,8 +82,6 @@ class DodecaViewActivity : AppCompatActivity()
             DataBindingUtil.setContentView(this, R.layout.activity_dodeca_view)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
-        setSupportActionBar(bar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
         setupToolbar()
         viewModel.showBottomBar()
         // if launched from implicit intent (uri passed from [MainActivity]):
@@ -104,6 +103,13 @@ class DodecaViewActivity : AppCompatActivity()
     }
 
     private fun setupToolbar() {
+        bindSupportActionBar(
+            toolbar = dodeca_view_toolbar,
+            toolbarShown = viewModel.bottomBarShown,
+            showAnimationId = R.anim.slide_in_bottom,
+            hideAnimationId = R.anim.slide_out_bottom
+        )
+        supportActionBar?.setDisplayShowTitleEnabled(false)
         setOf(toolbar1, toolbar2).forEach { toolbar ->
             toolbar.children.filterIsInstance(ImageButton::class.java).forEach { button ->
                 button.setOnClickListener { onToolbarItemClick(it.id) }

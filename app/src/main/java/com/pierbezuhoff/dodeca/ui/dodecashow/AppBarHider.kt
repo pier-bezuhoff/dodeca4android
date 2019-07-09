@@ -16,7 +16,7 @@ interface AppBarHider {
 
 class CoroutineAppBarHider(private val scope: CoroutineScope) : AppBarHider {
     private var hidingJob: Job? = null
-    private val _appBarShown: MutableLiveData<Boolean> = MutableLiveData(true)
+    private val _appBarShown: MutableLiveData<Boolean> = MutableLiveData()
     override val appBarShown: LiveData<Boolean> = _appBarShown
 
     override fun showAppBar(timeoutSeconds: Int?) {
