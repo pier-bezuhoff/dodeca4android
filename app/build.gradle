@@ -18,8 +18,8 @@ android {
         minSdkVersion 19
         targetSdkVersion 28
         multiDexEnabled true
-        versionCode 36
-        versionName "1.5.2.2" // <-> (values, values-ru)/strings.xml/version_name
+        versionCode 39
+        versionName "1.5.1.2" // <-> (values, values-ru)/strings.xml/version_name
         kapt {
             arguments {
                 arg("room.schemaLocation", "$projectDir/schemas".toString())
