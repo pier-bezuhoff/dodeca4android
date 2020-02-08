@@ -151,7 +151,10 @@ class DodecaViewActivity : AppCompatActivity()
     @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun saveScreenshot() {
         val screenshot: Bitmap = dodeca_view.drawToBitmap()
-        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        val dir = picturesDir/Filename(getString(R.string.app_name))
+        if (!dir.exists())
+            dir.mkdir()
         val name = viewModel.dduRepresentation.value?.ddu?.file?.nameWithoutExtension ?: "untitled-ddu"
         viewModel.viewModelScope.launch(Dispatchers.IO) {
             val similarFiles: Array<out File>? = dir
@@ -169,7 +172,7 @@ class DodecaViewActivity : AppCompatActivity()
                 screenshot.compress(Bitmap.CompressFormat.PNG, 100, it)
             }
             withContext(Dispatchers.Main) {
-                toast(getString(R.string.screenshot_saved_toast, newName, dir.name))
+                toast(getString(R.string.screenshot_saved_toast, newName, "${picturesDir.name}/${getString(R.string.app_name)}"))
             }
         }
 
@@ -330,6 +333,7 @@ class DodecaViewActivity : AppCompatActivity()
         private const val HELP_CODE = 3
         /** Distraction free mode */
         private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        private const val SCREENSHOTS_DIR_NAME = "DodecaMeditation"
     }
 }
 
