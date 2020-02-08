@@ -107,7 +107,7 @@ suspend fun ContentResolver.copyDirectory(source: DocumentFile, target: File) {
 }
 
 /** Add unique digital postfix if [file] already exists */
-suspend fun withUniquePostfix(file: File): File = withContext(Dispatchers.IO) {
+suspend fun withUniquePostfix(file: File, extenesion: String = "ddu"): File = withContext(Dispatchers.IO) {
     val allFiles: List<File> = file.siblings()
     val fileName = file.fileName
     val part1 = Regex("^(.*)-(\\d*)$") // parse file name as "[namePart1]-[digital postfix]"
@@ -135,7 +135,7 @@ suspend fun withUniquePostfix(file: File): File = withContext(Dispatchers.IO) {
         .filter { it !in postfixes }
         .first()
     val newFileName = "$name-$newPostfix"
-    return@withContext File(file.parentFile, "$newFileName.ddu")
+    return@withContext File(file.parentFile, "$newFileName.$extenesion")
 }
 
 suspend fun File.siblings(): List<File> = withContext(Dispatchers.IO) {

@@ -4,8 +4,10 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.os.PersistableBundle
 import android.util.Log
 import android.view.View
@@ -14,8 +16,9 @@ import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
+import androidx.core.view.drawToBitmap
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
@@ -66,7 +69,7 @@ class DodecaViewActivity : AppCompatActivity()
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
     }
     private val viewModel by lazy {
-        ViewModelProviders.of(this, factory).get(DodecaViewModel::class.java)
+        ViewModelProvider(this, factory).get(DodecaViewModel::class.java)
     }
     private val dduFileService by lazy {
         DduFileService(applicationContext)
@@ -140,8 +143,36 @@ class DodecaViewActivity : AppCompatActivity()
             }
             R.id.clear_button -> viewModel.requestClear()
             R.id.autocenter_button -> viewModel.requestAutocenter()
+            R.id.screenshot_button -> saveScreenshotWithPermissionCheck()
             R.id.settings_button -> goToActivity(SettingsActivity::class.java, APPLY_SETTINGS_CODE)
         }
+    }
+
+    @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    fun saveScreenshot() {
+        val screenshot: Bitmap = dodeca_view.drawToBitmap()
+        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        val name = viewModel.dduRepresentation.value?.ddu?.file?.nameWithoutExtension ?: "untitled-ddu"
+        viewModel.viewModelScope.launch(Dispatchers.IO) {
+            val similarFiles: Array<out File>? = dir
+                .listFiles { file -> file.nameWithoutExtension.startsWith(name) }
+            val similar = similarFiles?.map { it.nameWithoutExtension } ?: emptyList()
+            var i = 0
+            val names = sequenceOf(name) + generateSequence {
+                i++
+                return@generateSequence "$name-$i"
+            }
+            val newName = (names - similar).first()
+            val file = dir/Filename("$newName.png")
+            file.createNewFile()
+            file.outputStream().use {
+                screenshot.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+            withContext(Dispatchers.Main) {
+                toast(getString(R.string.screenshot_saved_toast, newName, dir.name))
+            }
+        }
+
     }
 
     private fun <T : AppCompatActivity> goToActivity(cls: Class<T>, resultCode: Int, vararg extraArgs: Pair<String, String>) {

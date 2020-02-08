@@ -25,6 +25,7 @@
     <string name="autocenter_button_title">Autocenter</string>
     <string name="settings_button_title">Settings</string>
     <string name="draw_circles_button_title">Circle drawing mode</string>
+    <string name="screenshot_button_title">Take screenshot</string>
     <!-- unused -->
     <string name="change_color_button_title">Change color</string>
 
@@ -53,6 +54,7 @@
     <string name="ddu_exported_toast">ddu-picture \"%s\" has been exported</string>
     <string name="ddu_exported_for_dodecalook_toast">ddu-picture \"%s\" has been exported as DodecaLook-compatible
     </string>
+    <string name="screenshot_saved_toast">Screenshot saved as \"%s.png\" to \"%s\" folder</string>
 
     <!-- Status strings -->
     <string name="extracting_assets_status">Extracting ddu-pictures into \"%s\"…</string>
