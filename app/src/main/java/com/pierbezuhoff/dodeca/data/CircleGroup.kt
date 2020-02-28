@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 
 interface ImmutableCircleGroup {
+    val defaultPaint: Paint
     val figures: List<CircleFigure>
     operator fun get(i: Int): CircleFigure
 }

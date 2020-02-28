@@ -1,6 +1,7 @@
 package com.pierbezuhoff.dodeca.ui.dodecaview
 
 import android.app.Application
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.Log
 import android.view.MotionEvent
@@ -261,6 +262,13 @@ class DodecaViewModel(
             }
         }
     }
+
+    fun takeScreenshot(width: Int, height: Int, scale: Int = 1): Bitmap? =
+        dduRepresentation.value?.run {
+            val screenshot = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888)
+            Canvas(screenshot).drawScaledVisible(scale)
+            return@run screenshot
+        }
 
     override fun toast(message: CharSequence) {
         context.toast(message)

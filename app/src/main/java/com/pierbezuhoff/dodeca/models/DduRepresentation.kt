@@ -14,6 +14,7 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
+import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.DduAttributesHolder
 import com.pierbezuhoff.dodeca.data.DduOptionsChangeListener
@@ -391,6 +392,21 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         )
     }
 
+    fun Canvas.drawScaledVisible(scale: Int) {
+        drawBackground()
+        val scaledFigures = circleGroup.figures.toList().map {
+            it.copy(newColor = null).also { scale(scale.toFloat(), scale.toFloat()) }
+        }
+        val scaledCircles = CircleGroup(
+            scaledFigures,
+            circleGroup.defaultPaint
+        )
+        scaledCircles.draw(
+            canvas = this,
+            shape = shape, showAllCircles = values.showAllCircles
+        )
+    }
+
 
     private class UpdateScheduler {
         private var lastUpdateTime: Long = 0
@@ -419,7 +435,8 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     }
 
     class PresenterDisconnector(dduRepresentation: DduRepresentation) : LifecycleObserver {
-        val dduRepresentation: WeakReference<DduRepresentation> = WeakReference(dduRepresentation)
+        private val dduRepresentation: WeakReference<DduRepresentation> =
+            WeakReference(dduRepresentation)
         @Suppress("unused")
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         fun disconnectPresenter() { dduRepresentation.get()?.presenter = null }

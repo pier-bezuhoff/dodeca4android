@@ -46,6 +46,7 @@ internal class PrimitiveCircles(
                 append(i, Paint(defaultBorderPaint).apply { color = attr.borderColor })
         }
     }
+    override val defaultPaint: Paint = paint
     override val figures: List<CircleFigure>
         get() = (0 until size).map { i ->
             val (color, fill, rule, borderColor) = attrs[i]
