@@ -151,13 +151,13 @@ class DodecaViewActivity : AppCompatActivity()
     fun saveScreenshot() {
         val scale = 3
         val (w, h) = dodeca_view.getSize()!!
-        val maybeScreenshot =
-            runCatching { viewModel.takeScreenshot(w, h, scale) }.getOrNull()
-        if (maybeScreenshot == null) {
-            toast("cannot take screenshot")
-        } else {
-            val screenshot: Bitmap = maybeScreenshot
-            // val screenshot: Bitmap = dodeca_view.drawToBitmap() // not scaled, ygwys
+        runCatching {
+            return@runCatching viewModel.takeScreenshot(w, h, scale)
+        }.getOrElse { e ->
+            toast("cannot take screenshot: $e")
+            return@getOrElse null
+        }?.let { screenshot ->
+//             val screenshot: Bitmap = dodeca_view.drawToBitmap() // not scaled, ygwys
             val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             val appName = getString(R.string.app_name)
             val dir = picturesDir/Filename(appName)
@@ -165,10 +165,11 @@ class DodecaViewActivity : AppCompatActivity()
                 dir.mkdir()
             val name = viewModel.dduRepresentation.value?.ddu?.file?.nameWithoutExtension ?: "untitled-ddu"
             viewModel.viewModelScope.launch(Dispatchers.IO) {
-                val file = mkScreenshotFile(name)
+                val file = mkScreenshotFile(dir, name)
                 file.outputStream().use {
                     screenshot.compress(Bitmap.CompressFormat.PNG, 100, it)
                 }
+                println(file)
                 // add img to gallery, TODO: test it
                 sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).apply { data = Uri.fromFile(file) })
                 withContext(Dispatchers.Main) {
@@ -178,7 +179,7 @@ class DodecaViewActivity : AppCompatActivity()
         }
     }
 
-    private fun mkScreenshotFile(name: String): File {
+    private fun mkScreenshotFile(dir: File, name: String): File {
         val similarFiles: Array<out File>? = dir
             .listFiles { file -> file.nameWithoutExtension.startsWith(name) }
         val similar = similarFiles?.map { it.nameWithoutExtension } ?: emptyList()

@@ -54,7 +54,7 @@
     <string name="ddu_exported_toast">ddu-picture \"%s\" has been exported</string>
     <string name="ddu_exported_for_dodecalook_toast">ddu-picture \"%s\" has been exported as DodecaLook-compatible
     </string>
-    <string name="screenshot_saved_toast">Screenshot saved as \"%s.png\" to \"%s\" folder</string>
+    <string name="screenshot_saved_toast">Screenshot saved as \"%s\" to \"%s\" folder</string>
 
     <!-- Status strings -->
     <string name="extracting_assets_status">Extracting ddu-pictures into \"%s\"…</string>
