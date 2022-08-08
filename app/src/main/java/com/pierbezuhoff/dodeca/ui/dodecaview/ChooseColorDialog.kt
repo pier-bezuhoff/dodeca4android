@@ -3,7 +3,6 @@ package com.pierbezuhoff.dodeca.ui.dodecaview
 import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
-import android.graphics.PorterDuff
 import android.graphics.drawable.LayerDrawable
 import android.view.LayoutInflater
 import android.view.View
@@ -14,6 +13,8 @@ import android.widget.Switch
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.BlendModeColorFilterCompat
+import androidx.core.graphics.BlendModeCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
@@ -71,7 +72,7 @@ class ChooseColorDialog(
         }
         val dialog = builder.apply {
             setMessage(R.string.choose_circle_dialog_message)
-            setPositiveButton(R.string.choose_circle_dialog_edit) { _, _ -> Unit } // will be set later
+            setPositiveButton(R.string.choose_circle_dialog_edit) { _, _ -> } // will be set later
             setNegativeButton(R.string.choose_circle_dialog_cancel) { _, _ -> chooseColorListener.onChooseColorClosed() }
         }.create()
         dialog.setOnDismissListener { chooseColorListener.onChooseColorClosed() }
@@ -145,7 +146,7 @@ class CircleAdapter(
                     list[0].apply { position = i }
                 else
                     CircleGroupRow(
-                        list.toSet().apply { forEach { it.position = null } },
+                        list.toSet().onEach { it.position = null },
                         position = i,
                         checked = list.all { it.checked }
                     )
@@ -301,11 +302,11 @@ class CircleAdapter(
         val border = circleImage.getDrawable(0)
         val inner = circleImage.getDrawable(1)
         if (fill) {
-            inner.setColorFilter(color, PorterDuff.Mode.SRC_ATOP)
-            border.setColorFilter(borderColor ?: color, PorterDuff.Mode.SRC_ATOP)
+            inner.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(color, BlendModeCompat.SRC_ATOP)
+            border.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(borderColor ?: color, BlendModeCompat.SRC_ATOP)
         } else {
             inner.alpha = 0
-            border.setColorFilter(color, PorterDuff.Mode.SRC_ATOP)
+            border.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(color, BlendModeCompat.SRC_ATOP)
         }
         return circleImage
     }
@@ -507,7 +508,7 @@ class CircleAdapter(
                     list[0]
                 else
                     CircleGroupRow(
-                        list.toSet().apply { forEach { it.position = null } },
+                        list.toSet().onEach { it.position = null },
                         checked = list.all { it.checked }
                     )
             }

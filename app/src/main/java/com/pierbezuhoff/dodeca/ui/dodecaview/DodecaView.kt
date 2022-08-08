@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.View
-import androidx.lifecycle.Observer
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.utils.ComplexFF
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
@@ -42,12 +41,13 @@ class DodecaView @JvmOverloads constructor(
 
     private fun setupObservers() {
         require(lifecycleInherited)
-        viewModel.bottomBarShown.observe(this, Observer {
+        viewModel.bottomBarShown.observe(this) {
+            // TODO: update to window inset controller
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
-        })
-        viewModel.dduRepresentation.observe(this, Observer {
+        }
+        viewModel.dduRepresentation.observe(this) {
             it.connectPresenter(this)
-        })
+        }
     }
 
     override fun getCenter(): Complex? =

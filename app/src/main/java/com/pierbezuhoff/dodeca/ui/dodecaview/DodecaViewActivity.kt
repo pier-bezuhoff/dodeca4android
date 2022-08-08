@@ -5,17 +5,24 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.media.MediaScannerConnection
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.PersistableBundle
 import android.util.Log
-import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.children
+import androidx.core.view.drawToBitmap
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -75,6 +82,10 @@ class DodecaViewActivity : AppCompatActivity()
     }
     private val dir: File get() = viewModel.dir
 
+    private val dduResultLauncher = registerForActivityResult(StartActivityForResult()) { onDduResult(it.resultCode, it.data) }
+    private val settingsResultLauncher = registerForActivityResult(StartActivityForResult()) { onSettingsResult(it.resultCode, it.data) }
+    private val helpResultLauncher = registerForActivityResult(StartActivityForResult()) { viewModel.showBottomBar() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupWindow()
@@ -87,21 +98,29 @@ class DodecaViewActivity : AppCompatActivity()
         setupToolbar()
         viewModel.showBottomBar()
         // if launched from implicit intent (uri passed from [MainActivity]):
-        intent.getParcelableExtra<Uri>("ddu_uri")?.let { uri ->
-            readUriWithPermissionCheck(uri)
-        } ?: viewModel.loadInitialDdu()
+        val uri = if (Build.VERSION.SDK_INT >= 33)
+            intent.getParcelableExtra("ddu_uri", Uri::class.java)
+        else intent.getParcelableExtra<Uri>("ddu_uri")
+        uri?.let { uri -> readUriWithPermissionCheck(uri) } ?: viewModel.loadInitialDdu()
         dodeca_view.inheritLifecycleOf(this)
     }
 
     private fun setupWindow() {
-        window.decorView.apply {
-            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
-            setOnSystemUiVisibilityChangeListener {
-                if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
-                    systemUiVisibility =
-                        IMMERSIVE_UI_VISIBILITY
-            }
-        }
+        hideSystemBars()
+//        window.decorView.apply {
+//            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+//            setOnSystemUiVisibilityChangeListener {
+//                if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
+//                    systemUiVisibility =
+//                        IMMERSIVE_UI_VISIBILITY
+//            }
+//        }
+    }
+
+    private fun hideSystemBars() {
+        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
     }
 
     private fun setupToolbar() {
@@ -119,10 +138,10 @@ class DodecaViewActivity : AppCompatActivity()
     private fun onToolbarItemClick(id: Int) {
         viewModel.showBottomBar()
         when (id) {
-            R.id.help_button -> goToActivity(HelpActivity::class.java, HELP_CODE)
+            R.id.help_button -> goToActivity(HelpActivity::class.java, helpResultLauncher)
             R.id.load_button -> goToActivity(
                 DduChooserActivity::class.java,
-                DDU_CODE,
+                dduResultLauncher,
                 "dir_path" to dir.absolutePath
             )
             R.id.save_button -> saveDdu()
@@ -143,21 +162,16 @@ class DodecaViewActivity : AppCompatActivity()
             R.id.clear_button -> viewModel.requestClear()
             R.id.autocenter_button -> viewModel.requestAutocenter()
             R.id.screenshot_button -> saveScreenshotWithPermissionCheck()
-            R.id.settings_button -> goToActivity(SettingsActivity::class.java, APPLY_SETTINGS_CODE)
+            R.id.settings_button -> goToActivity(SettingsActivity::class.java, settingsResultLauncher)
         }
     }
 
     @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun saveScreenshot() {
-        val scale = 3
-        val (w, h) = dodeca_view.getSize()!!
-        runCatching {
-            return@runCatching viewModel.takeScreenshot(w, h, scale)
-        }.getOrElse { e ->
-            toast("cannot take screenshot: $e")
-            return@getOrElse null
-        }?.let { screenshot ->
-//             val screenshot: Bitmap = dodeca_view.drawToBitmap() // not scaled, ygwys
+        val screenshot: Bitmap? =
+            if (false) dodeca_view.drawToBitmap() // ??? idr
+            else viewModel.takeFullScreenshot()
+        screenshot?.let {
             val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             val appName = getString(R.string.app_name)
             val dir = picturesDir/Filename(appName)
@@ -171,7 +185,8 @@ class DodecaViewActivity : AppCompatActivity()
                 }
                 println(file)
                 // add img to gallery, TODO: test it
-                sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).apply { data = Uri.fromFile(file) })
+//                sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).apply { data = Uri.fromFile(file) })
+                MediaScannerConnection.scanFile(applicationContext, arrayOf(file.toString()), null, null)
                 withContext(Dispatchers.Main) {
                     toast(getString(R.string.screenshot_saved_toast, file.name, "${picturesDir.name}/$appName"))
                 }
@@ -188,21 +203,18 @@ class DodecaViewActivity : AppCompatActivity()
             i++
             return@generateSequence "$name-$i"
         }
-        val newName = (names - similar).first()
+        val newName = (names - similar.toSet()).first()
         val file = dir/Filename("$newName.png")
         file.createNewFile()
         return file
     }
 
-    private fun <T : AppCompatActivity> goToActivity(cls: Class<T>, resultCode: Int, vararg extraArgs: Pair<String, String>) {
+    private fun <T : AppCompatActivity> goToActivity(cls: Class<T>, resultLauncher: ActivityResultLauncher<Intent>, vararg extraArgs: Pair<String, String>) {
         viewModel.hideBottomBar()
         val intent = Intent(this, cls)
         for ((key, arg) in extraArgs)
             intent.putExtra(key, arg)
-        startActivityForResult(
-            intent,
-            resultCode
-        )
+        resultLauncher.launch(intent)
     }
 
     private fun saveDdu() {
@@ -249,30 +261,26 @@ class DodecaViewActivity : AppCompatActivity()
         viewModel.pause()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        when (requestCode) {
-            DDU_CODE -> {
-                if (resultCode == Activity.RESULT_OK) {
-                    data?.getStringExtra("ddu_path")?.let { path ->
-                        readFile(File(path))
-                    }
-                }
+    private fun onDduResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK) {
+            data?.getStringExtra("ddu_path")?.let { path ->
+                readFile(File(path))
             }
-            APPLY_SETTINGS_CODE -> {
-                if (resultCode == Activity.RESULT_OK) {
-                    fun have(param: String): Boolean =
-                        data?.getBooleanExtra(param, false) == true
-                    viewModel.applyInstantSettings(
-                        revertCurrentDdu = have("default_ddu"),
-                        revertAllDdus = have("default_ddus"),
-                        discardAllPreviews = have("discard_previews")
-                    )
-                }
-                optionsManager.fetchAll()
-            }
-            HELP_CODE -> Unit
         }
+        viewModel.showBottomBar()
+    }
+
+    private fun onSettingsResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK) {
+            fun have(param: String): Boolean =
+                data?.getBooleanExtra(param, false) == true
+            viewModel.applyInstantSettings(
+                revertCurrentDdu = have("default_ddu"),
+                revertAllDdus = have("default_ddus"),
+                discardAllPreviews = have("discard_previews")
+            )
+        }
+        optionsManager.fetchAll()
         viewModel.showBottomBar()
     }
 
@@ -281,7 +289,7 @@ class DodecaViewActivity : AppCompatActivity()
         onRequestPermissionsResult(requestCode, grantResults)
     }
 
-    override fun onSaveInstanceState(outState: Bundle?, outPersistentState: PersistableBundle?) {
+    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
         super.onSaveInstanceState(outState, outPersistentState)
         viewModel.maybeAutosave()
     }
@@ -299,18 +307,20 @@ class DodecaViewActivity : AppCompatActivity()
         if (!haveWriteExternalStoragePermission()) {
             Log.i(TAG, "permission WRITE_EXTERNAL_STORAGE not granted yet!")
         }
-        val name: Filename = File(uri.path).filename
-        viewModel.viewModelScope.launch(Dispatchers.IO) {
-            val targetFile = withUniquePostfix(dduFileService.dduDir/name)
-            // NOTE: when 'file' scheme (namely from ZArchiver) WRITE_EXTERNAL_STORAGE permission is obligatory
-            val inputStream = contentResolver.openInputStream(uri)
-            inputStream?.let {
-                copyStream(it, FileOutputStream(targetFile))
-                Log.i(TAG, "imported ddu-file \"$name\"")
-                withContext(Dispatchers.Main) {
-                    toast(getString(R.string.imported_ddu_toast, name))
+        uri.path?.let { path ->
+            val name: Filename = File(path).filename
+            viewModel.viewModelScope.launch(Dispatchers.IO) {
+                val targetFile = withUniquePostfix(dduFileService.dduDir/name)
+                // NOTE: when 'file' scheme (namely from ZArchiver) WRITE_EXTERNAL_STORAGE permission is obligatory
+                val inputStream = contentResolver.openInputStream(uri)
+                inputStream?.let {
+                    copyStream(it, FileOutputStream(targetFile))
+                    Log.i(TAG, "imported ddu-file \"$name\"")
+                    withContext(Dispatchers.Main) {
+                        toast(getString(R.string.imported_ddu_toast, name))
+                    }
+                    viewModel.loadDduFrom(targetFile)
                 }
-                viewModel.loadDduFrom(targetFile)
             }
         }
     }
@@ -343,12 +353,8 @@ class DodecaViewActivity : AppCompatActivity()
 
     companion object {
         private const val TAG = "DodecaViewActivity"
-        // requestCode-s for onActivityResult
-        private const val DDU_CODE = 1
-        private const val APPLY_SETTINGS_CODE = 2
-        private const val HELP_CODE = 3
-        /** Distraction free mode */
-        private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        /** Distraction free mode (deprecated) */
+//        private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         private const val SCREENSHOTS_DIR_NAME = "DodecaMeditation"
     }
 }

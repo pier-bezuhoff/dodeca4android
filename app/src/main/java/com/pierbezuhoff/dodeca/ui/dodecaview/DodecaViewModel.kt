@@ -236,10 +236,8 @@ class DodecaViewModel(
 
     private suspend fun saveDdu(file: File? = null) {
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
-            val ddu: Ddu? = dduRepresentation.buildCurrentDdu()
-            ddu?.let {
-                save(it, file)
-            }
+            val ddu: Ddu = dduRepresentation.buildCurrentDdu()
+            save(ddu, file)
         }
     }
 
@@ -263,12 +261,8 @@ class DodecaViewModel(
         }
     }
 
-    fun takeScreenshot(width: Int, height: Int, scale: Int = 1): Bitmap? =
-        dduRepresentation.value?.run {
-            val screenshot = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888)
-            Canvas(screenshot).drawScaledVisible(scale)
-            return@run screenshot
-        }
+    fun takeFullScreenshot(): Bitmap? =
+        dduRepresentation.value?.traceBitmap
 
     override fun toast(message: CharSequence) {
         context.toast(message)

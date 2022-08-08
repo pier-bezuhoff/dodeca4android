@@ -1,9 +1,7 @@
 package com.pierbezuhoff.dodeca.utils
 
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.OnLifecycleEvent
 import java.lang.ref.WeakReference
 
 /** Connection with multiple receivers */
@@ -32,9 +30,8 @@ class MultiConnection<ListenerInterface> {
         }
 
         fun unsubscribeOnDestroy(lifecycleOwner: LifecycleOwner) {
-            lifecycleOwner.lifecycle.addObserver(object : LifecycleObserver {
-                @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-                fun onDestroy() { unsubscribe() }
+            lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
+                override fun onDestroy(owner: LifecycleOwner) { unsubscribe() }
             })
         }
     }

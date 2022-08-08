@@ -17,7 +17,6 @@ import com.pierbezuhoff.dodeca.utils.isDdu
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -212,7 +211,8 @@ class DduFileService(private val context: Context) {
             for (file: File in dir.walkTopDown())
                 if (file.isDdu)
                     dduFileRepository.deleteIfExists(file.filename)
-            FileUtils.cleanDirectory(dir)
+            dir.deleteRecursively() // TODO: test
+//            FileUtils.cleanDirectory(dir)
         }
     }
 

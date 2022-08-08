@@ -1,5 +1,6 @@
 package com.pierbezuhoff.dodeca.models
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
@@ -7,14 +8,11 @@ import android.graphics.Paint
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.core.graphics.withMatrix
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
-import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.DduAttributesHolder
 import com.pierbezuhoff.dodeca.data.DduOptionsChangeListener
@@ -87,6 +85,8 @@ class DduRepresentation(override val ddu: Ddu) : Any()
 
     private val motion: Matrix = Matrix() // visible(z) = motion.move(z)
     private var trace: Trace? = null
+    val traceBitmap: Bitmap?
+        get() = trace?.bitmap
     private var currentCenter: Complex? = null // for screen rotations, visible current center (almost always == presenter?.getCenter())
 
     private var redrawTraceOnce: Boolean by Once()
@@ -211,7 +211,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     }
 
     /** Scale and translate all figures in ddu according to current view creating new ddu */
-    suspend fun buildCurrentDdu(): Ddu? =
+    suspend fun buildCurrentDdu(): Ddu =
         withContext(Dispatchers.Default) {
             val currentDrawTrace = drawTrace
             val currentShape = shape
@@ -392,22 +392,6 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         )
     }
 
-    fun Canvas.drawScaledVisible(scale: Int) {
-        drawBackground()
-        val scaledFigures = circleGroup.figures.toList().map {
-            it.copy(newColor = null).also { scale(scale.toFloat(), scale.toFloat()) }
-        }
-        val scaledCircles = CircleGroup(
-            scaledFigures,
-            circleGroup.defaultPaint
-        )
-        scaledCircles.draw(
-            canvas = this,
-            shape = shape, showAllCircles = values.showAllCircles
-        )
-    }
-
-
     private class UpdateScheduler {
         private var lastUpdateTime: Long = 0
         private var ups: Int = DEFAULT_UPS // updates per second
@@ -434,12 +418,15 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         }
     }
 
-    class PresenterDisconnector(dduRepresentation: DduRepresentation) : LifecycleObserver {
+    class PresenterDisconnector(dduRepresentation: DduRepresentation) : DefaultLifecycleObserver {
         private val dduRepresentation: WeakReference<DduRepresentation> =
             WeakReference(dduRepresentation)
-        @Suppress("unused")
-        @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-        fun disconnectPresenter() { dduRepresentation.get()?.presenter = null }
+
+        override fun onDestroy(owner: LifecycleOwner) {
+            super.onDestroy(owner)
+            disconnectPresenter()
+        }
+        private fun disconnectPresenter() { dduRepresentation.get()?.presenter = null }
     }
 
     companion object {

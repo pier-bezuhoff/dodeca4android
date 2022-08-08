@@ -7,7 +7,7 @@ import android.graphics.Paint
 
 class Trace(width: Int, height: Int) {
     // NOTE: bitmap == (factor ^ 2) * screens
-    private val bitmap: Bitmap
+    val bitmap: Bitmap // must not be changed from outside
     val canvas: Canvas
     /** (bitmap top-left corner) - (screen top-left corner) */
     private val translation: Matrix

@@ -56,8 +56,8 @@ class DduChooserViewModel(
     private fun updateFromDir(dir: File) {
         dirs.clear()
         files.clear()
-        dirs.addAll(dir.listFiles(DIR_FILE_FILTER))
-        files.addAll(dir.listFiles(DDU_FILE_FILTER))
+        dir.listFiles(DIR_FILE_FILTER)?.let { dirs.addAll(it) }
+        dir.listFiles(DDU_FILE_FILTER)?.let { files.addAll(it) }
     }
 
     override fun getPreviewOf(file: File): LiveData<Pair<File, Bitmap>> {

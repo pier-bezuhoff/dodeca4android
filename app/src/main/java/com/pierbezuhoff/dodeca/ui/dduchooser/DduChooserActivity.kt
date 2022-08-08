@@ -10,16 +10,16 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.annotation.MenuRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.documentfile.provider.DocumentFile
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.options
 import com.pierbezuhoff.dodeca.data.values
@@ -58,11 +58,12 @@ class DduChooserActivity : AppCompatActivity()
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
     }
     private val viewModel by lazy {
-        ViewModelProviders.of(this, factory).get(DduChooserViewModel::class.java)
+        ViewModelProvider(this, factory).get(DduChooserViewModel::class.java)
     }
     private val dduFileRepository by lazy {
         DduFileRepository.get(applicationContext)
     }
+
     private val dduFileService by lazy {
         DduFileService(applicationContext)
     }
@@ -72,6 +73,12 @@ class DduChooserActivity : AppCompatActivity()
     private var requestedDduDir: File? = null
     private lateinit var dirDeltaList: DeltaList<File>
     private lateinit var dduFileDeltaList: DeltaList<File>
+
+    private val importDirResultLauncher = registerForActivityResult(StartActivityForResult()) { onImportDirResult(it.resultCode, it.data) }
+    private val importDdusResultLauncher = registerForActivityResult(StartActivityForResult()) { onImportDdusResult(it.resultCode, it.data) }
+    private val exportDduResultLauncher = registerForActivityResult(StartActivityForResult()) { onExportDduResult(it.resultCode, it.data) }
+    private val exportDduForDodecaLookResultLauncher = registerForActivityResult(StartActivityForResult()) { onExportDduForDodecaLookResult(it.resultCode, it.data) }
+    private val exportDirResultLauncher = registerForActivityResult(StartActivityForResult()) { onExportDirResult(it.resultCode, it.data) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,8 +105,8 @@ class DduChooserActivity : AppCompatActivity()
         val adapter = DirAdapter(viewModel.dirs)
         dirDeltaList = DeltaList(viewModel.dirs, adapter)
         dir_recycler_view.adapter = adapter
-        dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext) as RecyclerView.LayoutManager
-        dir_recycler_view.itemAnimator = DefaultItemAnimator() as RecyclerView.ItemAnimator
+        dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
+        dir_recycler_view.itemAnimator = DefaultItemAnimator()
         adapter.dirChangeSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
     }
@@ -147,11 +154,11 @@ class DduChooserActivity : AppCompatActivity()
         createdContextMenu = contextMenuSource
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.ddu_chooser_appbar, menu)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            menu?.removeItem(R.id.import_dir)
-            menu?.removeItem(R.id.export_ddus)
+            menu.removeItem(R.id.import_dir)
+            menu.removeItem(R.id.export_ddus)
         }
         return super.onCreateOptionsMenu(menu)
     }
@@ -163,21 +170,21 @@ class DduChooserActivity : AppCompatActivity()
             R.id.import_ddus -> requestImportDdus()
             R.id.export_ddus -> requestExportDduDir()
             R.id.import_dir -> requestImportDduDir()
-            R.id.delete_ddus -> deleteAll()
+//            R.id.delete_ddus -> deleteAll() // bruh, why??
             R.id.toggle_folders -> toggleFolders()
             else -> isSet = false
         }
         return isSet || super.onOptionsItemSelected(item)
     }
 
-    override fun onContextItemSelected(item: MenuItem?): Boolean {
+    override fun onContextItemSelected(item: MenuItem): Boolean {
         var isSet1 = true
         var isSet2 = true
         createdContextMenu?.let { source ->
             when (source) {
                 is ContextMenuSource.DduFile -> {
                     val file: File = source.file
-                    when (item?.itemId) {
+                    when (item.itemId) {
                         R.id.ddu_rename -> renameDduFile(file)
                         R.id.ddu_delete -> deleteDduFile(file)
                         R.id.ddu_restore -> restoreDduFile(file)
@@ -189,7 +196,7 @@ class DduChooserActivity : AppCompatActivity()
                 }
                 is ContextMenuSource.Dir -> {
                     val dir: File = source.dir
-                    when (item?.itemId) {
+                    when (item.itemId) {
                         R.id.dir_delete -> deleteDir(dir)
                         R.id.dir_export -> requestExportDduDir(dir)
                         else -> isSet2 = false
@@ -218,7 +225,7 @@ class DduChooserActivity : AppCompatActivity()
             type = "*/*"
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         }
-        startActivityForResult(intent, IMPORT_DDUS_REQUEST_CODE)
+        importDdusResultLauncher.launch(intent)
     }
 
     private fun importDdus(uris: List<Uri>) {
@@ -241,8 +248,8 @@ class DduChooserActivity : AppCompatActivity()
     private fun requestExportDduDir(targetDir: File = dir) {
         requestedDduDir = targetDir
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-            startActivityForResult(intent, EXPORT_DIR_REQUEST_CODE)
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE) // NOTE: added "val" instead of "this.intent="
+            exportDirResultLauncher.launch(intent)
         }
     }
 
@@ -265,7 +272,7 @@ class DduChooserActivity : AppCompatActivity()
     private fun requestImportDduDir() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-            startActivityForResult(intent, IMPORT_DIR_REQUEST_CODE)
+            importDirResultLauncher.launch(intent)
         } // NOTE: Android < 5 has no Intent.ACTION_OPEN_DOCUMENT_TREE
     }
 
@@ -391,7 +398,7 @@ class DduChooserActivity : AppCompatActivity()
             putExtra(Intent.EXTRA_TITLE, file.name)
         }
         requestedDduFile = file
-        startActivityForResult(intent, EXPORT_DDU_REQUEST_CODE)
+        exportDduResultLauncher.launch(intent)
     }
 
     private fun exportDduFile(uri: Uri) {
@@ -415,7 +422,7 @@ class DduChooserActivity : AppCompatActivity()
             putExtra(Intent.EXTRA_TITLE, file.name)
         }
         requestedDduFile = file
-        startActivityForResult(intent, EXPORT_DDU_FOR_DODECA_LOOK_REQUEST_CODE)
+        exportDduForDodecaLookResultLauncher.launch(intent)
     }
 
     private fun exportDduFileForDodecaLook(uri: Uri) {
@@ -445,38 +452,39 @@ class DduChooserActivity : AppCompatActivity()
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val maybeUri: Uri? by lazy { data?.data }
+    private fun onImportDirResult(resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK)
-            when (requestCode) {
-                IMPORT_DIR_REQUEST_CODE -> {
-                    maybeUri?.let { uri ->
-                        DocumentFile.fromTreeUri(this, uri)
-                            ?.let { importDduDir(it) }
-                    }
-                }
-                IMPORT_DDUS_REQUEST_CODE ->
-                    (data?.clipData?.let { clipData ->
-                        (0 until clipData.itemCount).map { clipData.getItemAt(it).uri }
-                    } ?: maybeUri?.let { listOf(it) })
-                        ?.let { uris -> importDdus(uris) }
-                EXPORT_DDU_REQUEST_CODE ->
-                    maybeUri?.let { uri -> exportDduFile(uri) }
-                EXPORT_DDU_FOR_DODECA_LOOK_REQUEST_CODE ->
-                    maybeUri?.let { uri -> exportDduFileForDodecaLook(uri) }
-                EXPORT_DIR_REQUEST_CODE ->
-                    maybeUri?.let { uri -> exportDduDir(uri) }
-                else -> super.onActivityResult(requestCode, resultCode, data)
+            data?.data?.let { uri ->
+                DocumentFile.fromTreeUri(this, uri)
+                    ?.let { importDduDir(it) }
             }
+    }
+
+    private fun onImportDdusResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK)
+            (data?.clipData?.let { clipData ->
+                (0 until clipData.itemCount).map { clipData.getItemAt(it).uri }
+            } ?: data?.data?.let { listOf(it) })
+                ?.let { uris -> importDdus(uris) }
+    }
+
+    private fun onExportDduResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK)
+            data?.data?.let { uri -> exportDduFile(uri) }
+    }
+
+    private fun onExportDduForDodecaLookResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK)
+            data?.data?.let { uri -> exportDduFileForDodecaLook(uri) }
+    }
+
+    private fun onExportDirResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK)
+            data?.data?.let { uri -> exportDduDir(uri) }
     }
 
     companion object {
         private const val TAG: String = "DduChooserActivity"
-        private const val IMPORT_DIR_REQUEST_CODE = 1
-        private const val IMPORT_DDUS_REQUEST_CODE = 2
-        private const val EXPORT_DIR_REQUEST_CODE = 3
-        private const val EXPORT_DDU_REQUEST_CODE = 4
-        private const val EXPORT_DDU_FOR_DODECA_LOOK_REQUEST_CODE = 5
         private val DEFAULT_DDU_FILENAME = Filename("untitled.ddu")
     }
 }

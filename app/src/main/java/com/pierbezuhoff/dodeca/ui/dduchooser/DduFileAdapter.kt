@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.MenuRes
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
@@ -69,12 +68,12 @@ class DduFileAdapter(private val files: List<File>)
             File("")
             previewSupplierConnection.send {
                 getPreviewOf(file)
-            } ?.observe(this@DduFileAdapter, Observer { (file: File, newBitmap: Bitmap) ->
+            } ?.observe(this@DduFileAdapter) { (file: File, newBitmap: Bitmap) ->
                 // NOTE: view holder may be recycled and re-bind-ed while we are waiting for the preview,
                 //  so we tag it with [file]
                 if (holder.file == file)
                     setPreview(holder, newBitmap)
-            })
+            }
         }
     }
 

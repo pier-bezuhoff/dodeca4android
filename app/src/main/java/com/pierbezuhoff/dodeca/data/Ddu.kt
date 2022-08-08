@@ -264,7 +264,6 @@ private class DduReader(private val reader: InputStreamReader) {
     }
 
     private fun readCircleLine() {
-        @Suppress("NON_EXHAUSTIVE_WHEN")
         when (mode) {
             Mode.RADIUS -> circleBuilder::radius maybeSetTo maybeReadDouble()
             Mode.X -> circleBuilder::x maybeSetTo maybeReadDouble()
@@ -272,6 +271,7 @@ private class DduReader(private val reader: InputStreamReader) {
             Mode.COLOR -> circleBuilder::color maybeSetTo maybeReadColor()
             Mode.FILL -> circleBuilder::fill maybeSetTo maybeReadBoolean()
             Mode.RULE -> circleBuilder::rule maybeSetTo maybeReadRule()
+            else -> {}
         }
         if (mode >= Mode.RULE && trimmedLine.startsWith("borderColor:"))
             circleBuilder::borderColor maybeSetTo maybeReadColor(trimmedSubstringAfter("borderColor:"))

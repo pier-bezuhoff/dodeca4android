@@ -34,27 +34,27 @@ class DodecaGestureDetector private constructor(
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    override fun onTouch(view: View?, event: MotionEvent?): Boolean {
+    override fun onTouch(view: View?, event: MotionEvent): Boolean {
         gestureDetector.onTouchEvent(event)
         scaleDetector.onTouchEvent(event)
         return true
     }
 
-    override fun onDown(e: MotionEvent?): Boolean {
+    override fun onDown(e: MotionEvent): Boolean {
         super.onDown(e)
         return true
     }
 
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
         singleTapConnection.send { onSingleTap(e) }
         return super.onSingleTapConfirmed(e)
     }
 
-    override fun onDoubleTap(e: MotionEvent?): Boolean {
+    override fun onDoubleTap(e: MotionEvent): Boolean {
         return super.onDoubleTap(e)
     }
 
-    override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
+    override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
         scrollConnection.send { onScroll(distanceX, distanceY) }
         return super.onScroll(e1, e2, distanceX, distanceY)
     }
@@ -63,8 +63,8 @@ class DodecaGestureDetector private constructor(
         private val scaleConnection = Connection<ScaleListener>()
         val onScaleSubscription = scaleConnection.subscription
 
-        override fun onScale(detector: ScaleGestureDetector?): Boolean {
-            detector?.apply {
+        override fun onScale(detector: ScaleGestureDetector): Boolean {
+            detector.apply {
                 scaleConnection.send { onScale(scaleFactor, focusX, focusY) }
             }
             super.onScale(detector)

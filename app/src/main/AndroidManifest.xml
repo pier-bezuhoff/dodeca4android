@@ -22,6 +22,7 @@
                 android:name=".ui.MainActivity"
                 android:label="@string/app_name"
                 android:theme="@style/AppTheme.NoActionBar"
+                android:exported="true"
         >
 
             <!-- android:configChanges="orientation|screenSize" -->
@@ -55,18 +56,19 @@
         </activity>
         <activity
                 android:name=".ui.dodecaview.DodecaViewActivity"
+                android:exported="false"
                 android:theme="@style/AppTheme.NoActionBar"
         >
         </activity>
-        <activity android:name=".ui.dodecaedit.DodecaEditActivity">
+        <activity android:name=".ui.dodecaedit.DodecaEditActivity" android:exported="false">
         </activity>
-        <activity android:name=".ui.settings.SettingsActivity">
+        <activity android:name=".ui.settings.SettingsActivity" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
             </intent-filter>
         </activity>
-        <activity android:name=".ui.dduchooser.DduChooserActivity"/>
-        <activity android:name=".ui.help.HelpActivity"/>
+        <activity android:name=".ui.dduchooser.DduChooserActivity" android:exported="false"/>
+        <activity android:name=".ui.help.HelpActivity" android:exported="false"/>
     </application>
 
 </manifest>

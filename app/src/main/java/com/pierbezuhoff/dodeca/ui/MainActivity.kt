@@ -5,7 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Options
@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity()
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
     }
     private val viewModel by lazy {
-        ViewModelProviders.of(this, factory).get(MainViewModel::class.java)
+        ViewModelProvider(this, factory).get(MainViewModel::class.java)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -12,7 +12,6 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.ui.MainActivity
 import org.jetbrains.anko.support.v4.email
 
-@Suppress("UsePropertyAccessSyntax")
 class SettingsFragment : PreferenceFragmentCompat() {
     var settingsActivity: SettingsActivity? = null
 
@@ -41,11 +40,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
             hookClick(key) { addExtraResult(key) }
         }
         hookClick("default") {
-            val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
-            editor.clear()
-            PreferenceManager.setDefaultValues(context, R.xml.preferences, true)
-            editor.apply()
-            setupPreferences(rootKey) // a bit recursive, redraw defaults
+            context?.let { c ->
+                val editor = PreferenceManager.getDefaultSharedPreferences(c).edit()
+                editor.clear()
+                PreferenceManager.setDefaultValues(c, R.xml.preferences, true)
+                editor.apply()
+                setupPreferences(rootKey) // a bit recursive, redraw defaults
+            }
         }
         setOf("preview_size", "n_preview_updates", "preview_smart_updates").forEach { key ->
             hookChange(key) { addExtraResult("discard_previews") }

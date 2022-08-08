@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.Locale
 
 /** File name (without extension) */
 data class FileName(private val fileName: String) {
@@ -25,7 +26,7 @@ val File.fileName: FileName get() = FileName.of(this)
 data class Filename(private val filename: String) {
     val fileName: FileName get() = FileName.of(File(filename))
     val extension: String get() = File(filename).extension
-    val isDdu: Boolean get() = extension.toLowerCase() == "ddu"
+    val isDdu: Boolean get() = extension.lowercase(Locale.getDefault()) == "ddu"
     override fun toString(): String = filename
     fun toFile(parent: File? = null): File =
         File(parent, filename)
@@ -107,7 +108,7 @@ suspend fun ContentResolver.copyDirectory(source: DocumentFile, target: File) {
 }
 
 /** Add unique digital postfix if [file] already exists */
-suspend fun withUniquePostfix(file: File, extenesion: String = "ddu"): File = withContext(Dispatchers.IO) {
+suspend fun withUniquePostfix(file: File, extension: String = "ddu"): File = withContext(Dispatchers.IO) {
     val allFiles: List<File> = file.siblings()
     val fileName = file.fileName
     val part1 = Regex("^(.*)-(\\d*)$") // parse file name as "[namePart1]-[digital postfix]"
@@ -119,11 +120,11 @@ suspend fun withUniquePostfix(file: File, extenesion: String = "ddu"): File = wi
     val postfixes: Set<Int> = allFiles
         .asSequence()
         .filter { it.isDdu }
-        .map {
-            it.nameWithoutExtension.let { name ->
+        .map { file ->
+            file.nameWithoutExtension.let { name ->
                 part1.find(name)?.groupValues
                     ?.let { it[1] to it[2].toInt() }
-                    ?: name to null
+                    ?: (name to null)
             }
             // result: Sequence<Pair<String, Int?>>
             // result = Sequence of ((namePart1, digitalPostfix) or (name, null))
@@ -135,7 +136,7 @@ suspend fun withUniquePostfix(file: File, extenesion: String = "ddu"): File = wi
         .filter { it !in postfixes }
         .first()
     val newFileName = "$name-$newPostfix"
-    return@withContext File(file.parentFile, "$newFileName.$extenesion")
+    return@withContext File(file.parentFile, "$newFileName.$extension")
 }
 
 suspend fun File.siblings(): List<File> = withContext(Dispatchers.IO) {
@@ -146,10 +147,10 @@ suspend fun File.siblings(): List<File> = withContext(Dispatchers.IO) {
 fun ContentResolver.getDisplayName(uri: Uri): Filename? {
     var filename: Filename? = null
     val cursor: Cursor? = query(uri, null, null, null, null, null)
-    cursor?.use {
-        if (it.moveToFirst()) {
-            val displayName: String? =
-                it.getString(it.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+    cursor?.use { c ->
+        if (c.moveToFirst()) {
+            val i = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            val displayName: String? = if (i < 0) null else c.getString(i)
             displayName?.let {
                 filename = Filename(it)
             }

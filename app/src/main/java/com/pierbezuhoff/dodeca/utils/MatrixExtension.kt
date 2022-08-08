@@ -28,7 +28,7 @@ val Matrix.dy: Float get() = values[5]
 val Matrix.sx: Float get() = values[0]
 val Matrix.sy: Float get() = values[4]
 
-fun Matrix.inversed(): Matrix? {
+fun Matrix.inverted(): Matrix? {
     val inverse = Matrix()
     val success = invert(inverse)
     return if (success) inverse else null
