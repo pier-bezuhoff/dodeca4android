@@ -26,6 +26,8 @@
     <string name="settings_button_title">Settings</string>
     <string name="draw_circles_button_title">Circle drawing mode</string>
     <string name="screenshot_button_title">Take screenshot</string>
+
+    <string name="ellipsis" translatable="false">something</string>
     <!-- unused -->
     <string name="change_color_button_title">Change color</string>
 

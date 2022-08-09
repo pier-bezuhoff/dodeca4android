@@ -27,11 +27,13 @@ import com.pierbezuhoff.dodeca.utils.Just
 import com.pierbezuhoff.dodeca.utils.Once
 import com.pierbezuhoff.dodeca.utils.Sleeping
 import com.pierbezuhoff.dodeca.utils.asFF
+import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.dx
 import com.pierbezuhoff.dodeca.utils.dy
 import com.pierbezuhoff.dodeca.utils.mean
 import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.move
+import com.pierbezuhoff.dodeca.utils.plus
 import com.pierbezuhoff.dodeca.utils.sx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -40,6 +42,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.math3.complex.Complex
 import java.lang.ref.WeakReference
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Suppress("NOTHING_TO_INLINE")
@@ -82,6 +85,10 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         set(value) { field = value; changeDrawTrace(value) }
     override var shape: Shape = ddu.shape
         set(value) { field = value; changeShape(value) }
+    var showEverything: Boolean = false
+        set(value) { changeShowEverything(value); field = value }
+    var selectedCircles: IntArray = intArrayOf()
+        set(value) { changeSelectedCircle(value); field = value }
 
     private val motion: Matrix = Matrix() // visible(z) = motion.move(z)
     private var trace: Trace? = null
@@ -156,7 +163,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             trace?.motion?.run {
                 scroll(-dx, -dy)
             }
-        } else { // BUG: ?sometimes skip to else
+        } else { // BUG: ?sometimes it skips to else
             presenter?.getCenter()?.let { center ->
                 val shownCircles: List<CircleFigure> = circleGroup.figures.filter(CircleFigure::show)
                 val visibleCenter = shownCircles.map { visible(it.center) }.mean()
@@ -178,7 +185,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         updateOnce = true
     }
 
-    override fun onScroll(dx: Float, dy: Float) {
+    override fun onScroll(fromX: Float, fromY: Float, dx: Float, dy: Float) {
         scroll(-dx, -dy)
     }
 
@@ -200,7 +207,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         currentCenter = presenter?.getCenter()
         motion.transformation()
         if (drawTrace) {
-            if (values.redrawTraceOnMove)
+            if (values.redrawTraceOnMove || true) // TMP
                 clearTrace()
             else {
                 trace?.motion?.transformation()
@@ -270,14 +277,26 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         presenter?.redraw()
     }
 
-    fun draw(canvas: Canvas) =
+    private fun changeShowEverything(newShowEverything: Boolean) {
+        if (newShowEverything != showEverything) {
+            presenter?.redraw()
+        }
+    }
+
+    private fun changeSelectedCircle(newSelectedCircles: IntArray) {
+        if (!newSelectedCircles.contentEquals(selectedCircles))
+            presenter?.redraw()
+    }
+
+    fun draw(canvas: Canvas) {
         when {
             updating || updateOnce -> updateCanvas(canvas)
             drawTrace -> canvas.drawTraceCanvas()
-            else -> onCanvas(canvas) {
-                drawVisible()
-            }
+            else -> onCanvas(canvas) { drawVisible() }
         }
+        if (showEverything)
+            onCanvas(canvas) { drawOverlay() }
+    }
 
     /** Reset trace and invalidate */
     fun clearTrace() {
@@ -390,6 +409,47 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             times = times, canvas = this,
             shape = shape, showAllCircles = values.showAllCircles, reverse = values.reverseMotion
         )
+    }
+
+    private inline fun Canvas.drawOverlay() {
+        circleGroup.drawOverlay(this, selectedCircles)
+        presenter?.redraw()
+    }
+
+    fun moveCircle(i: Int, v: Complex) {
+        val dc = v/motion.sx.toDouble()
+        val f = circleGroup[i]
+        f.center += dc
+        circleGroup[i] = f
+        presenter?.redraw()
+    }
+
+    fun changeCircleRadius(i: Int, scale: Double = 1.0, dr: Double = 0.0) {
+        val f = circleGroup[i]
+        val newRadius = abs(scale * f.radius + dr/motion.sx)
+        f.radius = newRadius
+        circleGroup[i] = f
+        presenter?.redraw()
+    }
+
+    fun selectCircles(
+        p: Complex,
+        threshold: Double = 10.0, amongHidden: Boolean = true
+    ): List<Int> {
+        val indexedCircles = circleGroup.figures.withIndex().reversed()
+        val targets = if (amongHidden) indexedCircles else indexedCircles.filter { (_, c) -> c.show }
+        val result = targets.filter { (_, c) ->
+            val d = (p - visible(c.center)).abs()
+//            useCenters && d <= threshold ||
+                abs(d - c.radius * motion.sx) <= threshold
+        }.map { (i, _) -> i }
+        return result.ifEmpty {
+            targets.filter { (_, c) ->
+                val d = (p - visible(c.center)).abs()
+                val visibleRadius = c.radius * motion.sx
+                c.fill && d < visibleRadius + threshold
+            }.map { (i, _) -> i }
+        }
     }
 
     private class UpdateScheduler {

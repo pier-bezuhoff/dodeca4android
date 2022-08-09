@@ -20,6 +20,7 @@ interface CircleGroup : ImmutableCircleGroup {
         times: Int,
         reverse: Boolean = false,
         canvas: Canvas, shape: Shape = Shape.CIRCLE, showAllCircles: Boolean = false)
+    fun drawOverlay(canvas: Canvas, selected: IntArray = intArrayOf())
 }
 
 interface SuspendableCircleGroup : CircleGroup {

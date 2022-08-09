@@ -36,7 +36,7 @@ class Ddu(
 ) {
 
     val autoCenter get() = circles.filter { it.show }.map { it.center }.mean()
-    val complexity: Int get() = circles.sumBy { it.rule?.length ?: 0 }
+    val complexity: Int get() = circles.sumOf { it.rule?.length ?: 0 }
     private val nSmartUpdates: Int
         get() = (MIN_PREVIEW_UPDATES + values.nPreviewUpdates * 20 / sqrt(1.0 + complexity)).roundToInt()
     private val nUpdates: Int // for buildPreview
@@ -223,7 +223,7 @@ private class DduReader(private val reader: InputStreamReader) {
     private fun readLegacyGlobalLine() {
         when (nGlobals) {
             0 -> dduBuilder::backgroundColor maybeSetGlobalTo maybeReadColor()
-            // don't know, what this 2 means ("howInvers" and "howAnim")
+            // don't know, what these 2 mean ("howInvers" and "howAnim")
             1, 2 -> maybeReadInt()?.let {
                 dduBuilder.restGlobals.add(it)
                 nGlobals++

@@ -15,15 +15,13 @@ fun showWhen(view: View, shown: Boolean?) {
     view.visibility = if (shown != false) View.VISIBLE else View.GONE
 }
 
-@BindingAdapter("tintEnabled")
-fun tintEnabled(view: View, enabled: Boolean) {
+@BindingAdapter(value = ["tintEnabled", "defaultTint", "darkerTint"], requireAll = false)
+fun tintEnabled(view: View, enabled: Boolean?, defaultColor: Int?, darkerColor: Int?) {
     ViewCompat.setBackgroundTintList(
         view,
         ColorStateList.valueOf(
-            ContextCompat.getColor(view.context,
-                if (enabled) R.color.darkerToolbarColor
-                else R.color.toolbarColor
-            )
+            if (enabled == true) (darkerColor ?: ContextCompat.getColor(view.context, R.color.darkerToolbarColor))
+            else (defaultColor ?: ContextCompat.getColor(view.context, R.color.toolbarColor))
         )
     )
 }

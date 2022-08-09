@@ -4,8 +4,27 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../../layout/custom_preview.xml" value="0.10393541876892028" />
+        <entry key="app/src/main/res/drawable-anydpi/ic_move.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable-anydpi/ic_new_circle.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/circle_image.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/circle_visibility.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_choose_color.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_clear.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_down.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_drag.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_export.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_folder.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_trace.xml" value="0.1" />
         <entry key="app/src/main/res/layout-w240dp/edit_circle.xml" value="0.146875" />
+        <entry key="app/src/main/res/layout/activity_dodeca_edit.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/activity_dodeca_view.xml" value="0.27960666951688756" />
         <entry key="app/src/main/res/layout/edit_circle.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/shape_spinner_row.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/toolbar1.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/toolbar2.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/toolbar_edit.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/toolbar_edit1.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/toolbar_edit2.xml" value="0.2787516032492518" />
         <entry key="app/src/main/res/menu/ddu_chooser_appbar.xml" value="0.27960666951688756" />
         <entry key="app/src/main/res/menu/ddu_chooser_context_menu.xml" value="0.13980333475844378" />
       </map>

@@ -2,10 +2,13 @@ package com.pierbezuhoff.dodeca.data
 
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Paint
+import android.graphics.SweepGradient
 import android.util.SparseArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 
 // NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times faster
 // maybe: have float old_s
@@ -310,6 +313,49 @@ internal class PrimitiveCircles(
         canvas.drawLine(x - r, y, x + r, y, paints[i])
     }
 
+    override fun drawOverlay(canvas: Canvas, selected: IntArray) {
+        for (i in 0 until size) {
+            if (i in selected) {
+                drawCircleOverlay(i, canvas, bold = true)
+                drawSelectedCircleOverlay(i, canvas)
+            }
+            else {
+                drawCircleOverlay(i, canvas)
+            }
+        }
+    }
+
+    private fun drawCircleOverlay(i: Int, canvas: Canvas, bold: Boolean = false) {
+        val x = oldXs[i].toFloat()
+        val y = oldYs[i].toFloat()
+        val r = oldRs[i].toFloat()
+        val attr = attrs[i]
+        val c = attr.borderColor ?: attr.color
+        val paint = Paint(paints[i])
+        paint.style = Paint.Style.STROKE
+        if (!attr.show) {
+            // NOTE: quite slow w/ hardware acceleration
+            val dashEffect = DashPathEffect(floatArrayOf(15f, 5f), 0f)
+            paint.pathEffect = dashEffect
+        }
+        paint.shader = SweepGradient(x, y, intArrayOf(c, Color.BLACK, c), null)
+        if (bold) // yucky, do smth else
+            paint.strokeWidth = 2f // 0 by default
+        canvas.drawCircle(x, y, r, paint)
+    }
+
+    private fun drawSelectedCircleOverlay(i: Int, canvas: Canvas) {
+        val x = oldXs[i].toFloat()
+        val y = oldYs[i].toFloat()
+        val r = oldRs[i].toFloat()
+        val p = Paint()
+        p.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 0f)
+        canvas.drawLine(x, y - r, x, y + r, p) // dashed vertical diameter
+        p.pathEffect = DashPathEffect(floatArrayOf(2f, 2f), 0f)
+        canvas.drawLine(x, y, x + r, y, p)
+        canvas.drawPoint(x + r, y, p)
+    }
+
     /* invert i-th circle with respect to j-th old circle */
     private inline fun invert(i: Int, j: Int) {
         val x0 = xs[i]
@@ -332,12 +378,12 @@ internal class PrimitiveCircles(
                 var d2 = dx * dx + dy * dy
                 val r2 = r * r
                 val r02 = r0 * r0
-                if (d2 == r02) // if result should be line
+                if (d2 == r02) // if result should be a line
                     d2 += 1e-6f
                 val scale = r2 / (d2 - r02)
                 xs[i] = x + dx * scale
                 ys[i] = y + dy * scale
-                rs[i] = r2 * r0 / Math.abs(d2 - r02)
+                rs[i] = r2 * r0 / abs(d2 - r02)
             }
         }
     }

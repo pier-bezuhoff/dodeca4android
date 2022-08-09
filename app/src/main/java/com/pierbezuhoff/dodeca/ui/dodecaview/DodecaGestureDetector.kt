@@ -15,7 +15,7 @@ class DodecaGestureDetector private constructor(
     , View.OnTouchListener
 {
     interface SingleTapListener { fun onSingleTap(e: MotionEvent?) }
-    interface ScrollListener { fun onScroll(dx: Float, dy: Float) }
+    interface ScrollListener { fun onScroll(fromX: Float, fromY: Float, dx: Float, dy: Float) }
     interface ScaleListener { fun onScale(scale: Float, focusX: Float, focusY: Float) }
 
     private val gestureDetector = GestureDetector(context.applicationContext, this)
@@ -55,7 +55,9 @@ class DodecaGestureDetector private constructor(
     }
 
     override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-        scrollConnection.send { onScroll(distanceX, distanceY) }
+        val fromX = e1.x
+        val fromY = e1.y
+        scrollConnection.send { onScroll(fromX, fromY, distanceX, distanceY) }
         return super.onScroll(e1, e2, distanceX, distanceY)
     }
 
@@ -81,8 +83,8 @@ class DodecaGestureDetector private constructor(
             instance ?: synchronized(this) {
                 instance
                     ?: DodecaGestureDetector(context).also {
-                    instance = it
-                }
+                        instance = it
+                    }
             }
     }
 }

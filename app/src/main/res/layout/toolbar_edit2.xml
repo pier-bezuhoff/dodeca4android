@@ -2,77 +2,71 @@
 <layout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
->
+        >
     <data>
-        <variable name="model" type="com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditViewModel"/>
+        <variable name="viewModel" type="com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditViewModel"/>
     </data>
     <LinearLayout
+            android:id="@+id/toolbar_edit2"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-    >
-        <ImageButton
-                android:id="@+id/help_button"
-                android:src="@drawable/ic_help"
-                app:backgroundTint="@color/toolbarColor"
-                android:padding="8dp"
-                android:layout_width="match_parent"
-                android:layout_weight="1"
-                android:layout_height="match_parent"
-                android:contentDescription="@{@string/help_button_title}"
-        />
+            android:gravity="center">
         <ImageButton
                 android:id="@+id/load_button"
                 android:src="@drawable/ic_open_file"
-                app:backgroundTint="@color/toolbarColor"
+                app:backgroundTint="@color/editToolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/load_button_title}"
-        />
+                />
         <ImageButton
                 android:id="@+id/save_button"
                 android:src="@drawable/ic_save_file"
-                app:backgroundTint="@color/toolbarColor"
+                app:backgroundTint="@color/editToolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/save_button_title}"
-        />
+                />
         <ImageButton
                 android:id="@+id/play_button"
                 android:src="@drawable/ic_play"
-                app:backgroundTint="@color/toolbarColor"
+                app:backgroundTint="@color/editToolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/play_button_title}"
-                app:tintEnabled="@{safeUnbox(model.playing)}"
-        />
+                app:switchImageWhen="@{safeUnbox(viewModel.updating)}"
+                app:trueDrawable="@{@drawable/ic_pause}"
+                app:falseDrawable="@{@drawable/ic_play}"
+                />
         <ImageButton
-                android:id="@+id/draw_circles_button"
-                android:src="@drawable/ic_add_circle"
-                app:backgroundTint="@color/toolbarColor"
+                android:id="@+id/show_everything_button"
+                android:src="@drawable/ic_visibility"
+                app:backgroundTint="@color/editToolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:contentDescription="@{@string/draw_circles_button_title}"
-                app:tintEnabled="@{safeUnbox(model.drawCirclesMode)}"
-        />
+                android:contentDescription="@{@string/ellipsis}"
+                app:switchImageWhen="@{safeUnbox(viewModel.showEverything)}"
+                app:trueDrawable="@{@drawable/ic_visibility}"
+                app:falseDrawable="@{@drawable/ic_visibility_off}"
+                />
         <ImageButton
-                android:id="@+id/settings_button"
-                android:src="@drawable/ic_settings"
-                app:backgroundTint="@color/toolbarColor"
+                android:id="@+id/edit_button"
+                android:src="@drawable/ic_choose_color"
+                app:backgroundTint="@color/editToolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:contentDescription="@{@string/settings_button_title}"
-        />
-
+                android:contentDescription="@{@string/ellipsis}"
+                />
     </LinearLayout>
 </layout>

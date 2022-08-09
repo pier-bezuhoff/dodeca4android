@@ -60,7 +60,11 @@
                 android:theme="@style/AppTheme.NoActionBar"
         >
         </activity>
-        <activity android:name=".ui.dodecaedit.DodecaEditActivity" android:exported="false">
+        <activity
+                android:name=".ui.dodecaedit.DodecaEditActivity"
+                android:exported="false"
+                android:theme="@style/AppTheme.NoActionBar"
+                >
         </activity>
         <activity android:name=".ui.settings.SettingsActivity" android:exported="false">
             <intent-filter>

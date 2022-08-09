@@ -359,15 +359,14 @@ class DodecaViewModel(
     }
 
     private inner class StatUpdater : DduRepresentation.StatHolder {
-        internal val statTimeDelta: Int = context.resources.getInteger(R.integer.stat_time_delta)
+        val statTimeDelta: Int = context.resources.getInteger(R.integer.stat_time_delta)
         private var nUpdates: Long by Delegates.observable(0L) { _, _, newNUpdates: Long ->
             _nUpdates.postValue(newNUpdates)
         }
         private var lastUpdateTime: Long = 0
         private var lastTimedUpdate: Long = 0
         private var lastTimedUpdateTime: Long = System.currentTimeMillis()
-        @Suppress("RemoveExplicitTypeArguments") // do not compile without it...
-        private var dTime: Float? by Delegates.observable<Float?>(null) { _, _, newDTime: Float? ->
+        private var dTime: Float? by Delegates.observable(null) { _, _, newDTime: Float? ->
             _dTime.postValue(newDTime)
         }
 

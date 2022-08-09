@@ -9,6 +9,7 @@ import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.plus
 import com.pierbezuhoff.dodeca.utils.times
 import org.apache.commons.math3.complex.Complex
+import kotlin.math.PI
 
 /* radius >= 0 */
 open class Circle(var center: Complex, var radius: Double) {
@@ -101,6 +102,9 @@ class CircleFigure(center: Complex, radius: Double,
                 .map(Character::getNumericValue)
                 .toIntArray()
         } ?: intArrayOf()
+
+    val right: Complex get() = center + radius
+    val topLeft: Complex get() = center + radius * (Complex.I * (3 * PI/4)).exp()
 
     fun copy(
         newCenter: Complex? = null, newRadius: Double? = null,

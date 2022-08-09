@@ -3,6 +3,8 @@
     <color name="colorPrimary">#008577</color>
     <color name="toolbarColor">#008577</color>
     <color name="darkerToolbarColor">#007368</color>
+    <color name="editToolbarColor">#D9CB54</color>
+    <color name="darkerEditToolbarColor">#BFB24D</color>
     <color name="progressBarColor">#D81B60</color>
     <!--<color name="toolbarColor">#e0008577</color>-->
     <color name="colorPrimaryDark">#00574B</color>
