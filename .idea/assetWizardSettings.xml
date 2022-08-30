@@ -372,7 +372,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:$PROJECT_DIR$/../Sdk/icons/material/materialicons/delete_forever/baseline_delete_forever_24.xml" />
+                                      <entry key="url" value="file:$PROJECT_DIR$/../Sdk/icons/material/materialicons/mode_edit/baseline_mode_edit_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -383,7 +383,7 @@
                         <option name="values">
                           <map>
                             <entry key="autoMirrored" value="true" />
-                            <entry key="outputName" value="ic_delete" />
+                            <entry key="outputName" value="edit_ic" />
                             <entry key="sourceFile" value="$PROJECT_DIR$/app/src/main/res/drawable/ic_trace.svg" />
                           </map>
                         </option>

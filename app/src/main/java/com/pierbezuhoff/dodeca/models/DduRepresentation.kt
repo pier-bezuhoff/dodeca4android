@@ -294,8 +294,10 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             drawTrace -> canvas.drawTraceCanvas()
             else -> onCanvas(canvas) { drawVisible() }
         }
-        if (showEverything)
+        if (showEverything) {
+//            _drawOverlay(canvas)
             onCanvas(canvas) { drawOverlay() }
+        }
     }
 
     /** Reset trace and invalidate */
@@ -416,6 +418,11 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         presenter?.redraw()
     }
 
+    private fun _drawOverlay(canvas: Canvas) {
+        1
+        presenter?.redraw()
+    }
+
     fun moveCircle(i: Int, v: Complex) {
         val dc = v/motion.sx.toDouble()
         val f = circleGroup[i]
@@ -498,7 +505,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             }
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
-        private const val FPS = 60 // empirical
+        private const val FPS = 60
         /** Interval between presenter.redraw() calls */
         private const val DT_IN_MILLISECONDS: Long = (1000f / FPS).toLong()
         private const val INITIAL_DELAY_IN_MILLISECONDS: Long = 1

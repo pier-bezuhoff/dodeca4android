@@ -4,12 +4,12 @@ import android.graphics.Color
 import com.pierbezuhoff.dodeca.utils.Maybe
 import com.pierbezuhoff.dodeca.utils.None
 import com.pierbezuhoff.dodeca.utils.abs2
-import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.plus
 import com.pierbezuhoff.dodeca.utils.times
 import org.apache.commons.math3.complex.Complex
 import kotlin.math.PI
+import kotlin.math.abs
 
 /* radius >= 0 */
 open class Circle(var center: Complex, var radius: Double) {
@@ -29,16 +29,18 @@ open class Circle(var center: Complex, var radius: Double) {
     open fun inverted(circle: Circle): Circle {
         val (c, r) = circle
         return when {
-            r == 0.0 -> Circle(c, 0.0)
-            r == Double.POSITIVE_INFINITY -> Circle(Complex.INF, Double.POSITIVE_INFINITY)
-            center == c -> Circle(center, circle.r2 / radius)
+            r == Double.POSITIVE_INFINITY ->
+                Circle(Complex.INF, Double.POSITIVE_INFINITY)
+            center == c ->
+                Circle(center, circle.r2 / radius)
             else -> {
                 val d = center - c
                 var d2 = d.abs2()
                 if (d.abs() == radius) // c <- this
-                    d2 += 1e-6 // cheat to avoid returning line
-                val newCenter = c + circle.r2 * d / (d2 - r2)
-                val newRadius = circle.r2 * radius / Math.abs(d2 - r2)
+                    d2 += 1e-6 // cheat to avoid returning a straight line
+                val ratio = circle.r2 / (d2 - r2)
+                val newCenter = c + ratio * d
+                val newRadius = abs(ratio) * radius
                 Circle(newCenter, newRadius)
             }
         }
@@ -51,22 +53,20 @@ open class Circle(var center: Complex, var radius: Double) {
     open fun invert(circle: Circle) {
         val (c, r) = circle
         when {
-            r == 0.0 -> {
-                center = c
-                radius = 0.0
-            }
             r == Double.POSITIVE_INFINITY -> {
                 center = Complex.INF
                 radius = Double.POSITIVE_INFINITY
             }
-            center == c -> radius = circle.r2 / radius
+            center == c ->
+                radius = circle.r2 / radius
             else -> {
                 val d = center - c
                 var d2 = d.abs2()
                 if (d.abs() == radius) // c <- this
-                    d2 += 1e-6 // cheat to avoid returning line
-                val newCenter = c + circle.r2 * d / (d2 - r2)
-                val newRadius = circle.r2 * radius / Math.abs(d2 - r2)
+                    d2 += 1e-6 // cheat to avoid returning a straight line
+                val ratio = circle.r2 / (d2 - r2)
+                val newCenter = c + ratio * d
+                val newRadius = abs(ratio) * radius
                 center = newCenter
                 radius = newRadius
             }

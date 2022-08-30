@@ -84,8 +84,7 @@ class DodecaEditActivity : AppCompatActivity()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        hideSystemBars()
-        window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        setupWindow()
         val binding = DataBindingUtil.setContentView<ActivityDodecaEditBinding>(this, R.layout.activity_dodeca_edit)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
@@ -98,6 +97,25 @@ class DodecaEditActivity : AppCompatActivity()
         uri?.let { readUriWithPermissionCheck(it) } ?: viewModel.loadInitialDdu()
         dodeca_edit_view.inheritLifecycleOf(this)
         dodeca_edit_view.setLayerType(View.LAYER_TYPE_SOFTWARE, null) // makes dashed lines visible, but maybe(?) slower
+    }
+
+    private fun setupWindow() {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        window.decorView.apply {
+            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+            setOnSystemUiVisibilityChangeListener {
+                if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
+                    systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+            }
+        }
+//        hideSystemBars()
+//        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { v, insets ->
+//            Log.i(TAG, "insets!")
+//            if (insets.isVisible(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars()))
+//                hideSystemBars() // doesnt work properly :(
+//            insets
+//        }
+        window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
     }
 
     private fun hideSystemBars() {
@@ -271,5 +289,6 @@ class DodecaEditActivity : AppCompatActivity()
     }
     companion object {
         const val TAG = "DodecaEditActivity"
+        private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     }
 }

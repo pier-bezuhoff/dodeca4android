@@ -13,6 +13,7 @@ import kotlin.reflect.KProperty
 
 // TODO: migrate to OptionsViewModel
 // initialization (from MainActivity): `Options(resources: Resources)`
+// BUG: when not started from MainActivity it remains uninitialized
 lateinit var options: Options private set
 lateinit var values: Values private set
 
@@ -162,9 +163,9 @@ class Values(private val options: Options) {
     val versionCode: Int by options.versionCode
 }
 
-private fun Resources.dp2px(dp: Int): Int =
+fun Resources.dp2px(dp: Int): Int =
     dp * displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
 
-private fun Resources.px2dp(px: Int): Int =
+fun Resources.px2dp(px: Int): Int =
     px * DisplayMetrics.DENSITY_DEFAULT / displayMetrics.densityDpi
 

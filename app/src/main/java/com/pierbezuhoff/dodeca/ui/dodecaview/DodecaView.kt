@@ -42,7 +42,6 @@ class DodecaView @JvmOverloads constructor(
     private fun setupObservers() {
         require(lifecycleInherited)
         viewModel.bottomBarShown.observe(this) {
-            // TODO: update to window inset controller
             systemUiVisibility = IMMERSIVE_UI_VISIBILITY
         }
         viewModel.dduRepresentation.observe(this) {

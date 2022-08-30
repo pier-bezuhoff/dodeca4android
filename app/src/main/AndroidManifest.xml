@@ -23,6 +23,7 @@
                 android:label="@string/app_name"
                 android:theme="@style/AppTheme.NoActionBar"
                 android:exported="true"
+                android:noHistory="true"
         >
 
             <!-- android:configChanges="orientation|screenSize" -->

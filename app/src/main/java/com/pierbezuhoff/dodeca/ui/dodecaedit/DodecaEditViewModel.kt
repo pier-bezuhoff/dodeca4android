@@ -43,6 +43,7 @@ class DodecaEditViewModel(
     private val _selection: MutableLiveData<Set<Int>> = MutableLiveData()
 
     private var oldUpdating: Boolean? = null // [updating] before [pause]
+    private var oldDrawTrace: Boolean? = null // drawTrace in the NAVIGATE mode
     private var dduLoaded = false
     val dduLoading: LiveData<Boolean> = _dduLoading // for ProgressBar
 
@@ -215,8 +216,22 @@ class DodecaEditViewModel(
     }
 
     fun requestEditingMode(mode: EditingMode) {
-        if (mode == EditingMode.SELECT && (selection.value?.size ?: 0) > 1)
-            _selection.value = setOf(selection.value!!.first())
+        if (editingMode.value == EditingMode.NAVIGATE && mode != EditingMode.NAVIGATE) {
+            oldDrawTrace = dduRepresentation.value?.drawTrace
+            dduRepresentation.value?.drawTrace = false
+        } else if (mode == EditingMode.NAVIGATE) {
+            oldDrawTrace?.let {
+                dduRepresentation.value?.drawTrace = it
+            }
+        }
+        if (mode == EditingMode.SELECT) {
+            if (editingMode.value == EditingMode.SELECT)
+                _selection.value = emptySet()
+            else if ((selection.value?.size ?: 0) > 1)
+                _selection.value = setOf(selection.value!!.first())
+        }
+        if (mode == EditingMode.MULTISELECT && editingMode.value == EditingMode.MULTISELECT)
+            _selection.value = emptySet() // double click unselects everything
         _editingMode.value = mode
     }
 

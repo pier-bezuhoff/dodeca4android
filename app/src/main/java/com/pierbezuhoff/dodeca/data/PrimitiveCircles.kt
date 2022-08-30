@@ -152,7 +152,6 @@ internal class PrimitiveCircles(
 
     private inline fun _draw(canvas: Canvas, shape: Shape, showAllCircles: Boolean) {
         // TODO: rotation
-        // TODO: show centers
         when (shape) {
             Shape.CIRCLE -> drawHelper(showAllCircles) { drawCircle(it, canvas) }
             Shape.SQUARE -> drawHelper(showAllCircles) { drawSquare(it, canvas) }

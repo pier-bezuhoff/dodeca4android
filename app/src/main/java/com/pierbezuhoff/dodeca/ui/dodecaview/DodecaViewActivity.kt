@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.PersistableBundle
 import android.util.Log
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import androidx.activity.result.ActivityResultLauncher
@@ -106,18 +107,23 @@ class DodecaViewActivity : AppCompatActivity()
     }
 
     private fun setupWindow() {
-        hideSystemBars()
-//        window.decorView.apply {
-//            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
-//            setOnSystemUiVisibilityChangeListener {
-//                if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
-//                    systemUiVisibility =
-//                        IMMERSIVE_UI_VISIBILITY
-//            }
+//        hideSystemBars()
+//        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { v, insets ->
+//            if (insets.isVisible(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars()))
+//                hideSystemBars() // doesnt work sadly
+//            insets
 //        }
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        window.decorView.apply {
+            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+            setOnSystemUiVisibilityChangeListener {
+                if ((it and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
+                    systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+            }
+        }
     }
 
-    private fun hideSystemBars() {
+    private fun hideSystemBars() { // yokunai
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
@@ -354,7 +360,7 @@ class DodecaViewActivity : AppCompatActivity()
     companion object {
         private const val TAG = "DodecaViewActivity"
         /** Distraction free mode (deprecated) */
-//        private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         private const val SCREENSHOTS_DIR_NAME = "DodecaMeditation"
     }
 }
