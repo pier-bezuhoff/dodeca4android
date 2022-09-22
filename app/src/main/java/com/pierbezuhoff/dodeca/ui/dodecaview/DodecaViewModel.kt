@@ -21,6 +21,7 @@ import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.filename
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -78,6 +79,22 @@ class DodecaViewModel(
         gestureDetector
             .onSingleTapSubscription
             .subscribeFrom(this)
+    }
+
+    fun reloadDdu() {
+        dduRepresentation.value?.let { r ->
+            loadDdu(r.ddu)
+            stop()
+            hideBottomBar()
+            viewModelScope.launch {
+                resume(noBottomBar = true)
+                delay(10L)
+                stop()
+                requestClear()
+                delay(3 * 1000L)
+                resume(noBottomBar = true)
+            }
+        }
     }
 
     fun loadInitialDdu() {
@@ -273,10 +290,11 @@ class DodecaViewModel(
     }
 
     /** Resume ddu evolution after [pause] or [stop] */
-    fun resume() {
+    fun resume(noBottomBar: Boolean = false) {
         val newUpdating = oldUpdating ?: DEFAULT_UPDATING
         setUpdating(newUpdating)
-        showBottomBar()
+        if (!noBottomBar)
+            showBottomBar()
     }
 
     /** Pause ddu evolution (no autosave) */

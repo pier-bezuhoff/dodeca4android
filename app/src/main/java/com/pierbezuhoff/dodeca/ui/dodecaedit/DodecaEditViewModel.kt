@@ -146,7 +146,7 @@ class DodecaEditViewModel(
         val showEverything = showEverything.value
         if (
             e != null &&
-            mode in listOf(EditingMode.SELECT, EditingMode.MULTISELECT, EditingMode.COPY) &&
+            mode in listOf(EditingMode.MULTISELECT, EditingMode.COPY) &&
             ddu != null &&
             showEverything != null
         ) {
@@ -154,10 +154,6 @@ class DodecaEditViewModel(
             val selectedCircles = ddu.selectCircles(p, threshold = threshold, amongHidden = showEverything)
             if (selectedCircles.isNotEmpty())
                 when (mode) {
-                    EditingMode.SELECT -> {
-                        val new = selectedCircles.first()
-                        _selection.postValue(setOf(new))
-                    }
                     EditingMode.MULTISELECT -> {
                         _selection.postValue((selection.value ?: emptySet()) + selectedCircles)
                     }
@@ -172,11 +168,6 @@ class DodecaEditViewModel(
         dduRepresentation.value?.let { ddu ->
             when (editingMode.value) {
                 EditingMode.NAVIGATE, EditingMode.COPY -> ddu.onScroll(fromX, fromY, dx, dy)
-                EditingMode.SELECT -> {
-                    selection.value?.firstOrNull()?.let { i ->
-                        ddu.moveCircle(i, v)
-                    } ?: ddu.onScroll(fromX, fromY, dx, dy)
-                }
                 EditingMode.MULTISELECT -> {
                     val selectedCircles = selection.value ?: emptyList()
                     if (selectedCircles.isEmpty())
@@ -196,11 +187,6 @@ class DodecaEditViewModel(
         dduRepresentation.value?.let { ddu ->
             when (editingMode.value) {
                 EditingMode.NAVIGATE, EditingMode.COPY -> ddu.onScale(scale, focusX, focusY)
-                EditingMode.SELECT -> {
-                    selection.value?.lastOrNull()?.let { i ->
-                        ddu.changeCircleRadius(i, scale = s)
-                    } ?: ddu.onScale(scale, focusX, focusY)
-                }
                 EditingMode.MULTISELECT -> {
                     val selectedCircles = selection.value ?: emptyList()
                     if (selectedCircles.isEmpty())
@@ -223,12 +209,6 @@ class DodecaEditViewModel(
             oldDrawTrace?.let {
                 dduRepresentation.value?.drawTrace = it
             }
-        }
-        if (mode == EditingMode.SELECT) {
-            if (editingMode.value == EditingMode.SELECT)
-                _selection.value = emptySet()
-            else if ((selection.value?.size ?: 0) > 1)
-                _selection.value = setOf(selection.value!!.first())
         }
         if (mode == EditingMode.MULTISELECT && editingMode.value == EditingMode.MULTISELECT)
             _selection.value = emptySet() // double click unselects everything
@@ -262,6 +242,9 @@ class DodecaEditViewModel(
     private suspend fun saveDdu(file: File? = null) {
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
             val ddu: Ddu = dduRepresentation.buildCurrentDdu()
+            oldDrawTrace?.let { drawTrace ->
+                ddu.drawTrace = drawTrace
+            }
             save(ddu, file)
         }
     }
@@ -352,5 +335,5 @@ class DodecaEditViewModel(
 }
 
 enum class EditingMode {
-    NAVIGATE, SELECT, MULTISELECT, COPY
+    NAVIGATE, MULTISELECT, COPY
 }

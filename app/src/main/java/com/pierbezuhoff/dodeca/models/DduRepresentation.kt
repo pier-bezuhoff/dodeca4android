@@ -396,6 +396,9 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         drawCircles()
     }
 
+    fun drawJustBackground() =
+        onTraceCanvas { drawBackground() }
+
     private inline fun Canvas.drawBackground() =
         drawColor(ddu.backgroundColor)
 

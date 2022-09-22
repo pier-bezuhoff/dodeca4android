@@ -32,6 +32,7 @@ import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
 import com.pierbezuhoff.dodeca.ui.dodecaview.ChooseColorDialog
+import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
@@ -135,11 +136,17 @@ class DodecaEditActivity : AppCompatActivity()
     private fun onToolbarItemClick(id: Int) {
         when (id) {
             R.id.navigate_mode_button -> viewModel.requestEditingMode(EditingMode.NAVIGATE)
-            R.id.select_mode_button -> viewModel.requestEditingMode(EditingMode.SELECT)
             R.id.multiselect_mode_button -> viewModel.requestEditingMode(EditingMode.MULTISELECT)
             R.id.copy_mode_button -> viewModel.requestEditingMode(EditingMode.COPY)
-            R.id.new_circle_button -> 5
-            R.id.delete_button -> 6
+//            R.id.new_circle_button -> 5
+            R.id.done_button -> {
+                viewModel.requestSaveDdu() // NOTE: saving is async and might get gc-ed away (?!)
+                val intent = Intent(this, DodecaViewActivity::class.java)
+//                viewModel.dduRepresentation.value?.ddu?.file?.let { dduFile ->
+//                    intent.putExtra("ddu_uri", Uri.fromFile(dduFile))
+//                }
+                startActivity(intent)
+            }
             R.id.load_button -> goToActivity(
                 DduChooserActivity::class.java,
                 dduResultLauncher,

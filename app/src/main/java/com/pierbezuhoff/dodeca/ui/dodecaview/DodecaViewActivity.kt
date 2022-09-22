@@ -28,7 +28,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaViewBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
@@ -154,20 +153,16 @@ class DodecaViewActivity : AppCompatActivity()
             R.id.play_button -> viewModel.toggleUpdating()
             R.id.next_step_button -> viewModel.requestOneStep()
             R.id.trace_button -> viewModel.toggleDrawTrace()
-            R.id.choose_color_button -> {
-                viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
-                    viewModel.pause()
-                    ChooseColorDialog(
-                        this,
-                        chooseColorListener = this,
-                        circleGroup = circleGroup
-                    ).build()
-                        .show()
-                }
-            }
             R.id.clear_button -> viewModel.requestClear()
             R.id.autocenter_button -> viewModel.requestAutocenter()
             R.id.screenshot_button -> saveScreenshotWithPermissionCheck()
+            R.id.restart_button -> {
+                viewModel.reloadDdu()
+                // reload ddu
+                // hide bottom bar
+                // pause 3s
+                // start
+            }
             R.id.settings_button -> goToActivity(SettingsActivity::class.java, settingsResultLauncher)
         }
     }
@@ -189,7 +184,6 @@ class DodecaViewActivity : AppCompatActivity()
                 file.outputStream().use {
                     screenshot.compress(Bitmap.CompressFormat.PNG, 100, it)
                 }
-                println(file)
                 // add img to gallery, TODO: test it
 //                sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).apply { data = Uri.fromFile(file) })
                 MediaScannerConnection.scanFile(applicationContext, arrayOf(file.toString()), null, null)

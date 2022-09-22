@@ -27,19 +27,6 @@ xmlns:app="http://schemas.android.com/apk/res-auto"
             app:darkerTint="@{@color/darkerEditToolbarColor}"
             />
     <ImageButton
-            android:id="@+id/select_mode_button"
-            android:src="@drawable/ic_drag"
-            app:backgroundTint="@color/editToolbarColor"
-            android:padding="8dp"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@{@string/ellipsis}"
-            app:tintEnabled="@{viewModel.editingMode == EditingMode.SELECT}"
-            app:defaultTint="@{@color/editToolbarColor}"
-            app:darkerTint="@{@color/darkerEditToolbarColor}"
-            />
-    <ImageButton
             android:id="@+id/multiselect_mode_button"
             android:src="@drawable/ic_multiselect"
             app:backgroundTint="@color/editToolbarColor"
@@ -66,19 +53,19 @@ xmlns:app="http://schemas.android.com/apk/res-auto"
             app:darkerTint="@{@color/darkerEditToolbarColor}"
             />
 
+<!--    <ImageButton-->
+<!--            android:id="@+id/new_circle_button"-->
+<!--            android:src="@drawable/ic_new_circle"-->
+<!--            app:backgroundTint="@color/editToolbarColor"-->
+<!--            android:padding="8dp"-->
+<!--            android:layout_weight="1"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:contentDescription="@{@string/ellipsis}"-->
+<!--            />-->
     <ImageButton
-            android:id="@+id/new_circle_button"
-            android:src="@drawable/ic_new_circle"
-            app:backgroundTint="@color/editToolbarColor"
-            android:padding="8dp"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@{@string/ellipsis}"
-            />
-    <ImageButton
-            android:id="@+id/delete_button"
-            android:src="@drawable/ic_delete"
+            android:id="@+id/done_button"
+            android:src="@drawable/ic_done"
             app:backgroundTint="@color/editToolbarColor"
             android:padding="8dp"
             android:layout_weight="1"
