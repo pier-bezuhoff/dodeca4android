@@ -86,11 +86,8 @@ class DodecaViewModel(
             loadDdu(r.ddu)
             stop()
             hideBottomBar()
+            requestClear()
             viewModelScope.launch {
-                resume(noBottomBar = true)
-                delay(10L)
-                stop()
-                requestClear()
                 delay(3 * 1000L)
                 resume(noBottomBar = true)
             }

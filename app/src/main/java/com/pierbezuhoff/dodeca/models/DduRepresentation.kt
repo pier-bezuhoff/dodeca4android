@@ -207,7 +207,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         currentCenter = presenter?.getCenter()
         motion.transformation()
         if (drawTrace) {
-            if (values.redrawTraceOnMove || true) // TMP
+            if (values.redrawTraceOnMove)
                 clearTrace()
             else {
                 trace?.motion?.transformation()
@@ -294,10 +294,10 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             drawTrace -> canvas.drawTraceCanvas()
             else -> onCanvas(canvas) { drawVisible() }
         }
-        if (showEverything) {
-//            _drawOverlay(canvas)
-            onCanvas(canvas) { drawOverlay() }
-        }
+//        if (showEverything) {
+////            _drawOverlay(canvas)
+//            onCanvas(canvas) { drawOverlay() }
+//        }
     }
 
     /** Reset trace and invalidate */
@@ -307,7 +307,8 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         redrawTraceOnce = drawTrace
         if (!updating) {
             onTraceCanvas {
-                drawVisible()
+                drawBackground()
+//                drawVisible()
             }
         }
         presenter?.redraw()

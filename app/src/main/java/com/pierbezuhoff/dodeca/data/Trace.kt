@@ -35,7 +35,7 @@ class Trace(width: Int, height: Int) {
         canvas.drawBitmap(bitmap, blitMatrix, paint)
 
     companion object {
-        private val BITMAP_CONFIG = Bitmap.Config.RGB_565
+        private val BITMAP_CONFIG = Bitmap.Config.ARGB_8888
         private val factor: Int get() = values.canvasFactor
     }
 }
