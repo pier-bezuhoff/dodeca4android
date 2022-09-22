@@ -28,6 +28,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaViewBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
@@ -154,7 +155,17 @@ class DodecaViewActivity : AppCompatActivity()
             R.id.next_step_button -> viewModel.requestOneStep()
             R.id.trace_button -> viewModel.toggleDrawTrace()
             R.id.clear_button -> viewModel.requestClear()
-            R.id.autocenter_button -> viewModel.requestAutocenter()
+            R.id.edit_button -> {
+                viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
+                    viewModel.pause()
+                    ChooseColorDialog(
+                        this,
+                        chooseColorListener = this,
+                        circleGroup = circleGroup
+                    ).build()
+                        .show()
+                }
+            }
             R.id.screenshot_button -> saveScreenshotWithPermissionCheck()
             R.id.restart_button -> {
                 viewModel.reloadDdu()
