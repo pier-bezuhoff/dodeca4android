@@ -11,6 +11,7 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Options
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.models.OptionsManager
+import com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditActivity
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
 import kotlinx.coroutines.launch
@@ -54,8 +55,11 @@ class MainActivity : AppCompatActivity()
             null
 
     private fun startDodecaViewActivity() {
-        val intent = Intent(this@MainActivity, DodecaViewActivity::class.java)
-//        val intent = Intent(this@MainActivity, DodecaEditActivity::class.java)
+        val intent =
+            if (START_IN_EDITOR)
+                Intent(this@MainActivity, DodecaEditActivity::class.java)
+            else
+                Intent(this@MainActivity, DodecaViewActivity::class.java)
         getUriFromImplicitIntent()?.let { uri: Uri ->
             intent.putExtra("ddu_uri", uri)
         }
@@ -66,5 +70,7 @@ class MainActivity : AppCompatActivity()
         private const val TAG = "MainActivity"
         @Suppress("unused")
         const val LIMITED_VERSION = true
+
+        private const val START_IN_EDITOR: Boolean = false
     }
 }
