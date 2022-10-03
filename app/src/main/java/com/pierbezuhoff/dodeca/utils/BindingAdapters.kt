@@ -36,3 +36,4 @@ fun setContentDescription(view: View, contentDescription: String) {
     TooltipCompat.setTooltipText(view, contentDescription)
     view.contentDescription = contentDescription
 }
+

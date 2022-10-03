@@ -47,6 +47,7 @@
             android:layout_height="match_parent"
             tools:context=".ui.MainActivity"
             app:layout_constraintBottom_toBottomOf="parent"
+            android:id="@+id/coordinatorLayout"
             >
 
         <androidx.appcompat.widget.Toolbar

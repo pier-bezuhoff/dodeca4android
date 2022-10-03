@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <bool name="redraw_trace">false</bool>
+    <bool name="redraw_trace">true</bool>
     <bool name="show_all_circles">false</bool>
     <bool name="reverse_motion">false</bool>
     <bool name="autosave">false</bool>

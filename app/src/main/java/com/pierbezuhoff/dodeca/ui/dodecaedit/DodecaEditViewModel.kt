@@ -241,7 +241,7 @@ class DodecaEditViewModel(
 
     private suspend fun saveDdu(file: File? = null) {
         dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
-            val ddu: Ddu = dduRepresentation.buildCurrentDdu()
+            val ddu: Ddu = dduRepresentation.buildCurrentDduState()
             oldDrawTrace?.let { drawTrace ->
                 ddu.drawTrace = drawTrace
             }

@@ -86,7 +86,8 @@ class DodecaEditActivity : AppCompatActivity()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupWindow()
-        val binding = DataBindingUtil.setContentView<ActivityDodecaEditBinding>(this, R.layout.activity_dodeca_edit)
+        val binding: ActivityDodecaEditBinding =
+            DataBindingUtil.setContentView(this, R.layout.activity_dodeca_edit)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
         setSupportActionBar(edit_bar)
@@ -133,6 +134,7 @@ class DodecaEditActivity : AppCompatActivity()
         }
     }
 
+    // BUG: no tooltips!
     private fun onToolbarItemClick(id: Int) {
         when (id) {
             R.id.navigate_mode_button -> viewModel.requestEditingMode(EditingMode.NAVIGATE)
@@ -154,7 +156,9 @@ class DodecaEditActivity : AppCompatActivity()
             )
             R.id.save_button -> saveDdu()
             R.id.play_button -> viewModel.toggleUpdating()
-            R.id.show_everything_button -> viewModel.toggleShowEverything()
+            R.id.show_everything_button -> {
+                viewModel.toggleShowEverything()
+            }
             R.id.edit_circles_button -> {
                 viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
                     viewModel.pause()

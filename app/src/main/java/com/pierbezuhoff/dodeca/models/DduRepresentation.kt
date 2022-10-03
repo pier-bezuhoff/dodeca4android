@@ -217,7 +217,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             presenter?.redraw()
     }
 
-    /** Scale and translate all figures in ddu according to current view creating new ddu */
+    /** Scale and translate all figures in ddu according to the current view creating a new ddu */
     suspend fun buildCurrentDdu(): Ddu =
         withContext(Dispatchers.Default) {
             val currentDrawTrace = drawTrace
@@ -231,6 +231,19 @@ class DduRepresentation(override val ddu: Ddu) : Any()
                         newRule = newFigure.rule, newBorderColor = Just(newFigure.borderColor)
                     )
                 }
+                drawTrace = currentDrawTrace
+                bestCenter = presenter?.getCenter()
+                shape = currentShape
+            }
+        }
+
+    // capture current circle's positions
+    suspend fun buildCurrentDduState(): Ddu =
+        withContext(Dispatchers.Default) {
+            val currentDrawTrace = drawTrace
+            val currentShape = shape
+            ddu.copy().apply {
+                circles = circleGroup.figures
                 drawTrace = currentDrawTrace
                 bestCenter = presenter?.getCenter()
                 shape = currentShape
@@ -294,10 +307,10 @@ class DduRepresentation(override val ddu: Ddu) : Any()
             drawTrace -> canvas.drawTraceCanvas()
             else -> onCanvas(canvas) { drawVisible() }
         }
-//        if (showEverything) {
-////            _drawOverlay(canvas)
-//            onCanvas(canvas) { drawOverlay() }
-//        }
+        if (showEverything) {
+//            _drawOverlay(canvas)
+            onCanvas(canvas) { drawOverlay() }
+        }
     }
 
     /** Reset trace and invalidate */
