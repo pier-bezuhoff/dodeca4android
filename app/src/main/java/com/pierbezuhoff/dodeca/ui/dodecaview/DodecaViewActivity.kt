@@ -159,6 +159,7 @@ class DodecaViewActivity : AppCompatActivity()
             R.id.edit_button -> {
                 viewModel.requestSaveDdu() // NOTE: saving is async and might get gc-ed away (?!)
                 val intent = Intent(this, DodecaEditActivity::class.java)
+                startActivity(intent)
             }
             R.id.edit_circles_colors_button -> {
                 viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->

@@ -108,7 +108,7 @@
     <string name="settings_saves_title">Saves</string>
     <string name="save_as_title">Save as</string>
     <string name="save_as_summary">Suggest to save under a new name on save</string>
-    <string name="autosave_title">Autosave current ddu</string>
+    <string name="autosave_title">Autosave</string>
 
     <string name="restore_default_ddu_title">Restore the original of the ddu-picture</string>
     <string name="restore_default_ddus_title">Restore all ddu-pictures</string>
@@ -126,7 +126,7 @@
     <string name="preview_smart_updates_summary">Number of updates depends on the ddu complexity</string>
 
     <string name="settings_about_title">About</string>
-    <string name="description_summary">&app_name;: Android port for DodecaLook</string>
+    <string name="description_summary">&app_name;: an Android port of DodecaLook</string>
     <string name="version_title">Version</string>
     <string name="version_summary">&app_name; &version_name;</string>
     <string name="copyright_title" translatable="false">Copyright</string>

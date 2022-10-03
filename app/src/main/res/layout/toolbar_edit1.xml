@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout
-xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         >
-<data>
-    <variable name="viewModel" type="com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditViewModel"/>
-    <import type="com.pierbezuhoff.dodeca.ui.dodecaedit.EditingMode"/>
-</data>
-<LinearLayout
-        android:id="@+id/toolbar_edit1"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        >
+    <data>
+        <variable name="viewModel" type="com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditViewModel"/>
+        <import type="com.pierbezuhoff.dodeca.ui.dodecaedit.EditingMode"/>
+    </data>
+    <LinearLayout
+            android:id="@+id/toolbar_edit1"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
 
     <ImageButton
             android:id="@+id/done_button"
