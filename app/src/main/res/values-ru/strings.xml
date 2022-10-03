@@ -30,7 +30,6 @@
     <string name="reverse_motion">Обратить движение</string>
     <string name="clear_button_title">Очистить</string>
     <string name="one_step_button_title">Пошагово: один шаг</string>
-    <string name="change_color_button_title">Поменять цвет</string>
     <string name="please_pick_color_toast">Двойное нажатие, чтобы выбрать цвет</string>
     <string name="bad_ddu_format_toast">Неправильный формат ddu-файла \"%s\"</string>
     <string name="error_ddu_save_no_file_toast">Ошибка во время сохранения ddu: ddu не привязано к файлу</string>
@@ -38,8 +37,8 @@
     <string name="restore_defaults_title">Восстановить настройки по умолчанию</string>
     <string name="restore_default_ddus_title">Восстановить исходные ddu-картины</string>
     <string name="restore_default_ddu_title">Восстановить исходную версию данной ddu-картины</string>
-    <string name="ddu_saved_toast">ddu-картина сохранена как \"%s\"</string>
-    <string name="imported_ddu_overwrites_original_toast">Исходная ddu-картина была перезаписана импортом</string>
+    <string name="ddu_saved_toast">Сохранено как \"%s\"</string>
+    <string name="imported_ddu_overwrites_original_toast">Исходная ddu-картина была перезаписана импортированной</string>
     <string name="imported_ddu_toast">Импортирована новая ddu-картина: \"%s\"</string>
     <string name="permission_rationale_dialog_allow">Разрешить</string>
     <string name="permission_rationale_dialog_deny">Отклонить</string>
@@ -157,4 +156,11 @@
     <string name="skip_n_timeout_summary">Ждать максимум %s пока пропускаются обновления</string>
     <string name="screenshot_button_title">Сделать скриншот</string>
     <string name="screenshot_saved_toast">"Снимок экрана сохранён как \"%s\" в раздел \"%s\"</string>
+    <string name="edit_button_title">Редактировать</string>
+    <string name="done_button_title">Сохранить и перейти к просмотру</string>
+    <string name="navigate_mode_button_title">Режим Навигации</string>
+    <string name="multiselect_mode_button_title">Режим выбора и изменения окружностей</string>
+    <string name="show_everything_button_title">Показать/скрыть невидимые окружности</string>
+    <string name="edit_circles_button_title">Редактировать окружности</string>
+    <string name="edit_circles_colors_button_title">Редактировать цвета окружностей</string>
 </resources>

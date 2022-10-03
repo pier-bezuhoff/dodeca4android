@@ -138,7 +138,7 @@ class DodecaEditActivity : AppCompatActivity()
             R.id.navigate_mode_button -> viewModel.requestEditingMode(EditingMode.NAVIGATE)
             R.id.multiselect_mode_button -> viewModel.requestEditingMode(EditingMode.MULTISELECT)
             R.id.copy_mode_button -> viewModel.requestEditingMode(EditingMode.COPY)
-//            R.id.new_circle_button -> 5
+            R.id.new_circle_button -> 5
             R.id.done_button -> {
                 viewModel.requestSaveDdu() // NOTE: saving is async and might get gc-ed away (?!)
                 val intent = Intent(this, DodecaViewActivity::class.java)
@@ -155,7 +155,7 @@ class DodecaEditActivity : AppCompatActivity()
             R.id.save_button -> saveDdu()
             R.id.play_button -> viewModel.toggleUpdating()
             R.id.show_everything_button -> viewModel.toggleShowEverything()
-            R.id.edit_button -> {
+            R.id.edit_circles_button -> {
                 viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
                     viewModel.pause()
                     ChooseColorDialog(

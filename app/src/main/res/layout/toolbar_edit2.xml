@@ -53,20 +53,20 @@
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:contentDescription="@{@string/ellipsis}"
+                android:contentDescription="@{@string/show_everything_button_title}"
                 app:switchImageWhen="@{safeUnbox(viewModel.showEverything)}"
                 app:trueDrawable="@{@drawable/ic_visibility}"
                 app:falseDrawable="@{@drawable/ic_visibility_off}"
                 />
         <ImageButton
-                android:id="@+id/edit_button"
+                android:id="@+id/edit_circles_button"
                 android:src="@drawable/ic_choose_color"
                 app:backgroundTint="@color/editToolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:contentDescription="@{@string/ellipsis}"
+                android:contentDescription="@{@string/edit_circles_button_title}"
                 />
     </LinearLayout>
 </layout>

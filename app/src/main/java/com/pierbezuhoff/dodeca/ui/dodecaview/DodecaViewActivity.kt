@@ -34,6 +34,7 @@ import com.pierbezuhoff.dodeca.databinding.ActivityDodecaViewBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
+import com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditActivity
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
 import com.pierbezuhoff.dodeca.ui.settings.SettingsActivity
@@ -156,6 +157,10 @@ class DodecaViewActivity : AppCompatActivity()
             R.id.trace_button -> viewModel.toggleDrawTrace()
             R.id.clear_button -> viewModel.requestClear()
             R.id.edit_button -> {
+                viewModel.requestSaveDdu() // NOTE: saving is async and might get gc-ed away (?!)
+                val intent = Intent(this, DodecaEditActivity::class.java)
+            }
+            R.id.edit_circles_colors_button -> {
                 viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
                     viewModel.pause()
                     ChooseColorDialog(
@@ -167,6 +172,7 @@ class DodecaViewActivity : AppCompatActivity()
                 }
             }
             R.id.screenshot_button -> saveScreenshotWithPermissionCheck()
+            R.id.autocenter_button -> viewModel.requestAutocenter()
             R.id.restart_button -> {
                 viewModel.reloadDdu()
                 // reload ddu

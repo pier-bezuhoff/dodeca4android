@@ -9,36 +9,45 @@
     <string name="ddu_asset_dir">ddu</string>
     <string name="first_ddu">Unknown lady.ddu</string>
 
-    <!-- Strings related to bottom bar -->
+    <!-- Strings related to the bottom bar -->
     <string name="help_button_title">Help</string>
-    <string name="load_button_title">Choose ddu-picture</string>
-    <string name="save_button_title">Save ddu-picture</string>
+    <string name="load_button_title">Choose a ddu-picture</string>
+    <string name="save_button_title">Save the ddu-picture</string>
     <string name="restart_button_title">Restart</string>
     <string name="play_button_title">Play/pause</string>
     <string name="one_step_button_title">Stepwise: one step</string>
     <string name="outline_button_title">Toggle outline</string>
     <string name="trace_button_title">Toggle trace</string>
-    <string name="shape_spinner_title">Choose shape</string>
+    <string name="shape_spinner_title">Choose a shape</string>
     <string name="shape_spinner_prompt">Draw this shape instead of circle</string>
     <string name="shape_image_title">Shape</string>
     <string name="clear_button_title">Clear</string>
     <string name="autocenter_button_title">Autocenter</string>
     <string name="settings_button_title">Settings</string>
     <string name="draw_circles_button_title">Circle drawing mode</string>
-    <string name="screenshot_button_title">Take screenshot</string>
+    <string name="screenshot_button_title">Take a screenshot</string>
 
-    <string name="ellipsis" translatable="false">something</string>
+    <string name="edit_button_title">Edit</string>
     <!-- unused -->
-    <string name="change_color_button_title">Change color</string>
+    <string name="edit_circles_colors_button_title">Edit circle\'s colors</string>
+
+    <!-- Strings related to the editor bottom bar -->
+    <!--    <string name="_button_title"></string>-->
+    <string name="done_button_title">Save and go to the viewer</string>
+    <string name="navigate_mode_button_title">Go into Navigation Mode</string>
+    <string name="multiselect_mode_button_title">Go into Multi-selection Mode</string>
+    <string name="show_everything_button_title">Show/hide invisible circles</string>
+    <string name="edit_circles_button_title">Edit circles</string>
+    <string name="ellipsis" translatable="false">something</string>
 
     <!-- Toasts -->
-    <string name="please_pick_color_toast">Double tap to pick color</string>
-    <string name="bad_ddu_format_toast">Bad format of ddu-file \"%s\"</string>
-    <string name="error_ddu_save_no_file_toast">Error while saving ddu: ddu has no file</string>
-    <string name="error_ddu_save_toast">Error while saving ddu, see log</string>
-    <string name="ddu_saved_toast">ddu-picture saved as \"%s\"</string>
-    <string name="imported_ddu_overwrites_original_toast">Original ddu-picture was overwritten by imported one</string>
-    <string name="imported_ddu_toast">New ddu-picture was imported: \"%s\"</string>
+    <string name="please_pick_color_toast">Double tap to pick a color</string>
+    <string name="bad_ddu_format_toast">Bad format of the ddu-file \"%s\"</string>
+    <string name="error_ddu_save_no_file_toast">Error while saving the ddu: the ddu has no file</string>
+    <string name="error_ddu_save_toast">Error while saving the ddu, see log</string>
+    <string name="ddu_saved_toast">Saved as \"%s\"</string>
+    <string name="imported_ddu_overwrites_original_toast">The original has been overwritten by the imported one</string>
+    <string name="imported_ddu_toast">A new ddu-picture has been imported: \"%s\"</string>
     <string name="canvas_factor_oom_toast">Canvas factor %d is too large: it caused out of memory error! Trying smaller
         factor %d…
     </string>
@@ -46,16 +55,15 @@
     <string name="ddu_rename_toast">\"%s\" renamed to \"%s\"</string>
     <string name="ddu_delete_toast">\"%s\" deleted</string>
     <string name="ddu_restore_toast">\"%s\" restored to \"%s\"</string>
-    <string name="ddu_duplicate_toast">Duplicate of \"%s\" saved as \"%s\"</string>
+    <string name="ddu_duplicate_toast">A duplicate of \"%s\" saved as \"%s\"</string>
     <string name="dir_importing_toast">Importing folder \"%s\"…</string>
     <string name="dir_exporting_toast">Exporting folder \"%s\"…</string>
-    <string name="ddus_imported_toast">New ddu-pictures have been imported</string>
+    <string name="ddus_imported_toast">New ddu-pictures imported</string>
     <string name="ddus_importing_toast">Importing new ddu-pictures</string>
-    <string name="dir_exported_toast">Folder \"%s\" has been exported</string>
-    <string name="dir_imported_toast">Folder \"%s\" has been imported</string>
-    <string name="ddu_exported_toast">ddu-picture \"%s\" has been exported</string>
-    <string name="ddu_exported_for_dodecalook_toast">ddu-picture \"%s\" has been exported as DodecaLook-compatible
-    </string>
+    <string name="dir_exported_toast">Folder \"%s\" exported</string>
+    <string name="dir_imported_toast">Folder \"%s\" imported</string>
+    <string name="ddu_exported_toast">ddu-picture \"%s\" exported</string>
+    <string name="ddu_exported_for_dodecalook_toast">"ddu-picture \"%s\" exported as DodecaLook-compatible\n    "</string>
     <string name="screenshot_saved_toast">Screenshot saved as \"%s\" to \"%s\" folder</string>
 
     <!-- Status strings -->
@@ -73,8 +81,8 @@
     <string name="skip_n_timeout_summary">Wait maximum %s while skipping updates, stop if timeout reached</string>
 
     <string name="settings_display_title">Display</string>
-    <string name="redraw_trace_title">Redraw trace</string>
-    <string name="redraw_trace_summary">Clear trace on scroll and scale</string>
+    <string name="redraw_trace_title">Redrawing trace</string>
+    <string name="redraw_trace_summary">Clear the trace on scroll and scale</string>
     <string name="show_all_circles_title">Show all circles</string>
     <string name="show_all_circles_summary">Show hidden and static circles</string>
     <!-- v unused for now -->
@@ -87,22 +95,22 @@
     <string name="stat_x_updates_per_text">%d updates per %.3f seconds</string>
     <string name="stat_x_updates_per_initial"># updates per #</string>
     <string name="always_autocenter_title">Always autocenter</string>
-    <string name="always_autocenter_summary">Autocenter when loading new ddu and best center is not specified</string>
+    <string name="always_autocenter_summary">Autocenter when loading a new ddu and the best center is not specified</string>
     <string name="canvas_factor_title">Canvas factor</string>
-    <string name="canvas_factor_summary">Canvas is %s times larger than visible screen</string>
+    <string name="canvas_factor_summary">Canvas is %s times larger than the visible screen</string>
     <!-- v ups and fps are unused now -->
     <string name="ups_title">Speed</string>
-    <string name="ups_summary">%s updates per second (speed of circle motion)</string>
+    <string name="ups_summary">%s updates per second (the speed of the circle motion)</string>
     <string name="fps_title" translatable="false">FPS</string>
-    <string name="fps_summary">Frames per second, redraw speed</string>
+    <string name="fps_summary">Frames per second, redrawing speed</string>
     <!-- ^ -->
 
     <string name="settings_saves_title">Saves</string>
     <string name="save_as_title">Save as</string>
-    <string name="save_as_summary">Suggest to save under new name on save</string>
+    <string name="save_as_summary">Suggest to save under a new name on save</string>
     <string name="autosave_title">Autosave current ddu</string>
 
-    <string name="restore_default_ddu_title">Restore current ddu-picture</string>
+    <string name="restore_default_ddu_title">Restore the original of the ddu-picture</string>
     <string name="restore_default_ddus_title">Restore all ddu-pictures</string>
     <string name="restore_defaults_title">Restore default settings</string>
 
@@ -110,26 +118,25 @@
     <string name="discard_previews_title">Discard previews</string>
     <string name="preview_size_title">Preview size</string>
     <string name="preview_size_summary">%s ⨯ %s</string>
-    <string name="autocenter_preview_title">Autocenter preview</string>
-    <string name="autocenter_preview_summary">Autocenter preview if best center is not specified</string>
+    <string name="autocenter_preview_title">Autocenter a preview</string>
+    <string name="autocenter_preview_summary">Autocenter a preview if the best center is not specified</string>
     <string name="n_preview_updates_title">Preview updates</string>
-    <string name="n_preview_updates_summary">%s updates to draw preview</string>
+    <string name="n_preview_updates_summary">%s updates to draw a preview</string>
     <string name="preview_smart_updates_title">Smart updates</string>
-    <string name="preview_smart_updates_summary">Number of updates depends on ddu complexity</string>
+    <string name="preview_smart_updates_summary">Number of updates depends on the ddu complexity</string>
 
     <string name="settings_about_title">About</string>
     <string name="description_summary">&app_name;: Android port for DodecaLook</string>
     <string name="version_title">Version</string>
     <string name="version_summary">&app_name; &version_name;</string>
     <string name="copyright_title" translatable="false">Copyright</string>
-    <string name="copyright_summary">© Revolt Pimenov (algorithms, esthetic geometry), Ivan Nikitin (programming)
-    </string>
+    <string name="copyright_summary">"© Revolt Pimenov (algorithms, aesthetic geometry), Ivan Nikitin (programming)\n    "</string>
     <string name="support_title">Feedback and support</string>
     <string name="feedback_subject" translatable="false">&app_name; support</string>
     <string name="developer_email" translatable="false">&feedback_email;</string>
 
     <!-- Strings related to permissions -->
-    <string name="permission_storage_message">Please, allow storage access to import this ddu-picture</string>
+    <string name="permission_storage_message">Please, allow storage access to import the ddu-picture</string>
     <string name="permission_storage_accusation">You denied storage access permission. Why? You cannot import the ddu
         now!
     </string>
@@ -145,10 +152,10 @@
     <string name="help_title">Help</string>
 
     <!-- ddu chooser -->
-    <string name="to_parent_dir_title">To parent folder</string>
+    <string name="to_parent_dir_title">To the parent folder</string>
     <string name="import_ddus_title">Import ddu-pictures</string>
     <string name="export_ddus_title">Export all</string>
-    <string name="import_folder_title">Import folder with ddu-pictures</string>
+    <string name="import_folder_title">Import a folder with ddu-pictures</string>
     <string name="ddu_preview_title">ddu-picture preview</string>
     <string name="ddu_rename">Rename</string>
     <string name="ddu_delete">Delete</string>
@@ -156,38 +163,37 @@
     <string name="ddu_duplicate">Duplicate</string>
     <string name="ddu_export">Export</string>
     <string name="ddu_export_for_dodecalook">Export for DodecaLook</string>
-    <string name="dir_delete">Delete folder</string>
-    <string name="dir_export">Export folder</string>
+    <string name="dir_delete">Delete the folder</string>
+    <string name="dir_export">Export the folder</string>
     <string name="rename_dialog_message">Rename ddu-picture \"%s\"%s</string>
     <string name="rename_dialog_original_name">(original name: \"%s\")</string>
     <string name="folder_icon_description">Folder icon</string>
     <string name="dir_name_initial_text">[folder name]</string>
     <string name="delete_ddus">Delete all ddu-pictures</string>
-    <string name="delete_all_alert_message">Do you want to permanently delete all ddu-pictures in current folder?
-    </string>
+    <string name="delete_all_alert_message">"Do you want to permanently delete all ddu-pictures in the current folder?     "</string>
     <string name="delete_all_alert_title">Deletion confirmation</string>
 
     <!-- Color chooser dialog -->
     <string name="all_circles_checkbox_description">Select all</string>
     <string name="sort_by_color_description">Sort by color</string>
     <string name="sort_by_name_description">Sort by name</string>
-    <string name="circle_layout_description">Edit circle</string>
+    <string name="circle_layout_description">Edit the circle</string>
     <string name="circle_image_description">Circle image</string>
     <string name="circle_name_initial_text">#</string>
-    <string name="expand_group_description">Expand/collapse group</string>
+    <string name="expand_group_description">Expand/collapse the group</string>
     <string name="choose_circle_dialog_message">Choose circles to edit</string>
     <string name="choose_circle_dialog_edit">Edit</string>
     <string name="choose_circle_dialog_cancel">Cancel</string>
-    <string name="edit_circle_dialog_message_single">Edit circle %s</string>
-    <string name="edit_circle_dialog_message_plural">Edit circles %s</string>
+    <string name="edit_circle_dialog_message_single">Edit the circle %s</string>
+    <string name="edit_circle_dialog_message_plural">Edit the circles %s</string>
     <string name="edit_circle_dialog_apply">Apply</string>
     <string name="edit_circle_dialog_cancel">Cancel</string>
-    <string name="color_picker_dialog_message">Choose color</string>
+    <string name="color_picker_dialog_message">Choose a color</string>
     <string name="color_picker_dialog_ok">OK</string>
     <string name="color_picker_dialog_cancel">Cancel</string>
-    <string name="edit_circle_color_description">Filled circle</string>
+    <string name="edit_circle_color_description">A filled circle</string>
     <string name="edit_circle_fill_description">Fill</string>
-    <string name="edit_circle_border_color_description">Thin circle</string>
+    <string name="edit_circle_border_color_description">A thin circle</string>
     <string name="edit_circle_has_border_color_text">Different border color</string>
     <string name="choose_color_button_title">Edit circles</string>
     <string name="circle_visibility_description">Show/hide circle</string>
