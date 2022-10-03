@@ -64,6 +64,8 @@ xmlns:app="http://schemas.android.com/apk/res-auto"
             app:tintEnabled="@{viewModel.editingMode == EditingMode.COPY}"
             app:defaultTint="@{@color/editToolbarColor}"
             app:darkerTint="@{@color/darkerEditToolbarColor}"
+
+            android:visibility="gone"
             />
 
     <ImageButton
@@ -75,6 +77,8 @@ xmlns:app="http://schemas.android.com/apk/res-auto"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="@{@string/ellipsis}"
+
+            android:visibility="gone"
             />
     <ImageButton
             android:id="@+id/delete_button"
@@ -85,6 +89,8 @@ xmlns:app="http://schemas.android.com/apk/res-auto"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="@{@string/ellipsis}"
+
+            android:visibility="gone"
             />
 </LinearLayout>
 </layout>
