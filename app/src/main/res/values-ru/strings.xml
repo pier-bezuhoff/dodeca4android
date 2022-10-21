@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
         <!ENTITY app_name "Додека Медитация">
-        <!ENTITY version_name "2.0">
+        <!ENTITY version_name "2.1">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
@@ -163,4 +163,13 @@
     <string name="show_everything_button_title">Показать/скрыть невидимые окружности</string>
     <string name="edit_circles_button_title">Редактировать окружности</string>
     <string name="edit_circles_colors_button_title">Редактировать цвета окружностей</string>
+    <string name="adjust_angles_dialog_message">Изменить углы двигателей</string>
+    <string name="adjust_angles_dialog_message">И</string>
+    <string name="adjust_angles_dialog_edit">Применить</string>
+    <string name="adjust_angles_dialog_cancel">Отмена</string>
+    <string name="angle1_title">Угол двигателя ранга 0 будет умножен на %d/%d</string>
+    <string name="angle2_title">Угол двигателя ранга 1 будет умножен на %d/%d</string>
+    <string name="angle2_title">Угол двигателя ранга 0 будет умножен на %d/%d</string>
+    <string name="angle3_title">Угол двигателя ранга 2 будет умножен на %d/%d</string>
+    <string name="angle3_title">Угол двигателя ранга 0 будет умножен на %d/%d</string>
 </resources>

@@ -14,55 +14,64 @@
             android:layout_height="wrap_content"
             >
 
-    <!-- BUG: tool tips are not working -->
-    <ImageButton
-            android:id="@+id/done_button"
-            android:src="@drawable/ic_done"
-            app:backgroundTint="@color/editToolbarColor"
-            android:padding="8dp"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@{@string/done_button_title}"
-            />
+        <!-- BUG: tool tips are not working -->
         <ImageButton
-            android:id="@+id/navigate_mode_button"
-            android:src="@drawable/ic_move"
-            app:backgroundTint="@color/editToolbarColor"
-            android:padding="8dp"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@{@string/navigate_mode_button_title}"
-            app:tintEnabled="@{viewModel.editingMode == EditingMode.NAVIGATE}"
-            app:defaultTint="@{@color/editToolbarColor}"
-            app:darkerTint="@{@color/darkerEditToolbarColor}"
-            />
-    <ImageButton
-            android:id="@+id/multiselect_mode_button"
-            android:src="@drawable/ic_multiselect"
-            app:backgroundTint="@color/editToolbarColor"
-            android:padding="8dp"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@{@string/multiselect_mode_button_title}"
-            app:tintEnabled="@{viewModel.editingMode == EditingMode.MULTISELECT}"
-            app:defaultTint="@{@color/editToolbarColor}"
-            app:darkerTint="@{@color/darkerEditToolbarColor}"
-            />
-    <ImageButton
-            android:id="@+id/copy_mode_button"
-            android:src="@drawable/ic_copy"
-            app:backgroundTint="@color/editToolbarColor"
-            android:padding="8dp"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@{@string/ellipsis}"
-            app:tintEnabled="@{viewModel.editingMode == EditingMode.COPY}"
-            app:defaultTint="@{@color/editToolbarColor}"
-            app:darkerTint="@{@color/darkerEditToolbarColor}"
+                android:id="@+id/done_button"
+                android:src="@drawable/ic_done"
+                app:backgroundTint="@color/editToolbarColor"
+                android:padding="8dp"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@{@string/done_button_title}"
+                />
+        <ImageButton
+                android:id="@+id/angles_button"
+                android:src="@drawable/ic_tricircle"
+                app:backgroundTint="@color/editToolbarColor"
+                android:padding="8dp"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+        <ImageButton
+                android:id="@+id/navigate_mode_button"
+                android:src="@drawable/ic_move"
+                app:backgroundTint="@color/editToolbarColor"
+                android:padding="8dp"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@{@string/navigate_mode_button_title}"
+                app:tintEnabled="@{viewModel.editingMode == EditingMode.NAVIGATE}"
+                app:defaultTint="@{@color/editToolbarColor}"
+                app:darkerTint="@{@color/darkerEditToolbarColor}"
+                />
+        <ImageButton
+                android:id="@+id/multiselect_mode_button"
+                android:src="@drawable/ic_multiselect"
+                app:backgroundTint="@color/editToolbarColor"
+                android:padding="8dp"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@{@string/multiselect_mode_button_title}"
+                app:tintEnabled="@{viewModel.editingMode == EditingMode.MULTISELECT}"
+                app:defaultTint="@{@color/editToolbarColor}"
+                app:darkerTint="@{@color/darkerEditToolbarColor}"
+                />
+        <ImageButton
+                android:id="@+id/copy_mode_button"
+                android:src="@drawable/ic_copy"
+                app:backgroundTint="@color/editToolbarColor"
+                android:padding="8dp"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@{@string/ellipsis}"
+                app:tintEnabled="@{viewModel.editingMode == EditingMode.COPY}"
+                app:defaultTint="@{@color/editToolbarColor}"
+                app:darkerTint="@{@color/darkerEditToolbarColor}"
 
             android:visibility="gone"
             />

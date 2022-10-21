@@ -65,6 +65,7 @@ import java.io.IOException
 @RuntimePermissions
 class DodecaEditActivity : AppCompatActivity()
     , ChooseColorDialog.ChooseColorListener
+    , AdjustAnglesDialog.AdjustAnglesListener
 {
 
     private val optionsManager by lazy {
@@ -141,6 +142,17 @@ class DodecaEditActivity : AppCompatActivity()
             R.id.multiselect_mode_button -> viewModel.requestEditingMode(EditingMode.MULTISELECT)
             R.id.copy_mode_button -> viewModel.requestEditingMode(EditingMode.COPY)
             R.id.new_circle_button -> 5
+            R.id.angles_button -> {
+                viewModel.getCircleGroup()?.let { cg ->
+                    viewModel.pause()
+                    AdjustAnglesDialog(
+                        this,
+                        adjustAnglesListener = this,
+                        cg
+                    ).build()
+                        .show()
+                }
+            }
             R.id.done_button -> {
                 viewModel.requestSaveDdu() // NOTE: saving is async and might get gc-ed away (?!)
                 val intent = Intent(this, DodecaViewActivity::class.java)
@@ -210,6 +222,11 @@ class DodecaEditActivity : AppCompatActivity()
         }
 
     override fun onChooseColorClosed() {
+        viewModel.resume()
+        viewModel.requestUpdateOnce()
+    }
+
+    override fun onAdjustAnglesClosed() {
         viewModel.resume()
         viewModel.requestUpdateOnce()
     }

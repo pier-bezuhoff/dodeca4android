@@ -18,6 +18,7 @@ operator fun Complex.times(factor: Float): Complex = this.multiply(factor.toDoub
 operator fun Complex.div(divisor: Complex): Complex = this.divide(divisor)
 operator fun Double.div(divisor: Complex): Complex = divisor.reciprocal().multiply(this)
 operator fun Complex.div(divisor: Double): Complex = this.divide(divisor)
+operator fun Complex.div(divisor: Int): Complex = this.divide(divisor.toDouble())
 operator fun Complex.component1(): Double = real
 operator fun Complex.component2(): Double = imaginary
 fun Complex.asFF(): Pair<Float, Float> = Pair(real.toFloat(), imaginary.toFloat())

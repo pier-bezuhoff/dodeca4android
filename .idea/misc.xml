@@ -19,6 +19,10 @@
         <entry key="app/src/main/res/layout-w240dp/edit_circle.xml" value="0.146875" />
         <entry key="app/src/main/res/layout/activity_dodeca_edit.xml" value="0.27960666951688756" />
         <entry key="app/src/main/res/layout/activity_dodeca_view.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/activity_settings.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/adjust_angles_dialog.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/choose_angles_dialog.xml" value="0.2787516032492518" />
+        <entry key="app/src/main/res/layout/choose_color_dialog.xml" value="0.27960666951688756" />
         <entry key="app/src/main/res/layout/edit_circle.xml" value="0.1" />
         <entry key="app/src/main/res/layout/shape_spinner_row.xml" value="0.27960666951688756" />
         <entry key="app/src/main/res/layout/toolbar1.xml" value="0.27960666951688756" />
