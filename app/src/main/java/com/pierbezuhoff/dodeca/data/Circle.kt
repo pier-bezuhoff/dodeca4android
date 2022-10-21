@@ -134,16 +134,15 @@ open class Circle(var center: Complex, var radius: Double) {
         // val p1 = -c1.real/c1.imaginary
         // val q1 = -(1 + 1/p1) * c1/(2 * c1.abs2())
         // y=p1*x+q1 = image of the [circle]
-        val t1 = I * c1.normalized() // line vector of inv(circle)
-        val t2 = I * c2.normalized() // line vector of inv(this)
-        val t2new = t1 * (t2/t1).pow(multiplier)
-        val rho = ip.imaginary * t2new.real - ip.real * t2new.imaginary
-        val p0 = -I * rho * t2new // closest point of the new image (line) of [this] to the origin(ip2)
-        val c = p0/(2 * p0.abs2()) // inv(p0) = 2*c
+        val n1 = c1.normalized() // normal vector to the line=inv(circle)
+        val n2 = c2.normalized()
+        val n2new = n1 * (n2/n1).pow(multiplier)
+        val rho = (n2new * ip.conjugate()).real
+        val p0 = rho * n2new // closest point of the new image (line) of [this] to the origin(ip2)
+        val c = n2new/(2 * rho) // inv(p0) = 2*c
         // back from system001
         val newR = c.abs() * s
         val newC = c * s - t
-        Log.i(TAG, "ip $ip, c1 $c1, c2 $c2, p0 $p0, c $c")
         center = newC
         radius = newR
     }
