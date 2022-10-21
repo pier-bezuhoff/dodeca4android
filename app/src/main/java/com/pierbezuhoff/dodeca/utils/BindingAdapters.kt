@@ -4,6 +4,7 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -37,3 +38,7 @@ fun setContentDescription(view: View, contentDescription: String) {
     view.contentDescription = contentDescription
 }
 
+@BindingAdapter("android:visibility")
+fun setVisibility(layout: LinearLayout, visible: Boolean) {
+    layout.visibility = if (visible) View.VISIBLE else View.GONE
+}

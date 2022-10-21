@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca.ui.dodecaedit
 
 import android.app.Dialog
 import android.content.Context
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleGroup
@@ -21,20 +22,21 @@ class AdjustAnglesDialog(
     fun build(): Dialog {
         val builder = AlertDialog.Builder(context)
         val inflater = context.layoutInflater
-        val layout = inflater.inflate(R.layout.adjust_angles_dialog, null)
         val binding = AdjustAnglesDialogBinding.inflate(inflater)
+        val minProgress = 0
         with(binding) {
-            angle1 = 1
-            angle1Denominator = 1
-            angle2 = 1
-            angle2Denominator = 1
-            angle3 = 1
-            angle3Denominator = 1
+            angle1 = minProgress
+            angle1Denominator = minProgress
+            angle2 = minProgress
+            angle2Denominator = minProgress
+            angle3 = minProgress
+            angle3Denominator = minProgress
             val figures = circleGroup.figures
             showAngle3 =
                 figures.size >= 5 &&
                 !figures[4].show && !figures[5].show
         }
+        val layout = binding.root
         builder.setView(layout)
         val dialog = builder.apply {
             setMessage(R.string.adjust_angles_dialog_message)
@@ -45,9 +47,10 @@ class AdjustAnglesDialog(
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val figures = circleGroup.figures
-                val f1 = Fraction(binding.angle1, binding.angle1Denominator)
-                val f2 = Fraction(binding.angle2, binding.angle2Denominator)
-                val f3 = Fraction(binding.angle3, binding.angle3Denominator)
+                val f1 = Fraction(1 + binding.angle1, 1 + binding.angle1Denominator)
+                val f2 = Fraction(1 + binding.angle2, 1 + binding.angle2Denominator)
+                val f3 = Fraction(1 + binding.angle3, 1 + binding.angle3Denominator)
+                Log.i(TAG, "angle multipliers: $f1, $f2, $f3")
                 val engines = mapOf(
                     Pair(0, 1) to f1,
                     Pair(2, 3) to f2,
@@ -70,5 +73,9 @@ class AdjustAnglesDialog(
             }
         }
         return dialog
+    }
+
+    companion object {
+        const val TAG: String = "AdjustAnglesDialog"
     }
 }

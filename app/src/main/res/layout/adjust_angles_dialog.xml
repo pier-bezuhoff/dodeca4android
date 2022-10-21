@@ -6,9 +6,9 @@
         <variable name="angle1Denominator" type="int" />
         <variable name="angle2" type="int" />
         <variable name="angle2Denominator" type="int" />
-        <variable name="showAngle3" type="boolean" />
         <variable name="angle3" type="int" />
         <variable name="angle3Denominator" type="int" />
+        <variable name="showAngle3" type="Boolean" />
     </data>
 
     <LinearLayout
@@ -25,7 +25,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="8dp"
-                    android:text="@{@string/angle1_description(angle1, angle1Denominator)}"
+                    android:text="@{@string/angle1_title(1+angle1, 1+angle1Denominator)}"
                     />
             <SeekBar
                     android:id="@+id/angle1_slider"
@@ -57,7 +57,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="8dp"
-                    android:text="@{@string/angle2_description(angle2, angle2Denominator)}"
+                    android:text="@{@string/angle2_title(1+angle2, 1+angle2Denominator)}"
                     />
             <SeekBar
                     android:id="@+id/angle2_slider"
@@ -91,7 +91,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="8dp"
-                    android:text="@{@string/angle3_description(angle3, angle3Denominator)}"
+                    android:text="@{@string/angle3_title(1+angle3, 1+angle3Denominator)}"
                     />
             <SeekBar
                     android:id="@+id/angle3_slider"

@@ -164,12 +164,9 @@
     <string name="edit_circles_button_title">Редактировать окружности</string>
     <string name="edit_circles_colors_button_title">Редактировать цвета окружностей</string>
     <string name="adjust_angles_dialog_message">Изменить углы двигателей</string>
-    <string name="adjust_angles_dialog_message">И</string>
     <string name="adjust_angles_dialog_edit">Применить</string>
     <string name="adjust_angles_dialog_cancel">Отмена</string>
     <string name="angle1_title">Угол двигателя ранга 0 будет умножен на %d/%d</string>
     <string name="angle2_title">Угол двигателя ранга 1 будет умножен на %d/%d</string>
-    <string name="angle2_title">Угол двигателя ранга 0 будет умножен на %d/%d</string>
     <string name="angle3_title">Угол двигателя ранга 2 будет умножен на %d/%d</string>
-    <string name="angle3_title">Угол двигателя ранга 0 будет умножен на %d/%d</string>
 </resources>

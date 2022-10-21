@@ -1,6 +1,7 @@
 package com.pierbezuhoff.dodeca.data
 
 import android.graphics.Color
+import android.util.Log
 import com.pierbezuhoff.dodeca.utils.Maybe
 import com.pierbezuhoff.dodeca.utils.None
 import com.pierbezuhoff.dodeca.utils.abs2
@@ -91,7 +92,6 @@ open class Circle(var center: Complex, var radius: Double) {
         this.center = center + scaleFactor * (this.center - center)
     }
 
-    // reference (1=this): https://gist.github.com/jupdike/bfe5eb23d1c395d8a0a1a4ddd94882ac
     /* Return the list of intersection points */
     fun findIntersection(circle: Circle): List<Complex> {
         val r12 = r2
@@ -102,21 +102,24 @@ open class Circle(var center: Complex, var radius: Double) {
         if (abs(radius - circle.radius) > d || d > radius + circle.radius)
             return emptyList()
         val dr2 = r12 - r22
-        val a = dr2 / (2 * d2)
-        val c = sqrt(2 * (r12 + r22)/d2 - (dr2 * dr2) / (d2 * d2) - 1)
-        val f = (circle.center + center)/2 + a * dc
-        val g = c * dc/2
-        val p1 = Complex(f.real + g.imaginary, f.imaginary + g.real)
-        if (g.abs() == 0.0) // NOTE: g=0 => they are tangential
-            return listOf(p1)
-        val p2 = Complex(f.real - g.imaginary, f.imaginary - g.real)
+        // reference (0=this, 1=circle):
+        // https://stackoverflow.com/questions/3349125/circle-circle-intersection-points#answer-3349134
+        val a = (d2 + dr2)/(2 * d)
+        val h = sqrt(r2 - a*a)
+        val pc = center + a * dc / d
+        val v = h * dc / d
+        val p1 = pc + Complex(v.imaginary, -v.real)
+        val p2 = pc - Complex(v.imaginary, -v.real)
         return listOf(p1, p2)
     }
 
     /* 'Rotate' [this] circle so that the new angle between the circles will be *= [multiplier] */
     fun changeAngle(circle: Circle, multiplier: Double) {
         val intersection = findIntersection(circle)
-        assert(intersection.size == 2) { "Circles must fully intersect for this operation" }
+        if (intersection.size != 2) {
+            Log.w(TAG, "Circles must fully intersect for [changeAngle]!, skipping...")
+            return
+        }
         val (ip1, ip2) = intersection
         // ip2 -> (0, 0); |ip1| -> 1
         val t = -ip2
@@ -135,13 +138,18 @@ open class Circle(var center: Complex, var radius: Double) {
         val t2 = I * c2.normalized() // line vector of inv(this)
         val t2new = t1 * (t2/t1).pow(multiplier)
         val rho = ip.imaginary * t2new.real - ip.real * t2new.imaginary
-        val p0 = -I * rho * t2new // closest point of the new image of [this] (line) to the origin(ip2)
+        val p0 = -I * rho * t2new // closest point of the new image (line) of [this] to the origin(ip2)
         val c = p0/(2 * p0.abs2()) // inv(p0) = 2*c
         // back from system001
         val newR = c.abs() * s
         val newC = c * s - t
+        Log.i(TAG, "ip $ip, c1 $c1, c2 $c2, p0 $p0, c $c")
         center = newC
         radius = newR
+    }
+
+    companion object {
+        private const val TAG = "Circle"
     }
 }
 
