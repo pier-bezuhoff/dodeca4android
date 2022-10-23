@@ -22,6 +22,7 @@ import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.utils.Maybe
 import com.pierbezuhoff.dodeca.utils.None
+import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
 import com.pierbezuhoff.dodeca.utils.justIf
 import com.rarepebble.colorpicker.ColorPickerView
 import kotlinx.android.synthetic.main.choose_color_dialog.view.*
@@ -573,21 +574,3 @@ internal fun circlesNumbers(circles: Collection<CircleRow>): String = when(circl
             circles.last().id.toString() + " [${circles.size}]"
     }
 
-inline fun <E, K> Iterable<E>.consecutiveGroupBy(selector: (E) -> K): List<Pair<K, List<E>>> {
-    val lists: MutableList<Pair<K, List<E>>> = mutableListOf()
-    var k: K? = null
-    var list: MutableList<E> = mutableListOf()
-    for (e in this) {
-        val newK = selector(e)
-        if (k == newK) {
-            list.add(e)
-        } else {
-            k?.let { lists.add(it to list) }
-            k = newK
-            list = mutableListOf(e)
-        }
-    }
-    if (list.isNotEmpty())
-        lists.add(k!! to list)
-    return lists
-}

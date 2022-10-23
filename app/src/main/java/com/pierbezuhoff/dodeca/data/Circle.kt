@@ -137,9 +137,8 @@ open class Circle(var center: Complex, var radius: Double) {
         val n1 = c1.normalized() // normal vector to the line=inv(circle)
         val n2 = c2.normalized()
         val n2new = n1 * (n2/n1).pow(multiplier)
-        val rho = (n2new * ip.conjugate()).real
-        val p0 = rho * n2new // closest point of the new image (line) of [this] to the origin(ip2)
-        val c = n2new/(2 * rho) // inv(p0) = 2*c
+        val rho = (n2new * ip.conjugate()).real // distances from the origin (ip2) to the line=inv(this)
+        val c = n2new/(2 * rho) // inv(rho*n2new) = 2*c
         // back from system001
         val newR = c.abs() * s
         val newC = c * s - t
