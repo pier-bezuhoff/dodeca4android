@@ -125,6 +125,9 @@ class DodecaEditActivity : AppCompatActivity()
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+        window.decorView.apply {
+            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+        }
     }
 
     private fun setupToolbar() {
@@ -222,11 +225,13 @@ class DodecaEditActivity : AppCompatActivity()
         }
 
     override fun onChooseColorClosed() {
+        hideSystemBars()
         viewModel.resume()
         viewModel.requestUpdateOnce()
     }
 
     override fun onAdjustAnglesClosed() {
+        hideSystemBars()
         viewModel.resume()
         viewModel.requestUpdateOnce()
     }
