@@ -5,6 +5,8 @@ package com.pierbezuhoff.dodeca.data
 import android.graphics.Canvas
 import android.graphics.Paint
 
+// TODO: detach update <-&-> draw
+// also: remove show all circles cuz it's useless
 interface ImmutableCircleGroup {
     val defaultPaint: Paint
     val figures: List<CircleFigure>
@@ -32,7 +34,9 @@ interface SuspendableCircleGroup : CircleGroup {
 }
 
 fun CircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): CircleGroup =
-    PrimitiveCircles(circleFigures, defaultPaint)
+//    PrimitiveCircles(circleFigures, defaultPaint)
+    ProjectiveCircles(circleFigures, defaultPaint)
 
 fun SuspendableCircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): SuspendableCircleGroup =
-    PrimitiveCircles(circleFigures, defaultPaint)
+//    PrimitiveCircles(circleFigures, defaultPaint)
+    ProjectiveCircles(circleFigures, defaultPaint)

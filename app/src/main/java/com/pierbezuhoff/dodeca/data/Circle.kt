@@ -237,3 +237,13 @@ class CircleFigure(center: Complex, radius: Double,
     }
 }
 
+data class FigureAttributes(
+    val color: Int = CircleFigure.DEFAULT_COLOR,
+    val fill: Boolean = CircleFigure.DEFAULT_FILL,
+    val rule: String? = CircleFigure.DEFAULT_RULE,
+    val borderColor: Int? = CircleFigure.DEFAULT_BORDER_COLOR
+) {
+    private val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
+    private val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
+    val show: Boolean get() = dynamic && !dynamicHidden
+}

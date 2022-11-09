@@ -18,7 +18,7 @@ internal class PrimitiveCircles(
     cs: List<CircleFigure>,
     private val paint: Paint
 ) : SuspendableCircleGroup {
-    private var size: Int = cs.size
+    private val size: Int = cs.size
     private val xs: DoubleArray = DoubleArray(size) { cs[it].x }
     private val ys: DoubleArray = DoubleArray(size) { cs[it].y }
     private val rs: DoubleArray = DoubleArray(size) { cs[it].radius }
@@ -102,15 +102,14 @@ internal class PrimitiveCircles(
         _updateTimes(times, reverse)
 
     private inline fun _updateTimes(times: Int, reverse: Boolean) {
-        repeat(times) {
-            _update(reverse)
-        }
-        // FIX: slow and diverges
-/*        if (reverse) {
-            savingOld { repeat(times) { reversedUpdate() } }
+//        repeat(times) {
+//            _update(reverse)
+//        }
+        if (reverse) {
+            repeat(times) { savingOld { reversedUpdate() } }
         } else {
-            savingOld { repeat(times) { straightUpdate() } }
-        }*/
+            repeat(times) { savingOld { straightUpdate() } }
+        }
     }
 
     override suspend fun suspendableUpdateTimes(times: Int, reverse: Boolean) {
@@ -162,12 +161,13 @@ internal class PrimitiveCircles(
     }
 
     private inline fun drawHelper(showAllCircles: Boolean, crossinline draw: (Int) -> Unit) {
-        if (showAllCircles)
+        if (showAllCircles) {
             for (i in 0 until size)
                 draw(i)
-        else
+        } else {
             for (i in shownIndices)
                 draw(i)
+        }
     }
 
     override fun drawTimes(
@@ -180,8 +180,8 @@ internal class PrimitiveCircles(
             _update(reverse)
         }
         _draw(canvas, shape, showAllCircles)
-        // TODO: understand why following is slower and diverges
-        // _drawTimes(times, reverse, canvas, shape, showAllCircles)
+        // TODO: understand why the following is slower
+//         _drawTimes(times, reverse, canvas, shape, showAllCircles)
     }
 
     override suspend fun suspendableDrawTimes(
@@ -202,10 +202,9 @@ internal class PrimitiveCircles(
         withContext(Dispatchers.Default) { _draw(canvas, shape, showAllCircles) }
     }
 
-    /* draw; redraw; draw; redraw ...; draw
-    * (times + 1) x draw, times x redraw
-    * times >= 1
-    * some clever inline-magic used
+    // unused: too slow
+    /* draw; update; draw; update ...; draw
+    * = (n + 1) x draw, n x update
     * */
     private inline fun _drawTimes(
         times: Int,
@@ -224,33 +223,33 @@ internal class PrimitiveCircles(
         crossinline update: () -> Unit
     ) {
         when (shape) {
-            Shape.CIRCLE -> drawTimesUS(times, showAllCircles, update) { drawCircle(it, canvas) }
-            Shape.SQUARE -> drawTimesUS(times, showAllCircles, update) { drawSquare(it, canvas) }
-            Shape.CROSS -> drawTimesUS(times, showAllCircles, update) { drawCross(it, canvas) }
-            Shape.VERTICAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawVerticalBar(it, canvas) }
-            Shape.HORIZONTAL_BAR -> drawTimesUS(times, showAllCircles, update) { drawHorizontalBar(it, canvas) }
+            Shape.CIRCLE -> drawTimesUD(times, showAllCircles, update) { drawCircle(it, canvas) }
+            Shape.SQUARE -> drawTimesUD(times, showAllCircles, update) { drawSquare(it, canvas) }
+            Shape.CROSS -> drawTimesUD(times, showAllCircles, update) { drawCross(it, canvas) }
+            Shape.VERTICAL_BAR -> drawTimesUD(times, showAllCircles, update) { drawVerticalBar(it, canvas) }
+            Shape.HORIZONTAL_BAR -> drawTimesUD(times, showAllCircles, update) { drawHorizontalBar(it, canvas) }
         }
     }
 
-    private inline fun drawTimesUS(
+    private inline fun drawTimesUD(
         times: Int,
         showAllCircles: Boolean,
         crossinline update: () -> Unit,
         crossinline draw: (Int) -> Unit
     ) {
         if (showAllCircles)
-            drawTimesUSA(times, update) {
+            drawTimesUDA(times, update) {
                 for (i in 0 until size)
                     draw(i)
             }
         else
-            drawTimesUSA(times, update) {
+            drawTimesUDA(times, update) {
                 for (i in shownIndices)
                     draw(i)
             }
     }
 
-    private inline fun drawTimesUSA(times: Int, crossinline update: () -> Unit, crossinline drawAll: () -> Unit) {
+    private inline fun drawTimesUDA(times: Int, crossinline update: () -> Unit, crossinline drawAll: () -> Unit) {
         repeat(times) {
             drawAll()
             savingOld { update() }
@@ -385,17 +384,6 @@ internal class PrimitiveCircles(
                 rs[i] = r2 * r0 / abs(d2 - r02)
             }
         }
-    }
-
-    private data class FigureAttributes(
-        val color: Int = CircleFigure.DEFAULT_COLOR,
-        val fill: Boolean = CircleFigure.DEFAULT_FILL,
-        val rule: String? = CircleFigure.DEFAULT_RULE,
-        val borderColor: Int? = CircleFigure.DEFAULT_BORDER_COLOR
-    ) {
-        private val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
-        private val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
-        val show: Boolean get() = dynamic && !dynamicHidden
     }
 }
 

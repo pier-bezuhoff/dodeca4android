@@ -2,13 +2,22 @@
 
 package com.pierbezuhoff.dodeca.data
 
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Paint
+import android.graphics.SweepGradient
 import android.opengl.Matrix
+import android.util.Log
+import android.util.SparseArray
 import com.pierbezuhoff.dodeca.utils.abs2
 import com.pierbezuhoff.dodeca.utils.component1
 import com.pierbezuhoff.dodeca.utils.component2
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
 import com.pierbezuhoff.dodeca.utils.plus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
@@ -21,11 +30,10 @@ typealias Vector4 = FloatArray
 typealias Matrix44 = FloatArray
 typealias Pole = Vector4
 
-// TMP: abstract
 // NOTE: maybe use nd4j for performance (>200MB), also try deprecated Matrix4f
-// NOTE: some ddu may diverge because of Float-s
+// NOTE: some ddu may diverge because of Float-s (?)
 // https://github.com/deeplearning4j/deeplearning4j/tree/master/nd4j
-abstract class ProjectiveCircles(
+internal class ProjectiveCircles(
     figures: List<CircleFigure>,
     private val paint: Paint
 ) : SuspendableCircleGroup {
@@ -36,19 +44,52 @@ abstract class ProjectiveCircles(
     private val rulesForParts: List<Int> // part index: rule index
     private val nRules: Int // only counting unique ones
     private val nParts: Int // nParts >= nRules
-    private val nCircles: Int = figures.size // nCircles >= nRules
+    private val size: Int = figures.size // size = nCircles >= nRules
     // dynamic
     private val parts: Array<Matrix44> // unique parts of rules (can contain each other)
     private val rules: Array<Matrix44> // unique rules
     private val cumulativeRules: Array<Matrix44> // each update: cum. rule = rule * cum. rule
     private val poles: Array<Pole>
-    private val xs: FloatArray = FloatArray(nCircles)
-    private val ys: FloatArray = FloatArray(nCircles)
-    private val rs: FloatArray = FloatArray(nCircles)
+    private val xs: FloatArray = FloatArray(size)
+    private val ys: FloatArray = FloatArray(size)
+    private val rs: FloatArray = FloatArray(size)
+    private val attrs: Array<FigureAttributes> = Array(size) {
+        figures[it].run {
+            FigureAttributes(color, fill, rule, borderColor)
+        }
+    }
+    private var shownIndices: IntArray = attrs
+        .mapIndexed { i, attr -> i to attr }
+        .filter { it.second.show }
+        .map { it.first }
+        .toIntArray()
+    private val paints: Array<Paint> = attrs.map {
+        Paint(paint).apply {
+            color = it.color
+            style =
+                if (it.fill) Paint.Style.FILL_AND_STROKE
+                else Paint.Style.STROKE
+        }
+    }.toTypedArray()
+    private val defaultBorderPaint = Paint(paint)
+        .apply { color = Color.BLACK; style = Paint.Style.STROKE }
+    private val borderPaints: SparseArray<Paint> = SparseArray<Paint>()
+        .apply {
+            attrs.forEachIndexed { i, attr ->
+                if (attr.borderColor != null && attr.fill && attr.show)
+                    append(i, Paint(defaultBorderPaint).apply { color = attr.borderColor })
+            }
+        }
+    override val defaultPaint: Paint = paint
+    override val figures: List<CircleFigure>
+        get() = (0 until size).map { i ->
+            val (color, fill, rule, borderColor) = attrs[i]
+            CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), color, fill, rule, borderColor)
+        }
 
     init {
         val symbolicRules = figures.map {
-            val r = it.rule ?: ""
+            val r = it.rule?.trimStart('n') ?: ""
             r.reversed().map { c -> c.digitToInt() }
         }
         val uniqueRules = symbolicRules.distinct()
@@ -70,17 +111,25 @@ abstract class ProjectiveCircles(
         // rule index: list of part indices
         val ruleBlueprints = ruleSplits.map { split -> split.map { part -> symbolicParts.indexOf(part) } }
         partsOfRules = ruleBlueprints.map { it.toIntArray() }
+
+        // TMP: traceback
+        uniqueRules.forEachIndexed { i, r ->
+            val cIxs = rulesForCircles.withIndex().filter { (_, rIx) -> rIx == i }.joinToString(",") { (cIx, _) -> "#$cIx" }
+            Log.i(TAG, "${r.joinToString("")}: $cIxs")
+        }
+        val partsString = symbolicParts.joinToString { it.joinToString("") }
+        Log.i(TAG, "parts: $partsString")
+
+        // calc coordinate repr
+        initialPoles = figures.map { circle2pole(it) }
+        poles = initialPoles.map { it.copyOf() }.toTypedArray()
         val pivotIndices: Set<Int> = uniqueRules.flatten().toSet()
-        val poles0 = mutableListOf<Vector4>()
-        val pivots = mutableListOf<Matrix44>()
+        val pivots = mutableMapOf<Int, Matrix44>()
         for (i in pivotIndices) {
             val pole = circle2pole(figures[i])
-            poles0.add(pole)
-            pivots.add(pole2matrix(pole))
+            pivots[i] = pole2matrix(pole)
         }
-        initialPoles = poles0
-        poles = poles0.toTypedArray()
-        parts = symbolicParts.map { it.map { i -> pivots[i] }.product() }.toTypedArray()
+        parts = symbolicParts.map { it.map { i -> pivots[i]!! }.product() }.toTypedArray() // index out of bounds error
         rules = ruleBlueprints.map { it.map { i -> parts[i] }.product() }.toTypedArray()
         cumulativeRules = rules.map { I44() }.toTypedArray()
         figures.forEachIndexed { i, f ->
@@ -90,7 +139,7 @@ abstract class ProjectiveCircles(
         }
     }
 
-    fun update() {
+    private inline fun straightUpdate() {
         cumulativeRules.zip(rules).forEach { (cr, r) -> cr.setToProduct(r, cr) }
         parts.zip(rulesForParts).forEach { (p, rIx) ->
             val r = rules[rIx]
@@ -102,18 +151,229 @@ abstract class ProjectiveCircles(
         }
     }
 
+    private fun reverseUpdate() {
+        straightUpdate() // TMP
+    }
+
     // most likely the bottleneck
-    fun apply() {
+    private inline fun applyMatrices() {
         initialPoles.forEachIndexed { cIx, pole ->
             poles[cIx].setToDotProduct(cumulativeRules[rulesForCircles[cIx]], pole)
         }
         poles.forEachIndexed { cIx, pole ->
-            val (cx, cy, r) = pole2circle(pole)
-            xs[cIx] = cx
-            ys[cIx] = cy
-            rs[cIx] = r
+//            val (cx, cy, r) = pole2circle(pole) // inline to escape type conversion etc.
+//            xs[cIx] = cx
+//            ys[cIx] = cy
+//            rs[cIx] = r
+            val (wx,wy,wz,w) = pole
+            val x = wx/w
+            val y = wy/w
+            val z = wz/w
+            val nz = 1 - z
+            xs[cIx] = x/nz
+            ys[cIx] = y/nz
+            rs[cIx] = sqrt(x*x + y*y + nz*nz - 1)/(1 - z/2)
         }
     }
+
+    override fun get(i: Int): CircleFigure {
+        val (color, fill, rule, borderColor) = attrs[i]
+        return CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), color, fill, rule, borderColor)
+    }
+
+    override fun set(i: Int, figure: CircleFigure) {
+        val wasShown = attrs[i].show
+        with(figure) {
+            assert(abs(xs[i] - x) + abs(ys[i] - y) + abs(rs[i] - radius) < 1e-6) {
+                "cannot handle coordinate changes yet"
+            }
+            assert(rule == attrs[i].rule) { "cannot handle rule change yet" }
+            attrs[i] = FigureAttributes(color, fill, rule, borderColor)
+            paints[i] = Paint(paint).apply {
+                color = figure.color
+                style = if (fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
+            }
+            if (show && borderColor != null && fill)
+                borderPaints.append(i, Paint(defaultBorderPaint).apply { color = borderColor })
+            else
+                borderPaints.delete(i)
+            if (wasShown && !show)
+                shownIndices = shownIndices.toMutableSet().run { remove(i); toIntArray() }
+            else if (!wasShown && show)
+                shownIndices = shownIndices.toMutableSet().run { add(i); toIntArray() }
+        }
+    }
+
+    override fun update(reverse: Boolean) =
+        _update(reverse)
+
+    private inline fun _update(reverse: Boolean) {
+        if (reverse)
+            reverseUpdate()
+        else
+            straightUpdate()
+        applyMatrices()
+    }
+
+    override fun updateTimes(times: Int, reverse: Boolean) {
+        if (reverse) {
+            repeat(times) { reverseUpdate() }
+        } else {
+            repeat(times) { straightUpdate() }
+        }
+        applyMatrices()
+    }
+
+    override fun draw(canvas: Canvas, shape: Shape, showAllCircles: Boolean) =
+        _draw(canvas, shape, showAllCircles)
+
+    private inline fun _draw(canvas: Canvas, shape: Shape, showAllCircles: Boolean) {
+        when (shape) {
+            Shape.CIRCLE -> drawHelper(showAllCircles) { drawCircle(it, canvas) }
+            Shape.SQUARE -> drawHelper(showAllCircles) { drawSquare(it, canvas) }
+            Shape.CROSS -> drawHelper(showAllCircles) { drawCross(it, canvas) }
+            Shape.VERTICAL_BAR -> drawHelper(showAllCircles) { drawVerticalBar(it, canvas) }
+            Shape.HORIZONTAL_BAR -> drawHelper(showAllCircles) { drawHorizontalBar(it, canvas) }
+        }
+    }
+
+    private inline fun drawHelper(showAllCircles: Boolean, crossinline draw: (Int) -> Unit) {
+        if (showAllCircles) {
+            for (i in 0 until size)
+                draw(i)
+        } else {
+            for (i in shownIndices)
+                draw(i)
+        }
+    }
+
+    override fun drawTimes(times: Int, reverse: Boolean, canvas: Canvas, shape: Shape, showAllCircles: Boolean) {
+        repeat(times) {
+            _draw(canvas, shape, showAllCircles)
+            _update(reverse)
+        }
+        _draw(canvas, shape, showAllCircles)
+    }
+
+    override fun drawOverlay(canvas: Canvas, selected: IntArray) {
+        for (i in 0 until size) {
+            if (i in selected) {
+                drawCircleOverlay(i, canvas, bold = true)
+                drawSelectedCircleOverlay(i, canvas)
+            }
+            else {
+                drawCircleOverlay(i, canvas)
+            }
+        }
+    }
+
+    override suspend fun suspendableUpdateTimes(times: Int, reverse: Boolean) {
+        repeat(times) {
+            withContext(Dispatchers.Default) {
+                _update(reverse)
+            }
+        }
+    }
+
+    override suspend fun suspendableDrawTimes(times: Int, reverse: Boolean, canvas: Canvas, shape: Shape, showAllCircles: Boolean) {
+        repeat(times) {
+            withContext(Dispatchers.Default) {
+                _draw(canvas, shape, showAllCircles)
+                _update(reverse)
+            }
+        }
+        withContext(Dispatchers.Default) { _draw(canvas, shape, showAllCircles) }
+    }
+
+    private inline fun drawCircle(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        canvas.drawCircle(x, y, r, paints[i])
+        borderPaints.get(i)?.let { borderPaint ->
+            canvas.drawCircle(x, y, r, borderPaint)
+        }
+    }
+
+    private inline fun drawSquare(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        canvas.drawRect(
+            x - r, y - r,
+            x + r, y + r,
+            paints[i]
+        )
+        borderPaints.get(i)?.let { borderPaint ->
+            canvas.drawRect(
+                x - r, y - r, x + r, y + r,
+                borderPaint
+            )
+        }
+    }
+
+    private inline fun drawCross(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        canvas.drawLines(
+            floatArrayOf(
+                x, y - r, x, y + r,
+                x - r, y, x + r, y
+            ),
+            paints[i]
+        )
+    }
+
+    private inline fun drawVerticalBar(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        canvas.drawLine(x, y - r, x, y + r, paints[i])
+    }
+
+    private inline fun drawHorizontalBar(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        canvas.drawLine(x - r, y, x + r, y, paints[i])
+    }
+
+    private fun drawCircleOverlay(i: Int, canvas: Canvas, bold: Boolean = false) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        val attr = attrs[i]
+        val c = attr.borderColor ?: attr.color
+        val paint = Paint(paints[i])
+        paint.style = Paint.Style.STROKE
+        if (!attr.show) {
+            // NOTE: quite slow w/ hardware acceleration
+            val dashEffect = DashPathEffect(floatArrayOf(15f, 5f), 0f)
+            paint.pathEffect = dashEffect
+        }
+        paint.shader = SweepGradient(x, y, intArrayOf(c, Color.BLACK, c), null)
+        if (bold) // yucky, do smth else
+            paint.strokeWidth = 2f // 0 by default
+        canvas.drawCircle(x, y, r, paint)
+    }
+
+    private fun drawSelectedCircleOverlay(i: Int, canvas: Canvas) {
+        val x = xs[i]
+        val y = ys[i]
+        val r = rs[i]
+        val p = Paint()
+        p.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 0f)
+        canvas.drawLine(x, y - r, x, y + r, p) // dashed vertical diameter
+        p.pathEffect = DashPathEffect(floatArrayOf(2f, 2f), 0f)
+        canvas.drawLine(x, y, x + r, y, p)
+        canvas.drawPoint(x + r, y, p)
+    }
+
+    companion object {
+        private const val TAG = "ProjectiveCircles"
+    }
+
 }
 
 // sphere: (0,0,0), R=1
@@ -131,10 +391,11 @@ private fun circle2pole(circle: Circle): Vector4 {
     // parameter of the pole on the line thru the circle.center and the sphere's north
     // pole = k*C + (1 - k)*N
     val k = (s2 - sz)/(x * sx + y * sy - sz)
-    return doubleArrayOf(k*x, k*y, 1 - k).map { it.toFloat() }.toFloatArray()
+    return doubleArrayOf(k*x, k*y, 1 - k, 1.0).map { it.toFloat() }.toFloatArray()
 }
 
-// TODO: optimize!
+// NOTE: inlined
+@Suppress("unused")
 private fun pole2circle(pole: Vector4): FloatArray {
     val (wx,wy,wz,w) = pole
     val x = wx/w
@@ -143,20 +404,24 @@ private fun pole2circle(pole: Vector4): FloatArray {
     // st. proj. pole->center
     val cx = x/(1 - z)
     val cy = y/(1 - z)
-    // let's find a point t on the polar circle
-    val d = hypot(x, y)
-    val p2 = x*x + y*y + z*z
-    val tz: Float = z/p2 + d * sqrt(p2 - 1)/p2
-    val tx: Float = if (d == 0.0f) sqrt(1 - tz*tz) else -x * (z*tz - 1)/(d*d)
-    val ty: Float = if (d == 0.0f) 0.0f else y * tx/x
-    // s = st. proj. of t on the plane
-    val sx = tx/(1 - tz)
-    val sy = ty/(1- tz)
-    val r = hypot(cx - sx, cy - sy) // so much overhead just for the radius...
+    val op2 = x*x + y*y + (z-1)*(z-1)
+    val r = sqrt(op2 - 1)/(1 - z/2) // sqrt(op2-1) = segment of tangent
+    // V the old way
+//    // let's find a point t on the polar circle
+//    val d = hypot(x, y)
+//    val p2 = x*x + y*y + z*z
+//    val tz: Float = z/p2 + d * sqrt(p2 - 1)/p2
+//    val tx: Float = if (d == 0.0f) sqrt(1 - tz*tz) else -x * (z*tz - 1)/(d*d)
+//    val ty: Float = if (d == 0.0f) 0.0f else y * tx/x
+//    // s = st. proj. of t on the plane
+//    val sx = tx/(1 - tz)
+//    val sy = ty/(1 - tz)
+//    val r = hypot(cx - sx, cy - sy) // so much overhead just for the radius...
     return floatArrayOf(cx, cy, r)
 }
 
 // TODO: test it
+@Suppress("LocalVariableName")
 private fun pole2matrix(pole: Vector4): Matrix44 {
     val (wx,wy,wz,w) = pole
     val x = wx/w
@@ -208,12 +473,12 @@ private fun Iterable<Matrix44>.product() : Matrix44 {
 }
 
 private inline fun Matrix44.setToProduct(a: Matrix44, b: Matrix44) {
-    Matrix.multiplyMM(a, 0, b, 0, this, 0)
+    Matrix.multiplyMM(this, 0, a, 0, b, 0)
 }
 
 private inline fun Vector4.setToDotProduct(m: Matrix44, v: Vector4) {
-    Matrix.multiplyMV(m, 0, v, 0, this, 0)
+    Matrix.multiplyMV(this, 0, m, 0, v, 0)
 }
 
 private inline fun Matrix44.inverse(): Matrix44 =
-    FloatArray(16).also { Matrix.invertM(this, 0, it, 0) }
+    FloatArray(16).also { Matrix.invertM(it, 0, this, 0) }
