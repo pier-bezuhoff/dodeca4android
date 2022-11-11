@@ -31,7 +31,7 @@
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:contentDescription="@{@string/edit_circles_colors_button_title}"
+                android:contentDescription="@{@string/mass_editor_button_title}"
 
                 android:visibility="gone"
                 />

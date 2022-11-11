@@ -25,7 +25,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaEditBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
@@ -174,12 +173,14 @@ class DodecaEditActivity : AppCompatActivity()
                 viewModel.toggleShowEverything()
             }
             R.id.mass_editor_button -> {
-                viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
+                // TODO: pass current selection into editor
+                viewModel.dduRepresentation.value?.let { dduR ->
                     viewModel.pause()
                     MassEditorDialog(
                         this,
                         chooseColorListener = this,
-                        circleGroup = circleGroup
+                        ddu = dduR.ddu,
+                        circleGroup = dduR.circleGroup
                     ).build()
                         .show()
                 }
@@ -223,25 +224,23 @@ class DodecaEditActivity : AppCompatActivity()
             cancelButton { viewModel.resume() }
         }
 
-    override fun onMassEditorClosed() {
+    private fun onDialogClosed() {
         hideSystemBars()
         viewModel.resume()
         viewModel.requestUpdateOnce()
     }
 
+    override fun onMassEditorClosed() =
+        onDialogClosed()
+
     override fun onMassEditorCirclesSelected(circleIndices: List<Int>) {
-        hideSystemBars()
-        viewModel.resume()
-        viewModel.requestUpdateOnce()
+        onDialogClosed()
         // go into multiselect mode + select ixs
         viewModel.requestEditingMode(EditingMode.MULTISELECT)
     }
 
-    override fun onAdjustAnglesClosed() {
-        hideSystemBars()
-        viewModel.resume()
-        viewModel.requestUpdateOnce()
-    }
+    override fun onAdjustAnglesClosed() =
+        onDialogClosed()
 
     override fun onResume() {
         super.onResume()

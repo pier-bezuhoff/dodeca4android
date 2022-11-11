@@ -20,14 +20,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.CircleGroup
+import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.utils.Maybe
 import com.pierbezuhoff.dodeca.utils.None
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
 import com.pierbezuhoff.dodeca.utils.justIf
 import com.rarepebble.colorpicker.ColorPickerView
-import kotlinx.android.synthetic.main.choose_color_row.view.*
 import kotlinx.android.synthetic.main.edit_circle.view.*
 import kotlinx.android.synthetic.main.mass_editor_dialog.view.*
+import kotlinx.android.synthetic.main.mass_editor_row.view.*
 import org.jetbrains.anko.AlertBuilder
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.customView
@@ -37,10 +38,20 @@ import org.jetbrains.anko.layoutInflater
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
-// TODO: refactor
+
+internal typealias ColorInt = Int
+internal typealias OnApply = (
+    shown: Maybe<Boolean>,
+    color: Maybe<ColorInt>,
+    fill: Maybe<Boolean>,
+    borderColor: Maybe<ColorInt?>
+) -> Unit
+
+
 class MassEditorDialog(
     private val context: Context,
     private val chooseColorListener: MassEditorListener,
+    private val ddu: Ddu,
     private val circleGroup: CircleGroup
 ) {
     private lateinit var rowAdapter: CircleAdapter
@@ -56,7 +67,7 @@ class MassEditorDialog(
         val layout = inflater.inflate(R.layout.mass_editor_dialog, null)
         builder.setView(layout)
         val manager = LinearLayoutManager(context)
-        rowAdapter = CircleAdapter(context, circleGroup)
+        rowAdapter = CircleAdapter(context, ddu, circleGroup)
         val height: Int = context.displayMetrics.heightPixels
         layout.circle_rows.apply {
             layoutManager = manager
@@ -91,7 +102,7 @@ class MassEditorDialog(
             }
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
                 chooseColorListener.onMassEditorCirclesSelected(rowAdapter.getCheckedCircleIndices())
-                //dialog.dismiss()
+                dialog.dismiss()
             }
         }
         return dialog
@@ -99,33 +110,26 @@ class MassEditorDialog(
 }
 
 
-internal typealias OnApply = (
-    shown: Maybe<Boolean>,
-    color: Maybe<Int>,
-    fill: Maybe<Boolean>,
-    borderColor: Maybe<Int?>
-) -> Unit
-
 @Suppress("NOTHING_TO_INLINE")
 class CircleAdapter(
     private val context: Context,
+    private val ddu: Ddu,
     private val circleGroup: CircleGroup
 ) : RecyclerView.Adapter<CircleAdapter.ViewHolder>() {
     class ViewHolder(val row: View) : RecyclerView.ViewHolder(row)
 
-    // TODO: show invisible at the end
+    private val bgRow = BackgroundRow(ddu.backgroundColor)
     private val circleRows: List<CircleRow> =
         circleGroup.figures
             .mapIndexed { i, figure -> CircleRow(figure, i) }
-            .filter { it.figure.dynamic } // show only circles with [rule]
             .sortedBy { it.figure.color }
             .sortedByDescending { it.visible }
-    private var rows: MutableList<Row> = factorByEquivalence(circleRows).toMutableList()
+    private var rows: MutableList<Row> =
+        (listOf(bgRow) + factorByEquivalence(circleRows)).toMutableList()
 
     // store rows with checked checkboxes, they might be collapsed though
     val checkedRows: MutableSet<Row> = mutableSetOf()
     private var binding: Boolean = false
-    var showInvisible: Boolean = true
 
     private inline fun CircleRow.persist() { circleGroup[id] = this.figure }
     private inline fun Row.remove() {
@@ -133,7 +137,7 @@ class CircleAdapter(
             rows.removeAt(it)
             position = null
         }
-        // NOTE: reassign position should be done later
+        // NOTE: reassigning positions should be done later
     }
     private inline fun CircleRow.check() { checked = true; checkedRows.add(this) }
     private inline fun CircleRow.uncheck() { checked = false; checkedRows.remove(this) }
@@ -155,6 +159,7 @@ class CircleAdapter(
                     listOf(row.id)
                 is CircleGroupRow ->
                     row.circles.map { it.id }.toList()
+                else -> emptyList()
             }
         }
 
@@ -176,7 +181,7 @@ class CircleAdapter(
 
     private inline fun factorByRule(circles: List<CircleRow>): List<Row> =
         circles
-            .consecutiveGroupBy { it.equivalence.rule }
+            .consecutiveGroupBy { it.figure.rule ?: "" }
             .mapIndexed { i, kAndList ->
                 val (_, list) = kAndList
                 if (list.size == 1)
@@ -195,9 +200,9 @@ class CircleAdapter(
 
     private fun CircleRow.persistApply(
         visible: Boolean? = null,
-        color: Int? = null,
+        color: ColorInt? = null,
         fill: Boolean? = null,
-        borderColor: Maybe<Int?> = None
+        borderColor: Maybe<ColorInt?> = None
     ) {
         figure = figure.copy(
             newShown = visible,
@@ -210,18 +215,48 @@ class CircleAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val row = LayoutInflater.from(parent.context)
-            .inflate(R.layout.choose_color_row, parent, false)
+            .inflate(R.layout.mass_editor_row, parent, false)
         return ViewHolder(row)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         binding = true
         val row = rows[position]
-        when(row) {
+        row.position = position
+        when (row) {
+            is BackgroundRow -> onBindBackgroundVH(holder, row)
             is CircleRow -> onBindCircleVH(holder, row)
             is CircleGroupRow -> onBindCircleGroupVH(holder, row)
         }
         binding = false
+    }
+
+    private fun onBindBackgroundVH(holder: ViewHolder, row: BackgroundRow) {
+        with(holder.row) {
+            // increase left margin
+            (circle_layout.layoutParams as ViewGroup.MarginLayoutParams).apply {
+                leftMargin = ROW_LEFT_MARGIN
+            }
+            circle_name.text = resources.getString(R.string.background_color)
+            circle_rule.text = ""
+            circle_image.setImageDrawable(circleImageFor(row.equivalence))
+            circle_checkbox.visibility = View.INVISIBLE
+            circle_layout.setOnClickListener {
+                colorPickerDialog(row.color) { newColor ->
+                    if (row.color != newColor) {
+                        row.color = newColor
+                        ddu.backgroundColor = newColor // MAYBE: force a redraw
+                        notifyItemChanged(0)
+                    }
+                }.show()
+            }
+            circle_visibility.visibility = View.INVISIBLE
+            expand_group.apply {
+                visibility = View.GONE
+                setOnCheckedChangeListener { _, _ -> }
+                isChecked = false
+            }
+        }
     }
 
     private fun onBindCircleVH(holder: ViewHolder, row: CircleRow) {
@@ -229,16 +264,20 @@ class CircleAdapter(
         with(holder.row) {
             // increase left margin
             (circle_layout.layoutParams as ViewGroup.MarginLayoutParams).apply {
-                leftMargin = 8 // 40
+                leftMargin = ROW_LEFT_MARGIN
             }
             circle_name.text = "${row.id}"
+            val rule = figure.rule?.trimStart('n')
+            circle_rule.text = rule?.ifBlank { "-" } ?: "-"
             circle_image.setImageDrawable(circleImageFor(figure.equivalence))
             circle_checkbox.apply {
+                visibility = View.VISIBLE
                 setOnCheckedChangeListener { _, checked -> if (checked) row.check() else row.uncheck() }
                 isChecked = row.checked
             }
             circle_layout.setOnClickListener { editCircle(row) }
             circle_visibility.apply {
+                visibility = View.VISIBLE
                 setOnCheckedChangeListener { _, _ -> }
                 isChecked = row.visible
                 setOnCheckedChangeListener { _, checked ->
@@ -256,11 +295,19 @@ class CircleAdapter(
     private fun onBindCircleGroupVH(holder: ViewHolder, row: CircleGroupRow) {
         with(holder.row) {
             (circle_layout.layoutParams as ViewGroup.MarginLayoutParams).apply {
-                leftMargin = 8
+                leftMargin = ROW_LEFT_MARGIN
             }
             circle_name.text = row.name // should change whenever .circles changes
+            val firstRule = row.circles.first().figure.rule ?: ""
+            circle_rule.text =
+                if (row.circles.all { (it.figure.rule ?: "") == firstRule }) {
+                    firstRule.trimStart('n').ifBlank { "-" }
+                } else {
+                    "*"
+                }
             circle_image.setImageDrawable(circleImageFor(row.equivalence))
             circle_checkbox.apply {
+                visibility = View.VISIBLE
                 setOnCheckedChangeListener { _, checked -> if (!binding) checkGroup(row, checked) }
                 isChecked = row.checked
             }
@@ -272,6 +319,7 @@ class CircleAdapter(
                 }.show()
             }
             circle_visibility.apply {
+                visibility = View.VISIBLE
                 setOnCheckedChangeListener { _, _ -> }
                 isChecked = row.visible
                 setOnCheckedChangeListener { _, checked ->
@@ -309,6 +357,7 @@ class CircleAdapter(
     }
 
     private fun expandGroup(row: CircleGroupRow) {
+        // BUG: first expand pushes header underneath
         rows.addAll(1 + row.position!!, row.circles)
         row.expanded = true
         reassignPositions()
@@ -365,11 +414,11 @@ class CircleAdapter(
         var shownChanged = false
         var shown: Boolean by Delegates.observable(figure.show) { _, _, _ -> shownChanged = true }
         var colorChanged = false
-        var color: Int by Delegates.observable(figure.color) { _, _, _ -> colorChanged = true }
+        var color: ColorInt by Delegates.observable(figure.color) { _, _, _ -> colorChanged = true }
         var fillChanged = false
         var fill: Boolean by Delegates.observable(figure.fill) { _, _, _ -> fillChanged = true }
         var borderColorChanged = false
-        var borderColor: Int? by Delegates.observable(figure.borderColor) { _, _, _ -> borderColorChanged = true }
+        var borderColor: ColorInt? by Delegates.observable(figure.borderColor) { _, _, _ -> borderColorChanged = true }
         return context.alert(message) {
             customView {
                 include<LinearLayout>(R.layout.edit_circle).also { layout ->
@@ -449,18 +498,18 @@ class CircleAdapter(
     }
 
     private inline fun colorPickerDialog(
-        color: Int,
-        crossinline onChosen: (newColor: Int) -> Unit
+        color: ColorInt,
+        crossinline onChosen: (newColor: ColorInt) -> Unit
     ): AlertBuilder<DialogInterface> =
         context.alert(R.string.color_picker_dialog_message) {
             val colorPicker = ColorPickerView(context)
             colorPicker.color = color
             colorPicker.showAlpha(false)
-            colorPicker.showHex(false) // focusing => pop up keyboard
+            colorPicker.showHex(false) // focusing => pops up keyboard
             customView {
                 addView(colorPicker, ViewGroup.LayoutParams.MATCH_PARENT.let { ViewGroup.LayoutParams(it, it) })
             }
-            // NOTE: in landscape: ok/cancel are off screen
+            // BUG: in landscape: ok/cancel are off screen
             positiveButton(R.string.color_picker_dialog_ok) { onChosen(colorPicker.color) }
             negativeButton(R.string.color_picker_dialog_cancel) { }
             onCancelled { onChosen(colorPicker.color) }
@@ -500,13 +549,14 @@ class CircleAdapter(
 
     fun onCheckAll(checked: Boolean) {
         if (!binding) {
+            val cRows = rows.drop(1)
             if (checked) {
                 checkedRows.addAll(circleRows)
-                checkedRows.addAll(rows)
+                checkedRows.addAll(cRows)
             } else {
                 checkedRows.clear()
             }
-            rows.forEach { it.checked = checked }
+            cRows.forEach { it.checked = checked }
             circleRows.forEach { it.checked = checked }
             notifyDataSetChanged()
         }
@@ -521,7 +571,7 @@ class CircleAdapter(
             _rows.sortBy { it.figure.color }
         else
             _rows.sortByDescending { it.figure.color }
-        rows = factorByEquivalence(_rows).toMutableList()
+        rows = (listOf(bgRow) + factorByEquivalence(_rows)).toMutableList()
         reassignPositions()
         notifyDataSetChanged()
     }
@@ -536,7 +586,7 @@ class CircleAdapter(
             _rows.sortByDescending { it.id }
         // now we have the right order, but without groups
         // we will group consequential with the same equivalence
-        rows = _rows
+        rows = (listOf(bgRow) + _rows
             .consecutiveGroupBy { it.equivalence }
             .map { (_, list) ->
                 if (list.size == 1)
@@ -547,39 +597,39 @@ class CircleAdapter(
                         checked = list.all { it.checked }
                     )
             }
-            .sortedByDescending { it.visible }
-            .toMutableList()
+            ).toMutableList()
         reassignPositions()
         notifyDataSetChanged()
     }
 
     fun onSortByRule(ascending: Boolean) {
+        // TODO: sort by ranks & rules
         val unexpandedGroupRows = rows.filterIsInstance<CircleGroupRow>().filter { !it.expanded }
         // deliberately not lazy stream: collapseGroup mutates rows
         unexpandedGroupRows.forEach { expandGroup(it) }
         val _rows: MutableList<CircleRow> = rows.filterIsInstance<CircleRow>().toMutableList()
         if (ascending)
-            _rows.sortBy { it.equivalence.rule.length }
+            _rows.sortBy { it.figure.rule?.length ?: 0 }
         else
-            _rows.sortByDescending { it.equivalence.rule.length }
-        rows = factorByRule(_rows).toMutableList()
+            _rows.sortByDescending { it.figure.rule?.length ?: 0 }
+        rows = (listOf(bgRow) + factorByRule(_rows)).toMutableList()
         reassignPositions()
         notifyDataSetChanged()
     }
 
     companion object {
         const val TAG: String = "CircleAdapter"
+        private const val ROW_LEFT_MARGIN = 8 //40
     }
 }
 
-internal data class Equivalence(val visible: Boolean, val color: Int, val fill: Boolean, val borderColor: Int?, val rule: String)
+internal data class Equivalence(val visible: Boolean, val color: ColorInt, val fill: Boolean, val borderColor: ColorInt?)
 
 internal val CircleFigure.equivalence get() = Equivalence(
     show,
     color,
     fill,
     borderColor,
-    rule ?: ""
 )
 
 sealed class Row(
@@ -589,10 +639,15 @@ sealed class Row(
     val shown: Boolean get() = position != null
     internal abstract val equivalence: Equivalence
     val visible: Boolean get() = equivalence.visible
-    fun equivalent(other: Row): Boolean = equivalence == other.equivalence
+    open fun equivalent(other: Row): Boolean = equivalence == other.equivalence
 }
 
-//class BackgroundRow : Row(0, false)
+class BackgroundRow(var color: ColorInt) : Row(null, false) {
+    // rule = "0" is never used so we are all good
+    override val equivalence get() = Equivalence(true, color, true, 0)
+    override fun equivalent(other: Row) =
+        other is BackgroundRow && color == other.color
+}
 
 class CircleRow(
     var figure: CircleFigure,
@@ -620,7 +675,7 @@ class CircleGroupRow(
 
 internal fun circlesNumbers(circles: Collection<CircleRow>): String = when(circles.size) {
         1 -> "${circles.take(1)[0].id}"
-        2, 3 -> circles.take(3).joinToString { it.id.toString() }
+        2, 3, 4 -> circles.take(3).joinToString { it.id.toString() }
         else -> circles.take(2).joinToString { it.id.toString() } + ".." +
             circles.last().id.toString() + " [${circles.size}]"
     }

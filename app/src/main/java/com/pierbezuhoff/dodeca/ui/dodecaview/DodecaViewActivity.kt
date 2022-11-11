@@ -28,14 +28,13 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaViewBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
-import com.pierbezuhoff.dodeca.ui.dodecaedit.MassEditorDialog
 import com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditActivity
+import com.pierbezuhoff.dodeca.ui.dodecaedit.MassEditorDialog
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
 import com.pierbezuhoff.dodeca.ui.settings.SettingsActivity
@@ -163,12 +162,13 @@ class DodecaViewActivity : AppCompatActivity()
                 startActivity(intent)
             }
             R.id.mass_editor_button -> {
-                viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
+                viewModel.dduRepresentation.value?.let { dduR ->
                     viewModel.pause()
                     MassEditorDialog(
                         this,
                         chooseColorListener = this,
-                        circleGroup = circleGroup
+                        ddu = dduR.ddu,
+                        circleGroup = dduR.circleGroup
                     ).build()
                         .show()
                 }
@@ -268,6 +268,10 @@ class DodecaViewActivity : AppCompatActivity()
     override fun onMassEditorClosed() {
         viewModel.resume()
         viewModel.requestUpdateOnce()
+    }
+
+    override fun onMassEditorCirclesSelected(circleIndices: List<Int>) {
+        onMassEditorClosed()
     }
 
     override fun onResume() {

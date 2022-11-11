@@ -28,8 +28,7 @@
     <string name="screenshot_button_title">Take a screenshot</string>
 
     <string name="edit_button_title">Edit</string>
-    <!-- unused -->
-    <string name="edit_circles_colors_button_title">Edit circle\'s colors</string>
+    <string name="mass_editor_button_title">Mass edit circles</string>
 
     <!-- Strings related to the editor bottom bar -->
     <!--    <string name="_button_title"></string>-->
@@ -113,6 +112,7 @@
     <string name="restore_default_ddu_title">Restore the original of the ddu-picture</string>
     <string name="restore_default_ddus_title">Restore all ddu-pictures</string>
     <string name="restore_defaults_title">Restore default settings</string>
+    <string name="settings_ddu_files_title">Revert defaults</string>
 
     <string name="settings_preview_title">Preview</string>
     <string name="discard_previews_title">Discard previews</string>
@@ -172,6 +172,7 @@
     <string name="delete_ddus">Delete all ddu-pictures</string>
     <string name="delete_all_alert_message">"Do you want to permanently delete all ddu-pictures in the current folder?     "</string>
     <string name="delete_all_alert_title">Deletion confirmation</string>
+    <string name="toggle_folders">Toggle folders</string>
 
     <!-- Mass editor dialog -->
     <string name="all_circles_checkbox_description">Select all</string>
@@ -200,8 +201,7 @@
     <string name="choose_color_button_title">Edit circles</string>
     <string name="circle_visibility_description">Show/hide circle</string>
     <string name="circle_show_description">Visible</string>
-    <string name="toggle_folders">Toggle folders</string>
-    <string name="settings_ddu_files_title">Revert defaults</string>
+    <string name="background_color">Background color</string>
 
     <!-- Adjust angles dialog -->
     <string name="adjust_angles_dialog_message">Adjust engines\' angles</string>

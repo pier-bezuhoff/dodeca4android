@@ -41,18 +41,22 @@
                     android:button="@drawable/sort_order"
                     android:layout_width="24dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="24dp"
                     android:padding="8dp"
                     android:textOn=""
                     android:textOff=""
                     android:contentDescription="@{@string/sort_by_name_description}"
             />
+            <android.widget.Space android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
             <ToggleButton
                     android:id="@+id/sort_by_rule"
                     android:background="@null"
                     android:button="@drawable/sort_order"
                     android:layout_width="24dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="48dp"
                     android:padding="8dp"
+                    android:gravity="end"
                     android:textOn=""
                     android:textOff=""
                     android:contentDescription="@{@string/sort_by_rule_description}"
