@@ -95,9 +95,9 @@
     <string name="circle_image_description">Изображение окружности</string>
     <string name="circle_name_initial_text">№</string>
     <string name="expand_group_description">Развернуть/свернуть группу</string>
-    <string name="choose_circle_dialog_message">Выбрать окружности для редактирования</string>
-    <string name="choose_circle_dialog_edit">Редактировать</string>
-    <string name="choose_circle_dialog_cancel">Отмена</string>
+    <string name="mass_editor_dialog_message">Выбрать окружности для редактирования</string>
+    <string name="mass_editor_dialog_edit">Редактировать</string>
+    <string name="mass_editor_dialog_cancel">Отмена</string>
     <string name="edit_circle_dialog_message_single">Редактировать окружность %s</string>
     <string name="edit_circle_dialog_apply">Применить</string>
     <string name="edit_circle_dialog_cancel">Отмена</string>
@@ -169,4 +169,6 @@
     <string name="angle1_title">Угол двигателя ранга 0 будет умножен на %d/%d</string>
     <string name="angle2_title">Угол двигателя ранга 1 будет умножен на %d/%d</string>
     <string name="angle3_title">Угол двигателя ранга 2 будет умножен на %d/%d</string>
+    <string name="mass_editor_dialog_select">Выбрать</string>
+    <string name="sort_by_rule_description">Сортировать по правилу</string>
 </resources>

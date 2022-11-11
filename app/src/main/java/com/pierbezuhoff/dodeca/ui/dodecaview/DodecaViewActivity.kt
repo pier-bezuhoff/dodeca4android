@@ -34,6 +34,7 @@ import com.pierbezuhoff.dodeca.databinding.ActivityDodecaViewBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
+import com.pierbezuhoff.dodeca.ui.dodecaedit.MassEditorDialog
 import com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditActivity
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
@@ -68,7 +69,7 @@ import java.io.IOException
 
 @RuntimePermissions
 class DodecaViewActivity : AppCompatActivity()
-    , ChooseColorDialog.ChooseColorListener
+    , MassEditorDialog.MassEditorListener
 {
     private val optionsManager by lazy {
         OptionsManager(defaultSharedPreferences)
@@ -161,10 +162,10 @@ class DodecaViewActivity : AppCompatActivity()
                 val intent = Intent(this, DodecaEditActivity::class.java)
                 startActivity(intent)
             }
-            R.id.edit_circles_colors_button -> {
+            R.id.mass_editor_button -> {
                 viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
                     viewModel.pause()
-                    ChooseColorDialog(
+                    MassEditorDialog(
                         this,
                         chooseColorListener = this,
                         circleGroup = circleGroup
@@ -264,7 +265,7 @@ class DodecaViewActivity : AppCompatActivity()
             cancelButton { viewModel.resume() }
         }
 
-    override fun onChooseColorClosed() {
+    override fun onMassEditorClosed() {
         viewModel.resume()
         viewModel.requestUpdateOnce()
     }

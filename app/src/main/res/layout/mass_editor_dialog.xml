@@ -46,6 +46,17 @@
                     android:textOff=""
                     android:contentDescription="@{@string/sort_by_name_description}"
             />
+            <ToggleButton
+                    android:id="@+id/sort_by_rule"
+                    android:background="@null"
+                    android:button="@drawable/sort_order"
+                    android:layout_width="24dp"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:textOn=""
+                    android:textOff=""
+                    android:contentDescription="@{@string/sort_by_rule_description}"
+                    />
         </LinearLayout>
         <View style="@style/dividerHorizontal"/>
         <androidx.recyclerview.widget.RecyclerView

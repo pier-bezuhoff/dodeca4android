@@ -71,6 +71,6 @@ class MainActivity : AppCompatActivity()
         @Suppress("unused")
         const val LIMITED_VERSION = true
 
-        private const val START_IN_EDITOR: Boolean = false
+        private const val START_IN_EDITOR: Boolean = true
     }
 }

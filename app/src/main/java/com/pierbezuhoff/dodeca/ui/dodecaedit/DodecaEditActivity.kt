@@ -31,7 +31,6 @@ import com.pierbezuhoff.dodeca.databinding.ActivityDodecaEditBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
-import com.pierbezuhoff.dodeca.ui.dodecaview.ChooseColorDialog
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
 import com.pierbezuhoff.dodeca.utils.FileName
@@ -64,7 +63,7 @@ import java.io.IOException
 
 @RuntimePermissions
 class DodecaEditActivity : AppCompatActivity()
-    , ChooseColorDialog.ChooseColorListener
+    , MassEditorDialog.MassEditorListener
     , AdjustAnglesDialog.AdjustAnglesListener
 {
 
@@ -174,10 +173,10 @@ class DodecaEditActivity : AppCompatActivity()
             R.id.show_everything_button -> {
                 viewModel.toggleShowEverything()
             }
-            R.id.edit_circles_button -> {
+            R.id.mass_editor_button -> {
                 viewModel.getCircleGroup()?.let { circleGroup: CircleGroup ->
                     viewModel.pause()
-                    ChooseColorDialog(
+                    MassEditorDialog(
                         this,
                         chooseColorListener = this,
                         circleGroup = circleGroup
@@ -224,10 +223,18 @@ class DodecaEditActivity : AppCompatActivity()
             cancelButton { viewModel.resume() }
         }
 
-    override fun onChooseColorClosed() {
+    override fun onMassEditorClosed() {
         hideSystemBars()
         viewModel.resume()
         viewModel.requestUpdateOnce()
+    }
+
+    override fun onMassEditorCirclesSelected(circleIndices: List<Int>) {
+        hideSystemBars()
+        viewModel.resume()
+        viewModel.requestUpdateOnce()
+        // go into multiselect mode + select ixs
+        viewModel.requestEditingMode(EditingMode.MULTISELECT)
     }
 
     override fun onAdjustAnglesClosed() {

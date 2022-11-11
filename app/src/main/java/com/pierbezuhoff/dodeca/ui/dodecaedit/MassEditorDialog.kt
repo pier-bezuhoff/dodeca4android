@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.ui.dodecaview
+package com.pierbezuhoff.dodeca.ui.dodecaedit
 
 import android.app.Dialog
 import android.content.Context
@@ -25,9 +25,9 @@ import com.pierbezuhoff.dodeca.utils.None
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
 import com.pierbezuhoff.dodeca.utils.justIf
 import com.rarepebble.colorpicker.ColorPickerView
-import kotlinx.android.synthetic.main.choose_color_dialog.view.*
 import kotlinx.android.synthetic.main.choose_color_row.view.*
 import kotlinx.android.synthetic.main.edit_circle.view.*
+import kotlinx.android.synthetic.main.mass_editor_dialog.view.*
 import org.jetbrains.anko.AlertBuilder
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.customView
@@ -38,21 +38,22 @@ import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
 // TODO: refactor
-class ChooseColorDialog(
+class MassEditorDialog(
     private val context: Context,
-    private val chooseColorListener: ChooseColorListener,
+    private val chooseColorListener: MassEditorListener,
     private val circleGroup: CircleGroup
 ) {
     private lateinit var rowAdapter: CircleAdapter
 
-    interface ChooseColorListener {
-        fun onChooseColorClosed()
+    interface MassEditorListener {
+        fun onMassEditorClosed()
+        fun onMassEditorCirclesSelected(circleIndices: List<Int>)
     }
 
     fun build(): Dialog {
         val builder = AlertDialog.Builder(context)
         val inflater = context.layoutInflater
-        val layout = inflater.inflate(R.layout.choose_color_dialog, null)
+        val layout = inflater.inflate(R.layout.mass_editor_dialog, null)
         builder.setView(layout)
         val manager = LinearLayoutManager(context)
         rowAdapter = CircleAdapter(context, circleGroup)
@@ -68,21 +69,29 @@ class ChooseColorDialog(
         layout.all_circles_checkbox.setOnCheckedChangeListener { _, checked -> rowAdapter.onCheckAll(checked) }
         layout.sort_by_color.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByColor(checked) }
         layout.sort_by_name.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByName(checked) }
-        setOf(layout.all_circles_checkbox, layout.sort_by_color, layout.sort_by_name).forEach {
+        layout.sort_by_rule.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByRule(checked) }
+        setOf(
+            layout.all_circles_checkbox, layout.sort_by_color, layout.sort_by_name, layout.sort_by_rule
+        ).forEach {
             TooltipCompat.setTooltipText(it, it.contentDescription)
         }
         val dialog = builder.apply {
-            setMessage(R.string.choose_circle_dialog_message)
-            setPositiveButton(R.string.choose_circle_dialog_edit) { _, _ -> } // will be set later
-            setNegativeButton(R.string.choose_circle_dialog_cancel) { _, _ -> chooseColorListener.onChooseColorClosed() }
+            setMessage(R.string.mass_editor_dialog_message)
+            setPositiveButton(R.string.mass_editor_dialog_edit) { _, _ -> } // will be set later
+            setNegativeButton(R.string.mass_editor_dialog_cancel) { _, _ -> chooseColorListener.onMassEditorClosed() }
+            setNeutralButton(R.string.mass_editor_dialog_select) { _, _ -> } // will be set later
         }.create()
-        dialog.setOnDismissListener { chooseColorListener.onChooseColorClosed() }
+        dialog.setOnDismissListener { chooseColorListener.onMassEditorClosed() }
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 if (rowAdapter.checkedRows.isNotEmpty())
                     rowAdapter.editCheckedCircles()
                 else
                     dialog.dismiss()
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                chooseColorListener.onMassEditorCirclesSelected(rowAdapter.getCheckedCircleIndices())
+                //dialog.dismiss()
             }
         }
         return dialog
@@ -113,7 +122,7 @@ class CircleAdapter(
             .sortedByDescending { it.visible }
     private var rows: MutableList<Row> = factorByEquivalence(circleRows).toMutableList()
 
-    // store rows with checked checkboxes, they may be collapsed though
+    // store rows with checked checkboxes, they might be collapsed though
     val checkedRows: MutableSet<Row> = mutableSetOf()
     private var binding: Boolean = false
     var showInvisible: Boolean = true
@@ -139,10 +148,21 @@ class CircleAdapter(
         circles.forEach { it.uncheck() }
     }
 
+    fun getCheckedCircleIndices(): List<Int> =
+        checkedRows.flatMap { row ->
+            when (row) {
+                is CircleRow ->
+                    listOf(row.id)
+                is CircleGroupRow ->
+                    row.circles.map { it.id }.toList()
+            }
+        }
+
     private inline fun factorByEquivalence(circles: List<CircleRow>): List<Row> =
-        circles.groupBy { it.equivalence } // hope we don't lose CircleRow::id order
-            .values
-            .mapIndexed { i, list ->
+        circles
+            .consecutiveGroupBy { it.equivalence }
+            .mapIndexed { i, kAndList ->
+                val (_, list) = kAndList
                 if (list.size == 1)
                     list[0].apply { position = i }
                 else
@@ -153,6 +173,21 @@ class CircleAdapter(
                     )
             }
             .sortedByDescending { it.visible }
+
+    private inline fun factorByRule(circles: List<CircleRow>): List<Row> =
+        circles
+            .consecutiveGroupBy { it.equivalence.rule }
+            .mapIndexed { i, kAndList ->
+                val (_, list) = kAndList
+                if (list.size == 1)
+                    list[0].apply { position = i }
+                else
+                    CircleGroupRow(
+                        list.toSet().onEach { it.position = null },
+                        position = i,
+                        checked = list.all { it.checked }
+                    )
+            }
 
     private fun reassignPositions() {
         rows.forEachIndexed { i, row -> row.position = i }
@@ -479,7 +514,7 @@ class CircleAdapter(
 
     fun onSortByColor(ascending: Boolean) {
         val unexpandedGroupRows = rows.filterIsInstance<CircleGroupRow>().filter { !it.expanded }
-        // deliberately not lazy stream: collapseGroup mutate rows
+        // deliberately not lazy stream: collapseGroup mutates rows
         unexpandedGroupRows.forEach { expandGroup(it) }
         val _rows: MutableList<CircleRow> = rows.filterIsInstance<CircleRow>().toMutableList()
         if (ascending)
@@ -493,15 +528,14 @@ class CircleAdapter(
 
     fun onSortByName(ascending: Boolean) {
         val unexpandedGroupRows = rows.filterIsInstance<CircleGroupRow>().filter { !it.expanded }
-        // deliberately not lazy stream: expandGroup mutate rows
         unexpandedGroupRows.forEach { expandGroup(it) }
         val _rows = rows.filterIsInstance<CircleRow>().toMutableList()
         if (ascending)
             _rows.sortBy { it.id }
         else
             _rows.sortByDescending { it.id }
-        // now we have right order, but without groups
-        // we will group consequential with same equivalence
+        // now we have the right order, but without groups
+        // we will group consequential with the same equivalence
         rows = _rows
             .consecutiveGroupBy { it.equivalence }
             .map { (_, list) ->
@@ -519,18 +553,33 @@ class CircleAdapter(
         notifyDataSetChanged()
     }
 
+    fun onSortByRule(ascending: Boolean) {
+        val unexpandedGroupRows = rows.filterIsInstance<CircleGroupRow>().filter { !it.expanded }
+        // deliberately not lazy stream: collapseGroup mutates rows
+        unexpandedGroupRows.forEach { expandGroup(it) }
+        val _rows: MutableList<CircleRow> = rows.filterIsInstance<CircleRow>().toMutableList()
+        if (ascending)
+            _rows.sortBy { it.equivalence.rule.length }
+        else
+            _rows.sortByDescending { it.equivalence.rule.length }
+        rows = factorByRule(_rows).toMutableList()
+        reassignPositions()
+        notifyDataSetChanged()
+    }
+
     companion object {
         const val TAG: String = "CircleAdapter"
     }
 }
 
-internal data class Equivalence(val visible: Boolean, val color: Int, val fill: Boolean, val borderColor: Int?)
+internal data class Equivalence(val visible: Boolean, val color: Int, val fill: Boolean, val borderColor: Int?, val rule: String)
 
 internal val CircleFigure.equivalence get() = Equivalence(
     show,
     color,
     fill,
-    borderColor
+    borderColor,
+    rule ?: ""
 )
 
 sealed class Row(
@@ -543,9 +592,11 @@ sealed class Row(
     fun equivalent(other: Row): Boolean = equivalence == other.equivalence
 }
 
+//class BackgroundRow : Row(0, false)
+
 class CircleRow(
     var figure: CircleFigure,
-    val id: Int, // number in .ddu file
+    val id: Int, // position of the circle in the .ddu file
     position: Int? = null,
     checked: Boolean = false
 ) : Row(position, checked) {
@@ -570,7 +621,7 @@ class CircleGroupRow(
 internal fun circlesNumbers(circles: Collection<CircleRow>): String = when(circles.size) {
         1 -> "${circles.take(1)[0].id}"
         2, 3 -> circles.take(3).joinToString { it.id.toString() }
-        else -> circles.take(2).joinToString { it.id.toString() } + ", ..., " +
+        else -> circles.take(2).joinToString { it.id.toString() } + ".." +
             circles.last().id.toString() + " [${circles.size}]"
     }
 

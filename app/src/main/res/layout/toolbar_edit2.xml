@@ -59,14 +59,14 @@
                 app:falseDrawable="@{@drawable/ic_visibility_off}"
                 />
         <ImageButton
-                android:id="@+id/edit_circles_button"
+                android:id="@+id/mass_editor_button"
                 android:src="@drawable/ic_choose_color"
                 app:backgroundTint="@color/editToolbarColor"
                 android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:contentDescription="@{@string/edit_circles_button_title}"
+                android:contentDescription="@{@string/mass_editor_button_title}"
                 />
     </LinearLayout>
 </layout>
