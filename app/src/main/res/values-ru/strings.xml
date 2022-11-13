@@ -172,5 +172,5 @@
     <string name="sort_by_rule_description">Сортировать по правилу</string>
     <string name="background_color">Цвет фона</string>
     <string name="mass_editor_button_title">Редактор окружностей</string>
-    <string name="mass_editor_dialog_recolor_everything">Перекрасить всё</string>
+    <string name="mass_editor_dialog_recolor_everything">Сдвинуть цветовую гамму</string>
 </resources>

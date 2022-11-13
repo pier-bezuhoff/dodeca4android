@@ -104,8 +104,14 @@ class MassEditorDialog(
                     dialog.dismiss()
             }
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                // NOTE: some performance issue on larger ddus
                 //chooseColorListener.onMassEditorCirclesSelected(rowAdapter.getCheckedCircleIndices())
-                val avHSL = averageHSL(ddu.circles.filter { it.show }.map { it.color })
+                val selectedIxs = rowAdapter.getCheckedCircleIndices()
+                val targetIxs =
+                    if (selectedIxs.isEmpty())
+                        (0 until circleGroup.figures.size).filter { circleGroup.figures[it].show }
+                    else selectedIxs.filter { circleGroup.figures[it].show }
+                val avHSL = averageHSL(targetIxs.map { circleGroup.figures[it].color })
                 val av = ColorUtils.HSLToColor(avHSL)
                 colorPickerDialog(context, av) { newColor ->
                     val hsl = FloatArray(3)
@@ -113,7 +119,7 @@ class MassEditorDialog(
                     val dH = hsl[0] - avHSL[0]
                     val dS = hsl[1] - avHSL[1]
                     val dL = hsl[2] - avHSL[2]
-                    for (i in 0 until circleGroup.figures.size) {
+                    targetIxs.forEach { i ->
                         val figure = circleGroup.figures[i]
                         ColorUtils.colorToHSL(figure.color, hsl)
                         hsl[0] = (hsl[0] + dH).mod(360f)
@@ -129,7 +135,8 @@ class MassEditorDialog(
                         }
                         circleGroup[i] = circleGroup[i].copy(newColor = newC, newBorderColor = Maybe(newBC))
                     }
-                }
+                    dialog.dismiss()
+                }.show()
             }
         }
         return dialog
@@ -713,17 +720,17 @@ internal fun averageHSL(colors: Iterable<ColorInt>): FloatArray {
     var h = 0f
     var s = 0f
     var l = 0f
-    var nCircles = 0
+    var nColors = 0
     val hsl = FloatArray(3)
     for (color in colors) {
-        nCircles += 1
+        nColors += 1
         ColorUtils.colorToHSL(color, hsl)
         h += hsl[0]
         s += hsl[1]
         l += hsl[2]
     }
-    hsl[0] = h/nCircles
-    hsl[1] = s/nCircles
-    hsl[2] = l/nCircles
+    hsl[0] = h/nColors
+    hsl[1] = s/nColors
+    hsl[2] = l/nColors
     return hsl
 }

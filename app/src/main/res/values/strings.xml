@@ -186,7 +186,7 @@
     <string name="mass_editor_dialog_message">Choose circles to edit</string>
     <string name="mass_editor_dialog_edit">Edit</string>
     <string name="mass_editor_dialog_select">Select</string>
-    <string name="mass_editor_dialog_recolor_everything">Recolor everything</string>
+    <string name="mass_editor_dialog_recolor_everything">Shift color palette</string>
     <string name="mass_editor_dialog_cancel">Cancel</string>
     <string name="edit_circle_dialog_message_single">Edit the circle %s</string>
     <string name="edit_circle_dialog_message_plural">Edit the circles %s</string>
