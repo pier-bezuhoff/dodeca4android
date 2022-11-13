@@ -15,6 +15,7 @@ import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
+import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
@@ -35,6 +36,8 @@ import org.jetbrains.anko.customView
 import org.jetbrains.anko.displayMetrics
 import org.jetbrains.anko.include
 import org.jetbrains.anko.layoutInflater
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
@@ -90,7 +93,7 @@ class MassEditorDialog(
             setMessage(R.string.mass_editor_dialog_message)
             setPositiveButton(R.string.mass_editor_dialog_edit) { _, _ -> } // will be set later
             setNegativeButton(R.string.mass_editor_dialog_cancel) { _, _ -> chooseColorListener.onMassEditorClosed() }
-            setNeutralButton(R.string.mass_editor_dialog_select) { _, _ -> } // will be set later
+            setNeutralButton(R.string.mass_editor_dialog_recolor_everything) { _, _ -> } // will be set later
         }.create()
         dialog.setOnDismissListener { chooseColorListener.onMassEditorClosed() }
         dialog.setOnShowListener {
@@ -101,8 +104,32 @@ class MassEditorDialog(
                     dialog.dismiss()
             }
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                chooseColorListener.onMassEditorCirclesSelected(rowAdapter.getCheckedCircleIndices())
-                dialog.dismiss()
+                //chooseColorListener.onMassEditorCirclesSelected(rowAdapter.getCheckedCircleIndices())
+                val avHSL = averageHSL(ddu.circles.filter { it.show }.map { it.color })
+                val av = ColorUtils.HSLToColor(avHSL)
+                colorPickerDialog(context, av) { newColor ->
+                    val hsl = FloatArray(3)
+                    ColorUtils.colorToHSL(newColor, hsl)
+                    val dH = hsl[0] - avHSL[0]
+                    val dS = hsl[1] - avHSL[1]
+                    val dL = hsl[2] - avHSL[2]
+                    for (i in 0 until circleGroup.figures.size) {
+                        val figure = circleGroup.figures[i]
+                        ColorUtils.colorToHSL(figure.color, hsl)
+                        hsl[0] = (hsl[0] + dH).mod(360f)
+                        hsl[1] = min(max(0f, hsl[1] + dS), 1f)
+                        hsl[2] = min(max(0f, hsl[2] + dL), 1f)
+                        val newC = ColorUtils.HSLToColor(hsl)
+                        val newBC = figure.borderColor?.let { bc ->
+                            ColorUtils.colorToHSL(bc, hsl)
+                            hsl[0] = (hsl[0] + dH).mod(360f)
+                            hsl[1] = min(max(0f, hsl[1] + dS), 1f)
+                            hsl[2] = min(max(0f, hsl[2] + dL), 1f)
+                            ColorUtils.HSLToColor(hsl)
+                        }
+                        circleGroup[i] = circleGroup[i].copy(newColor = newC, newBorderColor = Maybe(newBC))
+                    }
+                }
             }
         }
         return dialog
@@ -242,7 +269,7 @@ class CircleAdapter(
             circle_image.setImageDrawable(circleImageFor(row.equivalence))
             circle_checkbox.visibility = View.INVISIBLE
             circle_layout.setOnClickListener {
-                colorPickerDialog(row.color) { newColor ->
+                colorPickerDialog(context, row.color) { newColor ->
                     if (row.color != newColor) {
                         row.color = newColor
                         ddu.backgroundColor = newColor // MAYBE: force a redraw
@@ -434,7 +461,7 @@ class CircleAdapter(
                     colorButton.apply {
                         setColorFilter(color)
                         setOnClickListener {
-                            colorPickerDialog(color) { newColor ->
+                            colorPickerDialog(context, color) { newColor ->
                                 color = newColor
                                 colorButton.setColorFilter(newColor)
                                 if (borderColor == null)
@@ -470,7 +497,7 @@ class CircleAdapter(
                     borderColorButton.apply {
                         setColorFilter(borderColor ?: color)
                         setOnClickListener {
-                            colorPickerDialog(borderColor ?: color) { newColor ->
+                            colorPickerDialog(context, borderColor ?: color) { newColor ->
                                 borderColorSwitch.apply {
                                     if (!isChecked && fill)
                                         isChecked = true // NOTE: may change borderColor
@@ -496,24 +523,6 @@ class CircleAdapter(
             negativeButton(R.string.edit_circle_dialog_cancel) { }
         }
     }
-
-    private inline fun colorPickerDialog(
-        color: ColorInt,
-        crossinline onChosen: (newColor: ColorInt) -> Unit
-    ): AlertBuilder<DialogInterface> =
-        context.alert(R.string.color_picker_dialog_message) {
-            val colorPicker = ColorPickerView(context)
-            colorPicker.color = color
-            colorPicker.showAlpha(false)
-            colorPicker.showHex(false) // focusing => pops up keyboard
-            customView {
-                addView(colorPicker, ViewGroup.LayoutParams.MATCH_PARENT.let { ViewGroup.LayoutParams(it, it) })
-            }
-            // BUG: in landscape: ok/cancel are off screen
-            positiveButton(R.string.color_picker_dialog_ok) { onChosen(colorPicker.color) }
-            negativeButton(R.string.color_picker_dialog_cancel) { }
-            onCancelled { onChosen(colorPicker.color) }
-        }
 
     private inline fun editCirclesDialog(
         circles: Collection<CircleRow>, // non-empty!
@@ -623,6 +632,26 @@ class CircleAdapter(
     }
 }
 
+private fun colorPickerDialog(
+    context: Context,
+    color: ColorInt,
+    onChosen: (newColor: ColorInt) -> Unit
+): AlertBuilder<DialogInterface> =
+    context.alert(R.string.color_picker_dialog_message) {
+        val colorPicker = ColorPickerView(context)
+        colorPicker.color = color
+        colorPicker.showAlpha(false)
+        colorPicker.showHex(false) // focusing => pops up keyboard
+        customView {
+            addView(colorPicker, ViewGroup.LayoutParams.MATCH_PARENT.let { ViewGroup.LayoutParams(it, it) })
+        }
+        // BUG: in landscape: ok/cancel are off screen
+        positiveButton(R.string.color_picker_dialog_ok) { onChosen(colorPicker.color) }
+        negativeButton(R.string.color_picker_dialog_cancel) { }
+        onCancelled { onChosen(colorPicker.color) }
+    }
+
+
 internal data class Equivalence(val visible: Boolean, val color: ColorInt, val fill: Boolean, val borderColor: ColorInt?)
 
 internal val CircleFigure.equivalence get() = Equivalence(
@@ -680,3 +709,21 @@ internal fun circlesNumbers(circles: Collection<CircleRow>): String = when(circl
             circles.last().id.toString() + " [${circles.size}]"
     }
 
+internal fun averageHSL(colors: Iterable<ColorInt>): FloatArray {
+    var h = 0f
+    var s = 0f
+    var l = 0f
+    var nCircles = 0
+    val hsl = FloatArray(3)
+    for (color in colors) {
+        nCircles += 1
+        ColorUtils.colorToHSL(color, hsl)
+        h += hsl[0]
+        s += hsl[1]
+        l += hsl[2]
+    }
+    hsl[0] = h/nCircles
+    hsl[1] = s/nCircles
+    hsl[2] = l/nCircles
+    return hsl
+}
