@@ -104,14 +104,13 @@ class MassEditorDialog(
                     dialog.dismiss()
             }
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                // NOTE: some performance issue on larger ddus
                 //chooseColorListener.onMassEditorCirclesSelected(rowAdapter.getCheckedCircleIndices())
                 val selectedIxs = rowAdapter.getCheckedCircleIndices()
                 val targetIxs =
                     if (selectedIxs.isEmpty())
-                        (0 until circleGroup.figures.size).filter { circleGroup.figures[it].show }
-                    else selectedIxs.filter { circleGroup.figures[it].show }
-                val avHSL = averageHSL(targetIxs.map { circleGroup.figures[it].color })
+                        (0 until circleGroup.figures.size).filter { circleGroup[it].show }
+                    else selectedIxs.filter { circleGroup[it].show }
+                val avHSL = averageHSL(targetIxs.map { circleGroup[it].color })
                 val av = ColorUtils.HSLToColor(avHSL)
                 colorPickerDialog(context, av) { newColor ->
                     val hsl = FloatArray(3)
@@ -120,7 +119,7 @@ class MassEditorDialog(
                     val dS = hsl[1] - avHSL[1]
                     val dL = hsl[2] - avHSL[2]
                     targetIxs.forEach { i ->
-                        val figure = circleGroup.figures[i]
+                        val figure = circleGroup[i]
                         ColorUtils.colorToHSL(figure.color, hsl)
                         hsl[0] = (hsl[0] + dH).mod(360f)
                         hsl[1] = min(max(0f, hsl[1] + dS), 1f)
@@ -199,9 +198,9 @@ class CircleAdapter(
 
     private inline fun factorByEquivalence(circles: List<CircleRow>): List<Row> =
         circles
-            .consecutiveGroupBy { it.equivalence }
-            .mapIndexed { i, kAndList ->
-                val (_, list) = kAndList
+            .groupBy { it.equivalence }
+            .values // hopefully initial ordering is more-or-less preserved
+            .mapIndexed { i, list ->
                 if (list.size == 1)
                     list[0].apply { position = i }
                 else
@@ -215,7 +214,7 @@ class CircleAdapter(
 
     private inline fun factorByRule(circles: List<CircleRow>): List<Row> =
         circles
-            .consecutiveGroupBy { it.figure.rule ?: "" }
+            .consecutiveGroupBy { it.figure.rule ?: "" } // enough since it's already sorted by rule
             .mapIndexed { i, kAndList ->
                 val (_, list) = kAndList
                 if (list.size == 1)
@@ -710,8 +709,8 @@ class CircleGroupRow(
 }
 
 internal fun circlesNumbers(circles: Collection<CircleRow>): String = when(circles.size) {
-        1 -> "${circles.take(1)[0].id}"
-        2, 3, 4 -> circles.take(3).joinToString { it.id.toString() }
+        1 -> "${circles.single().id}"
+        2, 3, 4 -> circles.joinToString { it.id.toString() }
         else -> circles.take(2).joinToString { it.id.toString() } + ".." +
             circles.last().id.toString() + " [${circles.size}]"
     }
