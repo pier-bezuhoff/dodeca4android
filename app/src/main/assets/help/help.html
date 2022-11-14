@@ -6,33 +6,37 @@
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-<h2>Bottom bar</h2>
+<h2>Bottom bar tools</h2>
 <div>
     <ul>
-        <li>Tap on area above bottom bar to toggle it.</li>
-        <li>Long tap on button to see brief description.</li>
-        <li>Bottom bar hides after 30 seconds of inactivity.</li>
+        <li>Tap on above the bottom bar to hide/show it.</li>
+        <li>Long tap on a button to see its brief description.</li>
+        <li>The bottom bar hides after 30 seconds of inactivity.</li>
     </ul>
     <table>
         <tr>
             <td><img src="icons/ic_choose_color.svg" alt="edit-circles-button"></td>
-            <td><p>Circle editor. Allows to change fill color and border color of selected circles.</p></td>
+            <td><p>Circle editor. You can change fill/border colors of selected circles, hide them; change the background color.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_trace.svg" alt="trace-button"></td>
-            <td><p>Toggle trace. Clear canvas if trace is on.</p></td>
+            <td><p>Toggle the trace. It controls whether the moving circles leave their afterimages on the canvas.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_circle.svg" alt="circle-shape"></td>
-            <td><p>Choose one of the following shapes to draw instead of circle: square, cross, vertical bar, horizontal bar.</p></td>
+            <td><p>Shapes. You can choose one of the following shapes to draw instead of circles: squares, crosses, vertical bars or horizontal bars.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_clear.svg" alt="clear-button"></td>
-            <td><p>Clear canvas. Note: restore quality after zoom.</p></td>
+            <td><p>Clear the canvas. It can be used to restore quality after zooming, start anew when you changed the background color.</p></td>
+        </tr>
+        <tr>
+            <td><img src="icons/ic_screenshot.svg" alt="screenshot-button"></td>
+            <td><p>Take a screenshot. You have to give the app storage permissions to save it.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_autocenter.svg" alt="autocenter-button"></td>
-            <td><p>Autocenter. Move to approximate center of the <i>ddu</i>-picture.</p></td>
+            <td><p>Autocenter. It moves you to the approximate center of the <i>ddu</i>-picture.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_help.svg" alt="help-button"></td>
@@ -40,12 +44,12 @@
         </tr>
         <tr>
             <td><img src="icons/ic_open_file.svg" alt="open-ddu-button"></td>
-            <td><p>Open <i>Dodeca Meditation</i> art collection and let you choose a <i>ddu</i>-picture.</p></td>
+            <td><p>Open the <i>Dodeca Meditation</i> art gallery and choose a <i>ddu</i>-picture.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_save_file.svg" alt="save-ddu-button"></td>
             <td><p>
-                Save current position, scale, shape, colors and trace (on/off).
+                Save this <i>ddu</i>-picture (doesn't save the timestamp).
             </p></td>
         </tr>
         <tr>
@@ -53,85 +57,84 @@
                 <img src="icons/ic_play.svg" alt="play-button">
                 <img src="icons/ic_pause.svg" alt="pause-button">
             </td>
-            <td><p>Start/stop playing <i>ddu</i>-picture.</p></td>
+            <td><p>Start/stop playing the <i>ddu</i>-picture.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_next_step.svg" alt="next-step-button"></td>
-            <td><p>Stop playing <i>ddu</i>-picture and perform one update.</p></td>
+            <td><p>Stop playing the <i>ddu</i>-picture and perform one update.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_settings.svg" alt="settings-button"></td>
-            <td><p>Open <i>Dodeca Meditation</i> settings.</p></td>
+            <td><p>Open settings.</p></td>
         </tr>
     </table>
 </div>
-<h2>Choosing <i>ddu</i>-picture</h2>
+<h2>The <i>Dodeca Meditation</i> art gallery</h2>
 <div>
     <p>
-        When you first open the <i>ddu</i>-collection you will see loading previews ―
-        they are generating from existing files (<b>not</b> downloading from the internet).
-        You can change preview parameters from <i>Settings</i>. Only changed
-        <i>ddu</i>-pictures will be loading on subsequent opening of the collection.
+        When you first open the art gallery you will see loading previews ―
+        they are being generated from existing files (<b>not</b> from the internet).
+        You can change preview parameters from <i>Settings</i>.
     </p>
-    <h3>Top bar</h3>
+    <h3>Top bar controls</h3>
     <table>
         <tr>
             <td><img src="icons/ic_arrow_upward.svg"></td>
-            <td><p>Go to parent folder.</p></td>
+            <td><p>Go to the parent folder.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_import.svg"></td>
-            <td><p>Import <i>ddu</i>-pictures from the file system.</p></td>
+            <td><p>Import a <i>ddu</i>-picture from the file system.</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_export.svg"></td>
-            <td><p>Export current folder to the file system (assuming you have Android 5.0 Lollipop or higher).</p></td>
+            <td><p>Export the current folder to the file system (assuming you have Android 5.0 Lollipop or newer).</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_add_folder.svg"></td>
-            <td><p>Import folder with <i>ddu</i>-pictures from the file system
-                (assuming you have Android 5.0 Lollipop or higher).</p></td>
+            <td><p>Import a folder with <i>ddu</i>-pictures from the file system
+                (assuming you have Android 5.0 Lollipop or newer).</p></td>
         </tr>
         <tr>
             <td><img src="icons/ic_delete.svg"></td>
-            <td><p>Delete content of current folder.</p></td>
+            <td><p>Empty this folder.</p></td>
         </tr>
         <tr>
             <td></td>
             <td><p>Show/hide folders.</p></td>
         </tr>
     </table>
-    <h3>Context menu</h3>
+    <h3>Context menus</h3>
     <div>
-        <p>Context menu appears on long tap on <i>ddu</i>-picture/folder.</p>
-        <h4>For <i>ddu</i>-picture</h4>
-        <p>You can rename, delete, restore original version, create copy or export.</p>
-        <h4>For folder</h4>
-        <p>You can delete or export (assuming you have Android 5.0 Lollipop or higher).</p>
+        <p>Long tap on a <i>ddu</i>-picture/folder to open the context menu.</p>
+        <h4>For <i>ddu</i>-pictures:</h4>
+        <p>You can rename, delete, restore the original version, create a copy or export them.</p>
+        <h4>For folders</h4>
+        <p>You can delete or export (assuming you have Android 5.0 Lollipop or newer) them.</p>
     </div>
 </div>
 <!-- TODO: help on circle editing -->
-<h2>General</h2>
+<h2>General info</h2>
 <div>
     <p>
-        <i>Dodeca Meditation</i> is Android version of video art program <i>DodecaLook</i> for Windows.
+        <i>Dodeca Meditation</i> has a Windows predecessor: <i>DodecaLook</i>, an older app for generative video art of aesthetic geometry (you can find it in the app description on Google Play).
         If you found a bug or if you want to suggest some improvements ― go to
-        <i>Settings/Feedback and support</i> and email it to me.
-        Free for non-commercial use.
+        <i>Settings/Feedback and support</i> to email it to me.
+        The app and its are free for non-commercial use.
     </p>
-    <h3><i>ddu</i>-picture</h3>
+    <h3><i>ddu</i>-pictures</h3>
     <p>
-        <i>Dodeca Meditation</i> allows to view and modify <i>ddu</i>-pictures.
-        You can open a <i>ddu</i>-picture from <i>Dodeca Meditation</i> art collection via button on bottom bar.
-        If you already have a file of <i>ddu</i>-picture, locate it with file manager and choose to open with <i>Dodeca Meditation</i>.
-        <i>Dodeca Meditation</i> will import file of the <i>ddu</i>-picture to internal folder.
-        File of <i>ddu</i>-picture (with extension .ddu) contains initial state and development rules of the picture.
+        <i>Dodeca Meditation</i> allows you to watch and modify <i>ddu</i>-pictures.
+        You can look through <i>ddu</i>-pictures provided for <i>Dodeca Meditation</i> art gallery via the button on the bottom bar.
+        If you already have a *.ddu file, you can import it from the gallery or locate it with a file manager and choose to open with <i>Dodeca Meditation</i>.
+        <i>Dodeca Meditation</i> will import the file to its internal folder.
+        The file of a <i>ddu</i>-picture (with extension .ddu) contains initial state and development rules of the picture.
     </p>
-    <h3>Motion</h3>
+    <h3>Moving around</h3>
     <p>
-        You can change position of <i>ddu</i>-picture by dragging it.<br>
-        You can zoom/scale <i>ddu</i>-picture with 2 fingers (pinch to zoom).<br>
-        Note, that if <i>Settings/Redraw trace</i> is on, motion and scaling clear canvas.
+        You can change the position of a <i>ddu</i>-picture by dragging it.<br>
+        You can zoom/scale <i>ddu</i>-pictures with 2 fingers (pinch to zoom).<br>
+        Note, that if <i>Settings/Redraw trace</i> is on, any motion and scaling will clear the canvas.
     </p>
 </div>
 <!-- MAYBE: settings -->

@@ -42,7 +42,7 @@
     <string name="imported_ddu_toast">Импортирована новая ddu-картина: \"%s\"</string>
     <string name="permission_rationale_dialog_allow">Разрешить</string>
     <string name="permission_rationale_dialog_deny">Отклонить</string>
-    <string name="permission_storage_message">Пожалуйста, разрешите доступ к файлам на устройстве, чтобы импортировать данную ddu-картину</string>
+    <string name="permission_storage_message">Пожалуйста, разрешите доступ к файлам на устройстве, чтобы сохранить скриншот/импортировать данную ddu-картину</string>
     <string name="permission_storage_accusation">Вы не разрешили доступ к файлам. ddu-картина не может быть импортирована!</string>
     <string name="permission_rationale_dialog_title">Запрос на разрешение доступа</string>
     <string name="always_autocenter_title">Всегда проводить автоцентровку</string>

@@ -83,7 +83,10 @@ class MassEditorDialog(
         layout.all_circles_checkbox.setOnCheckedChangeListener { _, checked -> rowAdapter.onCheckAll(checked) }
         layout.sort_by_color.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByColor(checked) }
         layout.sort_by_name.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByName(checked) }
-        layout.sort_by_rule.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByRule(checked) }
+        if (CircleAdapter.HIDE_RULES)
+            layout.sort_by_rule.visibility = View.GONE
+        else
+            layout.sort_by_rule.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByRule(checked) }
         setOf(
             layout.all_circles_checkbox, layout.sort_by_color, layout.sort_by_name, layout.sort_by_rule
         ).forEach {
@@ -271,8 +274,19 @@ class CircleAdapter(
                 leftMargin = ROW_LEFT_MARGIN
             }
             circle_name.text = resources.getString(R.string.background_color)
-            circle_rule.text = ""
-            circle_image.setImageDrawable(circleImageFor(row.equivalence))
+            if (HIDE_RULES)
+                circle_rule.visibility = View.GONE
+            else
+                circle_rule.text = ""
+            val bgIcon = ContextCompat.getDrawable(context, R.drawable.background)
+                as LayerDrawable
+            bgIcon.mutate()
+            val bg = bgIcon.getDrawable(0)
+            bg.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+                row.color,
+                BlendModeCompat.SRC_ATOP
+            )
+            circle_image.setImageDrawable(bgIcon)
             circle_checkbox.visibility = View.INVISIBLE
             circle_layout.setOnClickListener {
                 colorPickerDialog(context, row.color) { newColor ->
@@ -301,7 +315,10 @@ class CircleAdapter(
             }
             circle_name.text = "${row.id}"
             val rule = figure.rule?.trimStart('n')
-            circle_rule.text = rule?.ifBlank { "-" } ?: "-"
+            if (HIDE_RULES)
+                circle_rule.visibility = View.GONE
+            else
+                circle_rule.text = rule?.ifBlank { "-" } ?: "-"
             circle_image.setImageDrawable(circleImageFor(figure.equivalence))
             circle_checkbox.apply {
                 visibility = View.VISIBLE
@@ -331,13 +348,17 @@ class CircleAdapter(
                 leftMargin = ROW_LEFT_MARGIN
             }
             circle_name.text = row.name // should change whenever .circles changes
-            val firstRule = row.circles.first().figure.rule ?: ""
-            circle_rule.text =
-                if (row.circles.all { (it.figure.rule ?: "") == firstRule }) {
-                    firstRule.trimStart('n').ifBlank { "-" }
-                } else {
-                    "*"
-                }
+            if (HIDE_RULES)
+                circle_rule.visibility = View.GONE
+            else {
+                val firstRule = row.circles.first().figure.rule ?: ""
+                circle_rule.text =
+                    if (row.circles.all { (it.figure.rule ?: "") == firstRule }) {
+                        firstRule.trimStart('n').ifBlank { "-" }
+                    } else {
+                        "*"
+                    }
+            }
             circle_image.setImageDrawable(circleImageFor(row.equivalence))
             circle_checkbox.apply {
                 visibility = View.VISIBLE
@@ -623,6 +644,7 @@ class CircleAdapter(
         // deliberately not lazy stream: collapseGroup mutates rows
         unexpandedGroupRows.forEach { expandGroup(it) }
         val _rows: MutableList<CircleRow> = rows.filterIsInstance<CircleRow>().toMutableList()
+        _rows.sortBy { it.figure.rule ?: "" }
         if (ascending)
             _rows.sortBy { it.figure.rule?.length ?: 0 }
         else
@@ -635,6 +657,7 @@ class CircleAdapter(
     companion object {
         const val TAG: String = "CircleAdapter"
         private const val ROW_LEFT_MARGIN = 8 //40
+        internal const val HIDE_RULES = true
     }
 }
 

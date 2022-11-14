@@ -19,7 +19,7 @@
     <string name="outline_button_title">Toggle outline</string>
     <string name="trace_button_title">Toggle trace</string>
     <string name="shape_spinner_title">Choose a shape</string>
-    <string name="shape_spinner_prompt">Draw this shape instead of circle</string>
+    <string name="shape_spinner_prompt">Draw this shape instead of circles</string>
     <string name="shape_image_title">Shape</string>
     <string name="clear_button_title">Clear</string>
     <string name="autocenter_button_title">Autocenter</string>
@@ -136,7 +136,7 @@
     <string name="developer_email" translatable="false">&feedback_email;</string>
 
     <!-- Strings related to permissions -->
-    <string name="permission_storage_message">Please, allow storage access to import the ddu-picture</string>
+    <string name="permission_storage_message">Please, allow storage access to save the screenshot/import the ddu-picture</string>
     <string name="permission_storage_accusation">You denied storage access permission. Why? You cannot import the ddu
         now!
     </string>
