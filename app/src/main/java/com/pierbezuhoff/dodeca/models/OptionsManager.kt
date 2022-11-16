@@ -43,7 +43,6 @@ class OptionsManager(
         private val ALL_OPTIONS: Set<Option<*>> = options.run {
             setOf(
                 redrawTraceOnMove,
-                showAllCircles,
                 reverseMotion,
                 autosave,
                 saveAs,

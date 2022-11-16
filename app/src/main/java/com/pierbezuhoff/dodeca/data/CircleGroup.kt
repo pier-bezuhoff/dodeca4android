@@ -17,11 +17,11 @@ interface CircleGroup : ImmutableCircleGroup {
     operator fun set(i: Int, figure: CircleFigure)
     fun update(reverse: Boolean = false)
     fun updateTimes(times: Int, reverse: Boolean = false)
-    fun draw(canvas: Canvas, shape: Shape = Shape.CIRCLE, showAllCircles: Boolean = false)
+    fun draw(canvas: Canvas, shape: Shape = Shape.CIRCLE,)
     fun drawTimes(
         times: Int,
         reverse: Boolean = false,
-        canvas: Canvas, shape: Shape = Shape.CIRCLE, showAllCircles: Boolean = false)
+        canvas: Canvas, shape: Shape = Shape.CIRCLE)
     fun drawOverlay(canvas: Canvas, selected: IntArray = intArrayOf())
 }
 
@@ -30,13 +30,13 @@ interface SuspendableCircleGroup : CircleGroup {
     suspend fun suspendableDrawTimes(
         times: Int,
         reverse: Boolean = false,
-        canvas: Canvas, shape: Shape = Shape.CIRCLE, showAllCircles: Boolean = false)
+        canvas: Canvas, shape: Shape = Shape.CIRCLE)
 }
 
 fun CircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): CircleGroup =
-    PrimitiveCircles(circleFigures, defaultPaint)
-//    ProjectiveCircles(circleFigures, defaultPaint)
+//    PrimitiveCircles(circleFigures, defaultPaint)
+    ProjectiveCircles(circleFigures, defaultPaint)
 
 fun SuspendableCircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): SuspendableCircleGroup =
-    PrimitiveCircles(circleFigures, defaultPaint)
-//    ProjectiveCircles(circleFigures, defaultPaint)
+//    PrimitiveCircles(circleFigures, defaultPaint)
+    ProjectiveCircles(circleFigures, defaultPaint)

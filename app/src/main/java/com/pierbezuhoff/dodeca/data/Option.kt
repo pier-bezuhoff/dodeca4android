@@ -110,8 +110,6 @@ class Options(val resources: Resources) {
         ParsedFloatKeyOption(key, resources.getString(id).toFloat())
     
     val redrawTraceOnMove = BooleanKeyOption("redraw_trace", R.bool.redraw_trace)
-    val showAllCircles = BooleanKeyOption("show_all_circles", R.bool.show_all_circles)
-    // val showCenters = KeyOption("show_centers", false)
     val reverseMotion = BooleanKeyOption("reverse_motion", R.bool.reverse_motion)
     // val rotateShapes = KeyOption("rotate_shapes", false)
     val autosave = BooleanKeyOption("autosave", R.bool.autosave)
@@ -142,7 +140,6 @@ class Options(val resources: Resources) {
 
 class Values(private val options: Options) {
     val redrawTraceOnMove: Boolean by options.redrawTraceOnMove
-    val showAllCircles: Boolean by options.showAllCircles
     val reverseMotion: Boolean by options.reverseMotion
     val autosave: Boolean by options.autosave
     val saveAs: Boolean by options.saveAs

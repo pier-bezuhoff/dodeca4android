@@ -141,7 +141,6 @@ class DodecaViewModel(
     }
 
     private fun registerOptionsObservers() {
-        options.showAllCircles.observe { dduRepresentation.value?.onShowAllCircles(it) }
         options.autocenterAlways.observe { dduRepresentation.value?.onAutocenterAlways(it) }
         options.canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
         options.speed.observe { dduRepresentation.value?.onSpeed(it) }

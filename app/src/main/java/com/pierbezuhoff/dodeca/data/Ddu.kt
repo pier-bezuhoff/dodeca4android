@@ -427,7 +427,6 @@ private class DduWriter(private val ddu: Ddu) {
 }
 
 interface DduOptionsChangeListener {
-    fun onShowAllCircles(showAllCircles: Boolean)
     fun onAutocenterAlways(autocenterAlways: Boolean)
     fun onCanvasFactor(canvasFactor: Int)
     fun onSpeed(speed: Float)

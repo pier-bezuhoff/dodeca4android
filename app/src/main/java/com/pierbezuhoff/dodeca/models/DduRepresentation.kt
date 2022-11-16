@@ -256,10 +256,6 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     private fun visible(z: Complex): Complex =
         motion.move(z)
 
-    override fun onShowAllCircles(showAllCircles: Boolean) {
-        presenter?.redraw()
-    }
-
     override fun onAutocenterAlways(autocenterAlways: Boolean) {
         if (autocenterAlways)
             autocenterize()
@@ -416,14 +412,14 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     private inline fun Canvas.drawCircles() {
         circleGroup.draw(
             canvas = this,
-            shape = shape, showAllCircles = values.showAllCircles
+            shape = shape
         )
     }
 
     private inline fun Canvas.drawCirclesTimes(times: Int) {
         circleGroup.drawTimes(
             times = times, canvas = this,
-            shape = shape, showAllCircles = values.showAllCircles, reverse = values.reverseMotion
+            shape = shape, reverse = values.reverseMotion
         )
     }
 

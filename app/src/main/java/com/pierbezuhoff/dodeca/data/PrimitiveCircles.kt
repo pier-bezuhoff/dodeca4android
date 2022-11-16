@@ -146,40 +146,35 @@ internal class PrimitiveCircles(
                 invert(i, j)
     }
 
-    override fun draw(canvas: Canvas, shape: Shape, showAllCircles: Boolean) =
-        _draw(canvas, shape, showAllCircles)
+    override fun draw(canvas: Canvas, shape: Shape) =
+        _draw(canvas, shape)
 
-    private inline fun _draw(canvas: Canvas, shape: Shape, showAllCircles: Boolean) {
-        // TODO: rotation
+    private inline fun _draw(canvas: Canvas, shape: Shape) {
+        // MAYBE: rotate shapes
         when (shape) {
-            Shape.CIRCLE -> drawHelper(showAllCircles) { drawCircle(it, canvas) }
-            Shape.SQUARE -> drawHelper(showAllCircles) { drawSquare(it, canvas) }
-            Shape.CROSS -> drawHelper(showAllCircles) { drawCross(it, canvas) }
-            Shape.VERTICAL_BAR -> drawHelper(showAllCircles) { drawVerticalBar(it, canvas) }
-            Shape.HORIZONTAL_BAR -> drawHelper(showAllCircles) { drawHorizontalBar(it, canvas) }
+            Shape.CIRCLE -> drawHelper { drawCircle(it, canvas) }
+            Shape.SQUARE -> drawHelper { drawSquare(it, canvas) }
+            Shape.CROSS -> drawHelper { drawCross(it, canvas) }
+            Shape.VERTICAL_BAR -> drawHelper { drawVerticalBar(it, canvas) }
+            Shape.HORIZONTAL_BAR -> drawHelper { drawHorizontalBar(it, canvas) }
         }
     }
 
-    private inline fun drawHelper(showAllCircles: Boolean, crossinline draw: (Int) -> Unit) {
-        if (showAllCircles) {
-            for (i in 0 until size)
-                draw(i)
-        } else {
-            for (i in shownIndices)
-                draw(i)
-        }
+    private inline fun drawHelper(crossinline draw: (Int) -> Unit) {
+        for (i in shownIndices)
+            draw(i)
     }
 
     override fun drawTimes(
         times: Int,
         reverse: Boolean,
-        canvas: Canvas, shape: Shape, showAllCircles: Boolean
+        canvas: Canvas, shape: Shape
     ) {
         repeat(times) {
-            _draw(canvas, shape, showAllCircles)
+            _draw(canvas, shape)
             _update(reverse)
         }
-        _draw(canvas, shape, showAllCircles)
+        _draw(canvas, shape)
         // TODO: understand why the following is slower
 //         _drawTimes(times, reverse, canvas, shape, showAllCircles)
     }
@@ -189,17 +184,16 @@ internal class PrimitiveCircles(
         reverse: Boolean,
         canvas: Canvas,
         shape: Shape,
-        showAllCircles: Boolean
     ) {
         // TODO: optimize
         // NOTE: not using _drawTimes in order to make coroutine cancellable-cooperative
         repeat(times) {
             withContext(Dispatchers.Default) {
-                _draw(canvas, shape, showAllCircles)
+                _draw(canvas, shape)
                 _update(reverse)
             }
         }
-        withContext(Dispatchers.Default) { _draw(canvas, shape, showAllCircles) }
+        withContext(Dispatchers.Default) { _draw(canvas, shape) }
     }
 
     // unused: too slow
@@ -209,44 +203,37 @@ internal class PrimitiveCircles(
     private inline fun _drawTimes(
         times: Int,
         reverse: Boolean,
-        canvas: Canvas, shape: Shape, showAllCircles: Boolean
+        canvas: Canvas, shape: Shape
     ) {
         if (reverse)
-            drawTimesU(times, canvas, shape, showAllCircles) { reversedUpdate() }
+            drawTimesU(times, canvas, shape) { reversedUpdate() }
         else
-            drawTimesU(times, canvas, shape, showAllCircles) { straightUpdate() }
+            drawTimesU(times, canvas, shape) { straightUpdate() }
     }
 
     private inline fun drawTimesU(
         times: Int,
-        canvas: Canvas, shape: Shape, showAllCircles: Boolean,
+        canvas: Canvas, shape: Shape,
         crossinline update: () -> Unit
     ) {
         when (shape) {
-            Shape.CIRCLE -> drawTimesUD(times, showAllCircles, update) { drawCircle(it, canvas) }
-            Shape.SQUARE -> drawTimesUD(times, showAllCircles, update) { drawSquare(it, canvas) }
-            Shape.CROSS -> drawTimesUD(times, showAllCircles, update) { drawCross(it, canvas) }
-            Shape.VERTICAL_BAR -> drawTimesUD(times, showAllCircles, update) { drawVerticalBar(it, canvas) }
-            Shape.HORIZONTAL_BAR -> drawTimesUD(times, showAllCircles, update) { drawHorizontalBar(it, canvas) }
+            Shape.CIRCLE -> drawTimesUD(times, update) { drawCircle(it, canvas) }
+            Shape.SQUARE -> drawTimesUD(times, update) { drawSquare(it, canvas) }
+            Shape.CROSS -> drawTimesUD(times, update) { drawCross(it, canvas) }
+            Shape.VERTICAL_BAR -> drawTimesUD(times, update) { drawVerticalBar(it, canvas) }
+            Shape.HORIZONTAL_BAR -> drawTimesUD(times, update) { drawHorizontalBar(it, canvas) }
         }
     }
 
     private inline fun drawTimesUD(
         times: Int,
-        showAllCircles: Boolean,
         crossinline update: () -> Unit,
         crossinline draw: (Int) -> Unit
     ) {
-        if (showAllCircles)
-            drawTimesUDA(times, update) {
-                for (i in 0 until size)
-                    draw(i)
-            }
-        else
-            drawTimesUDA(times, update) {
-                for (i in shownIndices)
-                    draw(i)
-            }
+        drawTimesUDA(times, update) {
+            for (i in shownIndices)
+                draw(i)
+        }
     }
 
     private inline fun drawTimesUDA(times: Int, crossinline update: () -> Unit, crossinline drawAll: () -> Unit) {

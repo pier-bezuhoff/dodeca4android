@@ -224,35 +224,30 @@ internal class ProjectiveCircles(
         applyMatrices()
     }
 
-    override fun draw(canvas: Canvas, shape: Shape, showAllCircles: Boolean) =
-        _draw(canvas, shape, showAllCircles)
+    override fun draw(canvas: Canvas, shape: Shape) =
+        _draw(canvas, shape)
 
-    private inline fun _draw(canvas: Canvas, shape: Shape, showAllCircles: Boolean) {
+    private inline fun _draw(canvas: Canvas, shape: Shape) {
         when (shape) {
-            Shape.CIRCLE -> drawHelper(showAllCircles) { drawCircle(it, canvas) }
-            Shape.SQUARE -> drawHelper(showAllCircles) { drawSquare(it, canvas) }
-            Shape.CROSS -> drawHelper(showAllCircles) { drawCross(it, canvas) }
-            Shape.VERTICAL_BAR -> drawHelper(showAllCircles) { drawVerticalBar(it, canvas) }
-            Shape.HORIZONTAL_BAR -> drawHelper(showAllCircles) { drawHorizontalBar(it, canvas) }
+            Shape.CIRCLE -> drawHelper { drawCircle(it, canvas) }
+            Shape.SQUARE -> drawHelper { drawSquare(it, canvas) }
+            Shape.CROSS -> drawHelper { drawCross(it, canvas) }
+            Shape.VERTICAL_BAR -> drawHelper { drawVerticalBar(it, canvas) }
+            Shape.HORIZONTAL_BAR -> drawHelper { drawHorizontalBar(it, canvas) }
         }
     }
 
-    private inline fun drawHelper(showAllCircles: Boolean, crossinline draw: (Int) -> Unit) {
-        if (showAllCircles) {
-            for (i in 0 until size)
-                draw(i)
-        } else {
-            for (i in shownIndices)
-                draw(i)
-        }
+    private inline fun drawHelper(crossinline draw: (Int) -> Unit) {
+        for (i in shownIndices)
+            draw(i)
     }
 
-    override fun drawTimes(times: Int, reverse: Boolean, canvas: Canvas, shape: Shape, showAllCircles: Boolean) {
+    override fun drawTimes(times: Int, reverse: Boolean, canvas: Canvas, shape: Shape) {
         repeat(times) {
-            _draw(canvas, shape, showAllCircles)
+            _draw(canvas, shape)
             _update(reverse)
         }
-        _draw(canvas, shape, showAllCircles)
+        _draw(canvas, shape)
     }
 
     override fun drawOverlay(canvas: Canvas, selected: IntArray) {
@@ -275,14 +270,14 @@ internal class ProjectiveCircles(
         }
     }
 
-    override suspend fun suspendableDrawTimes(times: Int, reverse: Boolean, canvas: Canvas, shape: Shape, showAllCircles: Boolean) {
+    override suspend fun suspendableDrawTimes(times: Int, reverse: Boolean, canvas: Canvas, shape: Shape) {
         repeat(times) {
             withContext(Dispatchers.Default) {
-                _draw(canvas, shape, showAllCircles)
+                _draw(canvas, shape)
                 _update(reverse)
             }
         }
-        withContext(Dispatchers.Default) { _draw(canvas, shape, showAllCircles) }
+        withContext(Dispatchers.Default) { _draw(canvas, shape) }
     }
 
     private inline fun drawCircle(i: Int, canvas: Canvas) {
@@ -394,7 +389,7 @@ private fun circle2pole(circle: Circle): Vector4 {
     return doubleArrayOf(k*x, k*y, 1 - k, 1.0).map { it.toFloat() }.toFloatArray()
 }
 
-// NOTE: inlined
+// NOTE: inlined for performance
 @Suppress("unused")
 private fun pole2circle(pole: Vector4): FloatArray {
     val (wx,wy,wz,w) = pole
@@ -404,7 +399,7 @@ private fun pole2circle(pole: Vector4): FloatArray {
     // st. proj. pole->center
     val cx = x/(1 - z)
     val cy = y/(1 - z)
-    val op2 = x*x + y*y + (z-1)*(z-1)
+    val op2 = x*x + y*y + (z-1)*(z-1) // op2 > 1 for *real* circles
     val r = sqrt(op2 - 1)/(1 - z/2) // sqrt(op2-1) = segment of tangent
     // V the old way
 //    // let's find a point t on the polar circle
@@ -433,31 +428,26 @@ private fun pole2matrix(pole: Vector4): Matrix44 {
     val phi = -atan2(y, hypot(x, z))
     // NOTE: transposed column-row order
     val Ry: Matrix44 = floatArrayOf(
-        cos(th), 0f, sin(th), 0f,
-        0f, 1f, 0f, 0f,
+        cos(th),  0f, sin(th), 0f,
+        0f,       1f, 0f,      0f,
         -sin(th), 0f, cos(th), 0f,
-        0f, 0f, 0f, 1f
+        0f,       0f, 0f,      1f
     )
     val Rz: Matrix44 = floatArrayOf(
-        cos(phi), sin(phi), 0f, 0f,
+        cos(phi),  sin(phi), 0f, 0f,
         -sin(phi), cos(phi), 0f, 0f,
-        0f, 0f, 1f, 0f,
-        0f, 0f, 0f, 1f
+        0f,        0f,       1f, 0f,
+        0f,        0f,       0f, 1f
     )
     val M: Matrix44 = floatArrayOf(
-        a2 + 1, 0f, 0f, 2*a,
-        0f, 1 - a2, 0f, 0f,
-        0f, 0f, 1 - a2, 0f,
-        -2*a, 0f, 0f, -a2 - 1
+        a2 + 1, 0f,     0f,     2*a,
+        0f,     1 - a2, 0f,     0f,
+        0f,     0f,     1 - a2, 0f,
+        -2*a,   0f,     0f,     -a2 - 1
     )
-    val result = I44()
-    with(result) {
-        setToProduct(Rz, Ry)
-        setToProduct(M, this)
-        setToProduct(Rz.inverse(), this)
-        setToProduct(Ry.inverse(), this)
-    }
-    return result
+    return listOf(
+        Ry.inverse(), Rz.inverse(), M, Rz, Ry
+    ).product()
 }
 
 private fun I44(): Matrix44 =
@@ -482,3 +472,17 @@ private inline fun Vector4.setToDotProduct(m: Matrix44, v: Vector4) {
 
 private inline fun Matrix44.inverse(): Matrix44 =
     FloatArray(16).also { Matrix.invertM(it, 0, this, 0) }
+
+private fun Vector4.showAsV3(): String {
+    val (x,y,z,w) = this
+    return "(%.3f\t%.3f\t%.3f)".format(x/w, y/w, z/w)
+}
+
+private fun Matrix44.showAsM44(): String =
+    (0..3).joinToString("\n", prefix = "((", postfix = "))") { rowIx ->
+        listOf(rowIx, rowIx+4, rowIx+8, rowIx+12).joinToString("\t") { i ->
+            "%.3f".format(this[i])
+        }
+    }
+
+private const val TAG = "ProjectiveCircles"
