@@ -24,27 +24,33 @@ import kotlin.math.hypot
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-typealias Rule = List<Int>
-typealias Part = List<Int>
+typealias Ix = Int
+typealias Ixs = IntArray
+typealias IxTable = List<Ix> // Ix to Ix correspondence
+typealias Rule = List<Ix>
+typealias Part = List<Ix>
 typealias Vector4 = FloatArray
 typealias Matrix44 = FloatArray
 typealias Pole = Vector4
 
+// BUG: most radii are 0-d and NaN-d, all non I rules are 0 4x4
+
 // NOTE: maybe use nd4j for performance (>200MB), also try deprecated Matrix4f
-// NOTE: some ddu may diverge because of Float-s (?)
 // https://github.com/deeplearning4j/deeplearning4j/tree/master/nd4j
+// NOTE: some ddu may diverge because of Float-s (?)
 internal class ProjectiveCircles(
     figures: List<CircleFigure>,
     private val paint: Paint
 ) : SuspendableCircleGroup {
     // static
     private val initialPoles: List<Pole> // poles of all initial circles
-    private val partsOfRules: List<IntArray> // rule index: int array of parts' indices
-    private val rulesForCircles: List<Int> // circle index: (unique) rule index
-    private val rulesForParts: List<Int> // part index: rule index
+    private val partsOfRules: List<Ixs> // (unique) rule index: int array of parts' indices
+    private val rulesForCircles: IxTable // circle index: (unique) rule index
+    private val rulesForParts: IxTable // part index: (unique) rule index
     private val nRules: Int // only counting unique ones
     private val nParts: Int // nParts >= nRules
     private val size: Int = figures.size // size = nCircles >= nRules
+    private val uniqueRules: List<Rule> // TMP
     // dynamic
     private val parts: Array<Matrix44> // unique parts of rules (can contain each other)
     private val rules: Array<Matrix44> // unique rules
@@ -58,11 +64,11 @@ internal class ProjectiveCircles(
             FigureAttributes(color, fill, rule, borderColor)
         }
     }
-    private var shownIndices: IntArray = attrs
+    private var shownIndices: MutableList<Ix> = attrs
         .mapIndexed { i, attr -> i to attr }
         .filter { it.second.show }
         .map { it.first }
-        .toIntArray()
+        .toMutableList()
     private val paints: Array<Paint> = attrs.map {
         Paint(paint).apply {
             color = it.color
@@ -82,9 +88,12 @@ internal class ProjectiveCircles(
         }
     override val defaultPaint: Paint = paint
     override val figures: List<CircleFigure>
-        get() = (0 until size).map { i ->
-            val (color, fill, rule, borderColor) = attrs[i]
-            CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), color, fill, rule, borderColor)
+        get() {
+            applyAllMatrices()
+            return (0 until size).map { i ->
+                val (color, fill, rule, borderColor) = attrs[i]
+                CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), color, fill, rule, borderColor)
+            }
         }
 
     init {
@@ -92,14 +101,14 @@ internal class ProjectiveCircles(
             val r = it.rule?.trimStart('n') ?: ""
             r.reversed().map { c -> c.digitToInt() }
         }
-        val uniqueRules = symbolicRules.distinct()
+        uniqueRules = symbolicRules.distinct()
         nRules = uniqueRules.size
         rulesForCircles = symbolicRules.map { uniqueRules.indexOf(it) }
         val partsRules = mutableMapOf<Part, Rule>()
         val ruleSplits = mutableListOf<List<Part>>() // rule index: list of parts comprising it
-        for (rule in symbolicRules) {
+        for (rule in uniqueRules) {
             val split = rule.consecutiveGroupBy { cIx -> symbolicRules[cIx] }
-            ruleSplits.add(split.map { it.second })
+            ruleSplits.add(split.map { it.second }) // splitting into mono-rule'd parts
             for ((r, part) in split)
                 partsRules[part] = r
         }
@@ -123,8 +132,8 @@ internal class ProjectiveCircles(
         // calc coordinate repr
         initialPoles = figures.map { circle2pole(it) }
         poles = initialPoles.map { it.copyOf() }.toTypedArray()
-        val pivotIndices: Set<Int> = uniqueRules.flatten().toSet()
-        val pivots = mutableMapOf<Int, Matrix44>()
+        val pivotIndices: Set<Ix> = uniqueRules.flatten().toSet()
+        val pivots = mutableMapOf<Ix, Matrix44>()
         for (i in pivotIndices) {
             val pole = circle2pole(figures[i])
             pivots[i] = pole2matrix(pole)
@@ -132,11 +141,12 @@ internal class ProjectiveCircles(
         parts = symbolicParts.map { it.map { i -> pivots[i]!! }.product() }.toTypedArray() // index out of bounds error
         rules = ruleBlueprints.map { it.map { i -> parts[i] }.product() }.toTypedArray()
         cumulativeRules = rules.map { I44() }.toTypedArray()
-        figures.forEachIndexed { i, f ->
-            xs[i] = f.center.real.toFloat()
-            ys[i] = f.center.imaginary.toFloat()
-            rs[i] = f.radius.toFloat()
-        }
+        applyMatrices()
+//        figures.forEachIndexed { i, f ->
+//            xs[i] = f.center.real.toFloat()
+//            ys[i] = f.center.imaginary.toFloat()
+//            rs[i] = f.radius.toFloat()
+//        }
     }
 
     private inline fun straightUpdate() {
@@ -144,7 +154,7 @@ internal class ProjectiveCircles(
         parts.zip(rulesForParts).forEach { (p, rIx) ->
             val r = rules[rIx]
             p.setToProduct(p, r.inverse())
-            p.setToProduct(r, p)
+            p.setToProduct(r, p) // p -> r * p * r.inv
         }
         partsOfRules.forEachIndexed { rIx, ps ->
             rules[rIx] = ps.map { parts[it] }.product()
@@ -160,11 +170,30 @@ internal class ProjectiveCircles(
         initialPoles.forEachIndexed { cIx, pole ->
             poles[cIx].setToDotProduct(cumulativeRules[rulesForCircles[cIx]], pole)
         }
+        shownIndices.forEach { cIx ->
+//            val (cx, cy, r) = pole2circle(pole) // inlined to escape type conversion etc.
+            val (wx,wy,wz,w) = poles[cIx]
+            val x = wx/w
+            val y = wy/w
+            val z = wz/w
+            val nz = 1 - z
+            xs[cIx] = x/nz
+            ys[cIx] = y/nz
+            rs[cIx] = sqrt(x*x + y*y + z*z - 1)/abs(nz)
+            Log.i(TAG, "#$cIx: ${poles[cIx].showAsCircle()}")
+        }
+        rules.forEachIndexed { i, m ->
+            Log.i(TAG, "rule '${uniqueRules[i].joinToString("")}':\n${m.showAsM44()}")
+        }
+    }
+
+    // most likely the bottleneck
+    private inline fun applyAllMatrices() {
+        initialPoles.forEachIndexed { cIx, pole ->
+            poles[cIx].setToDotProduct(cumulativeRules[rulesForCircles[cIx]], pole)
+        }
         poles.forEachIndexed { cIx, pole ->
-//            val (cx, cy, r) = pole2circle(pole) // inline to escape type conversion etc.
-//            xs[cIx] = cx
-//            ys[cIx] = cy
-//            rs[cIx] = r
+//            val (cx, cy, r) = pole2circle(pole) // inlined to escape type conversion etc.
             val (wx,wy,wz,w) = pole
             val x = wx/w
             val y = wy/w
@@ -172,11 +201,12 @@ internal class ProjectiveCircles(
             val nz = 1 - z
             xs[cIx] = x/nz
             ys[cIx] = y/nz
-            rs[cIx] = sqrt(x*x + y*y + nz*nz - 1)/(1 - z/2)
+            rs[cIx] = sqrt(x*x + y*y + z*z - 1)/abs(nz)
         }
     }
 
     override fun get(i: Int): CircleFigure {
+        applyAllMatrices()
         val (color, fill, rule, borderColor) = attrs[i]
         return CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), color, fill, rule, borderColor)
     }
@@ -198,14 +228,17 @@ internal class ProjectiveCircles(
             else
                 borderPaints.delete(i)
             if (wasShown && !show)
-                shownIndices = shownIndices.toMutableSet().run { remove(i); toIntArray() }
-            else if (!wasShown && show)
-                shownIndices = shownIndices.toMutableSet().run { add(i); toIntArray() }
+                shownIndices.remove(i)
+            else if (!wasShown && show) {
+                shownIndices.add(i)
+                shownIndices.sort()
+            }
+            Unit
         }
     }
 
     override fun update(reverse: Boolean) =
-        _update(reverse)
+        Unit//_update(reverse) // TMP
 
     private inline fun _update(reverse: Boolean) {
         if (reverse)
@@ -366,7 +399,7 @@ internal class ProjectiveCircles(
     }
 
     companion object {
-        private const val TAG = "ProjectiveCircles"
+        internal const val TAG = "ProjectiveCircles"
     }
 
 }
@@ -382,15 +415,13 @@ private fun circle2pole(circle: Circle): Vector4 {
     val sx = 2*t.real/d
     val sy = 2*t.imaginary/d
     val sz = (t.abs2() - 1)/d
-    val s2 = sx*sx + sy*sy + sz*sz
     // parameter of the pole on the line thru the circle.center and the sphere's north
     // pole = k*C + (1 - k)*N
-    val k = (s2 - sz)/(x * sx + y * sy - sz)
+    val k = (1 - sz)/(x * sx + y * sy - sz)
     return doubleArrayOf(k*x, k*y, 1 - k, 1.0).map { it.toFloat() }.toFloatArray()
 }
 
 // NOTE: inlined for performance
-@Suppress("unused")
 private fun pole2circle(pole: Vector4): FloatArray {
     val (wx,wy,wz,w) = pole
     val x = wx/w
@@ -399,24 +430,12 @@ private fun pole2circle(pole: Vector4): FloatArray {
     // st. proj. pole->center
     val cx = x/(1 - z)
     val cy = y/(1 - z)
-    val op2 = x*x + y*y + (z-1)*(z-1) // op2 > 1 for *real* circles
-    val r = sqrt(op2 - 1)/(1 - z/2) // sqrt(op2-1) = segment of tangent
-    // V the old way
-//    // let's find a point t on the polar circle
-//    val d = hypot(x, y)
-//    val p2 = x*x + y*y + z*z
-//    val tz: Float = z/p2 + d * sqrt(p2 - 1)/p2
-//    val tx: Float = if (d == 0.0f) sqrt(1 - tz*tz) else -x * (z*tz - 1)/(d*d)
-//    val ty: Float = if (d == 0.0f) 0.0f else y * tx/x
-//    // s = st. proj. of t on the plane
-//    val sx = tx/(1 - tz)
-//    val sy = ty/(1 - tz)
-//    val r = hypot(cx - sx, cy - sy) // so much overhead just for the radius...
+    val op2 = x*x + y*y + z*z // op2 > 1 for *real* circles
+    val r = sqrt(op2 - 1)/abs(1 - z) // sqrt(op2-1) = segment of tangent
     return floatArrayOf(cx, cy, r)
 }
 
 // TODO: test it
-@Suppress("LocalVariableName")
 private fun pole2matrix(pole: Vector4): Matrix44 {
     val (wx,wy,wz,w) = pole
     val x = wx/w
@@ -475,14 +494,17 @@ private inline fun Matrix44.inverse(): Matrix44 =
 
 private fun Vector4.showAsV3(): String {
     val (x,y,z,w) = this
-    return "(%.3f\t%.3f\t%.3f)".format(x/w, y/w, z/w)
+    return "(%.2f\t%.2f\t%.2f)".format(x/w, y/w, z/w)
+}
+
+private fun Vector4.showAsCircle(): String {
+    val (x, y, r) = pole2circle(this)
+    return "[(%.2f, %.2f)\tR=%.2f]".format(x, y, r)
 }
 
 private fun Matrix44.showAsM44(): String =
     (0..3).joinToString("\n", prefix = "((", postfix = "))") { rowIx ->
         listOf(rowIx, rowIx+4, rowIx+8, rowIx+12).joinToString("\t") { i ->
-            "%.3f".format(this[i])
+            "%.2f".format(this[i])
         }
     }
-
-private const val TAG = "ProjectiveCircles"
