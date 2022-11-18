@@ -10,11 +10,9 @@ import android.graphics.SweepGradient
 import android.opengl.Matrix
 import android.util.Log
 import android.util.SparseArray
-import com.pierbezuhoff.dodeca.utils.abs2
 import com.pierbezuhoff.dodeca.utils.component1
 import com.pierbezuhoff.dodeca.utils.component2
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
-import com.pierbezuhoff.dodeca.utils.plus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
@@ -59,12 +57,12 @@ internal class ProjectiveCircles(
     private val xs: FloatArray = FloatArray(size)
     private val ys: FloatArray = FloatArray(size)
     private val rs: FloatArray = FloatArray(size)
-    private val attrs: Array<FigureAttributes> = Array(size) {
-        figures[it].run {
+    private val attrs: Array<FigureAttributes> = Array(size) { i ->
+        figures[i].run {
             FigureAttributes(color, fill, rule, borderColor)
         }
     }
-    private var shownIndices: MutableList<Ix> = attrs
+    private val shownIndices: MutableList<Ix> = attrs
         .mapIndexed { i, attr -> i to attr }
         .filter { it.second.show }
         .map { it.first }
@@ -78,12 +76,16 @@ internal class ProjectiveCircles(
         }
     }.toTypedArray()
     private val defaultBorderPaint = Paint(paint)
-        .apply { color = Color.BLACK; style = Paint.Style.STROKE }
+        .apply {
+            color = Color.BLACK
+            style = Paint.Style.STROKE
+        }
     private val borderPaints: SparseArray<Paint> = SparseArray<Paint>()
         .apply {
             attrs.forEachIndexed { i, attr ->
                 if (attr.borderColor != null && attr.fill && attr.show)
                     append(i, Paint(defaultBorderPaint).apply { color = attr.borderColor })
+                // Q: ^^^ is it correct?
             }
         }
     override val defaultPaint: Paint = paint
@@ -142,6 +144,14 @@ internal class ProjectiveCircles(
         rules = ruleBlueprints.map { it.map { i -> parts[i] }.product() }.toTypedArray()
         cumulativeRules = rules.map { I44() }.toTypedArray()
         applyMatrices()
+        // TODO: try p2c isomorphism test
+        val good = figures.all { f ->
+            val (x,y,r) = pole2circle(circle2pole(f))
+            listOf(f.x to x, f.y to y, f.radius to r).all { (v0, v) ->
+                abs(v - v0) < 1e-2
+            }
+        }
+        assert(good) { "p2c != c2p.inv" }
 //        figures.forEachIndexed { i, f ->
 //            xs[i] = f.center.real.toFloat()
 //            ys[i] = f.center.imaginary.toFloat()
@@ -167,10 +177,8 @@ internal class ProjectiveCircles(
 
     // most likely the bottleneck
     private inline fun applyMatrices() {
-        initialPoles.forEachIndexed { cIx, pole ->
-            poles[cIx].setToDotProduct(cumulativeRules[rulesForCircles[cIx]], pole)
-        }
         shownIndices.forEach { cIx ->
+            poles[cIx].setToDotProduct(cumulativeRules[rulesForCircles[cIx]], initialPoles[cIx])
 //            val (cx, cy, r) = pole2circle(pole) // inlined to escape type conversion etc.
             val (wx,wy,wz,w) = poles[cIx]
             val x = wx/w
@@ -409,15 +417,17 @@ internal class ProjectiveCircles(
 // onto plane z=0
 private fun circle2pole(circle: Circle): Vector4 {
     val (x, y) = circle.center
-    val t = circle.center + circle.radius // any point on the circle
-    val d = 1 + t.abs2()
-    // s = stereographic image of t on the sphere
-    val sx = 2*t.real/d
-    val sy = 2*t.imaginary/d
-    val sz = (t.abs2() - 1)/d
+    val tx = x + circle.radius
+    val ty = y
+    // T = any point on the circle
+    val d = 1 + hypot(tx, ty)
+    // S = stereographic image of T on the sphere
+    val sx = 2*tx/d
+    val sy = 2*ty/d
+    val sz = (d - 2)/d
     // parameter of the pole on the line thru the circle.center and the sphere's north
     // pole = k*C + (1 - k)*N
-    val k = (1 - sz)/(x * sx + y * sy - sz)
+    val k = (1 - sz)/(x*sx + y*sy - sz) // P lies on the tangent plane at S <=> PS is perp. to OS
     return doubleArrayOf(k*x, k*y, 1 - k, 1.0).map { it.toFloat() }.toFloatArray()
 }
 
@@ -427,11 +437,12 @@ private fun pole2circle(pole: Vector4): FloatArray {
     val x = wx/w
     val y = wy/w
     val z = wz/w
+    val nz = 1 - z
     // st. proj. pole->center
-    val cx = x/(1 - z)
-    val cy = y/(1 - z)
+    val cx = x/nz
+    val cy = y/nz
     val op2 = x*x + y*y + z*z // op2 > 1 for *real* circles
-    val r = sqrt(op2 - 1)/abs(1 - z) // sqrt(op2-1) = segment of tangent
+    val r = sqrt(op2 - 1)/abs(nz) // sqrt(op2-1) = segment of tangent
     return floatArrayOf(cx, cy, r)
 }
 
@@ -467,6 +478,7 @@ private fun pole2matrix(pole: Vector4): Matrix44 {
     return listOf(
         Ry.inverse(), Rz.inverse(), M, Rz, Ry
     ).product()
+        .also { Log.i(ProjectiveCircles.TAG, it.showAsM44()) } // bruh all are the same and det=0
 }
 
 private fun I44(): Matrix44 =
