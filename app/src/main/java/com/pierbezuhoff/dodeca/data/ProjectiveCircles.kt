@@ -144,11 +144,10 @@ internal class ProjectiveCircles(
         rules = ruleBlueprints.map { it.map { i -> parts[i] }.product() }.toTypedArray()
         cumulativeRules = rules.map { I44() }.toTypedArray()
         applyMatrices()
-        // TODO: try p2c isomorphism test
         val good = figures.all { f ->
             val (x,y,r) = pole2circle(circle2pole(f))
             listOf(f.x to x, f.y to y, f.radius to r).all { (v0, v) ->
-                abs(v - v0) < 1e-2
+                abs(v - v0) < 1e-4
             }
         }
         assert(good) { "p2c != c2p.inv" }
@@ -477,8 +476,9 @@ private fun pole2matrix(pole: Vector4): Matrix44 {
     )
     return listOf(
         Ry.inverse(), Rz.inverse(), M, Rz, Ry
-    ).product()
-        .also { Log.i(ProjectiveCircles.TAG, it.showAsM44()) } // bruh all are the same and det=0
+    ).map { Log.i(ProjectiveCircles.TAG, it.showAsM44()) ; it }
+        .product()
+        .also { Log.i(ProjectiveCircles.TAG, "-> "+it.showAsM44()) } // bruh all are the same and det=0
 }
 
 private fun I44(): Matrix44 =

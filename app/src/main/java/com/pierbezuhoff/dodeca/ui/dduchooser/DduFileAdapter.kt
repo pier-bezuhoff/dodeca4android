@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritor
@@ -16,7 +17,10 @@ import com.pierbezuhoff.dodeca.utils.fileName
 import kotlinx.android.synthetic.main.ddu_item.view.*
 import java.io.File
 
-class DduFileAdapter(private val files: List<File>)
+class DduFileAdapter(
+    private val files: List<File>,
+    optionsManager: OptionsManager
+)
     : MetaRecyclerViewAdapter<DduFileAdapter.DduFileViewHolder>()
     , LifecycleInheritor by LifecycleInheritance()
 {
@@ -30,7 +34,7 @@ class DduFileAdapter(private val files: List<File>)
     private val previewSupplierConnection = Connection<PreviewSupplier>()
     val previewSupplierSubscription = previewSupplierConnection.subscription
 
-    private val blankPreview: Bitmap = Ddu.createBlankPreview()
+    private val blankPreview: Bitmap = Ddu.createBlankPreview(optionsManager.values.previewSizePx)
 
     class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         lateinit var file: File

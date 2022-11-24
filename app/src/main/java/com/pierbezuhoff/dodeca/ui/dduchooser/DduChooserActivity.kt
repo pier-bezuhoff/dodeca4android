@@ -21,8 +21,6 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.options
-import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDduChooserBinding
 import com.pierbezuhoff.dodeca.models.DduFileRepository
 import com.pierbezuhoff.dodeca.models.DduFileService
@@ -40,7 +38,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
-import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.editText
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
@@ -52,7 +49,7 @@ class DduChooserActivity : AppCompatActivity()
     , DduFileAdapter.FileChooser
 {
     private val optionsManager by lazy {
-        OptionsManager(defaultSharedPreferences)
+        OptionsManager(application)
     }
     private val factory by lazy {
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
@@ -112,7 +109,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun initDduRecyclerView() {
-        val adapter = DduFileAdapter(viewModel.files)
+        val adapter = DduFileAdapter(viewModel.files, optionsManager)
         dduFileDeltaList = DeltaList(viewModel.files, adapter)
         ddu_recycler_view.adapter = adapter
         // NOTE: colors and thickness of dividers are set from styles.xml
@@ -123,7 +120,7 @@ class DduChooserActivity : AppCompatActivity()
         adapter.contextMenuSubscription.subscribeFrom(this)
         adapter.previewSupplierSubscription.subscribeFrom(viewModel)
         adapter.inheritLifecycleOf(this)
-        val lastFile = dduFileService.dduDir/values.recentDdu
+        val lastFile = dduFileService.dduDir/optionsManager.values.recentDdu
         adapter.findPositionOf(lastFile)?.let { position: Int ->
             // NOTE: works bad when position is in the end of adapter
             //  also jumping slightly when scrolling upward
@@ -311,7 +308,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun toggleFolders() {
-        optionsManager.toggle(options.showFolders)
+        optionsManager.toggle(optionsManager.options.showFolders)
     }
 
     private fun renameDduFile(file: File) {

@@ -100,7 +100,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         private const val TAG: String = "SettingsFragment"
         // hidden in limited version
         private val ADVANCED_PREFERENCES = setOf(
-            "show_all_circles",
+//            "show_all_circles",
             "autocenter_always",
             /*"show_centers",*/
             /*"rotate_shapes",*/

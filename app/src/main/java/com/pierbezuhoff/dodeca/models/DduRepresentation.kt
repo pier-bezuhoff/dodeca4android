@@ -19,8 +19,6 @@ import com.pierbezuhoff.dodeca.data.DduOptionsChangeListener
 import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
-import com.pierbezuhoff.dodeca.data.options
-import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Just
@@ -46,7 +44,10 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Suppress("NOTHING_TO_INLINE")
-class DduRepresentation(override val ddu: Ddu) : Any()
+class DduRepresentation(
+    override val ddu: Ddu,
+    private val optionsManager: OptionsManager
+) : Any()
     , DduAttributesHolder
     , DduOptionsChangeListener
     , DodecaGestureDetector.ScrollListener
@@ -72,7 +73,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     val statHolderSubscription = statHolderConnection.subscription
     val toastEmitterSubscription = toastEmitterConnection.subscription
 
-    private var optionsManager: OptionsManager? = null // inject by setter
+    private val optionValues = optionsManager.values
 
     private val updateScheduler: UpdateScheduler = UpdateScheduler()
 
@@ -115,14 +116,10 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         presenter.mainLoop()
     }
 
-    fun connectOptionsManager(optionsManager: OptionsManager) {
-        this.optionsManager = optionsManager
-    }
-
     private fun setBestCenter() {
         if (ddu.bestCenter == null)
             ddu.bestCenter =
-                if (values.autocenterAlways) ddu.autoCenter
+                if (optionValues.autocenterAlways) ddu.autoCenter
                 else presenter?.getCenter()
     }
 
@@ -157,7 +154,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         // MAYBE: when canvasFactor * scale ~ 1 try to fit screen
         val scale: Float = motion.sx
         if (drawTrace && trace != null &&
-            values.canvasFactor == 1 &&
+            optionValues.canvasFactor == 1 &&
             1 - 1e-4 < scale && scale < 1 + 1e-1
         ) {
             trace?.motion?.run {
@@ -174,7 +171,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     }
 
     fun oneStep() {
-        val batch: Int = values.speed.roundToInt()
+        val batch: Int = optionValues.speed.roundToInt()
         drawTimes(batch)
         updateOnce = true
         presenter?.redraw()
@@ -207,7 +204,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         currentCenter = presenter?.getCenter()
         motion.transformation()
         if (drawTrace) {
-            if (values.redrawTraceOnMove)
+            if (optionValues.redrawTraceOnMove)
                 clearTrace()
             else {
                 trace?.motion?.transformation()
@@ -251,7 +248,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
         }
 
     suspend fun updateTimes(times: Int) =
-        circleGroup.suspendableUpdateTimes(times, reverse = values.reverseMotion)
+        circleGroup.suspendableUpdateTimes(times, reverse = optionValues.reverseMotion)
 
     private fun visible(z: Complex): Complex =
         motion.move(z)
@@ -325,11 +322,11 @@ class DduRepresentation(override val ddu: Ddu) : Any()
 
     private fun tryClearTrace() {
         var done = false
-        var canvasFactor = values.canvasFactor
+        var canvasFactor = optionValues.canvasFactor
         presenter?.getSize()?.let { (width: Int, height: Int) ->
             while (!done) {
                 try {
-                    trace = Trace(width, height)
+                    trace = Trace(width, height, optionsManager)
                     done = true
                 } catch (e: OutOfMemoryError) {
                     e.printStackTrace()
@@ -351,14 +348,15 @@ class DduRepresentation(override val ddu: Ddu) : Any()
                     }
                 }
             }
-            if (canvasFactor != values.canvasFactor)
-                optionsManager?.set(options.canvasFactor, canvasFactor)
+            if (canvasFactor != optionValues.canvasFactor) {
+                with(optionsManager) { set(options.canvasFactor, canvasFactor) }
+            }
         }
     }
 
     private fun updateCanvas(canvas: Canvas) {
         if (updating && updateScheduler.timeToUpdate()) {
-            val times = values.speed.roundToInt()
+            val times = optionValues.speed.roundToInt()
             drawTimes(times)
             statHolderConnection.send { updateStat(times) }
             updateScheduler.doUpdate()
@@ -368,7 +366,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
 
     private fun drawTimes(times: Int = 1) {
         if (times <= 1) {
-            circleGroup.update(reverse = values.reverseMotion)
+            circleGroup.update(reverse = optionValues.reverseMotion)
         } else {
             onTraceCanvas {
                 drawCirclesTimes(times)
@@ -419,7 +417,7 @@ class DduRepresentation(override val ddu: Ddu) : Any()
     private inline fun Canvas.drawCirclesTimes(times: Int) {
         circleGroup.drawTimes(
             times = times, canvas = this,
-            shape = shape, reverse = values.reverseMotion
+            shape = shape, reverse = optionValues.reverseMotion
         )
     }
 

@@ -8,19 +8,17 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.Options
 import com.pierbezuhoff.dodeca.databinding.ActivityMainBinding
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditActivity
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
 import kotlinx.coroutines.launch
-import org.jetbrains.anko.defaultSharedPreferences
 
 class MainActivity : AppCompatActivity()
 {
     private val optionsManager by lazy {
-        OptionsManager(defaultSharedPreferences)
+        OptionsManager(application)
     }
     private val factory by lazy {
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
@@ -31,8 +29,6 @@ class MainActivity : AppCompatActivity()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // TODO: migrate to OptionsViewModel
-        Options(resources).init() // init options.* and values.*
         val binding: ActivityMainBinding =
             DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.lifecycleOwner = this

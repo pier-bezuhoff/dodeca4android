@@ -4,8 +4,12 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import com.pierbezuhoff.dodeca.models.OptionsManager
 
-class Trace(width: Int, height: Int) {
+class Trace(
+    width: Int, height: Int,
+    val optionsManager: OptionsManager // models layer in the data layer, NotLikeThis
+) {
     // NOTE: bitmap == (factor ^ 2) * screens
     val bitmap: Bitmap // must not be changed from outside
     val canvas: Canvas
@@ -15,6 +19,8 @@ class Trace(width: Int, height: Int) {
     // MAYBE: cache blitMatrix for performance
     private val blitMatrix
         get() = Matrix(translation).apply { postConcat(motion) }
+    private val factor: Int
+        get() = optionsManager.values.canvasFactor
     var currentCanvasFactor: Int = factor
 
     init {
@@ -36,6 +42,5 @@ class Trace(width: Int, height: Int) {
 
     companion object {
         private val BITMAP_CONFIG = Bitmap.Config.ARGB_8888
-        private val factor: Int get() = values.canvasFactor
     }
 }

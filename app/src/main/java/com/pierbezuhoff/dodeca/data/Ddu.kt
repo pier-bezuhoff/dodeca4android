@@ -10,6 +10,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.IntRange
 import androidx.core.graphics.withMatrix
 import com.pierbezuhoff.dodeca.BuildConfig
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.utils.asFF
 import com.pierbezuhoff.dodeca.utils.mean
 import com.pierbezuhoff.dodeca.utils.minus
@@ -37,10 +38,11 @@ class Ddu(
 
     val autoCenter get() = circles.filter { it.show }.map { it.center }.mean()
     val complexity: Int get() = circles.sumOf { it.rule?.length ?: 0 }
-    private val nSmartUpdates: Int
-        get() = (MIN_PREVIEW_UPDATES + values.nPreviewUpdates * 20 / sqrt(1.0 + complexity)).roundToInt()
-    private val nUpdates: Int // for buildPreview
-        get() = if (values.previewSmartUpdates) nSmartUpdates else values.nPreviewUpdates
+    private fun getNSmartUpdates(nPreviewUpdates: Int): Int =
+        (MIN_PREVIEW_UPDATES + nPreviewUpdates * 20 / sqrt(1.0 + complexity)).roundToInt()
+    private fun getNUpdates(nPreviewUpdates: Int, previewSmartUpdates: Boolean): Int =
+        if (previewSmartUpdates) getNSmartUpdates(nPreviewUpdates) else nPreviewUpdates
+    // ^^^ for buildPreview
 
     // NOTE: copy(newRule = null) resolves overload ambiguity
     fun copy() =
@@ -72,28 +74,29 @@ class Ddu(
     suspend fun saveToStreamForDodecaLook(outputStream: OutputStream) =
         DduWriter(this).writeForDodecaLook(outputStream)
 
-    suspend fun buildPreview(width: Int, height: Int): Bitmap = withContext(Dispatchers.Default) {
-        // used RGB_565 instead of ARGB_8888 for performance (visually indistinguishable)
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-        val canvas = Canvas(bitmap)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        val circleGroup = CircleGroup(circles, paint)
-        val center = Complex((width / 2).toDouble(), (height / 2).toDouble())
-        val bestCenter = bestCenter ?: if (values.autocenterPreview) autoCenter else center
-        val (dx, dy) = (center - bestCenter).asFF()
-        val (centerX, centerY) = center.asFF()
-        val scale: Float = PREVIEW_SCALE * width / NORMAL_PREVIEW_SIZE // or use options.preview_size.default
-        val matrix = Matrix().apply { postTranslate(dx, dy); postScale(scale, scale, centerX, centerY) }
-        canvas.withMatrix(matrix) {
-            drawColor(backgroundColor)
-            if (drawTrace ?: true) {
-                circleGroup.drawTimes(nUpdates, canvas = canvas, shape = shape)
-            } else {
-                circleGroup.draw(canvas, shape = shape)
+    suspend fun buildPreview(width: Int, height: Int, values: OptionsManager.Values): Bitmap =
+        withContext(Dispatchers.Default) {
+            // used RGB_565 instead of ARGB_8888 for performance (visually indistinguishable)
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+            val canvas = Canvas(bitmap)
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+            val circleGroup = CircleGroup(circles, paint)
+            val center = Complex((width / 2).toDouble(), (height / 2).toDouble())
+            val bestCenter = bestCenter ?: if (values.autocenterPreview) autoCenter else center
+            val (dx, dy) = (center - bestCenter).asFF()
+            val (centerX, centerY) = center.asFF()
+            val scale: Float = PREVIEW_SCALE * width / NORMAL_PREVIEW_SIZE // or use options.preview_size.default
+            val matrix = Matrix().apply { postTranslate(dx, dy); postScale(scale, scale, centerX, centerY) }
+            canvas.withMatrix(matrix) {
+                drawColor(backgroundColor)
+                if (drawTrace ?: true) {
+                    circleGroup.drawTimes(getNUpdates(values.nPreviewUpdates, values.previewSmartUpdates), canvas = canvas, shape = shape)
+                } else {
+                    circleGroup.draw(canvas, shape = shape)
+                }
             }
+            return@withContext bitmap
         }
-        return@withContext bitmap
-    }
 
     companion object {
         private const val TAG: String = "Ddu"
@@ -113,8 +116,8 @@ class Ddu(
             DduReader(stream.reader()).read()
         }
 
-        fun createBlankPreview(): Bitmap {
-            val size = values.previewSizePx
+        fun createBlankPreview(previewSizePx: Int): Bitmap {
+            val size = previewSizePx
             val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
             val canvas = Canvas(bitmap)
             canvas.drawColor(Color.WHITE)

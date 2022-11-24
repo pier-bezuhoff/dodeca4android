@@ -5,7 +5,7 @@ import android.util.AttributeSet
 import androidx.core.content.withStyledAttributes
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.pierbezuhoff.dodeca.data.values
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import kotlin.math.max
 
 class AutofitGridRecyclerView @JvmOverloads constructor(
@@ -13,11 +13,13 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : RecyclerView(context, attrs, defStyleAttr) {
+    private val optionsManager = OptionsManager(context)
     private val manager = GridLayoutManager(
         context,
         defaultNColumns
     )
     private var columnWidth: Int? = null
+    private val defaultColumnWidth: Int get() = 2 * cellPadding + optionsManager.values.previewSizePx
 
     init {
         context.withStyledAttributes(attrs, intArrayOf(android.R.attr.columnWidth), defStyleAttr) {
@@ -38,6 +40,5 @@ class AutofitGridRecyclerView @JvmOverloads constructor(
         const val defaultNColumns = 2
         const val minNColumns = 1 // I'd like at least 2, check on small phones
         const val cellPadding = 8
-        val defaultColumnWidth: Int get() = 2 * cellPadding + values.previewSizePx
     }
 }

@@ -53,7 +53,7 @@ internal typealias OnApply = (
 
 class MassEditorDialog(
     private val context: Context,
-    private val chooseColorListener: MassEditorListener,
+    private val massEditorListener: MassEditorListener,
     private val ddu: Ddu,
     private val circleGroup: CircleGroup
 ) {
@@ -61,6 +61,8 @@ class MassEditorDialog(
 
     interface MassEditorListener {
         fun onMassEditorClosed()
+        /* NOT a terminal operation, the dialog is still open */
+        fun onMassEditorBackgroundChanged()
         fun onMassEditorCirclesSelected(circleIndices: List<Int>)
     }
 
@@ -70,7 +72,7 @@ class MassEditorDialog(
         val layout = inflater.inflate(R.layout.mass_editor_dialog, null)
         builder.setView(layout)
         val manager = LinearLayoutManager(context)
-        rowAdapter = CircleAdapter(context, ddu, circleGroup)
+        rowAdapter = CircleAdapter(context, ddu, circleGroup, massEditorListener)
         val height: Int = context.displayMetrics.heightPixels
         layout.circle_rows.apply {
             layoutManager = manager
@@ -95,10 +97,10 @@ class MassEditorDialog(
         val dialog = builder.apply {
             setMessage(R.string.mass_editor_dialog_message)
             setPositiveButton(R.string.mass_editor_dialog_edit) { _, _ -> } // will be set later
-            setNegativeButton(R.string.mass_editor_dialog_cancel) { _, _ -> chooseColorListener.onMassEditorClosed() }
+            setNegativeButton(R.string.mass_editor_dialog_cancel) { _, _ -> massEditorListener.onMassEditorClosed() }
             setNeutralButton(R.string.mass_editor_dialog_recolor_everything) { _, _ -> } // will be set later
         }.create()
-        dialog.setOnDismissListener { chooseColorListener.onMassEditorClosed() }
+        dialog.setOnDismissListener { massEditorListener.onMassEditorClosed() }
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 if (rowAdapter.checkedRows.isNotEmpty())
@@ -150,7 +152,8 @@ class MassEditorDialog(
 class CircleAdapter(
     private val context: Context,
     private val ddu: Ddu,
-    private val circleGroup: CircleGroup
+    private val circleGroup: CircleGroup,
+    private val massEditorListener: MassEditorDialog.MassEditorListener
 ) : RecyclerView.Adapter<CircleAdapter.ViewHolder>() {
     class ViewHolder(val row: View) : RecyclerView.ViewHolder(row)
 
@@ -292,8 +295,9 @@ class CircleAdapter(
                 colorPickerDialog(context, row.color) { newColor ->
                     if (row.color != newColor) {
                         row.color = newColor
-                        ddu.backgroundColor = newColor // MAYBE: force a redraw
+                        ddu.backgroundColor = newColor
                         notifyItemChanged(0)
+                        massEditorListener.onMassEditorBackgroundChanged()
                     }
                 }.show()
             }

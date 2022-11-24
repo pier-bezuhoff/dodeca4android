@@ -13,11 +13,9 @@ import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.Option
 import com.pierbezuhoff.dodeca.data.Shape
-import com.pierbezuhoff.dodeca.data.options
-import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.OptionsManager
-import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
+import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptions
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.filename
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +31,7 @@ import kotlin.properties.Delegates
 class DodecaViewModel(
     application: Application,
     optionsManager: OptionsManager
-) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
+) : DodecaAndroidViewModelWithOptions(application, optionsManager)
     , DodecaGestureDetector.SingleTapListener
     , DduRepresentation.StatHolder // by statUpdater
     , DduRepresentation.ToastEmitter
@@ -60,7 +58,7 @@ class DodecaViewModel(
     override fun showBottomBar() = bottomBarHider.showBottomBar()
     override fun hideBottomBar() = bottomBarHider.hideBottomBar()
 
-    val showStat: LiveData<Boolean> = options.showStat.liveData
+    val showStat: LiveData<Boolean> = optionsManager.options.showStat.liveData
     private val statUpdater: StatUpdater = StatUpdater()
     override fun updateStat(delta: Int) = statUpdater.updateStat(delta)
     // following 3 are used to show stat[istics] in layout/activity_dodeca_view.xml
@@ -108,18 +106,17 @@ class DodecaViewModel(
         dduLoaded = true
         maybeAutosave() // async, but capture current dduRepresentation
         statUpdater.reset()
-        DduRepresentation(ddu)
+        DduRepresentation(ddu, optionsManager)
             .let { dduRepresentation: DduRepresentation ->
                 dduRepresentation.statHolderSubscription.subscribeFrom(this)
                 dduRepresentation.toastEmitterSubscription.subscribeFrom(this)
-                dduRepresentation.connectOptionsManager(optionsManager)
                 gestureDetector.onScrollSubscription.subscribeFrom(dduRepresentation)
                 gestureDetector.onScaleSubscription.subscribeFrom(dduRepresentation)
                 updateDduAttributesFrom(dduRepresentation)
                 _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
             }
         ddu.file?.let { file: File ->
-            setSharedPreference(options.recentDdu, dduFileService.dduPathOf(file))
+            setSharedPreference(optionsManager.options.recentDdu, dduFileService.dduPathOf(file))
         }
     }
 
@@ -141,10 +138,10 @@ class DodecaViewModel(
     }
 
     private fun registerOptionsObservers() {
-        options.autocenterAlways.observe { dduRepresentation.value?.onAutocenterAlways(it) }
-        options.canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
-        options.speed.observe { dduRepresentation.value?.onSpeed(it) }
-        options.skipN.observe { skipN: Int ->
+        optionsManager.options.autocenterAlways.observe { dduRepresentation.value?.onAutocenterAlways(it) }
+        optionsManager.options.canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
+        optionsManager.options.speed.observe { dduRepresentation.value?.onSpeed(it) }
+        optionsManager.options.skipN.observe { skipN: Int ->
             dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
                 doSkipN(dduRepresentation, skipN)
             }
@@ -164,7 +161,7 @@ class DodecaViewModel(
         // FIX: update stat when partial skip
         if (n > 0) {
             viewModelScope.launch {
-                val timeoutSeconds = optionsManager.fetched(options.skipNTimeout)
+                val timeoutSeconds = optionsManager.run { fetched(options.skipNTimeout) }
                 val timeoutMilliseconds: Long = timeoutSeconds * 1000L
                 Log.i(TAG, "Skipping $n updates... (timeout $timeoutSeconds s)")
                 toast("Skipping $n updates... (timeout $timeoutSeconds s)")
@@ -182,7 +179,7 @@ class DodecaViewModel(
                     Log.w(TAG, "Skipping aborted due to timeout ($timeoutSeconds s > $skippingTime s)")
                     toast("Skipping aborted due to timeout ($timeoutSeconds s)")
                 }
-                setSharedPreference(options.skipN, 0)
+                setSharedPreference(optionsManager.options.skipN, 0)
                 _dduLoading.postValue(false)
                 resume()
             }
@@ -202,7 +199,7 @@ class DodecaViewModel(
     }
 
     private fun getRecentDduFile(): File =
-        dduFileService.dduDir/optionsManager.fetched(options.recentDdu)
+        dduFileService.dduDir/optionsManager. run { fetched(options.recentDdu) }
 
     override fun onSingleTap(e: MotionEvent?) {
         toggleBottomBar()
@@ -241,7 +238,7 @@ class DodecaViewModel(
 
     /** Async, maybe schedule ddu saving, capture dduRepresentation */
     fun maybeAutosave() {
-        if (values.autosave && dduRepresentation.value?.ddu?.file != null)
+        if (optionsManager.values.autosave && dduRepresentation.value?.ddu?.file != null)
             viewModelScope.launch {
                 saveDdu()
             }
@@ -386,9 +383,9 @@ class DodecaViewModel(
 
         override fun updateStat(delta: Int) {
             lastUpdateTime = System.currentTimeMillis()
-            val dNUpdates: Int = delta * (if (values.reverseMotion) -1 else 1)
+            val dNUpdates: Int = delta * (if (optionsManager.values.reverseMotion) -1 else 1)
             nUpdates += dNUpdates
-            if (values.showStat) {
+            if (optionsManager.values.showStat) {
                 val overhead: Long = abs(nUpdates - lastTimedUpdate)
                 if (overhead >= statTimeDelta) {
                     dTime = (lastUpdateTime - lastTimedUpdateTime) / (overhead / statTimeDelta.toFloat()) / 1000f

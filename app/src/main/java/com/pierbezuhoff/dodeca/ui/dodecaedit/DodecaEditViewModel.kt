@@ -11,12 +11,10 @@ import com.pierbezuhoff.dodeca.data.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.Option
 import com.pierbezuhoff.dodeca.data.Shape
-import com.pierbezuhoff.dodeca.data.options
-import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaGestureDetector
-import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
+import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptions
 import com.pierbezuhoff.dodeca.utils.ComplexFF
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.filename
@@ -29,7 +27,7 @@ import java.io.File
 class DodecaEditViewModel(
     application: Application,
     optionsManager: OptionsManager
-) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
+) : DodecaAndroidViewModelWithOptions(application, optionsManager)
     , DodecaGestureDetector.SingleTapListener
     , DodecaGestureDetector.ScrollListener
     , DodecaGestureDetector.ScaleListener
@@ -85,10 +83,9 @@ class DodecaEditViewModel(
     fun loadDdu(ddu: Ddu) {
         dduLoaded = true
         maybeAutosave() // async, but capture current dduRepresentation
-        DduRepresentation(ddu)
+        DduRepresentation(ddu, optionsManager)
             .let { dduRepresentation: DduRepresentation ->
                 dduRepresentation.toastEmitterSubscription.subscribeFrom(this)
-                dduRepresentation.connectOptionsManager(optionsManager)
                 updateDduAttributesFrom(dduRepresentation)
                 _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
                 _editingMode.value = DEFAULT_EDITING_MODE
@@ -97,7 +94,7 @@ class DodecaEditViewModel(
 
             }
         ddu.file?.let { file: File ->
-            setSharedPreference(options.recentDdu, dduFileService.dduPathOf(file))
+            setSharedPreference(optionsManager.options.recentDdu, dduFileService.dduPathOf(file))
         }
     }
 
@@ -138,7 +135,7 @@ class DodecaEditViewModel(
     }
 
     private fun getRecentDduFile(): File =
-        dduFileService.dduDir/optionsManager.fetched(options.recentDdu)
+        dduFileService.dduDir/optionsManager.fetched(optionsManager.options.recentDdu)
 
     override fun onSingleTap(e: MotionEvent?) {
         val mode = editingMode.value
@@ -233,7 +230,7 @@ class DodecaEditViewModel(
 
     /** Async, maybe schedule ddu saving, capture dduRepresentation */
     fun maybeAutosave() {
-        if (values.autosave && dduRepresentation.value?.ddu?.file != null)
+        if (optionsManager.values.autosave && dduRepresentation.value?.ddu?.file != null)
             viewModelScope.launch {
                 saveDdu()
             }

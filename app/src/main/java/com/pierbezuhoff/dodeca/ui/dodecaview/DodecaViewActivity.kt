@@ -28,7 +28,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaViewBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
@@ -54,7 +53,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
-import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.editText
 import org.jetbrains.anko.toast
 import permissions.dispatcher.NeedsPermission
@@ -71,7 +69,7 @@ class DodecaViewActivity : AppCompatActivity()
     , MassEditorDialog.MassEditorListener
 {
     private val optionsManager by lazy {
-        OptionsManager(defaultSharedPreferences)
+        OptionsManager(application)
     }
     private val factory by lazy {
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
@@ -166,7 +164,7 @@ class DodecaViewActivity : AppCompatActivity()
                     viewModel.pause()
                     MassEditorDialog(
                         this,
-                        chooseColorListener = this,
+                        massEditorListener = this,
                         ddu = dduR.ddu,
                         circleGroup = dduR.circleGroup
                     ).build()
@@ -237,7 +235,7 @@ class DodecaViewActivity : AppCompatActivity()
     }
 
     private fun saveDdu() {
-        if (!values.saveAs) {
+        if (!optionsManager.values.saveAs) {
             viewModel.requestSaveDdu()
         } else {
             viewModel.pause()
@@ -268,6 +266,10 @@ class DodecaViewActivity : AppCompatActivity()
     override fun onMassEditorClosed() {
         viewModel.resume()
         viewModel.requestUpdateOnce()
+    }
+
+    override fun onMassEditorBackgroundChanged() {
+        viewModel.dduRepresentation.value?.clearTrace()
     }
 
     override fun onMassEditorCirclesSelected(circleIndices: List<Int>) {

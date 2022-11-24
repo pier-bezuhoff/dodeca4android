@@ -1,17 +1,117 @@
 package com.pierbezuhoff.dodeca.models
 
-import android.content.SharedPreferences
+import android.content.Context
+import android.content.res.Resources
+import android.util.DisplayMetrics
+import androidx.annotation.BoolRes
+import androidx.annotation.StringRes
 import androidx.core.content.edit
+import com.pierbezuhoff.dodeca.R
+import com.pierbezuhoff.dodeca.data.KeyOption
 import com.pierbezuhoff.dodeca.data.Option
-import com.pierbezuhoff.dodeca.data.options
+import com.pierbezuhoff.dodeca.data.ParsedFloatKeyOption
+import com.pierbezuhoff.dodeca.data.ParsedIntKeyOption
+import com.pierbezuhoff.dodeca.data.ParsedKeyOption
+import com.pierbezuhoff.dodeca.utils.Filename
+import org.jetbrains.anko.defaultSharedPreferences
 
-/** Handy wrapper, does not hold any data (except [SharedPreferences] instance); depends on [options] */
-class OptionsManager(
-    private val sharedPreferences: SharedPreferences
-) {
+// MAYBE: the context should be the *application*
+class OptionsManager(context: Context) {
+    private val sharedPreferences = context.defaultSharedPreferences
+    val options: Options
+    val values: Values
+
+    init {
+        // MAYBE: lock smth for thread safety
+        if (!initialized) {
+            val resources = context.resources
+            _options = Options(resources)
+            _values = Values(_options!!, resources)
+            initialized = true
+        }
+        options = _options!!
+        values = _values!!
+    }
+
+    class Values(options: Options, resources: Resources) {
+        val redrawTraceOnMove: Boolean by options.redrawTraceOnMove
+        val reverseMotion: Boolean by options.reverseMotion
+        val autosave: Boolean by options.autosave
+        val saveAs: Boolean by options.saveAs
+        val autocenterAlways: Boolean by options.autocenterAlways
+        val speed: Float by options.speed
+        val skipN: Int by options.skipN
+        val skipNTimeout: Int by options.skipNTimeout
+        val canvasFactor: Int by options.canvasFactor
+        val showStat: Boolean by options.showStat
+        val previewSize: Int by options.previewSize
+        val autocenterPreview: Boolean by options.autocenterPreview
+        private val densityDpi = resources.displayMetrics.densityDpi
+        val previewSizePx: Int get() =
+            previewSize * densityDpi / DisplayMetrics.DENSITY_DEFAULT
+        val nPreviewUpdates: Int by options.nPreviewUpdates
+        val previewSmartUpdates: Boolean by options.previewSmartUpdates
+        val showFolders: Boolean by options.showFolders
+        /** Absolute path of the most recent ddu-file */
+        val recentDdu: Filename by options.recentDdu // TODO: Filename -> File
+        val versionCode: Int by options.versionCode
+    }
+
+    class Options(resources: Resources) {
+        private fun BooleanKeyOption(key: String, @BoolRes id: Int, resources: Resources): KeyOption<Boolean> =
+            KeyOption(key, resources.getBoolean(id))
+        private fun <T : Any> ParsedKeyOption(key: String, @StringRes id: Int, resources: Resources, parse: String.() -> T?): ParsedKeyOption<T> =
+            ParsedKeyOption(key, resources.getString(id).parse()!!, parse)
+        private fun ParsedIntKeyOption(key: String, @StringRes id: Int, resources: Resources): ParsedIntKeyOption =
+            ParsedIntKeyOption(key, default = resources.getString(id).toInt())
+        private fun ParsedFloatKeyOption(key: String, @StringRes id: Int, resources: Resources): ParsedFloatKeyOption =
+            ParsedFloatKeyOption(key, resources.getString(id).toFloat())
+
+        val redrawTraceOnMove = BooleanKeyOption("redraw_trace", R.bool.redraw_trace, resources)
+        val reverseMotion = BooleanKeyOption("reverse_motion", R.bool.reverse_motion, resources)
+        // val rotateShapes = KeyOption("rotate_shapes", false)
+        val autosave = BooleanKeyOption("autosave", R.bool.autosave, resources)
+        val saveAs = BooleanKeyOption("save_as", R.bool.save_as, resources)
+        val autocenterAlways = BooleanKeyOption("autocenter_always", R.bool.autocenter_always, resources)
+        val speed = ParsedFloatKeyOption("speed", R.string.speed, resources)
+        val skipN = ParsedIntKeyOption("skip_n", R.string.skip_n, resources)
+        val skipNTimeout = ParsedIntKeyOption("skip_n_timeout", R.string.skip_n_timeout, resources)
+        val canvasFactor = ParsedIntKeyOption("canvas_factor", R.string.canvas_factor, resources)
+        val showStat = BooleanKeyOption("show_stat", R.bool.show_stat, resources)
+        // buildPreview size in pixels, yet to be converted to dp
+        val previewSize = ParsedIntKeyOption("preview_size", R.string.preview_size, resources)
+        val autocenterPreview = BooleanKeyOption("autocenter_preview", R.bool.autocenter_preview, resources)
+        val nPreviewUpdates = ParsedIntKeyOption("n_preview_updates", R.string.n_preview_updates, resources)
+        val previewSmartUpdates = BooleanKeyOption("preview_smart_updates", R.bool.preview_smart_updates, resources)
+        val showFolders = BooleanKeyOption("show_folders", R.bool.show_folders, resources)
+        /** Absolute path of the most recent ddu-file */
+        val recentDdu = ParsedKeyOption("recent_ddu", R.string.first_ddu, resources) { Filename(this) }
+        val versionCode = KeyOption("version_code", resources.getInteger(R.integer.version_code))
+
+        internal val allOptions: Set<Option<*>> = setOf(
+            redrawTraceOnMove,
+            reverseMotion,
+            autosave,
+            saveAs,
+            autocenterAlways,
+            speed,
+            skipNTimeout,
+            skipN,
+            canvasFactor,
+            showStat,
+            previewSize,
+            autocenterPreview,
+            nPreviewUpdates,
+            previewSmartUpdates,
+            showFolders,
+            recentDdu,
+            versionCode
+        )
+    }
+
 
     fun fetchAll() {
-        ALL_OPTIONS.forEach {
+        options.allOptions.forEach {
             fetch(it)
         }
     }
@@ -40,27 +140,8 @@ class OptionsManager(
     }
 
     companion object {
-        private val ALL_OPTIONS: Set<Option<*>> = options.run {
-            setOf(
-                redrawTraceOnMove,
-                reverseMotion,
-                autosave,
-                saveAs,
-                autocenterAlways,
-                speed,
-                skipNTimeout,
-                skipN,
-                canvasFactor,
-                showStat,
-                previewSize,
-                autocenterPreview,
-                nPreviewUpdates,
-                previewSmartUpdates,
-                showFolders,
-                recentDdu,
-                versionCode
-            )
-        }
+        private var initialized = false
+        private var _options: Options? = null
+        private var _values: Values? = null
     }
 }
-

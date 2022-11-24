@@ -8,10 +8,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.map
 import com.pierbezuhoff.dodeca.data.Ddu
-import com.pierbezuhoff.dodeca.data.options
-import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.models.OptionsManager
-import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManager
+import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptions
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.isDdu
@@ -25,7 +23,7 @@ import kotlin.coroutines.coroutineContext
 class DduChooserViewModel(
     application: Application,
     optionsManager: OptionsManager
-) : DodecaAndroidViewModelWithOptionsManager(application, optionsManager)
+) : DodecaAndroidViewModelWithOptions(application, optionsManager)
     , DduFileAdapter.PreviewSupplier
 {
     // NOTE: only previews for ddu-files in current currentDir, should not use very much memory
@@ -37,7 +35,8 @@ class DduChooserViewModel(
     val files: MutableList<File> = mutableListOf()
     val currentDir: LiveData<File> = _currentDir
     val ddusLoading: LiveData<Boolean> = _ddusLoading
-    val showFolders: LiveData<Boolean> = options.showFolders.liveData
+    // NOTE: it's kinda hard to also hide the folders panel when there are no folders
+    val showFolders: LiveData<Boolean> = optionsManager.options.showFolders.liveData
 
     fun setInitialDir(newDir: File) {
         if (_currentDir.value == null) {
@@ -95,9 +94,9 @@ class DduChooserViewModel(
     private suspend fun buildPreviewOf(file: File): Bitmap {
         val filename: Filename = file.filename
         val ddu = Ddu.fromFile(file)
-        val size = values.previewSizePx
+        val size = optionsManager.values.previewSizePx
         // MAYBE: progress bar (# of updates)
-        val bitmap = ddu.buildPreview(size, size)
+        val bitmap = ddu.buildPreview(size, size, optionsManager.values)
         dduFileRepository.setPreview(filename, bitmap)
         return bitmap
     }

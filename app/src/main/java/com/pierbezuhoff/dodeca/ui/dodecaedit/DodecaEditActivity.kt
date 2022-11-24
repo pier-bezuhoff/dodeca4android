@@ -25,7 +25,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.values
 import com.pierbezuhoff.dodeca.databinding.ActivityDodecaEditBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
@@ -48,7 +47,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.customView
-import org.jetbrains.anko.defaultSharedPreferences
 import org.jetbrains.anko.editText
 import org.jetbrains.anko.toast
 import permissions.dispatcher.NeedsPermission
@@ -67,7 +65,7 @@ class DodecaEditActivity : AppCompatActivity()
 {
 
     private val optionsManager by lazy {
-        OptionsManager(defaultSharedPreferences)
+        OptionsManager(application)
     }
     private val factory by lazy {
         DodecaAndroidViewModelWithOptionsManagerFactory(application, optionsManager)
@@ -178,7 +176,7 @@ class DodecaEditActivity : AppCompatActivity()
                     viewModel.pause()
                     MassEditorDialog(
                         this,
-                        chooseColorListener = this,
+                        massEditorListener = this,
                         ddu = dduR.ddu,
                         circleGroup = dduR.circleGroup
                     ).build()
@@ -196,7 +194,7 @@ class DodecaEditActivity : AppCompatActivity()
     }
 
     private fun saveDdu() {
-        if (!values.saveAs) {
+        if (!optionsManager.values.saveAs) {
             viewModel.requestSaveDdu()
         } else {
             viewModel.pause()
@@ -233,10 +231,15 @@ class DodecaEditActivity : AppCompatActivity()
     override fun onMassEditorClosed() =
         onDialogClosed()
 
+    override fun onMassEditorBackgroundChanged() {
+        viewModel.dduRepresentation.value?.clearTrace()
+    }
+
     override fun onMassEditorCirclesSelected(circleIndices: List<Int>) {
         onDialogClosed()
         // go into multiselect mode + select ixs
         viewModel.requestEditingMode(EditingMode.MULTISELECT)
+        TODO()
     }
 
     override fun onAdjustAnglesClosed() =
