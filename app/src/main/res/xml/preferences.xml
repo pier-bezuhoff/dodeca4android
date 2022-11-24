@@ -43,12 +43,12 @@
                 android:title="@string/redraw_trace_title"
                 android:summary="@string/redraw_trace_summary"/>
         <!-- NOTE: advanced -->
-        <SwitchPreference
-                android:key="show_all_circles"
-                android:defaultValue="@bool/show_all_circles"
-                android:title="@string/show_all_circles_title"
-                android:summary="@string/show_all_circles_summary"
-        />
+<!--        <SwitchPreference-->
+<!--                android:key="show_all_circles"-->
+<!--                android:defaultValue="@bool/show_all_circles"-->
+<!--                android:title="@string/show_all_circles_title"-->
+<!--                android:summary="@string/show_all_circles_summary"-->
+<!--        />-->
         <!-- NOTE: advanced -->
         <!--<SwitchPreference-->
                 <!--android:key="show_centers"-->

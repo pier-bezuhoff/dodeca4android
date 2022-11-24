@@ -284,6 +284,7 @@ class DduChooserActivity : AppCompatActivity()
                 }
             }
         }
+        optionsManager.run { set(options.showFolders, true) }
     }
 
     private fun deleteAll() {
