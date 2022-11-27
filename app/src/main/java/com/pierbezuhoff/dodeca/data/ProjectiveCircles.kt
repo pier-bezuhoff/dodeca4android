@@ -10,11 +10,15 @@ import android.graphics.SweepGradient
 import android.opengl.Matrix
 import android.util.Log
 import android.util.SparseArray
-import com.pierbezuhoff.dodeca.utils.component1
-import com.pierbezuhoff.dodeca.utils.component2
+import com.pierbezuhoff.dodeca.utils.asFF
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.component3
+import kotlin.collections.component4
+import kotlin.collections.set
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -187,10 +191,10 @@ internal class ProjectiveCircles(
             xs[cIx] = x/nz
             ys[cIx] = y/nz
             rs[cIx] = sqrt(x*x + y*y + z*z - 1)/abs(nz)
-            Log.i(TAG, "#$cIx: ${poles[cIx].showAsCircle()}")
+//            Log.i(TAG, "#$cIx: ${poles[cIx].showAsCircle()}")
         }
         rules.forEachIndexed { i, m ->
-            Log.i(TAG, "rule '${uniqueRules[i].joinToString("")}':\n${m.showAsM44()}")
+//            Log.i(TAG, "rule '${uniqueRules[i].joinToString("")}':\n${m.showAsM44()}")
         }
     }
 
@@ -414,12 +418,16 @@ internal class ProjectiveCircles(
 // sphere: (0,0,0), R=1
 // proj from the north pole (0,0,1)
 // onto plane z=0
-private fun circle2pole(circle: Circle): Vector4 {
-    val (x, y) = circle.center
-    val tx = x + circle.radius
+// for linear (projective) functions: f(R, x) = R * f(1, x/R)
+private fun circle2pole(circle: Circle, sphereRadius: Float = 1f): Vector4 {
+    val (x0, y0) = circle.center.asFF()
+    val x = x0/sphereRadius
+    val y = y0/sphereRadius
+    val r = circle.radius/sphereRadius
+    val tx = x + circle.radius.toFloat()
     val ty = y
     // T = any point on the circle
-    val d = 1 + hypot(tx, ty)
+    val d = 1 + tx*tx + ty*ty
     // S = stereographic image of T on the sphere
     val sx = 2*tx/d
     val sy = 2*ty/d
@@ -427,21 +435,26 @@ private fun circle2pole(circle: Circle): Vector4 {
     // parameter of the pole on the line thru the circle.center and the sphere's north
     // pole = k*C + (1 - k)*N
     val k = (1 - sz)/(x*sx + y*sy - sz) // P lies on the tangent plane at S <=> PS is perp. to OS
-    return doubleArrayOf(k*x, k*y, 1 - k, 1.0).map { it.toFloat() }.toFloatArray()
+    val px = k*x * sphereRadius
+    val py = k*y * sphereRadius
+    val pz = (1 - k) * sphereRadius
+    return floatArrayOf(px, py, pz, 1f).also {
+        Log.i(ProjectiveCircles.TAG, "($x0, $y0), r=${circle.radius}; R = $sphereRadius\t-> ${it.showAsV3()}")
+    }
 }
 
 // NOTE: inlined for performance
-private fun pole2circle(pole: Vector4): FloatArray {
+private fun pole2circle(pole: Vector4, sphereRadius: Float = 1f): FloatArray {
     val (wx,wy,wz,w) = pole
-    val x = wx/w
-    val y = wy/w
-    val z = wz/w
+    val x = wx/w/sphereRadius
+    val y = wy/w/sphereRadius
+    val z = wz/w/sphereRadius
     val nz = 1 - z
     // st. proj. pole->center
-    val cx = x/nz
-    val cy = y/nz
+    val cx = x/nz * sphereRadius
+    val cy = y/nz * sphereRadius
     val op2 = x*x + y*y + z*z // op2 > 1 for *real* circles
-    val r = sqrt(op2 - 1)/abs(nz) // sqrt(op2-1) = segment of tangent
+    val r = sqrt(op2 - 1)/abs(nz) * sphereRadius // sqrt(op2-1) = segment of tangent
     return floatArrayOf(cx, cy, r)
 }
 
@@ -451,8 +464,8 @@ private fun pole2matrix(pole: Vector4): Matrix44 {
     val x = wx/w
     val y = wy/w
     val z = wz/w
-    val a = sqrt(x*x + y*y + z*z)
-    val a2 = a*a
+    val a2 = x*x + y*y + z*z
+    val a = sqrt(a2)
     val th = -atan2(z, x)
     val phi = -atan2(y, hypot(x, z))
     // NOTE: transposed column-row order
@@ -474,11 +487,12 @@ private fun pole2matrix(pole: Vector4): Matrix44 {
         0f,     0f,     1 - a2, 0f,
         -2*a,   0f,     0f,     -a2 - 1
     )
+    Log.i(ProjectiveCircles.TAG, "${pole.showAsCircle()};\ta=$a, th=$th, phi=$phi")
     return listOf(
         Ry.inverse(), Rz.inverse(), M, Rz, Ry
-    ).map { Log.i(ProjectiveCircles.TAG, it.showAsM44()) ; it }
+    ).map { /*Log.i(ProjectiveCircles.TAG, it.showAsM44()) ;*/ it }
         .product()
-        .also { Log.i(ProjectiveCircles.TAG, "-> "+it.showAsM44()) } // bruh all are the same and det=0
+//        .also { Log.i(ProjectiveCircles.TAG, "-> "+it.showAsM44()) } // bruh all are the same and det=0
 }
 
 private fun I44(): Matrix44 =
@@ -504,18 +518,21 @@ private inline fun Vector4.setToDotProduct(m: Matrix44, v: Vector4) {
 private inline fun Matrix44.inverse(): Matrix44 =
     FloatArray(16).also { Matrix.invertM(it, 0, this, 0) }
 
+private fun FloatArray.showAsList(): String =
+    joinToString("\t", "(", ")") { "%.2f".format(it) }
+
 private fun Vector4.showAsV3(): String {
     val (x,y,z,w) = this
     return "(%.2f\t%.2f\t%.2f)".format(x/w, y/w, z/w)
 }
 
-private fun Vector4.showAsCircle(): String {
+private fun Pole.showAsCircle(): String {
     val (x, y, r) = pole2circle(this)
     return "[(%.2f, %.2f)\tR=%.2f]".format(x, y, r)
 }
 
 private fun Matrix44.showAsM44(): String =
-    (0..3).joinToString("\n", prefix = "((", postfix = "))") { rowIx ->
+    (0..3).joinToString("\n", prefix = "\n((", postfix = "))") { rowIx ->
         listOf(rowIx, rowIx+4, rowIx+8, rowIx+12).joinToString("\t") { i ->
             "%.2f".format(this[i])
         }

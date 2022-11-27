@@ -32,6 +32,7 @@ import com.pierbezuhoff.dodeca.databinding.ActivityDodecaViewBinding
 import com.pierbezuhoff.dodeca.models.DduFileService
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
+import com.pierbezuhoff.dodeca.ui.dodecaedit.DodecaEditActivity
 import com.pierbezuhoff.dodeca.ui.dodecaedit.MassEditorDialog
 import com.pierbezuhoff.dodeca.ui.help.HelpActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
@@ -153,11 +154,11 @@ class DodecaViewActivity : AppCompatActivity()
             R.id.next_step_button -> viewModel.requestOneStep()
             R.id.trace_button -> viewModel.toggleDrawTrace()
             R.id.clear_button -> viewModel.requestClear()
-//            R.id.edit_button -> {
-//                viewModel.requestSaveDdu() // NOTE: saving is async and might get gc-ed away (?!)
-//                val intent = Intent(this, DodecaEditActivity::class.java)
-//                startActivity(intent)
-//            }
+            R.id.edit_button -> {
+                viewModel.requestSaveDdu() // NOTE: saving is async and might get gc-ed away (?!)
+                val intent = Intent(this, DodecaEditActivity::class.java)
+                startActivity(intent)
+            }
             R.id.mass_editor_button -> {
                 viewModel.dduRepresentation.value?.let { dduR ->
                     viewModel.pause()
@@ -211,6 +212,7 @@ class DodecaViewActivity : AppCompatActivity()
     }
 
     private fun mkScreenshotFile(dir: File, name: String): File {
+        // TODO: add try catch block cuz crawler somehow caused an IOError no file found
         val similarFiles: Array<out File>? = dir
             .listFiles { file -> file.nameWithoutExtension.startsWith(name) }
         val similar = similarFiles?.map { it.nameWithoutExtension } ?: emptyList()

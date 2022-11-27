@@ -661,7 +661,7 @@ class CircleAdapter(
     companion object {
         const val TAG: String = "CircleAdapter"
         private const val ROW_LEFT_MARGIN = 8 //40
-        internal const val HIDE_RULES = true
+        internal const val HIDE_RULES = false
     }
 }
 
