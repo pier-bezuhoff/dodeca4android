@@ -31,6 +31,9 @@ open class Circle(var center: Complex, var radius: Double) {
     fun copy(newCenter: Complex? = null, newRadius: Double? = null): Circle =
         Circle(newCenter ?: center, newRadius ?: radius)
 
+    override fun toString(): String =
+        "(%.4f,\t%.4f),\tr=%.4f".format(x, y, radius)
+
     /* Inverts [this] with respect to [circle] */
     open fun inverted(circle: Circle): Circle {
         val (c, r) = circle

@@ -8,6 +8,7 @@ buildscript {
         anko_version = '0.10.7'
         permission_dispatcher_version = '4.9.2'
         kotlin_coroutines_version = '1.6.1'
+        multik_version = '0.2.0'
     }
     repositories {
         google()

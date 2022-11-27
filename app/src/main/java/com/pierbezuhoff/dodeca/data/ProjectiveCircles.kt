@@ -10,7 +10,8 @@ import android.graphics.SweepGradient
 import android.opengl.Matrix
 import android.util.Log
 import android.util.SparseArray
-import com.pierbezuhoff.dodeca.utils.asFF
+import com.pierbezuhoff.dodeca.utils.component1
+import com.pierbezuhoff.dodeca.utils.component2
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -35,11 +36,12 @@ typealias Vector4 = FloatArray
 typealias Matrix44 = FloatArray
 typealias Pole = Vector4
 
-// BUG: most radii are 0-d and NaN-d, all non I rules are 0 4x4
+private const val SPHERE_RADIUS = 10_000.0
 
-// NOTE: maybe use nd4j for performance (>200MB), also try deprecated Matrix4f
+// NOTE: Float matrices/arrays are indeed too inacurate for proj operations
+//
+// NOTE: maybe use nd4j (>200MB) or ejml (seems to be lighter and also optimized
 // https://github.com/deeplearning4j/deeplearning4j/tree/master/nd4j
-// NOTE: some ddu may diverge because of Float-s (?)
 internal class ProjectiveCircles(
     figures: List<CircleFigure>,
     private val paint: Paint
@@ -103,6 +105,12 @@ internal class ProjectiveCircles(
         }
 
     init {
+        // TMP
+        val c = Circle(500.0, 500.0, 5.0)
+        val p = circle2pole(c)
+        val (x,y,r) = pole2circle(p)
+        Log.i(TAG, "(500, 500), r=5 ->\n${p.showAsV3()} -> \n($x, $y), r=$r")
+
         val symbolicRules = figures.map {
             val r = it.rule?.trimStart('n') ?: ""
             r.reversed().map { c -> c.digitToInt() }
@@ -150,11 +158,12 @@ internal class ProjectiveCircles(
         applyMatrices()
         val good = figures.all { f ->
             val (x,y,r) = pole2circle(circle2pole(f))
+            Log.i(TAG, "$f\t-> ($x, $y), r=$r")
             listOf(f.x to x, f.y to y, f.radius to r).all { (v0, v) ->
-                abs(v - v0) < 1e-4
+                abs(v - v0) < 1e-2
             }
         }
-        assert(good) { "p2c != c2p.inv" }
+        assert(good) { "!id" }
 //        figures.forEachIndexed { i, f ->
 //            xs[i] = f.center.real.toFloat()
 //            ys[i] = f.center.imaginary.toFloat()
@@ -415,16 +424,16 @@ internal class ProjectiveCircles(
 
 }
 
-// sphere: (0,0,0), R=1
+// sphere: (0,0,0), R=1 // MAYBE: R=~1000 is better for accuracy
 // proj from the north pole (0,0,1)
 // onto plane z=0
 // for linear (projective) functions: f(R, x) = R * f(1, x/R)
-private fun circle2pole(circle: Circle, sphereRadius: Float = 1f): Vector4 {
-    val (x0, y0) = circle.center.asFF()
+private fun circle2pole(circle: Circle, sphereRadius: Double = SPHERE_RADIUS): Vector4 {
+    val (x0, y0) = circle.center
     val x = x0/sphereRadius
     val y = y0/sphereRadius
     val r = circle.radius/sphereRadius
-    val tx = x + circle.radius.toFloat()
+    val tx = x + r
     val ty = y
     // T = any point on the circle
     val d = 1 + tx*tx + ty*ty
@@ -438,24 +447,25 @@ private fun circle2pole(circle: Circle, sphereRadius: Float = 1f): Vector4 {
     val px = k*x * sphereRadius
     val py = k*y * sphereRadius
     val pz = (1 - k) * sphereRadius
-    return floatArrayOf(px, py, pz, 1f).also {
-        Log.i(ProjectiveCircles.TAG, "($x0, $y0), r=${circle.radius}; R = $sphereRadius\t-> ${it.showAsV3()}")
-    }
+    return floatArrayOf(px.toFloat(), py.toFloat(), pz.toFloat(), 1f)
+//        .also {
+//        Log.i(ProjectiveCircles.TAG, "($x0, $y0), r=${circle.radius}; R = $sphereRadius\t-> ${it.showAsV3()}")
+//    }
 }
 
 // NOTE: inlined for performance
-private fun pole2circle(pole: Vector4, sphereRadius: Float = 1f): FloatArray {
+private fun pole2circle(pole: Vector4, sphereRadius: Double = SPHERE_RADIUS): FloatArray {
     val (wx,wy,wz,w) = pole
-    val x = wx/w/sphereRadius
-    val y = wy/w/sphereRadius
-    val z = wz/w/sphereRadius
+    val x = wx.toDouble()/w.toDouble()/sphereRadius
+    val y = wy.toDouble()/w.toDouble()/sphereRadius
+    val z = wz.toDouble()/w.toDouble()/sphereRadius
     val nz = 1 - z
     // st. proj. pole->center
     val cx = x/nz * sphereRadius
     val cy = y/nz * sphereRadius
     val op2 = x*x + y*y + z*z // op2 > 1 for *real* circles
     val r = sqrt(op2 - 1)/abs(nz) * sphereRadius // sqrt(op2-1) = segment of tangent
-    return floatArrayOf(cx, cy, r)
+    return floatArrayOf(cx.toFloat(), cy.toFloat(), r.toFloat())
 }
 
 // TODO: test it
