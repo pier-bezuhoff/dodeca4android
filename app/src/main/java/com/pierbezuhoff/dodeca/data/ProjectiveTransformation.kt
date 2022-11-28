@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.pierbezuhoff.dodeca.data
 
 import android.util.Log
@@ -22,7 +24,7 @@ import kotlin.math.sqrt
 typealias Vector4 = MultiArray<Double, D1>
 typealias Matrix44 = MultiArray<Double, D2>
 
-internal const val SPHERE_RADIUS = 1_000.0
+internal const val SPHERE_RADIUS = 100.0
 // sphere: (0,0,0), R=1 // MAYBE: R=~1000 is better for accuracy
 // proj from the north pole (0,0,1)
 // onto plane z=0
@@ -69,6 +71,7 @@ internal fun pole2circle(pole: Vector4, sphereRadius: Double = SPHERE_RADIUS): M
 }
 
 // assuming row-major ordered matrices
+@Suppress("LocalVariableName")
 internal fun pole2matrix(pole: Vector4): Matrix44 {
     val (wx,wy,wz,w) = pole
     val x = wx/w
@@ -78,41 +81,47 @@ internal fun pole2matrix(pole: Vector4): Matrix44 {
     val a = sqrt(a2)
     val th = -atan2(z, x)
     val phi = -atan2(y, hypot(x, z))
-    // NOTE: transposed column-row order
     val Ry = mkMatrix44(
-        cos(th),  0.0, sin(th), 0.0,
-        0.0,       1.0, 0.0,      0.0,
-        -sin(th), 0.0, cos(th), 0.0,
-        0.0,       0.0, 0.0,      1.0
+        cos(th),  0.0, -sin(th), 0.0,
+        0.0,  1.0, 0.0,0.0,
+        sin(th),  0.0, cos(th), 0.0,
+        0.0,  0.0, 0.0,1.0
     )
     val Rz = mkMatrix44(
-        cos(phi),  sin(phi), 0.0, 0.0,
-        -sin(phi), cos(phi), 0.0, 0.0,
-        0.0,        0.0,       1.0, 0.0,
-        0.0,        0.0,       0.0, 1.0
+        cos(phi), -sin(phi), 0.0, 0.0,
+        sin(phi),  cos(phi), 0.0, 0.0,
+        0.0,0.0,    1.0, 0.0,
+        0.0,0.0,    0.0, 1.0
     )
-    val M = mkMatrix44(
-        a2 + 1, 0.0,     0.0,     2*a,
-        0.0,     1 - a2, 0.0,     0.0,
-        0.0,     0.0,     1 - a2, 0.0,
-        -2*a,   0.0,     0.0,     -a2 - 1
-    )
+//    val M = mkMatrix44(
+//        a2 + 1, 0.0,    0.0,    -2*a,
+//        0.0,    1 - a2, 0.0,    0.0,
+//        0.0,    0.0,    1 - a2, 0.0,
+//        2*a,    0.0,    0.0,    -a2 - 1
+//    )
     val k = SPHERE_RADIUS
-    val S = mkMatrix44(
-        k, 0.0, 0.0, 0.0,
-        0.0, k, 0.0, 0.0,
-        0.0, 0.0, k, 0.0,
-        0.0, 0.0, 0.0, 1.0
-    )
+//    val S = mkMatrix44( // uniform scaling
+//        k,       0.0, 0.0, 0.0,
+//        0.0,     k,   0.0, 0.0,
+//        0.0, 0.0,     k,   0.0,
+//        0.0, 0.0, 0.0, 1.0
+//    )
+    val SMSinv = mkMatrix44(
+        a2 + 1, 0.0,    0.0,    -2*a*k,
+        0.0,    1 - a2, 0.0,    0.0,
+        0.0,    0.0,    1 - a2, 0.0,
+        2*a/k,    0.0,    0.0,    -a2 - 1
+    ) // S perp R_ => res = Ry.inv * Rz.inv * SMSinv * Rz * Ry
     Log.i(TAG, "${pole.showAsCircle()};\ta=$a, th=$th, phi=$phi")
     return listOf(
-        S, Ry.inverse(), Rz.inverse(), M, Rz, Ry, S.inverse()
-    ).map { /*Log.i(TAG, it.showAsM44()) ;*/ it }
+        Ry.inverse(), Rz.inverse(), SMSinv, Rz, Ry
+    )//.map { Log.i(TAG, "*" + it.showAsM44()) ; it }
         .product()
-        .also { Log.i(TAG, "-> "+it.showAsM44()) }
+        .also { Log.i(TAG, "---> "+it.showAsM44()) }
 }
 
 
+// NOTE: multik stores vectors as columns, generally uses row-colum order
 // multik helpers:
 
 internal fun I44(): Matrix44 =
@@ -136,13 +145,10 @@ internal inline fun mmult(a: Matrix44, b: Matrix44): Matrix44 =
 internal inline fun vmult(a: Matrix44, v: Vector4): Vector4 =
     mk.linalg.dot(a, v)
 
-internal fun Iterable<Matrix44>.product() : Matrix44 {
-    val result = I44()
+internal fun Iterable<Matrix44>.product() : Matrix44 =
     fold(I44()) { a, b ->
         mk.linalg.dot(a, b)
     }
-    return result
-}
 
 internal inline fun Matrix44.inverse(): Matrix44 =
     mk.linalg.inv(this)

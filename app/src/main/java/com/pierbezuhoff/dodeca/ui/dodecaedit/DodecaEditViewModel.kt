@@ -53,6 +53,8 @@ class DodecaEditViewModel(
 
     private val threshold: Double = 25.0 // TODO: adjust
 
+    private var oldForceRedraw: Boolean? = null // original redraw trace on move value
+
     val gestureDetector: DodecaGestureDetector = DodecaGestureDetector.get(context)
 
     init {
@@ -319,6 +321,21 @@ class DodecaEditViewModel(
 
     private fun updateDduAttributesFrom(dduRepresentation: DduRepresentation) {
         _updating.postValue(dduRepresentation.updating)
+    }
+
+    fun overwriteForceRedraw() {
+        optionsManager.run {
+            oldForceRedraw = values.redrawTraceOnMove
+            set(options.redrawTraceOnMove, true)
+        }
+    }
+
+    fun restoreForceRedraw() {
+        optionsManager.run {
+            oldForceRedraw?.let { old ->
+                set(options.redrawTraceOnMove, old)
+            }
+        }
     }
 
     companion object {

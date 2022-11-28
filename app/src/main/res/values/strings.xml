@@ -37,6 +37,7 @@
     <string name="multiselect_mode_button_title">Go into Multi-selection Mode</string>
     <string name="show_everything_button_title">Show/hide invisible circles</string>
     <string name="edit_circles_button_title">Edit circles</string>
+    <string name="angles_button_title">Change angular velocities</string>
     <string name="ellipsis" translatable="false">something</string>
 
     <!-- Toasts -->
@@ -205,7 +206,7 @@
     <string name="background_color">Background color</string>
 
     <!-- Adjust angles dialog -->
-    <string name="adjust_angles_dialog_message">Adjust engines\' angles</string>
+    <string name="adjust_angles_dialog_message">Adjust engines\' angles (angular velocities)</string>
     <string name="adjust_angles_dialog_edit">Apply</string>
     <string name="adjust_angles_dialog_cancel">Cancel</string>
     <string name="angle1_title">Rank 0 engine\'s angle will be multiplied by %d/%d</string>

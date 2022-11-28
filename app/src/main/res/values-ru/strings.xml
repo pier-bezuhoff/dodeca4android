@@ -162,7 +162,7 @@
     <string name="multiselect_mode_button_title">Режим выбора и изменения окружностей</string>
     <string name="show_everything_button_title">Показать/скрыть невидимые окружности</string>
     <string name="edit_circles_button_title">Редактировать окружности</string>
-    <string name="adjust_angles_dialog_message">Изменить углы двигателей</string>
+    <string name="adjust_angles_dialog_message">Изменить углы двигателей (угловую скорость)</string>
     <string name="adjust_angles_dialog_edit">Применить</string>
     <string name="adjust_angles_dialog_cancel">Отмена</string>
     <string name="angle1_title">Угол двигателя ранга 0 будет умножен на %d/%d</string>
@@ -173,4 +173,5 @@
     <string name="background_color">Цвет фона</string>
     <string name="mass_editor_button_title">Редактор окружностей</string>
     <string name="mass_editor_dialog_recolor_everything">Сдвинуть цветовую гамму</string>
+    <string name="angles_button_title">Изменить угловые скорости</string>
 </resources>

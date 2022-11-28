@@ -96,6 +96,7 @@ class DodecaEditActivity : AppCompatActivity()
         uri?.let { readUriWithPermissionCheck(it) } ?: viewModel.loadInitialDdu()
         dodeca_edit_view.inheritLifecycleOf(this)
         dodeca_edit_view.setLayerType(View.LAYER_TYPE_SOFTWARE, null) // makes dashed lines visible, but maybe(?) slower
+        viewModel.overwriteForceRedraw()
     }
 
     private fun setupWindow() {
@@ -154,6 +155,7 @@ class DodecaEditActivity : AppCompatActivity()
             }
             R.id.done_button -> {
                 viewModel.requestSaveDdu() // NOTE: saving is async and might get gc-ed away (?!)
+                viewModel.restoreForceRedraw()
                 val intent = Intent(this, DodecaViewActivity::class.java)
 //                viewModel.dduRepresentation.value?.ddu?.file?.let { dduFile ->
 //                    intent.putExtra("ddu_uri", Uri.fromFile(dduFile))
@@ -329,6 +331,12 @@ class DodecaEditActivity : AppCompatActivity()
             isCancelable = false
         }.show()
     }
+
+    override fun onDestroy() {
+        viewModel.restoreForceRedraw()
+        super.onDestroy()
+    }
+
     companion object {
         const val TAG = "DodecaEditActivity"
         private const val IMMERSIVE_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY

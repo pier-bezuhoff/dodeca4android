@@ -34,9 +34,9 @@ interface SuspendableCircleGroup : CircleGroup {
 }
 
 fun CircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): CircleGroup =
-//    PrimitiveCircles(circleFigures, defaultPaint)
-    ProjectiveCircles(circleFigures, defaultPaint)
+    PrimitiveCircles(circleFigures, defaultPaint)
+//    ProjectiveCircles(circleFigures, defaultPaint)
 
 fun SuspendableCircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): SuspendableCircleGroup =
-//    PrimitiveCircles(circleFigures, defaultPaint)
-    ProjectiveCircles(circleFigures, defaultPaint)
+    PrimitiveCircles(circleFigures, defaultPaint)
+//    ProjectiveCircles(circleFigures, defaultPaint)

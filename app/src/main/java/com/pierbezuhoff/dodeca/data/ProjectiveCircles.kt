@@ -83,7 +83,7 @@ internal class ProjectiveCircles(
             applyAllMatrices()
             return (0 until size).map { i ->
                 val (color, fill, rule, borderColor) = attrs[i]
-                CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), color, fill, rule, borderColor)
+                CircleFigure(xs[i], ys[i], rs[i], color, fill, rule, borderColor)
             }
         }
 
@@ -133,14 +133,14 @@ internal class ProjectiveCircles(
         rules = ruleBlueprints.map { it.map { i -> parts[i] }.product() }.toTypedArray()
         cumulativeRules = rules.map { I44() }.toTypedArray()
         applyMatrices()
-//        val good = figures.all { f ->
-//            val (x,y,r) = pole2circle(circle2pole(f))
+        val good = figures.all { f -> // TMP
+            val (x,y,r) = pole2circle(circle2pole(f))
 //            Log.i(TAG, "$f\t-> ($x, $y), r=$r")
-//            listOf(f.x to x, f.y to y, f.radius to r).all { (v0, v) ->
-//                abs(v - v0) < 1e-8
-//            }
-//        }
-//        assert(good) { "!id" }
+            listOf(f.x to x, f.y to y, f.radius to r).all { (v0, v) ->
+                abs(v - v0) < 1e-8
+            }
+        }
+        assert(good) { "!id" }
         figures.forEachIndexed { i, f ->
             xs[i] = f.x
             ys[i] = f.y
@@ -208,7 +208,7 @@ internal class ProjectiveCircles(
     override fun get(i: Int): CircleFigure {
         applyAllMatrices()
         val (color, fill, rule, borderColor) = attrs[i]
-        return CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), color, fill, rule, borderColor)
+        return CircleFigure(xs[i], ys[i], rs[i], color, fill, rule, borderColor)
     }
 
     override fun set(i: Int, figure: CircleFigure) {
@@ -238,7 +238,7 @@ internal class ProjectiveCircles(
     }
 
     override fun update(reverse: Boolean) =
-        Unit//_update(reverse) // TMP
+        _update(reverse)
 
     private inline fun _update(reverse: Boolean) {
         if (reverse)
