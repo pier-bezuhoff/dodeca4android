@@ -22,6 +22,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/edit_button_title}"
+
+                android:visibility="gone"
                 />
         <ImageButton
                 android:id="@+id/mass_editor_button"
@@ -32,8 +34,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/mass_editor_button_title}"
-
-                android:visibility="gone"
                 />
         <ImageButton
                 android:id="@+id/trace_button"

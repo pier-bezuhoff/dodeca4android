@@ -2,7 +2,6 @@
 
 package com.pierbezuhoff.dodeca.data
 
-import android.util.Log
 import com.pierbezuhoff.dodeca.utils.component1
 import com.pierbezuhoff.dodeca.utils.component2
 import org.jetbrains.kotlinx.multik.api.identity
@@ -14,6 +13,7 @@ import org.jetbrains.kotlinx.multik.ndarray.data.D1
 import org.jetbrains.kotlinx.multik.ndarray.data.D2
 import org.jetbrains.kotlinx.multik.ndarray.data.MultiArray
 import org.jetbrains.kotlinx.multik.ndarray.data.get
+import org.jetbrains.kotlinx.multik.ndarray.operations.map
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -24,13 +24,13 @@ import kotlin.math.sqrt
 typealias Vector4 = MultiArray<Double, D1>
 typealias Matrix44 = MultiArray<Double, D2>
 
-internal const val SPHERE_RADIUS = 100.0
+internal const val SPHERE_RADIUS = 1000.0
 // sphere: (0,0,0), R=1 // MAYBE: R=~1000 is better for accuracy
 // proj from the north pole (0,0,1)
 // onto plane z=0
 // for linear (projective) functions: f(R, x) = R * f(1, x/R)
 
-internal fun circle2pole(circle: Circle, sphereRadius: Double = SPHERE_RADIUS): Vector4 {
+fun circle2pole(circle: Circle, sphereRadius: Double = SPHERE_RADIUS): Vector4 {
     val (x0, y0) = circle.center
     val x = x0/sphereRadius
     val y = y0/sphereRadius
@@ -56,7 +56,7 @@ internal fun circle2pole(circle: Circle, sphereRadius: Double = SPHERE_RADIUS): 
 }
 
 // NOTE: inlined for performance
-internal fun pole2circle(pole: Vector4, sphereRadius: Double = SPHERE_RADIUS): MultiArray<Double, D1> {
+fun pole2circle(pole: Vector4, sphereRadius: Double = SPHERE_RADIUS): MultiArray<Double, D1> {
     val (wx,wy,wz,w) = pole
     val x = wx/w /sphereRadius
     val y = wy/w /sphereRadius
@@ -72,8 +72,9 @@ internal fun pole2circle(pole: Vector4, sphereRadius: Double = SPHERE_RADIUS): M
 
 // assuming row-major ordered matrices
 @Suppress("LocalVariableName")
-internal fun pole2matrix(pole: Vector4): Matrix44 {
-    val (wx,wy,wz,w) = pole
+fun pole2matrix(pole: Vector4): Matrix44 {
+    val (wx,wy,wz,w0) = pole
+    val w = w0 * SPHERE_RADIUS
     val x = wx/w
     val y = wy/w
     val z = wz/w
@@ -82,16 +83,16 @@ internal fun pole2matrix(pole: Vector4): Matrix44 {
     val th = -atan2(z, x)
     val phi = -atan2(y, hypot(x, z))
     val Ry = mkMatrix44(
-        cos(th),  0.0, -sin(th), 0.0,
-        0.0,  1.0, 0.0,0.0,
-        sin(th),  0.0, cos(th), 0.0,
-        0.0,  0.0, 0.0,1.0
+        cos(th),  0.0,   -sin(th), 0.0,
+        0.0,  1.0, 0.0,   0.0,
+        sin(th),  0.0,    cos(th), 0.0,
+        0.0,  0.0, 0.0,   1.0
     )
     val Rz = mkMatrix44(
         cos(phi), -sin(phi), 0.0, 0.0,
         sin(phi),  cos(phi), 0.0, 0.0,
-        0.0,0.0,    1.0, 0.0,
-        0.0,0.0,    0.0, 1.0
+        0.0, 0.0,   1.0, 0.0,
+        0.0, 0.0,   0.0, 1.0
     )
 //    val M = mkMatrix44(
 //        a2 + 1, 0.0,    0.0,    -2*a,
@@ -110,18 +111,20 @@ internal fun pole2matrix(pole: Vector4): Matrix44 {
         a2 + 1, 0.0,    0.0,    -2*a*k,
         0.0,    1 - a2, 0.0,    0.0,
         0.0,    0.0,    1 - a2, 0.0,
-        2*a/k,    0.0,    0.0,    -a2 - 1
+        2*a/k,  0.0,    0.0,    -a2 - 1
     ) // S perp R_ => res = Ry.inv * Rz.inv * SMSinv * Rz * Ry
-    Log.i(TAG, "${pole.showAsCircle()};\ta=$a, th=$th, phi=$phi")
-    return listOf(
+//    Log.i(TAG, "${pole.showAsCircle()};\ta=$a, th=$th, phi=$phi")
+    val result = listOf(
         Ry.inverse(), Rz.inverse(), SMSinv, Rz, Ry
     )//.map { Log.i(TAG, "*" + it.showAsM44()) ; it }
         .product()
-        .also { Log.i(TAG, "---> "+it.showAsM44()) }
+//        .also { Log.i(TAG, "---> "+it.showAsM44()) }
+    val det = result.det()
+    return result.map { it/det  } // scaling in order to not lose accuracy
 }
 
 
-// NOTE: multik stores vectors as columns, generally uses row-colum order
+// NOTE: multik stores vectors as columns, generally uses row-column order
 // multik helpers:
 
 internal fun I44(): Matrix44 =
@@ -152,6 +155,17 @@ internal fun Iterable<Matrix44>.product() : Matrix44 =
 
 internal inline fun Matrix44.inverse(): Matrix44 =
     mk.linalg.inv(this)
+
+// bruh, why do i have to do this
+internal fun Matrix44.det(): Double {
+    val m = this
+    return (
+        +m[0,0]*(m[1,1]*m[2,2]*m[3,3] + m[1,2]*m[2,3]*m[3,1] + m[1,3]*m[2,1]*m[3,2] - m[1,3]*m[2,2]*m[3,1] - m[1,2]*m[2,1]*m[3,3] - m[1,1]*m[2,3]*m[3,2])
+        -m[1,0]*(m[0,1]*m[2,2]*m[3,3] + m[0,2]*m[2,3]*m[3,1] + m[0,3]*m[2,1]*m[3,2] - m[0,3]*m[2,2]*m[3,1] - m[0,2]*m[2,1]*m[3,3] - m[0,1]*m[2,3]*m[3,2])
+        +m[2,0]*(m[0,1]*m[1,2]*m[3,3] + m[0,2]*m[1,3]*m[3,1] + m[0,3]*m[1,1]*m[3,2] - m[0,3]*m[1,2]*m[3,1] - m[0,2]*m[1,1]*m[3,3] - m[0,1]*m[1,3]*m[3,2])
+        -m[3,0]*(m[0,1]*m[1,2]*m[2,3] + m[0,2]*m[1,3]*m[2,1] + m[0,3]*m[1,1]*m[2,2] - m[0,3]*m[1,2]*m[2,1] - m[0,2]*m[1,1]*m[2,3] - m[0,1]*m[1,3]*m[2,2])
+        )
+}
 
 internal operator fun Vector4.component1(): Double = this[0]
 internal operator fun Vector4.component2(): Double = this[1]

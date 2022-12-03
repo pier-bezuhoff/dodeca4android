@@ -133,19 +133,29 @@ internal class ProjectiveCircles(
         rules = ruleBlueprints.map { it.map { i -> parts[i] }.product() }.toTypedArray()
         cumulativeRules = rules.map { I44() }.toTypedArray()
         applyMatrices()
-        val good = figures.all { f -> // TMP
-            val (x,y,r) = pole2circle(circle2pole(f))
-//            Log.i(TAG, "$f\t-> ($x, $y), r=$r")
-            listOf(f.x to x, f.y to y, f.radius to r).all { (v0, v) ->
-                abs(v - v0) < 1e-8
-            }
-        }
-        assert(good) { "!id" }
-        figures.forEachIndexed { i, f ->
-            xs[i] = f.x
-            ys[i] = f.y
-            rs[i] = f.radius
-        }
+//        val good = figures.all { f -> // TMP
+//            val (x,y,r) = pole2circle(circle2pole(f))
+////            Log.i(TAG, "$f\t-> ($x, $y), r=$r")
+//            listOf(f.x to x, f.y to y, f.radius to r).all { (v0, v) ->
+//                abs(v - v0) < 1e-8
+//            }
+//        }
+//        assert(good) { "!id" }
+//        figures.forEachIndexed { i, f ->
+//            xs[i] = f.x
+//            ys[i] = f.y
+//            rs[i] = f.radius
+//        }
+    }
+
+    private fun testRule(cIx: Ix) {
+        applyAllMatrices()
+        val c = Circle(xs[cIx], ys[cIx], rs[cIx])
+        val rIx = rulesForCircles[cIx]
+        val r = uniqueRules[rIx]
+        for (ix in r)
+            // invert
+        TODO()
     }
 
     private inline fun straightUpdate() {
@@ -171,6 +181,7 @@ internal class ProjectiveCircles(
             poles[cIx] = vmult(cumulativeRules[rulesForCircles[cIx]], initialPoles[cIx])
 //            val (cx, cy, r) = pole2circle(pole) // inlined to escape type conversion etc.
             val (wx,wy,wz,w0) = poles[cIx]
+            Log.i(TAG, "#$cIx: ($wx\t$wy\t$wz\t$w0)")
             val w = w0 * SPHERE_RADIUS
             val x = wx/w
             val y = wy/w
@@ -179,7 +190,7 @@ internal class ProjectiveCircles(
             xs[cIx] = x/nz * SPHERE_RADIUS
             ys[cIx] = y/nz * SPHERE_RADIUS
             rs[cIx] = sqrt(x*x + y*y + z*z - 1)/abs(nz) * SPHERE_RADIUS
-//            Log.i(TAG, "#$cIx: ${poles[cIx].showAsCircle()}")
+            Log.i(TAG, "#$cIx: (${xs[cIx]}, ${ys[cIx]}), r=${rs[cIx]}")
         }
         rules.forEachIndexed { i, m ->
 //            Log.i(TAG, "rule '${uniqueRules[i].joinToString("")}':\n${m.showAsM44()}")
