@@ -18,6 +18,7 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -119,8 +120,13 @@ fun pole2matrix(pole: Vector4): Matrix44 {
     )//.map { Log.i(TAG, "*" + it.showAsM44()) ; it }
         .product()
 //        .also { Log.i(TAG, "---> "+it.showAsM44()) }
-    val det = result.det()
-    return result.map { it/det  } // scaling in order to not lose accuracy
+    val descale = 1/abs(result.det()).pow(0.25)
+    // scaling in order to not lose accuracy
+    return result.map { it*descale }
+//        .also {
+//            Log.i(TAG, "descale: $descale\n =>${it.showAsM44()}")
+//            assert(abs(abs(it.det()) - 1) < 1e-4) { "det=1" }
+//        }
 }
 
 
@@ -160,10 +166,10 @@ internal inline fun Matrix44.inverse(): Matrix44 =
 internal fun Matrix44.det(): Double {
     val m = this
     return (
-        +m[0,0]*(m[1,1]*m[2,2]*m[3,3] + m[1,2]*m[2,3]*m[3,1] + m[1,3]*m[2,1]*m[3,2] - m[1,3]*m[2,2]*m[3,1] - m[1,2]*m[2,1]*m[3,3] - m[1,1]*m[2,3]*m[3,2])
-        -m[1,0]*(m[0,1]*m[2,2]*m[3,3] + m[0,2]*m[2,3]*m[3,1] + m[0,3]*m[2,1]*m[3,2] - m[0,3]*m[2,2]*m[3,1] - m[0,2]*m[2,1]*m[3,3] - m[0,1]*m[2,3]*m[3,2])
-        +m[2,0]*(m[0,1]*m[1,2]*m[3,3] + m[0,2]*m[1,3]*m[3,1] + m[0,3]*m[1,1]*m[3,2] - m[0,3]*m[1,2]*m[3,1] - m[0,2]*m[1,1]*m[3,3] - m[0,1]*m[1,3]*m[3,2])
-        -m[3,0]*(m[0,1]*m[1,2]*m[2,3] + m[0,2]*m[1,3]*m[2,1] + m[0,3]*m[1,1]*m[2,2] - m[0,3]*m[1,2]*m[2,1] - m[0,2]*m[1,1]*m[2,3] - m[0,1]*m[1,3]*m[2,2])
+        + m[0,0] * (m[1,1]*m[2,2]*m[3,3] + m[1,2]*m[2,3]*m[3,1] + m[1,3]*m[2,1]*m[3,2] - m[1,3]*m[2,2]*m[3,1] - m[1,2]*m[2,1]*m[3,3] - m[1,1]*m[2,3]*m[3,2])
+        - m[1,0] * (m[0,1]*m[2,2]*m[3,3] + m[0,2]*m[2,3]*m[3,1] + m[0,3]*m[2,1]*m[3,2] - m[0,3]*m[2,2]*m[3,1] - m[0,2]*m[2,1]*m[3,3] - m[0,1]*m[2,3]*m[3,2])
+        + m[2,0] * (m[0,1]*m[1,2]*m[3,3] + m[0,2]*m[1,3]*m[3,1] + m[0,3]*m[1,1]*m[3,2] - m[0,3]*m[1,2]*m[3,1] - m[0,2]*m[1,1]*m[3,3] - m[0,1]*m[1,3]*m[3,2])
+        - m[3,0] * (m[0,1]*m[1,2]*m[2,3] + m[0,2]*m[1,3]*m[2,1] + m[0,3]*m[1,1]*m[2,2] - m[0,3]*m[1,2]*m[2,1] - m[0,2]*m[1,1]*m[2,3] - m[0,1]*m[1,3]*m[2,2])
         )
 }
 
