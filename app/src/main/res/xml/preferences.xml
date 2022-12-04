@@ -34,6 +34,21 @@
                 android:title="@string/skip_n_timeout_title"
                 android:summary="@string/skip_n_timeout_summary"
         />
+        <!-- NOTE: advanced only -->
+        <ListPreference
+                android:key="circlegroup_implementation"
+                android:defaultValue="@string/circlegroup_implementation"
+                android:entries="@array/circlegroup_implementations"
+                android:entryValues="@array/circlegroup_implementations"
+                android:title="Algorithm"
+                android:summary="Internal circles' inversion implementation"
+        />
+        <EditTextPreference
+                android:key="projective_sphere_radius"
+                android:defaultValue="@string/projective_sphere_radius"
+                android:title="R"
+                android:summary="Projective sphere radius"
+        />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_display_title">

@@ -9,6 +9,8 @@
     <string name="speed" translatable="false">1</string>
     <string name="skip_n" translatable="false">0</string>
     <string name="skip_n_timeout" translatable="false">60</string>
+    <string name="circlegroup_implementation" translatable="false">planar-sequential</string>
+    <string name="projective_sphere_radius" translatable="false">1000</string>
     <string name="canvas_factor" translatable="false">2</string>
     <bool name="show_stat">false</bool>
     <bool name="prefer_recent_ddu">true</bool>

@@ -89,4 +89,10 @@
         <item>600</item>
     </string-array>
 
+    <string-array name="circlegroup_implementations">
+        <item>planar-sequential</item>
+        <item>planar-sequential-rough</item>
+        <item>projective</item>
+    </string-array>
+
 </resources>

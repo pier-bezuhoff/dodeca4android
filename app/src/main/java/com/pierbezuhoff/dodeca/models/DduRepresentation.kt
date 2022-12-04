@@ -19,6 +19,7 @@ import com.pierbezuhoff.dodeca.data.DduOptionsChangeListener
 import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
+import com.pierbezuhoff.dodeca.data.mkCircleGroup
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Just
@@ -79,7 +80,8 @@ class DduRepresentation(
 
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
-    val circleGroup: SuspendableCircleGroup = SuspendableCircleGroup(ddu.circles, paint)
+    var circleGroup: SuspendableCircleGroup =
+        mkCircleGroup(optionValues.circleGroupImplementation, optionValues.projR, ddu.circles, paint)
     override var updating: Boolean = DEFAULT_UPDATING
         set(value) { field = value; changeUpdating(value) }
     override var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
@@ -168,6 +170,16 @@ class DduRepresentation(
                 scroll(dx, dy)
             }
         }
+    }
+
+    fun updateCircleGroup() {
+        val figures = circleGroup.figures
+        val defaultPaint = circleGroup.defaultPaint
+        circleGroup = mkCircleGroup(
+            optionValues.circleGroupImplementation,
+            optionValues.projR,
+            figures, defaultPaint
+        )
     }
 
     fun oneStep() {

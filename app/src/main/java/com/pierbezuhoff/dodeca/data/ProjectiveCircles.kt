@@ -27,7 +27,8 @@ typealias Pole = Vector4
 // MAYBE: use nd4j (>200MB) or ejml (seems to be lighter and also optimized
 internal class ProjectiveCircles(
     figures: List<CircleFigure>,
-    private val paint: Paint
+    private val paint: Paint,
+    private val sphereRadius: Double
 ) : SuspendableCircleGroup {
     // static
     private val initialPoles: List<Pole> // poles of all initial circles
@@ -121,13 +122,13 @@ internal class ProjectiveCircles(
         Log.i(TAG, "parts: $partsString")
 
         // calc coordinate repr
-        initialPoles = figures.map { circle2pole(it) }
+        initialPoles = figures.map { circle2pole(it, sphereRadius) }
         poles = initialPoles.map { it.copy() }.toTypedArray()
         val pivotIndices: Set<Ix> = uniqueRules.flatten().toSet()
         val pivots = mutableMapOf<Ix, Matrix44>()
         for (i in pivotIndices) {
-            val pole = circle2pole(figures[i])
-            pivots[i] = pole2matrix(pole)
+            val pole = circle2pole(figures[i], sphereRadius)
+            pivots[i] = pole2matrix(pole, sphereRadius)
         }
         parts = symbolicParts.map { it.map { i -> pivots[i]!! }.product() }.toTypedArray() // index out of bounds error
         rules = ruleBlueprints.map { it.map { i -> parts[i] }.product() }.toTypedArray()
@@ -182,14 +183,14 @@ internal class ProjectiveCircles(
 //            val (cx, cy, r) = pole2circle(pole) // inlined to escape type conversion etc.
             val (wx,wy,wz,w0) = poles[cIx]
 //            Log.i(TAG, "#$cIx: ($wx\t$wy\t$wz\t$w0)")
-            val w = w0 * SPHERE_RADIUS
+            val w = w0 * sphereRadius
             val x = wx/w
             val y = wy/w
             val z = wz/w
             val nz = 1 - z
-            xs[cIx] = x/nz * SPHERE_RADIUS
-            ys[cIx] = y/nz * SPHERE_RADIUS
-            rs[cIx] = sqrt(x*x + y*y + z*z - 1)/abs(nz) * SPHERE_RADIUS
+            xs[cIx] = x/nz * sphereRadius
+            ys[cIx] = y/nz * sphereRadius
+            rs[cIx] = sqrt(x*x + y*y + z*z - 1)/abs(nz) * sphereRadius
 //            Log.i(TAG, "#$cIx: (${xs[cIx]}, ${ys[cIx]}), r=${rs[cIx]}")
         }
         rules.forEachIndexed { i, m ->
@@ -205,14 +206,14 @@ internal class ProjectiveCircles(
         poles.forEachIndexed { cIx, pole ->
 //            val (cx, cy, r) = pole2circle(pole) // inlined to escape type conversion etc.
             val (wx,wy,wz,w0) = pole
-            val w = w0 * SPHERE_RADIUS
+            val w = w0 * sphereRadius
             val x = wx/w
             val y = wy/w
             val z = wz/w
             val nz = 1 - z
-            xs[cIx] = x/nz * SPHERE_RADIUS
-            ys[cIx] = y/nz * SPHERE_RADIUS
-            rs[cIx] = sqrt(x*x + y*y + z*z - 1)/abs(nz) * SPHERE_RADIUS
+            xs[cIx] = x/nz * sphereRadius
+            ys[cIx] = y/nz * sphereRadius
+            rs[cIx] = sqrt(x*x + y*y + z*z - 1)/abs(nz) * sphereRadius
         }
     }
 

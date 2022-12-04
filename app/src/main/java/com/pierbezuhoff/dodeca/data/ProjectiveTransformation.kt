@@ -25,13 +25,13 @@ import kotlin.math.sqrt
 typealias Vector4 = MultiArray<Double, D1>
 typealias Matrix44 = MultiArray<Double, D2>
 
-internal const val SPHERE_RADIUS = 1000.0
+//internal const val SPHERE_RADIUS = 1000.0
 // sphere: (0,0,0), R=1 // MAYBE: R=~1000 is better for accuracy
 // proj from the north pole (0,0,1)
 // onto plane z=0
 // for linear (projective) functions: f(R, x) = R * f(1, x/R)
 
-fun circle2pole(circle: Circle, sphereRadius: Double = SPHERE_RADIUS): Vector4 {
+fun circle2pole(circle: Circle, sphereRadius: Double): Vector4 {
     val (x0, y0) = circle.center
     val x = x0/sphereRadius
     val y = y0/sphereRadius
@@ -57,7 +57,7 @@ fun circle2pole(circle: Circle, sphereRadius: Double = SPHERE_RADIUS): Vector4 {
 }
 
 // NOTE: inlined for performance
-fun pole2circle(pole: Vector4, sphereRadius: Double = SPHERE_RADIUS): MultiArray<Double, D1> {
+fun pole2circle(pole: Vector4, sphereRadius: Double): MultiArray<Double, D1> {
     val (wx,wy,wz,w) = pole
     val x = wx/w /sphereRadius
     val y = wy/w /sphereRadius
@@ -73,9 +73,9 @@ fun pole2circle(pole: Vector4, sphereRadius: Double = SPHERE_RADIUS): MultiArray
 
 // assuming row-major ordered matrices
 @Suppress("LocalVariableName")
-fun pole2matrix(pole: Vector4): Matrix44 {
+fun pole2matrix(pole: Vector4, sphereRadius: Double): Matrix44 {
     val (wx,wy,wz,w0) = pole
-    val w = w0 * SPHERE_RADIUS
+    val w = w0 * sphereRadius
     val x = wx/w
     val y = wy/w
     val z = wz/w
@@ -101,7 +101,7 @@ fun pole2matrix(pole: Vector4): Matrix44 {
 //        0.0,    0.0,    1 - a2, 0.0,
 //        2*a,    0.0,    0.0,    -a2 - 1
 //    )
-    val k = SPHERE_RADIUS
+    val k = sphereRadius
 //    val S = mkMatrix44( // uniform scaling
 //        k,       0.0, 0.0, 0.0,
 //        0.0,     k,   0.0, 0.0,
@@ -187,7 +187,7 @@ internal fun Vector4.showAsV3(): String {
 }
 
 internal fun Pole.showAsCircle(): String {
-    val (x, y, r) = pole2circle(this)
+    val (x, y, r) = pole2circle(this, 1000.0)
     return "[(%.2f, %.2f)\tR=%.2f]".format(x, y, r)
 }
 

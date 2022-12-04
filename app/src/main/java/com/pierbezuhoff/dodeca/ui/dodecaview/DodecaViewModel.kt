@@ -345,7 +345,8 @@ class DodecaViewModel(
     fun applyInstantSettings(
         revertCurrentDdu: Boolean = false,
         revertAllDdus: Boolean = false,
-        discardAllPreviews: Boolean = false
+        discardAllPreviews: Boolean = false,
+        updateCircleGroup: Boolean = false
     ) {
         suspend fun revertCurrentDdu() {
             getDduFile()?.let { file: File ->
@@ -362,10 +363,19 @@ class DodecaViewModel(
         suspend fun discardAllPreviews() =
             dduFileRepository.dropAllPreviews()
 
+        fun updateCircleGroup() {
+            optionsManager.run {
+                fetch(options.circleGroupImplementation)
+                fetch(options.projR)
+            }
+            dduRepresentation.value?.updateCircleGroup()
+        }
+
         viewModelScope.launch {
             if (revertCurrentDdu) revertCurrentDdu()
             if (revertAllDdus) revertAllDdus()
             if (discardAllPreviews) discardAllPreviews()
+            if (updateCircleGroup) updateCircleGroup()
         }
     }
 

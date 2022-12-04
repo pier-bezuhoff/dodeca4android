@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity()
 
     companion object {
         private const val TAG = "MainActivity"
-        const val LIMITED_VERSION = true
+        const val LIMITED_VERSION = false
 
         private const val START_IN_EDITOR: Boolean = false
     }

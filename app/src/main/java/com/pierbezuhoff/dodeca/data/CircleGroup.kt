@@ -6,7 +6,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 
 // TODO: detach update <-&-> draw
-// also: remove show all circles cuz it's useless
 interface ImmutableCircleGroup {
     val defaultPaint: Paint
     val figures: List<CircleFigure>
@@ -33,10 +32,13 @@ interface SuspendableCircleGroup : CircleGroup {
         canvas: Canvas, shape: Shape = Shape.CIRCLE)
 }
 
-fun CircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): CircleGroup =
-//    PrimitiveCircles(circleFigures, defaultPaint)
-    ProjectiveCircles(circleFigures, defaultPaint)
-
-fun SuspendableCircleGroup(circleFigures: List<CircleFigure>, defaultPaint: Paint): SuspendableCircleGroup =
-//    PrimitiveCircles(circleFigures, defaultPaint)
-    ProjectiveCircles(circleFigures, defaultPaint)
+fun mkCircleGroup(
+    implName: String, projR: Float?,
+    circleFigures: List<CircleFigure>, defaultPaint: Paint
+): SuspendableCircleGroup =
+    when(implName) {
+        "planar-sequential" -> PrimitiveCircles(circleFigures, defaultPaint)
+        "planar-sequential-rough" -> RoughPrimitiveCircles(circleFigures, defaultPaint)
+        "projective" -> ProjectiveCircles(circleFigures, defaultPaint, projR!!.toDouble())
+        else -> throw IllegalArgumentException("Illegal implementation name: $implName")
+    }

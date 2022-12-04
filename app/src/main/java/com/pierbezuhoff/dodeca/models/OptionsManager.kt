@@ -42,6 +42,8 @@ class OptionsManager(context: Context) {
         val speed: Float by options.speed
         val skipN: Int by options.skipN
         val skipNTimeout: Int by options.skipNTimeout
+        val circleGroupImplementation: String by options.circleGroupImplementation
+        val projR: Float by options.projR
         val canvasFactor: Int by options.canvasFactor
         val showStat: Boolean by options.showStat
         val previewSize: Int by options.previewSize
@@ -76,6 +78,8 @@ class OptionsManager(context: Context) {
         val speed = ParsedFloatKeyOption("speed", R.string.speed, resources)
         val skipN = ParsedIntKeyOption("skip_n", R.string.skip_n, resources)
         val skipNTimeout = ParsedIntKeyOption("skip_n_timeout", R.string.skip_n_timeout, resources)
+        val circleGroupImplementation = ParsedKeyOption("circlegroup_implementation", R.string.circlegroup_implementation, resources) { this }
+        val projR = ParsedFloatKeyOption("projective_sphere_radius", R.string.projective_sphere_radius, resources)
         val canvasFactor = ParsedIntKeyOption("canvas_factor", R.string.canvas_factor, resources)
         val showStat = BooleanKeyOption("show_stat", R.bool.show_stat, resources)
         // buildPreview size in pixels, yet to be converted to dp

@@ -298,12 +298,13 @@ class DodecaViewActivity : AppCompatActivity()
 
     private fun onSettingsResult(resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
-            fun have(param: String): Boolean =
+            fun received(param: String): Boolean =
                 data?.getBooleanExtra(param, false) == true
             viewModel.applyInstantSettings(
-                revertCurrentDdu = have("default_ddu"),
-                revertAllDdus = have("default_ddus"),
-                discardAllPreviews = have("discard_previews")
+                revertCurrentDdu = received("default_ddu"),
+                revertAllDdus = received("default_ddus"),
+                discardAllPreviews = received("discard_previews"),
+                updateCircleGroup = received("update_circlegroup")
             )
         }
         optionsManager.fetchAll()

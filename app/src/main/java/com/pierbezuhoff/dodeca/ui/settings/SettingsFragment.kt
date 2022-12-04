@@ -52,6 +52,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
             hookChange(key) { addExtraResult("discard_previews") }
         }
         hookClick("support") { sendFeedback() }
+        setOf("circlegroup_implementation", "projective_sphere_radius").forEach { key ->
+            hookClick(key) { addExtraResult("update_circlegroup") }
+        }
         @Suppress("ConstantConditionIf")
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach { key ->
@@ -100,6 +103,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         private const val TAG: String = "SettingsFragment"
         // hidden in limited version
         private val ADVANCED_PREFERENCES = setOf(
+            "circlegroup_implementation",
+            "projective_sphere_radius",
 //            "show_all_circles",
             "autocenter_always",
             /*"show_centers",*/
