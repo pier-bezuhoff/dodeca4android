@@ -17,9 +17,9 @@ import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.DduAttributesHolder
 import com.pierbezuhoff.dodeca.data.DduOptionsChangeListener
 import com.pierbezuhoff.dodeca.data.Shape
-import com.pierbezuhoff.dodeca.data.SuspendableCircleGroup
+import com.pierbezuhoff.dodeca.data.circlegroup.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
-import com.pierbezuhoff.dodeca.data.mkCircleGroup
+import com.pierbezuhoff.dodeca.data.circlegroup.mkCircleGroup
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.Just

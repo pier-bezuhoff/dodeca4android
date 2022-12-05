@@ -1,26 +1,33 @@
 @file:Suppress("FunctionName")
 
-package com.pierbezuhoff.dodeca.data
+package com.pierbezuhoff.dodeca.data.circlegroup
 
 import android.graphics.Canvas
 import android.graphics.Paint
+import com.pierbezuhoff.dodeca.data.CircleFigure
+import com.pierbezuhoff.dodeca.data.Shape
+
+typealias Ix = Int // short for "Index"
+typealias Ixs = IntArray // indices
+
 
 // TODO: detach update <-&-> draw
 interface ImmutableCircleGroup {
     val defaultPaint: Paint
     val figures: List<CircleFigure>
-    operator fun get(i: Int): CircleFigure
+    operator fun get(i: Ix): CircleFigure
 }
 
 interface CircleGroup : ImmutableCircleGroup {
-    operator fun set(i: Int, figure: CircleFigure)
+    operator fun set(i: Ix, figure: CircleFigure)
     fun update(reverse: Boolean = false)
     fun updateTimes(times: Int, reverse: Boolean = false)
     fun draw(canvas: Canvas, shape: Shape = Shape.CIRCLE,)
     fun drawTimes(
         times: Int,
         reverse: Boolean = false,
-        canvas: Canvas, shape: Shape = Shape.CIRCLE)
+        canvas: Canvas, shape: Shape = Shape.CIRCLE
+    )
     fun drawOverlay(canvas: Canvas, selected: IntArray = intArrayOf())
 }
 
@@ -29,7 +36,8 @@ interface SuspendableCircleGroup : CircleGroup {
     suspend fun suspendableDrawTimes(
         times: Int,
         reverse: Boolean = false,
-        canvas: Canvas, shape: Shape = Shape.CIRCLE)
+        canvas: Canvas, shape: Shape = Shape.CIRCLE
+    )
 }
 
 fun mkCircleGroup(

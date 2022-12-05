@@ -1,4 +1,4 @@
-package com.pierbezuhoff.dodeca.data
+package com.pierbezuhoff.dodeca.data.circlegroup
 
 import android.graphics.Canvas
 import android.graphics.Color
@@ -6,31 +6,35 @@ import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.SweepGradient
 import android.util.SparseArray
+import com.pierbezuhoff.dodeca.data.CircleFigure
+import com.pierbezuhoff.dodeca.data.FigureAttributes
+import com.pierbezuhoff.dodeca.data.Shape
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 // NOTE: 32-bit Float numbers used instead, Triada.ddu diverges, though it's ~2 times faster
 // MAYBE: have float only for old_s
+// TODO: migrate to BaseCircleGroup somehow
 /* List<Circle> is represented as 3 FloatArray */
 @Suppress("NOTHING_TO_INLINE")
 internal class RoughPrimitiveCircles(
-    cs: List<CircleFigure>,
+    figures: List<CircleFigure>,
     private val paint: Paint
 ) : SuspendableCircleGroup {
-    private val size: Int = cs.size
-    private val xs: FloatArray = FloatArray(size) { cs[it].x.toFloat() }
-    private val ys: FloatArray = FloatArray(size) { cs[it].y.toFloat() }
-    private val rs: FloatArray = FloatArray(size) { cs[it].radius.toFloat() }
+    private val size: Int = figures.size
+    private val xs: FloatArray = FloatArray(size) { figures[it].x.toFloat() }
+    private val ys: FloatArray = FloatArray(size) { figures[it].y.toFloat() }
+    private val rs: FloatArray = FloatArray(size) { figures[it].radius.toFloat() }
     private var oldXs: FloatArray = xs // old_s are used for draw and as oldCircles in redraw
     private var oldYs: FloatArray = ys
     private var oldRs: FloatArray = rs
     private val attrs: Array<FigureAttributes> = Array(size) {
-        cs[it].run {
+        figures[it].run {
             FigureAttributes(color, fill, rule, borderColor)
         }
     }
-    private val rules: Array<IntArray> = Array(size) { cs[it].sequence }
+    private val rules: Array<IntArray> = Array(size) { figures[it].sequence }
     private var shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
     private val paints: Array<Paint> = attrs.map {
         Paint(paint).apply {

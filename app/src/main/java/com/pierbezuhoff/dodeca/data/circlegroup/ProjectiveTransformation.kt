@@ -1,7 +1,8 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
-package com.pierbezuhoff.dodeca.data
+package com.pierbezuhoff.dodeca.data.circlegroup
 
+import com.pierbezuhoff.dodeca.data.Circle
 import com.pierbezuhoff.dodeca.utils.component1
 import com.pierbezuhoff.dodeca.utils.component2
 import org.jetbrains.kotlinx.multik.api.identity

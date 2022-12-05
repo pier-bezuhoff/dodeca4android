@@ -5,7 +5,7 @@ import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.CircleGroup
+import com.pierbezuhoff.dodeca.data.circlegroup.CircleGroup
 import com.pierbezuhoff.dodeca.databinding.AdjustAnglesDialogBinding
 import org.apache.commons.math3.fraction.Fraction
 import org.jetbrains.anko.layoutInflater

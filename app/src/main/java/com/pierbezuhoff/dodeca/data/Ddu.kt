@@ -10,6 +10,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.IntRange
 import androidx.core.graphics.withMatrix
 import com.pierbezuhoff.dodeca.BuildConfig
+import com.pierbezuhoff.dodeca.data.circlegroup.mkCircleGroup
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.utils.asFF
 import com.pierbezuhoff.dodeca.utils.mean
