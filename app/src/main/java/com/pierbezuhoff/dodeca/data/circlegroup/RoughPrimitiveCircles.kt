@@ -138,6 +138,7 @@ internal class RoughPrimitiveCircles(
         oldRs = rs
     }
 
+    // NOTE: outdated and extremely inaccurate, use ranked & invertNow instead
     private inline fun reversedUpdate() {
         for (i in 0 until size)
             for (j in rules[i].reversed())

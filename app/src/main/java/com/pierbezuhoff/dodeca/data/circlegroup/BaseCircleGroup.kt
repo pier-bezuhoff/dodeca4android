@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.SweepGradient
+import android.util.Log
 import android.util.SparseArray
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.FigureAttributes
@@ -31,6 +32,9 @@ abstract class BaseCircleGroup(
         .filter { it.second.show }
         .map { it.first }
         .toIntArray()
+    protected val _ranks by lazy { computeRanks() }
+    protected val ranked: Ixs by lazy { _ranks.second.flatten().toIntArray() }
+    protected val hasCircularDependencies by lazy { _ranks.first }
     protected val paints: Array<Paint> = attrs.map {
         Paint(paint).apply {
             color = it.color
@@ -61,30 +65,48 @@ abstract class BaseCircleGroup(
     protected abstract fun _update(reverse: Boolean)
 
     /* -> rank#: list of circles' indices */
-    protected fun computeRanks(): List<List<Ix>> {
+    protected fun computeRanks(): Pair<Boolean, List<List<Ix>>> {
         // factor by rules
-        val allRules = attrs.map { it.rule ?: "" } // Ix: Rule
-        val r2ixs = allRules // Rule: list of circles' indices
+        val allRules = attrs.map { it.rule?.trim('n') ?: "" } // ix => rule
+        val r2ixs = allRules // rule => ixs owning it
             .withIndex()
             .groupBy { (_, r) -> r }
             .mapValues { (_, v) -> v.map { (rIx, _) -> rIx } }
-        val rules = allRules
-            .flatMap { r -> r.map { c -> c.digitToInt() } }
-            .toMutableSet()
+        val rules = allRules // ix => rule = ixs it consists of
+            .map { r -> r.map { c -> c.digitToInt() } }
+            .withIndex()
+            .associate { (i, r) -> i to r }
+            .toMutableMap()
         val ranks = mutableListOf<List<Ix>>()
         val rank0 = r2ixs[""]!!
-        ranks.add(rank0)
-        rules.removeAll(rank0.toSet())
-        var rank = mutableListOf<Ix>()
-        var maxDepth = 100 // just in case
-        while (rules.isNotEmpty() && --maxDepth > 0) {
-            // find those that do not depend on rules
-            // if no look for circular dependencies (i in allRules[i])
-            rank = mutableListOf()
-            TODO()
+        fun addRank(rank: Set<Ix>) {
+            ranks.add(rank.toList().sorted())
+            rank.forEach { rules.remove(it) }
         }
-        assert(maxDepth > 0) { "yabe" }
-        return ranks
+        addRank(rank0.toSet())
+        var hasLoops = false
+        while (rules.isNotEmpty()) {
+            // find those that do not depend on rules
+            val notCategorized = rules.keys
+            val independent = rules.filter { (_, r) -> r.all { it !in notCategorized } }
+            if (independent.isEmpty()) {
+                // if no such then look for circular dependencies (i in allRules[i])
+                val circular = rules.filter { (ix, r) -> ix in r }
+                val circularIxs = circular.keys
+                val selfSufficient = circular.all { (_, r) -> r.all { it in circularIxs || it !in notCategorized } }
+                // idk there might be some more complicated cases that i have not encountered yet
+                if (circular.isNotEmpty() && selfSufficient) {
+                    addRank(circularIxs)
+                    hasLoops = true
+                } else {
+                    Log.w("BaseCircleGroup", "cannot fully rank the circles")
+                    break
+                }
+            } else {
+                addRank(independent.keys)
+            }
+        }
+        return hasLoops to ranks
     }
 
     override fun draw(canvas: Canvas, shape: Shape) =

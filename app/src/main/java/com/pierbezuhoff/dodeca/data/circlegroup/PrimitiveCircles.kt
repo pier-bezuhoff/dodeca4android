@@ -23,6 +23,7 @@ internal class PrimitiveCircles(
     override var ys: DoubleArray = _ys
     override var rs: DoubleArray = _rs
     private val rules: Array<IntArray> = Array(size) { figures[it].sequence }
+    private val reversedRules by lazy { rules.map { it.reversedArray() }.toTypedArray() }
     override val figures: List<CircleFigure>
         get() = (0 until size).map { i ->
             val (color, fill, rule, borderColor) = attrs[i]
@@ -45,6 +46,7 @@ internal class PrimitiveCircles(
             rs[i] = radius
             attrs[i] = FigureAttributes(color, fill, rule, borderColor)
             rules[i] = sequence
+            reversedRules[i] = sequence.reversedArray()
             paints[i] = Paint(paint).apply {
                 color = figure.color
                 style = if (fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
@@ -96,10 +98,20 @@ internal class PrimitiveCircles(
         rs = _rs
     }
 
-    private inline fun reversedUpdate() {
+    private inline fun simpleReversedUpdate() {
         for (i in 0 until size)
-            for (j in rules[i].reversed())
+            for (j in reversedRules[i])
                 invert(i, j)
+    }
+
+    // NOTE: does not handle ddus w/ self-dependent rules
+    private inline fun reversedUpdate() {
+        if (hasCircularDependencies)
+            simpleReversedUpdate()
+        else
+            for (i in ranked!!)
+                for (j in reversedRules[i])
+                    invertNow(i, j) // uses the new #j-th circle instead of the old one
     }
 
     private inline fun straightUpdate() {
@@ -164,6 +176,38 @@ internal class PrimitiveCircles(
         val x = xs[j]
         val y = ys[j]
         val r = rs[j]
+        when {
+            r == 0.0 -> {
+                _xs[i] = x
+                _ys[i] = y
+                _rs[i] = 0.0
+            }
+            x0 == x && y0 == y ->
+                _rs[i] = r * r / r0
+            else -> {
+                val dx = x0 - x
+                val dy = y0 - y
+                var d2 = dx * dx + dy * dy
+                val r2 = r * r
+                val r02 = r0 * r0
+                if (d2 == r02) // if result should be a line
+                    d2 += 1e-6f
+                val scale = r2 / (d2 - r02)
+                _xs[i] = x + dx * scale
+                _ys[i] = y + dy * scale
+                _rs[i] = r2 * r0 / abs(d2 - r02)
+            }
+        }
+    }
+
+    /* invert i-th circle with respect to j-th circle */
+    private inline fun invertNow(i: Ix, j: Ix) {
+        val x0 = _xs[i]
+        val y0 = _ys[i]
+        val r0 = _rs[i]
+        val x = _xs[j]
+        val y = _ys[j]
+        val r = _rs[j]
         when {
             r == 0.0 -> {
                 _xs[i] = x
