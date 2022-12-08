@@ -26,17 +26,18 @@ import kotlin.math.sqrt
 typealias Vector4 = MultiArray<Double, D1>
 typealias Matrix44 = MultiArray<Double, D2>
 
-//internal const val SPHERE_RADIUS = 1000.0
-// sphere: (0,0,0), R=1 // MAYBE: R=~1000 is better for accuracy
+//internal const val SPHERE_RADIUS = 2000.0
+// triada does not diverge with R=2000
+// sphere: (0,0,0), R=~2000 (better for accuracy)
 // proj from the north pole (0,0,1)
 // onto plane z=0
 // for linear (projective) functions: f(R, x) = R * f(1, x/R)
 
 fun circle2pole(circle: Circle, sphereRadius: Double): Vector4 {
     val (x0, y0) = circle.center
-    val x = x0/sphereRadius
-    val y = y0/sphereRadius
-    val r = circle.radius/sphereRadius
+    val x = x0 / sphereRadius
+    val y = y0 / sphereRadius
+    val r = circle.radius / sphereRadius
     val tx = x + r
     val ty = y
     // T = any point on the circle
@@ -60,9 +61,9 @@ fun circle2pole(circle: Circle, sphereRadius: Double): Vector4 {
 // NOTE: inlined for performance
 fun pole2circle(pole: Vector4, sphereRadius: Double): MultiArray<Double, D1> {
     val (wx,wy,wz,w) = pole
-    val x = wx/w /sphereRadius
-    val y = wy/w /sphereRadius
-    val z = wz/w /sphereRadius
+    val x = wx/w / sphereRadius
+    val y = wy/w / sphereRadius
+    val z = wz/w / sphereRadius
     val nz = 1 - z
     // st. proj. pole->center
     val cx = x/nz * sphereRadius
@@ -122,7 +123,7 @@ fun pole2matrix(pole: Vector4, sphereRadius: Double): Matrix44 {
         .product()
 //        .also { Log.i(TAG, "---> "+it.showAsM44()) }
     val descale = 1/abs(result.det()).pow(0.25)
-    // scaling in order to not lose accuracy
+    // scaling in order not to lose accuracy
     return result.map { it*descale }
 //        .also {
 //            Log.i(TAG, "descale: $descale\n =>${it.showAsM44()}")

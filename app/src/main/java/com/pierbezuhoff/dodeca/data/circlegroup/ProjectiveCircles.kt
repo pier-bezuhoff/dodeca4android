@@ -9,6 +9,7 @@ import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.FigureAttributes
 import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
+import com.pierbezuhoff.dodeca.utils.filteredIndices
 import kotlin.collections.set
 import kotlin.math.abs
 import kotlin.math.sqrt
@@ -34,7 +35,9 @@ internal class ProjectiveCircles(
     private val nRules: Int // only counting unique ones
     private val nParts: Int // nParts >= nRules
     // size = nCircles >= nRules
-    private val uniqueRules: List<Rule> // TMP
+    private val symbolicRules: List<Rule> // unique only
+    private val symbolicParts: List<Part> // unique only
+    private val rankedRulesAndParts: List<Pair<List<Ix>, List<Ix>>> by lazy { computeRankedRulesAndParts() }
 
     // dynamic
     private val parts: Array<Matrix44> // unique parts of rules (can contain each other)
@@ -54,33 +57,33 @@ internal class ProjectiveCircles(
         }
 
     init {
-        val symbolicRules = figures.map {
+        val allSymbolicRules = figures.map {
             val r = it.rule?.trimStart('n') ?: ""
             r.reversed().map { c -> c.digitToInt() }
         }
-        uniqueRules = symbolicRules.distinct()
-        nRules = uniqueRules.size
-        rulesForCircles = symbolicRules.map { uniqueRules.indexOf(it) }
+        symbolicRules = allSymbolicRules.distinct()
+        nRules = symbolicRules.size
+        rulesForCircles = allSymbolicRules.map { symbolicRules.indexOf(it) }
         val partsRules = mutableMapOf<Part, Rule>()
         val ruleSplits = mutableListOf<List<Part>>() // rule index: list of parts comprising it
-        for (rule in uniqueRules) {
-            val split = rule.consecutiveGroupBy { cIx -> symbolicRules[cIx] }
+        for (rule in symbolicRules) {
+            val split = rule.consecutiveGroupBy { cIx -> allSymbolicRules[cIx] }
             ruleSplits.add(split.map { it.second }) // splitting into mono-rule'd parts
             for ((r, part) in split)
                 partsRules[part] = r
         }
-        val symbolicParts = partsRules.keys.sortedBy { it.joinToString { d -> d.toString() } }
+        symbolicParts = partsRules.keys.sortedBy { it.joinToString { d -> d.toString() } }
         nParts = symbolicParts.size
         // part index: symbolic rule
         val rules4parts = symbolicParts.map { partsRules[it] }
-        rulesForParts = rules4parts.map { uniqueRules.indexOf(it) }
+        rulesForParts = rules4parts.map { symbolicRules.indexOf(it) }
         // rule index: list of part indices
         val ruleBlueprints = ruleSplits.map { split -> split.map { part -> symbolicParts.indexOf(part) } }
         partsOfRules = ruleBlueprints.map { it.toIntArray() }
 
         // TMP: traceback
-        uniqueRules.forEachIndexed { i, r ->
-            val cIxs = rulesForCircles.withIndex().filter { (_, rIx) -> rIx == i }.joinToString(",") { (cIx, _) -> "#$cIx" }
+        symbolicRules.forEachIndexed { i, r ->
+            val cIxs = rulesForCircles.filteredIndices { it == i }.joinToString(",") { cIx -> "#$cIx" }
             Log.i(TAG, "${r.joinToString("")}: $cIxs")
         }
         val partsString = symbolicParts.joinToString { it.joinToString("") }
@@ -89,7 +92,7 @@ internal class ProjectiveCircles(
         // calc coordinate repr
         initialPoles = figures.map { circle2pole(it, sphereRadius) }
         poles = initialPoles.map { it.copy() }.toTypedArray()
-        val pivotIndices: Set<Ix> = uniqueRules.flatten().toSet()
+        val pivotIndices: Set<Ix> = symbolicRules.flatten().toSet()
         val pivots = mutableMapOf<Ix, Matrix44>()
         for (i in pivotIndices) {
             val pole = circle2pole(figures[i], sphereRadius)
@@ -114,8 +117,39 @@ internal class ProjectiveCircles(
         }
     }
 
+    private fun computeRankedRulesAndParts(): List<Pair<List<Ix>, List<Ix>>>  {
+        val ranks = _ranks.second
+        val ix2rank = ranks
+            .mapIndexed { rank, ixs -> ixs.map { it to rank } }
+            .flatten()
+            .associate { it }
+        val rIx2rank = symbolicRules.map { rule ->
+            rule.maxOf { ix2rank[it]!! }
+        }
+        val pIx2rank = symbolicParts.map { part ->
+            part.maxOf { ix2rank[it]!! }
+        }
+        return ranks.indices.map { rank ->
+            val rs = rIx2rank.filteredIndices { it == rank }
+            val ps = pIx2rank.filteredIndices { it == rank }
+            rs to ps
+        }
+    }
+
     private fun reverseUpdate() {
-        straightUpdate() // TMP
+        cumulativeRules.zip(rules).forEachIndexed { i, (cr, r) ->
+            cumulativeRules[i] = mmult(r, cr)
+        }
+        rankedRulesAndParts.forEach { (rIxs, pIxs) ->
+            pIxs.forEach { pIx ->
+                val r = rules[rulesForParts[pIx]]
+                parts[pIx] = mmult(r.inverse(), mmult(parts[pIx], r))
+            }
+            rIxs.forEach { rIx ->
+                rules[rIx] = partsOfRules[rIx].map { parts[it] }.product()
+            }
+        }
+        // MAYBE: if circular switch to just reverse order
     }
 
     // most likely the bottleneck

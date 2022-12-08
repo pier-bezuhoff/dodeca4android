@@ -19,3 +19,6 @@ inline fun <E, K> Iterable<E>.consecutiveGroupBy(selector: (E) -> K): List<Pair<
         lists.add(k!! to list)
     return lists
 }
+
+inline fun <E> Iterable<E>.filteredIndices(selector: (E) -> Boolean): List<Int> =
+    withIndex().filter { (_, e) -> selector(e) }.map { (i, _) -> i }
