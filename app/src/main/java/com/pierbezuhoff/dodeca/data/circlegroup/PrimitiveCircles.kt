@@ -47,7 +47,7 @@ internal class PrimitiveCircles(
             attrs[i] = FigureAttributes(color, fill, rule, borderColor)
             rules[i] = sequence
             reversedRules[i] = sequence.reversedArray()
-            paints[i] = Paint(paint).apply {
+            paints[i] = Paint(defaultPaint).apply {
                 color = figure.color
                 style = if (fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
             }

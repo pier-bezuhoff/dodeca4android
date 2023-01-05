@@ -2,6 +2,7 @@
 
 package com.pierbezuhoff.dodeca.data.circlegroup
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import com.pierbezuhoff.dodeca.data.CircleFigure
@@ -13,13 +14,14 @@ typealias Ixs = IntArray // indices
 
 // TODO: detach update <-&-> draw
 interface ImmutableCircleGroup {
-    val defaultPaint: Paint
+    val defaultPaint: Paint // used for creating new paints in *set()*
     val figures: List<CircleFigure>
     operator fun get(i: Ix): CircleFigure
 }
 
 interface CircleGroup : ImmutableCircleGroup {
     operator fun set(i: Ix, figure: CircleFigure)
+    fun setTexture(i: Ix, bitmap: Bitmap) // TMP?
     fun update(reverse: Boolean = false)
     fun updateTimes(times: Int, reverse: Boolean = false)
     fun draw(canvas: Canvas, shape: Shape = Shape.CIRCLE,)

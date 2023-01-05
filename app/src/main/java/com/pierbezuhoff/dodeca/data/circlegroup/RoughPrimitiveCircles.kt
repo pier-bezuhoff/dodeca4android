@@ -1,5 +1,6 @@
 package com.pierbezuhoff.dodeca.data.circlegroup
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
@@ -89,6 +90,10 @@ internal class RoughPrimitiveCircles(
             else if (!wasShown && show)
                 shownIndices = shownIndices.toMutableSet().run { add(i); toIntArray() }
         }
+    }
+
+    override fun setTexture(i: Ix, bitmap: Bitmap) {
+        // todo
     }
 
     override fun update(reverse: Boolean) = _update(reverse)

@@ -9,10 +9,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.pierbezuhoff.dodeca.R
-import com.pierbezuhoff.dodeca.data.circlegroup.CircleGroup
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.Option
 import com.pierbezuhoff.dodeca.data.Shape
+import com.pierbezuhoff.dodeca.data.circlegroup.CircleGroup
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptions
@@ -79,6 +79,12 @@ class DodecaViewModel(
             .subscribeFrom(this)
     }
 
+    /*
+    * reload ddu
+    * hide bottom bar
+    * pause 3s
+    * start
+    * */
     fun reloadDdu() {
         dduRepresentation.value?.let { r ->
             loadDdu(r.ddu)

@@ -58,4 +58,26 @@
                 android:layout_margin="8dp"
         />
     </LinearLayout>
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+        <ImageButton
+                android:id="@+id/circle_texture"
+                android:src="@drawable/ic_circle_40dp"
+                android:contentDescription="Texture"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_margin="8dp"
+                />
+        <Switch
+                android:id="@+id/circle_use_texture"
+                android:text="Use texture"
+                android:textSize="@dimen/small_text_size"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_margin="8dp"
+                />
+    </LinearLayout>
 </LinearLayout>

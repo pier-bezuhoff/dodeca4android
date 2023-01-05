@@ -174,11 +174,11 @@ class DodecaViewActivity : AppCompatActivity()
             R.id.screenshot_button -> saveScreenshotWithPermissionCheck()
             R.id.autocenter_button -> viewModel.requestAutocenter()
             R.id.restart_button -> {
-                viewModel.reloadDdu()
                 // reload ddu
                 // hide bottom bar
                 // pause 3s
                 // start
+                viewModel.reloadDdu()
             }
             R.id.settings_button -> goToActivity(SettingsActivity::class.java, settingsResultLauncher)
         }

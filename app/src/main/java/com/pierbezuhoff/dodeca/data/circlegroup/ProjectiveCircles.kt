@@ -124,10 +124,10 @@ internal class ProjectiveCircles(
             .flatten()
             .associate { it }
         val rIx2rank = symbolicRules.map { rule ->
-            rule.maxOf { ix2rank[it]!! }
+            rule.maxOfOrNull { ix2rank[it]!! } ?: 0
         }
         val pIx2rank = symbolicParts.map { part ->
-            part.maxOf { ix2rank[it]!! }
+            part.maxOfOrNull { ix2rank[it]!! } ?: 0
         }
         return ranks.indices.map { rank ->
             val rs = rIx2rank.filteredIndices { it == rank }
@@ -207,7 +207,7 @@ internal class ProjectiveCircles(
             }
             assert(rule == attrs[i].rule) { "cannot handle rule change yet" }
             attrs[i] = FigureAttributes(color, fill, rule, borderColor)
-            paints[i] = Paint(paint).apply {
+            paints[i] = Paint(defaultPaint).apply {
                 color = figure.color
                 style = if (fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
             }

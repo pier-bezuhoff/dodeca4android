@@ -1,9 +1,12 @@
 package com.pierbezuhoff.dodeca.data.circlegroup
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.graphics.SweepGradient
 import android.util.Log
 import android.util.SparseArray
@@ -12,11 +15,13 @@ import com.pierbezuhoff.dodeca.data.FigureAttributes
 import com.pierbezuhoff.dodeca.data.Shape
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.ceil
 
+// my attempt to detach the draw logic from updates & other structures
 @Suppress("NOTHING_TO_INLINE", "MemberVisibilityCanBePrivate", "FunctionName")
 abstract class BaseCircleGroup(
     figures: List<CircleFigure>,
-    protected val paint: Paint, // used for creating new paints in *set()*
+    paint: Paint,
 ) : SuspendableCircleGroup {
     protected val size: Int = figures.size
     protected abstract val xs: DoubleArray // only used for drawing position here
@@ -27,6 +32,7 @@ abstract class BaseCircleGroup(
             FigureAttributes(color, fill, rule, borderColor)
         }
     }
+    protected val textures: MutableMap<Ix, Bitmap> = mutableMapOf() // MAYBE: use SparseArray instead
     protected var shownIndices: Ixs = attrs
         .mapIndexed { i, attr -> i to attr }
         .filter { it.second.show }
@@ -57,14 +63,22 @@ abstract class BaseCircleGroup(
             }
         }
     override val defaultPaint: Paint = paint
+    protected val maskPaint: Paint = Paint(paint).apply {
+        style = Paint.Style.FILL
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+    }
 
+
+    override fun setTexture(i: Ix, bitmap: Bitmap) {
+        textures[i] = bitmap
+    }
 
     override fun update(reverse: Boolean) =
         _update(reverse)
 
     protected abstract fun _update(reverse: Boolean)
 
-    /* -> rank#: list of circles' indices */
+    /* -> if ddu has a circular or worse rank structure, rank#: list of circles' indices */
     protected fun computeRanks(): Pair<Boolean, List<List<Ix>>> {
         // factor by rules
         val allRules = attrs.map { it.rule?.trim('n') ?: "" } // ix => rule
@@ -95,9 +109,10 @@ abstract class BaseCircleGroup(
                 val circularIxs = circular.keys
                 val selfSufficient = circular.all { (_, r) -> r.all { it in circularIxs || it !in notCategorized } }
                 // idk there might be some more complicated cases that i have not encountered yet
+                if (circular.isNotEmpty())
+                    hasLoops = true
                 if (circular.isNotEmpty() && selfSufficient) {
                     addRank(circularIxs)
-                    hasLoops = true
                 } else {
                     Log.w("BaseCircleGroup", "cannot fully rank the circles")
                     break
@@ -180,10 +195,26 @@ abstract class BaseCircleGroup(
         val x = xs[i].toFloat()
         val y = ys[i].toFloat()
         val r = rs[i].toFloat()
-        canvas.drawCircle(x, y, r, paints[i])
+        if (attrs[i].fill && textures.containsKey(i))
+            drawTextureInCircle(i, canvas)
+        else
+            canvas.drawCircle(x, y, r, paints[i])
         borderPaints.get(i)?.let { borderPaint ->
             canvas.drawCircle(x, y, r, borderPaint)
         }
+    }
+
+    protected inline fun drawTextureInCircle(i: Ix, canvas: Canvas) {
+        val x = xs[i].toFloat()
+        val y = ys[i].toFloat()
+        val r = rs[i].toFloat()
+        val size = ceil(2*r).toInt()
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val tmpCanvas = Canvas(bitmap)
+        val texture = textures[i]!!
+        tmpCanvas.drawBitmap(texture, 0f, 0f, null)
+        tmpCanvas.drawCircle(r, r, r, maskPaint)
+        canvas.drawBitmap(bitmap, x-r, y-r, null)
     }
 
     protected inline fun drawSquare(i: Ix, canvas: Canvas) {

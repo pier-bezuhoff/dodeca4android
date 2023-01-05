@@ -210,9 +210,11 @@ class DduChooserActivity : AppCompatActivity()
 
     private fun navigateToParentDir() {
         if (dir != dduFileService.dduDir) {
-            viewModel.goToDir(dir.parentFile)
-            dirDeltaList.updateAll()
-            dduFileDeltaList.updateAll()
+            dir.parentFile?.let { parent ->
+                viewModel.goToDir(parent)
+                dirDeltaList.updateAll()
+                dduFileDeltaList.updateAll()
+            }
         }
     }
 
