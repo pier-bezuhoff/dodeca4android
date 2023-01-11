@@ -35,6 +35,8 @@
     <string name="done_button_title">Save and go to the viewer</string>
     <string name="navigate_mode_button_title">Go into Navigation Mode</string>
     <string name="multiselect_mode_button_title">Go into Multi-selection Mode</string>
+    <string name="navigate_3d_mode_button_title">Go into 3D Navigation Mode</string>
+    <string name="rotate_3d_mode_button_title">Go into 3D rotation Mode</string>
     <string name="show_everything_button_title">Show/hide invisible circles</string>
     <string name="edit_circles_button_title">Edit circles</string>
     <string name="angles_button_title">Change angular velocities</string>
