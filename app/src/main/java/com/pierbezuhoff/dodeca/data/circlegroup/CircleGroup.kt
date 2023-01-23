@@ -22,6 +22,7 @@ interface ImmutableCircleGroup {
 interface CircleGroup : ImmutableCircleGroup {
     operator fun set(i: Ix, figure: CircleFigure)
     fun setTexture(i: Ix, bitmap: Bitmap) // TMP?
+    fun changeAngularSpeed(factor: Float)
     fun update(reverse: Boolean = false)
     fun updateTimes(times: Int, reverse: Boolean = false)
     fun draw(canvas: Canvas, shape: Shape = Shape.CIRCLE,)

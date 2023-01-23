@@ -2,6 +2,7 @@ package com.pierbezuhoff.dodeca.ui.dodecaedit
 
 import android.app.Application
 import android.graphics.Canvas
+import android.util.Log
 import android.view.MotionEvent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -23,6 +24,7 @@ import com.pierbezuhoff.dodeca.utils.filename
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.anko.toast
 import java.io.File
 
@@ -126,10 +128,62 @@ class DodecaEditViewModel(
     }
 
     private fun registerOptionsObservers() {
+        with (optionsManager.options) {
+            autocenterAlways.observe {
+                dduRepresentation.value?.onAutocenterAlways(it)
+            }
+            canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
+            speed.observe { dduRepresentation.value?.onSpeed(it) }
+            angularSpeedFactor.observe { factor: Float ->
+                dduRepresentation.value?.let { dduR: DduRepresentation ->
+                    if (factor != 1f) {
+                        dduR.circleGroup.changeAngularSpeed(factor)
+                        optionsManager.set(angularSpeedFactor, 1f)
+                    }
+                }
+            }
+            skipN.observe { skipN: Int ->
+                dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
+                    doSkipN(dduRepresentation, skipN)
+                }
+            }
+        }
+    }
+
+    private inline fun <T : Any> Option<T>.observe(crossinline action: (T) -> Unit) {
+        liveData.observeForever { action(it) }
     }
 
     private fun <T : Any> setSharedPreference(option: Option<T>, value: T) {
         optionsManager.set(option, value)
+    }
+
+    private fun doSkipN(dduRepresentation: DduRepresentation, n: Int) {
+        // TODO: do on a cloned CircleGroup
+        if (n > 0) {
+            viewModelScope.launch {
+                val timeoutSeconds = optionsManager.run { fetched(options.skipNTimeout) }
+                val timeoutMilliseconds: Long = timeoutSeconds * 1000L
+                Log.i(TAG, "Skipping $n updates... (timeout $timeoutSeconds s)")
+                toast("Skipping $n updates... (timeout $timeoutSeconds s)")
+                pause()
+                _dduLoading.postValue(true)
+                val startTime = System.currentTimeMillis()
+                withTimeoutOrNull(timeoutMilliseconds) {
+                    dduRepresentation.updateTimes(n)
+                    val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
+                    Log.i(TAG, "Skipped $n updates within $skippingTime s")
+                    toast("Skipped $n updates within $skippingTime s")
+                } ?: run {
+                    val skippingTime = (System.currentTimeMillis() - startTime) / 1000f
+                    Log.w(TAG, "Skipping aborted due to timeout ($timeoutSeconds s > $skippingTime s)")
+                    toast("Skipping aborted due to timeout ($timeoutSeconds s)")
+                }
+                setSharedPreference(optionsManager.options.skipN, 0)
+                _dduLoading.postValue(false)
+                resume()
+            }
+        }
     }
 
     private suspend fun getInitialDdu(): Ddu {

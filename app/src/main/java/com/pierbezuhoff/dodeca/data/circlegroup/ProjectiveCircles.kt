@@ -26,7 +26,7 @@ internal class ProjectiveCircles(
     figures: List<CircleFigure>,
     paint: Paint,
     private val sphereRadius: Double
-) : BaseCircleGroup(figures, paint) {
+) : DoubleBackedCircleGroup(figures, paint) {
     // static
     private val initialPoles: List<Pole> // poles of all initial circles
     private val partsOfRules: List<Ixs> // (unique) rule index: int array of parts' indices

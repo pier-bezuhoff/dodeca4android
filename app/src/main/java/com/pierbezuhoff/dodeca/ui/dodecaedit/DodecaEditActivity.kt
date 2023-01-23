@@ -99,7 +99,7 @@ class DodecaEditActivity : AppCompatActivity()
         uri?.let { readUriWithPermissionCheck(it) } ?: viewModel.loadInitialDdu()
         dodeca_edit_view.inheritLifecycleOf(this)
         dodeca_edit_view.setLayerType(View.LAYER_TYPE_SOFTWARE, null) // makes dashed lines visible, but maybe(?) slower
-        viewModel.overwriteForceRedraw()
+        // viewModel.overwriteForceRedraw() // idk
     }
 
     private fun setupWindow() {

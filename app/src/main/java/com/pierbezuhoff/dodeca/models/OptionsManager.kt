@@ -53,7 +53,6 @@ class OptionsManager(context: Context) {
             previewSize * densityDpi / DisplayMetrics.DENSITY_DEFAULT
         val nPreviewUpdates: Int by options.nPreviewUpdates
         val previewSmartUpdates: Boolean by options.previewSmartUpdates
-        val showFolders: Boolean by options.showFolders
         /** Absolute path of the most recent ddu-file */
         val recentDdu: Filename by options.recentDdu // TODO: Filename -> File
         val versionCode: Int by options.versionCode

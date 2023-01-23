@@ -46,13 +46,13 @@
                 android:defaultValue="@string/circlegroup_implementation"
                 android:entries="@array/circlegroup_implementations"
                 android:entryValues="@array/circlegroup_implementations"
-                android:title="Algorithm"
+                android:title="Algorithm (experimental)"
                 android:summary="Internal circles' inversion implementation"
         />
         <EditTextPreference
                 android:key="projective_sphere_radius"
                 android:defaultValue="@string/projective_sphere_radius"
-                android:title="R"
+                android:title="R (experimental)"
                 android:summary="Projective sphere radius"
         />
     </PreferenceCategory>

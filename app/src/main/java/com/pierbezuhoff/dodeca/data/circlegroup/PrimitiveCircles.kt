@@ -14,7 +14,7 @@ import kotlin.math.abs
 internal class PrimitiveCircles(
     figures: List<CircleFigure>,
     paint: Paint
-) : BaseCircleGroup(figures, paint) {
+) : DoubleBackedCircleGroup(figures, paint) {
     // new _*s <-- old *s
     private val _xs: DoubleArray = DoubleArray(size) { figures[it].x }
     private val _ys: DoubleArray = DoubleArray(size) { figures[it].y }

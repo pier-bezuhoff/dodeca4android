@@ -116,7 +116,7 @@ open class Circle(var center: Complex, var radius: Double) {
         return listOf(p1, p2)
     }
 
-    /* 'Rotate' [this] circle so that the new angle between the circles will be *= [multiplier] */
+    /** 'Rotate' [this] circle so that the new angle between the circles will be *= [multiplier] */
     fun changeAngle(circle: Circle, multiplier: Double) {
         val intersection = findIntersection(circle)
         if (intersection.size != 2) {

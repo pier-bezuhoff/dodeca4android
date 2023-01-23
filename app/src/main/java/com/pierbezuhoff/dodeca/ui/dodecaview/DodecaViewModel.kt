@@ -149,18 +149,24 @@ class DodecaViewModel(
     }
 
     private fun registerOptionsObservers() {
-        optionsManager.options.autocenterAlways.observe { dduRepresentation.value?.onAutocenterAlways(it) }
-        optionsManager.options.canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
-        optionsManager.options.speed.observe { dduRepresentation.value?.onSpeed(it) }
-        optionsManager.options.angularSpeedFactor.observe { factor: Float ->
-            dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
-                // ap f
-                // reset f to 1
+        with (optionsManager.options) {
+            autocenterAlways.observe {
+                dduRepresentation.value?.onAutocenterAlways(it)
             }
-        }
-        optionsManager.options.skipN.observe { skipN: Int ->
-            dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
-                doSkipN(dduRepresentation, skipN)
+            canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
+            speed.observe { dduRepresentation.value?.onSpeed(it) }
+            angularSpeedFactor.observe { factor: Float ->
+                dduRepresentation.value?.let { dduR: DduRepresentation ->
+                    if (factor != 1f) {
+                        dduR.circleGroup.changeAngularSpeed(factor)
+                        optionsManager.set(angularSpeedFactor, 1f)
+                    }
+                }
+            }
+            skipN.observe { skipN: Int ->
+                dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
+                    doSkipN(dduRepresentation, skipN)
+                }
             }
         }
     }
@@ -174,7 +180,7 @@ class DodecaViewModel(
     }
 
     private fun doSkipN(dduRepresentation: DduRepresentation, n: Int) {
-        // TODO: do on cloned CircleGroup
+        // TODO: do on a cloned CircleGroup
         // FIX: update stats when failed partial
         if (n > 0) {
             viewModelScope.launch {

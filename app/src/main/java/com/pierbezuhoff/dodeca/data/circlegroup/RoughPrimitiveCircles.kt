@@ -96,6 +96,10 @@ internal class RoughPrimitiveCircles(
         // todo
     }
 
+    override fun changeAngularSpeed(factor: Float) {
+        // muzukashii
+    }
+
     override fun update(reverse: Boolean) = _update(reverse)
 
     private inline fun _update(reverse: Boolean) {

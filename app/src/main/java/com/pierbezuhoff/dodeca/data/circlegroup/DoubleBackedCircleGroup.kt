@@ -19,7 +19,7 @@ import kotlin.math.ceil
 
 // my attempt to detach the draw logic from updates & other structures
 @Suppress("NOTHING_TO_INLINE", "MemberVisibilityCanBePrivate", "FunctionName")
-abstract class BaseCircleGroup(
+abstract class DoubleBackedCircleGroup(
     figures: List<CircleFigure>,
     paint: Paint,
 ) : SuspendableCircleGroup {
@@ -42,6 +42,8 @@ abstract class BaseCircleGroup(
     /* rank=0 indices, rank=1 indices, etc. */
     protected val ranked: Ixs by lazy { _ranks.second.flatten().toIntArray() }
     protected val hasCircularDependencies by lazy { _ranks.first }
+    /* pairs of circles constituting engines */
+    protected val enginePairs: Set<Pair<Ix, Ix>> by lazy { computePairs() }
     protected val paints: Array<Paint> = attrs.map {
         Paint(paint).apply {
             color = it.color
@@ -142,7 +144,6 @@ abstract class BaseCircleGroup(
                         if (rule.first() == rule.last()) {
                             var normalizedRule = rule.subList(1, rule.size-1)
                             if (normalizedRule.first() == normalizedRule.last()) {
-                                pairUp(rule.first(), normalizedRule.first()) // NOTE: provisional, might be unnecessary
                                 while (normalizedRule.first() == normalizedRule.last())
                                     normalizedRule = normalizedRule.subList(1, normalizedRule.size-1)
                             }
@@ -162,6 +163,17 @@ abstract class BaseCircleGroup(
             .filter { (a, b) -> a < b }
             .map { (a, b) -> a to b }
             .toSet()
+    }
+
+    override fun changeAngularSpeed(factor: Float) {
+        for ((aIx, bIx) in enginePairs) {
+            val a = figures[aIx]
+            val b = figures[bIx]
+            a.changeAngle(b, factor.toDouble())
+            xs[aIx] = a.x
+            ys[aIx] = a.y
+            rs[aIx] = a.radius
+        }
     }
 
     override fun draw(canvas: Canvas, shape: Shape) =
