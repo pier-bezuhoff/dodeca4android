@@ -55,6 +55,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setOf("circlegroup_implementation", "projective_sphere_radius").forEach { key ->
             hookClick(key) { addExtraResult("update_circlegroup") }
         }
+        // NOTE: skipN and alike are observed on change by viewModels and handled there
         @Suppress("ConstantConditionIf")
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach { key ->
@@ -103,11 +104,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         private const val TAG: String = "SettingsFragment"
         // hidden in limited version
         private val ADVANCED_PREFERENCES = setOf(
+            "angular_speed_factor",
             "circlegroup_implementation",
             "projective_sphere_radius",
 //            "show_all_circles",
             "autocenter_always",
-            /*"show_centers",*/
             /*"rotate_shapes",*/
 //            "skip_n",
             "skip_n_timeout",

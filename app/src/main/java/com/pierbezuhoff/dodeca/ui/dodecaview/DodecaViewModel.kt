@@ -12,7 +12,6 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.Option
 import com.pierbezuhoff.dodeca.data.Shape
-import com.pierbezuhoff.dodeca.data.circlegroup.CircleGroup
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptions
@@ -147,6 +146,12 @@ class DodecaViewModel(
         optionsManager.options.autocenterAlways.observe { dduRepresentation.value?.onAutocenterAlways(it) }
         optionsManager.options.canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
         optionsManager.options.speed.observe { dduRepresentation.value?.onSpeed(it) }
+        optionsManager.options.angularSpeedFactor.observe { factor: Float ->
+            dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
+                // ap f
+                // reset f to 1
+            }
+        }
         optionsManager.options.skipN.observe { skipN: Int ->
             dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
                 doSkipN(dduRepresentation, skipN)
@@ -164,7 +169,7 @@ class DodecaViewModel(
 
     private fun doSkipN(dduRepresentation: DduRepresentation, n: Int) {
         // TODO: do on cloned CircleGroup
-        // FIX: update stat when partial skip
+        // FIX: update stats when failed partial
         if (n > 0) {
             viewModelScope.launch {
                 val timeoutSeconds = optionsManager.run { fetched(options.skipNTimeout) }
@@ -337,9 +342,6 @@ class DodecaViewModel(
 
     fun getDduFile(): File? =
         dduRepresentation.value?.ddu?.file
-
-    fun getCircleGroup(): CircleGroup? =
-        dduRepresentation.value?.circleGroup
 
     private fun updateDduAttributesFrom(dduRepresentation: DduRepresentation) {
         _updating.postValue(dduRepresentation.updating)

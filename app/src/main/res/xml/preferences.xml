@@ -13,13 +13,19 @@
                 android:title="@string/speed_title"
                 android:summary="@string/speed_summary"
         />
+        <ListPreference
+                android:key="angular_speed_factor"
+                android:defaultValue="@string/speed"
+                android:entries="@array/angular_speed_factors"
+                android:entryValues="@array/angular_speed_factor_values"
+                android:title="@string/angular_speed_factor_title"
+                android:summary="@string/angular_speed_factor_summary"
+                />
         <SwitchPreference
                 android:key="reverse_motion"
                 android:defaultValue="@bool/reverse_motion"
                 android:title="@string/reverse_motion"
         />
-        <!-- TODO: add: rough primitive circles -->
-        <!-- MAYBE: optimal performance -->
         <EditTextPreference
                 android:key="skip_n"
                 android:defaultValue="@string/skip_n"

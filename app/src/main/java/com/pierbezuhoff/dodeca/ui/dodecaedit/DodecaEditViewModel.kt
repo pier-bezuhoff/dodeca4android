@@ -175,6 +175,8 @@ class DodecaEditViewModel(
                         for (i in selectedCircles)
                             ddu.moveCircle(i, v)
                 }
+                EditingMode.NAVIGATE_3D -> Unit // TODO
+                EditingMode.ROTATE_3D -> Unit
                 else -> Unit
             }
         }
@@ -195,6 +197,8 @@ class DodecaEditViewModel(
                             ddu.changeCircleRadius(i, scale = s)
                     // TODO: also add an option to scale the whole group rel. to the *focus*
                 }
+                EditingMode.NAVIGATE_3D -> Unit //  convert to Oz movements
+                EditingMode.ROTATE_3D -> Unit
                 else -> Unit
             }
         }
@@ -211,6 +215,12 @@ class DodecaEditViewModel(
         }
         if (mode == EditingMode.MULTISELECT && editingMode.value == EditingMode.MULTISELECT)
             _selection.value = emptySet() // double click unselects everything
+        val modes3d = listOf(EditingMode.NAVIGATE_3D, EditingMode.ROTATE_3D)
+        if (mode in modes3d && editingMode.value !in modes3d) {
+            // TODO: switch to the 3d view
+        } else if (mode !in modes3d && editingMode.value in modes3d) {
+            // TODO: switch to the 2d view
+        }
         _editingMode.value = mode
     }
 

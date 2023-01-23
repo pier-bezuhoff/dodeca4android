@@ -27,11 +27,12 @@ typealias Vector4 = MultiArray<Double, D1>
 typealias Matrix44 = MultiArray<Double, D2>
 
 //internal const val SPHERE_RADIUS = 2000.0
-// triada does not diverge with R=2000
+// triada does not diverge with R=2000+
 // sphere: (0,0,0), R=~2000 (better for accuracy)
 // proj from the north pole (0,0,1)
 // onto plane z=0
-// for linear (projective) functions: f(R, x) = R * f(1, x/R)
+
+// NOTE: for linear (projective) functions: f(R, x) = R * f(1, x/R)
 
 fun circle2pole(circle: Circle, sphereRadius: Double): Vector4 {
     val (x0, y0) = circle.center
@@ -53,9 +54,6 @@ fun circle2pole(circle: Circle, sphereRadius: Double): Vector4 {
     val py = k*y * sphereRadius
     val pz = (1 - k) * sphereRadius
     return mkVector44(px, py, pz)
-//        .also {
-//        Log.i(TAG, "($x0, $y0), r=${circle.radius}; R = $sphereRadius\t-> ${it.showAsV3()}")
-//    }
 }
 
 // NOTE: inlined for performance
@@ -116,19 +114,11 @@ fun pole2matrix(pole: Vector4, sphereRadius: Double): Matrix44 {
         0.0,    0.0,    1 - a2, 0.0,
         2*a/k,  0.0,    0.0,    -a2 - 1
     ) // S perp R_ => res = Ry.inv * Rz.inv * SMSinv * Rz * Ry
-//    Log.i(TAG, "${pole.showAsCircle()};\ta=$a, th=$th, phi=$phi")
     val result = listOf(
         Ry.inverse(), Rz.inverse(), SMSinv, Rz, Ry
-    )//.map { Log.i(TAG, "*" + it.showAsM44()) ; it }
-        .product()
-//        .also { Log.i(TAG, "---> "+it.showAsM44()) }
+    ).product()
     val descale = 1/abs(result.det()).pow(0.25)
-    // scaling in order not to lose accuracy
     return result.map { it*descale }
-//        .also {
-//            Log.i(TAG, "descale: $descale\n =>${it.showAsM44()}")
-//            assert(abs(abs(it.det()) - 1) < 1e-4) { "det=1" }
-//        }
 }
 
 

@@ -39,6 +39,7 @@ abstract class BaseCircleGroup(
         .map { it.first }
         .toIntArray()
     protected val _ranks by lazy { computeRanks() }
+    /* rank=0 indices, rank=1 indices, etc. */
     protected val ranked: Ixs by lazy { _ranks.second.flatten().toIntArray() }
     protected val hasCircularDependencies by lazy { _ranks.first }
     protected val paints: Array<Paint> = attrs.map {
@@ -122,6 +123,45 @@ abstract class BaseCircleGroup(
             }
         }
         return hasLoops to ranks
+    }
+
+    protected fun computePairs(): Set<Pair<Ix, Ix>> {
+        val allRules: List<List<Ix>> = // ix => rule
+            attrs.map { it.rule?.trim('n')?.map { c -> c.digitToInt() } ?: listOf() }
+        val pairs = mutableMapOf<Ix, Ix>()
+        fun pairUp(a: Ix, b: Ix) {
+            pairs[a] = b
+            pairs[b] = a
+        }
+        _ranks.second.forEach { ixs -> // NOTE: the traverse order is unimportant
+            ixs.map { allRules[it] }.distinct().forEach { rule ->
+                when (rule.size) {
+                    0 -> Unit
+                    2 -> pairUp(rule.first(), rule.last())
+                    else -> {
+                        if (rule.first() == rule.last()) {
+                            var normalizedRule = rule.subList(1, rule.size-1)
+                            if (normalizedRule.first() == normalizedRule.last()) {
+                                pairUp(rule.first(), normalizedRule.first()) // NOTE: provisional, might be unnecessary
+                                while (normalizedRule.first() == normalizedRule.last())
+                                    normalizedRule = normalizedRule.subList(1, normalizedRule.size-1)
+                            }
+                            normalizedRule.chunked(2).forEach {
+                                pairUp(it[0], it[1])
+                            }
+                        } else
+                            rule.chunked(2).forEach {
+                                pairUp(it[0], it[1])
+                            }
+                    }
+                }
+            }
+        }
+        return pairs
+            .asIterable()
+            .filter { (a, b) -> a < b }
+            .map { (a, b) -> a to b }
+            .toSet()
     }
 
     override fun draw(canvas: Canvas, shape: Shape) =

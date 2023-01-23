@@ -155,7 +155,8 @@ internal class ProjectiveCircles(
     // most likely the bottleneck
     private inline fun applyMatrices() {
         shownIndices.forEach { cIx ->
-            poles[cIx] = vmult(cumulativeRules[rulesForCircles[cIx]], initialPoles[cIx])
+            val rIx = rulesForCircles[cIx]
+            poles[cIx] = vmult(cumulativeRules[rIx], initialPoles[cIx])
 //            val (cx, cy, r) = pole2circle(pole) // inlined to escape type conversion etc.
             val (wx,wy,wz,w0) = poles[cIx]
 //            Log.i(TAG, "#$cIx: ($wx\t$wy\t$wz\t$w0)")
@@ -163,6 +164,8 @@ internal class ProjectiveCircles(
             val x = wx/w
             val y = wy/w
             val z = wz/w
+            if (x*x + y*y + z*z <= 1)
+                Log.w(TAG, "#$cIx evaporated by r#$rIx:\n${cumulativeRules[rIx].showAsM44()}")
             val nz = 1 - z
             xs[cIx] = x/nz * sphereRadius
             ys[cIx] = y/nz * sphereRadius
@@ -174,7 +177,6 @@ internal class ProjectiveCircles(
 //        }
     }
 
-    // most likely the bottleneck
     private inline fun applyAllMatrices() {
         initialPoles.forEachIndexed { cIx, pole ->
             poles[cIx] = vmult(cumulativeRules[rulesForCircles[cIx]], pole)
@@ -253,6 +255,11 @@ internal class ProjectiveCircles(
 
     override fun draw(canvas: Canvas, shape: Shape) =
         _draw(canvas, shape)
+
+    fun switchTo3D() {
+        // new Camera()
+    }
+    fun switchTo2D() {}
 
     companion object {
         private const val TAG = "ProjectiveCircles"

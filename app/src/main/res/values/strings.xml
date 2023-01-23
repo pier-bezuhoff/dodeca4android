@@ -77,6 +77,8 @@
     <string name="reverse_motion">Reverse motion</string>
     <string name="speed_title">Speed</string>
     <string name="speed_summary">Make %s updates in a row</string>
+    <string name="angular_speed_factor_title">Change angular speed</string>
+    <string name="angular_speed_factor_summary">Change engines\' angles by the factor of x</string>
     <string name="skip_n_title">Skip n updates</string>
     <string name="skip_n_summary">Skip updates without drawing</string>
     <string name="skip_n_timeout_title">Timeout for "skip n"</string>

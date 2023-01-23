@@ -7,6 +7,7 @@
     <bool name="save_as">true</bool>
     <bool name="autocenter_always">true</bool>
     <string name="speed" translatable="false">1</string>
+    <string name="angular_speed_factor" translatable="false">1</string>
     <string name="skip_n" translatable="false">0</string>
     <string name="skip_n_timeout" translatable="false">60</string>
     <string name="circlegroup_implementation" translatable="false">planar-sequential</string>

@@ -41,6 +41,37 @@
         <item>100</item>
     </string-array>
 
+    <string-array name="angular_speed_factors">
+        <item>-1</item>
+        <item>1/10</item>
+        <item>1/5</item>
+        <item>¼</item>
+        <item>⅓</item>
+        <item>½</item>
+        <item>1</item>
+        <item>1.5</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
+    <string-array name="angular_speed_factor_values">
+        <item>-1</item>
+        <item>0.1</item>
+        <item>0.2</item>
+        <item>0.25</item>
+        <item>0.33333333</item>
+        <item>0.5</item>
+        <item>1</item>
+        <item>1.5</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
+
     <string-array name="preview_sizes">
         <item>25</item>
         <item>50</item>

@@ -40,8 +40,8 @@ class OptionsManager(context: Context) {
         val saveAs: Boolean by options.saveAs
         val autocenterAlways: Boolean by options.autocenterAlways
         val speed: Float by options.speed
-        val skipN: Int by options.skipN
-        val skipNTimeout: Int by options.skipNTimeout
+//        val skipN: Int by options.skipN
+//        val skipNTimeout: Int by options.skipNTimeout
         val circleGroupImplementation: String by options.circleGroupImplementation
         val projR: Float by options.projR
         val canvasFactor: Int by options.canvasFactor
@@ -76,6 +76,7 @@ class OptionsManager(context: Context) {
         val saveAs = BooleanKeyOption("save_as", R.bool.save_as, resources)
         val autocenterAlways = BooleanKeyOption("autocenter_always", R.bool.autocenter_always, resources)
         val speed = ParsedFloatKeyOption("speed", R.string.speed, resources)
+        val angularSpeedFactor = ParsedFloatKeyOption("angular_speed_factor", R.string.angular_speed_factor, resources)
         val skipN = ParsedIntKeyOption("skip_n", R.string.skip_n, resources)
         val skipNTimeout = ParsedIntKeyOption("skip_n_timeout", R.string.skip_n_timeout, resources)
         val circleGroupImplementation = ParsedKeyOption("circlegroup_implementation", R.string.circlegroup_implementation, resources) { this }
@@ -99,6 +100,7 @@ class OptionsManager(context: Context) {
             saveAs,
             autocenterAlways,
             speed,
+            angularSpeedFactor,
             skipNTimeout,
             skipN,
             canvasFactor,
