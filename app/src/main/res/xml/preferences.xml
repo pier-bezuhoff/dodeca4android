@@ -57,6 +57,39 @@
         />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/settings_toolbar_title">
+        <SwitchPreference
+                android:key="show_mass_editor_button"
+                android:defaultValue="@bool/show_mass_editor_button"
+                android:title="@string/show_mass_editor_button_title"
+                android:icon="@drawable/ic_choose_color"
+                />
+        <SwitchPreference
+                android:key="show_trace_button"
+                android:defaultValue="@bool/show_trace_button"
+                android:title="@string/show_trace_button_title"
+                android:icon="@drawable/ic_trace"
+                />
+        <SwitchPreference
+                android:key="show_clear_button"
+                android:defaultValue="@bool/show_clear_button"
+                android:title="@string/show_clear_button_title"
+                android:icon="@drawable/ic_clear"
+                />
+        <SwitchPreference
+                android:key="show_autocenter_button"
+                android:defaultValue="@bool/show_autocenter_button"
+                android:title="@string/show_autocenter_button_title"
+                android:icon="@drawable/ic_autocenter"
+                />
+        <SwitchPreference
+                android:key="show_restart_button"
+                android:defaultValue="@bool/show_restart_button"
+                android:title="@string/show_restart_button_title"
+                android:icon="@drawable/ic_restore"
+                />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/settings_display_title">
         <SwitchPreference
                 android:key="redraw_trace"

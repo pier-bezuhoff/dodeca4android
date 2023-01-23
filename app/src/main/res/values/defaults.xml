@@ -15,6 +15,11 @@
     <string name="canvas_factor" translatable="false">2</string>
     <bool name="show_stat">false</bool>
     <bool name="prefer_recent_ddu">true</bool>
+    <bool name="show_mass_editor_button">false</bool>
+    <bool name="show_trace_button">true</bool>
+    <bool name="show_clear_button">true</bool>
+    <bool name="show_autocenter_button">true</bool>
+    <bool name="show_restart_button">false</bool>
     <string name="preview_size" translatable="false">150</string>
     <bool name="autocenter_preview">true</bool>
     <string name="n_preview_updates" translatable="false">100</string>

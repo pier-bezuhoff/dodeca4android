@@ -13,6 +13,8 @@ import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.circlegroup.CircleGroup
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.models.OptionsManager
+import com.pierbezuhoff.dodeca.ui.dodecaview.BottomBarHider
+import com.pierbezuhoff.dodeca.ui.dodecaview.CoroutineBottomBarHider
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptions
 import com.pierbezuhoff.dodeca.utils.ComplexFF
@@ -32,6 +34,7 @@ class DodecaEditViewModel(
     , DodecaGestureDetector.ScrollListener
     , DodecaGestureDetector.ScaleListener
     , DduRepresentation.ToastEmitter
+    , BottomBarHider
 {
     private val _dduLoading: MutableLiveData<Boolean> = MutableLiveData(false)
     private val _dduRepresentation: MutableLiveData<DduRepresentation> = MutableLiveData()
@@ -50,6 +53,11 @@ class DodecaEditViewModel(
     val editingMode: LiveData<EditingMode> = _editingMode
     val showEverything: LiveData<Boolean> = _showEverything
     val selection: LiveData<Set<Int>> = _selection
+
+    private val bottomBarHider: BottomBarHider = CoroutineBottomBarHider(viewModelScope)
+    override val bottomBarShown: LiveData<Boolean> get() = bottomBarHider.bottomBarShown
+    override fun showBottomBar() = bottomBarHider.showBottomBar()
+    override fun hideBottomBar() = bottomBarHider.hideBottomBar()
 
     private val threshold: Double = 25.0 // TODO: adjust
 
@@ -159,6 +167,9 @@ class DodecaEditViewModel(
                     EditingMode.COPY -> 3 // copy-paste new
                     else -> Unit
                 }
+            showBottomBar()
+        } else {
+            toggleBottomBar()
         }
     }
 
@@ -213,8 +224,16 @@ class DodecaEditViewModel(
                 dduRepresentation.value?.drawTrace = it
             }
         }
+        if (mode == EditingMode.NAVIGATE) {
+            resume()
+        }
         if (mode == EditingMode.MULTISELECT && editingMode.value == EditingMode.MULTISELECT)
             _selection.value = emptySet() // double click unselects everything
+        if (mode == EditingMode.MULTISELECT) {
+            _showEverything.value = true
+            _pause()
+            toast("select & drag circles")
+        }
         val modes3d = listOf(EditingMode.NAVIGATE_3D, EditingMode.ROTATE_3D)
         if (mode in modes3d && editingMode.value !in modes3d) {
             // TODO: switch to the 3d view
@@ -222,6 +241,7 @@ class DodecaEditViewModel(
             // TODO: switch to the 2d view
         }
         _editingMode.value = mode
+        showBottomBar()
     }
 
     fun requestSaveDdu() {
@@ -333,6 +353,42 @@ class DodecaEditViewModel(
         _updating.postValue(dduRepresentation.updating)
     }
 
+    fun applyInstantSettings(
+        revertCurrentDdu: Boolean = false,
+        revertAllDdus: Boolean = false,
+        discardAllPreviews: Boolean = false,
+        updateCircleGroup: Boolean = false
+    ) {
+        suspend fun revertCurrentDdu() {
+            getDduFile()?.let { file: File ->
+                dduFileService.extractDduAsset(file.filename, overwrite = true)
+                loadDduFrom(file)
+            }
+        }
+        suspend fun revertAllDdus() {
+            dduFileService.extractDduAssets(overwrite = true)
+            getDduFile()?.let { file: File ->
+                loadDduFrom(file)
+            }
+        }
+        suspend fun discardAllPreviews() =
+            dduFileRepository.dropAllPreviews()
+
+        fun updateCircleGroup() {
+            optionsManager.run {
+                fetch(options.circleGroupImplementation)
+                fetch(options.projR)
+            }
+            dduRepresentation.value?.updateCircleGroup()
+        }
+
+        viewModelScope.launch {
+            if (revertCurrentDdu) revertCurrentDdu()
+            if (revertAllDdus) revertAllDdus()
+            if (discardAllPreviews) discardAllPreviews()
+            if (updateCircleGroup) updateCircleGroup()
+        }
+    }
     fun overwriteForceRedraw() {
         optionsManager.run {
             oldForceRedraw = values.redrawTraceOnMove
@@ -354,7 +410,7 @@ class DodecaEditViewModel(
         private const val DEFAULT_UPDATING = true
         private val DEFAULT_SHAPE = Shape.CIRCLE
         private val DEFAULT_EDITING_MODE = EditingMode.NAVIGATE
-        private val DEFAULT_SHOW_EVERYTHING = true
+        private val DEFAULT_SHOW_EVERYTHING = false
     }
 }
 

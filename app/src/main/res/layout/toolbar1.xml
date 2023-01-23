@@ -22,8 +22,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/edit_button_title}"
-
-                android:visibility="gone"
                 />
         <ImageButton
                 android:id="@+id/mass_editor_button"
@@ -34,6 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/mass_editor_button_title}"
+                app:showWhen="@{viewModel.showMassEditorButton}"
                 />
         <ImageButton
                 android:id="@+id/trace_button"
@@ -45,6 +44,7 @@
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/trace_button_title}"
                 app:tintEnabled="@{safeUnbox(viewModel.drawTrace)}"
+                app:showWhen="@{viewModel.showTraceButton}"
         />
         <Spinner
                 android:id="@+id/shape_spinner"
@@ -66,6 +66,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/clear_button_title}"
+                app:showWhen="@{viewModel.showClearButton}"
         />
         <ImageButton
                 android:id="@+id/screenshot_button"
@@ -86,6 +87,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/autocenter_button_title}"
+                app:showWhen="@{viewModel.showAutocenterButton}"
                 />
         <ImageButton
                 android:id="@+id/restart_button"
@@ -95,7 +97,8 @@
                 android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:contentDescription="@{@string/ellipsis}"
+                android:contentDescription="@{@string/restart_button_title}"
+                app:showWhen="@{viewModel.showRestartButton}"
                 />
     </LinearLayout>
 </layout>

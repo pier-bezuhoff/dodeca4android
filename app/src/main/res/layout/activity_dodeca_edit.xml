@@ -63,6 +63,7 @@
                 app:contentInsetStartWithNavigation="0dp"
                 app:contentInsetEnd="0dp"
                 app:contentInsetEndWithActions="0dp"
+                app:showWhen="@{viewModel.bottomBarShown}"
                 >
             <LinearLayout
                     android:orientation="vertical"

@@ -31,6 +31,7 @@ import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.ui.dduchooser.DduChooserActivity
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaViewActivity
 import com.pierbezuhoff.dodeca.ui.meta.DodecaAndroidViewModelWithOptionsManagerFactory
+import com.pierbezuhoff.dodeca.ui.settings.SettingsActivity
 import com.pierbezuhoff.dodeca.utils.FileName
 import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.copyStream
@@ -79,6 +80,7 @@ class DodecaEditActivity : AppCompatActivity()
     private val dir: File get() = viewModel.dir
 
     private val dduResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { onDduResult(it.resultCode, it.data) }
+    private val settingsResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { onSettingsResult(it.resultCode, it.data) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,6 +92,7 @@ class DodecaEditActivity : AppCompatActivity()
         setSupportActionBar(edit_bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         setupToolbar()
+        viewModel.showBottomBar()
         val uri = if (Build.VERSION.SDK_INT >= 33)
             intent.getParcelableExtra("ddu_uri", Uri::class.java)
         else intent.getParcelableExtra<Uri>("ddu_uri")
@@ -185,6 +188,7 @@ class DodecaEditActivity : AppCompatActivity()
                         .show()
                 }
             }
+            R.id.settings_button -> goToActivity(SettingsActivity::class.java, settingsResultLauncher)
         }
     }
 
@@ -263,6 +267,21 @@ class DodecaEditActivity : AppCompatActivity()
                 readFile(File(path))
             }
         }
+    }
+
+    private fun onSettingsResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK) {
+            fun received(param: String): Boolean =
+                data?.getBooleanExtra(param, false) == true
+            viewModel.applyInstantSettings(
+                revertCurrentDdu = received("default_ddu"),
+                revertAllDdus = received("default_ddus"),
+                discardAllPreviews = received("discard_previews"),
+                updateCircleGroup = received("update_circlegroup")
+            )
+        }
+        optionsManager.fetchAll()
+        viewModel.showBottomBar()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

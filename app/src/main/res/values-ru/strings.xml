@@ -174,4 +174,12 @@
     <string name="mass_editor_button_title">Редактор окружностей</string>
     <string name="mass_editor_dialog_recolor_everything">Сдвинуть цветовую гамму</string>
     <string name="angles_button_title">Изменить угловые скорости</string>
+    <string name="angular_speed_factor_title">Изменить угловую скорость</string>
+    <string name="angular_speed_factor_summary">Изменить угол двигателей в x раз</string>
+    <string name="settings_toolbar_title">Показать/спрятать кнопки</string>
+    <string name="show_mass_editor_button_title">Показать кнопку \"редактирование окружностей\"</string>
+    <string name="show_clear_button_title">Показать кнопку \"очистить\"</string>
+    <string name="show_autocenter_button_title">Показать кнопку \"автоцентрировать\"</string>
+    <string name="show_restart_button_title">Показать кнопку \"перезапустить с задержкой\"</string>
+    <string name="show_trace_button_title">Показать кнопку \"след\"</string>
 </resources>

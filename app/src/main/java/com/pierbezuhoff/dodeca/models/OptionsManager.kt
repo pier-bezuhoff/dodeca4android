@@ -83,6 +83,11 @@ class OptionsManager(context: Context) {
         val projR = ParsedFloatKeyOption("projective_sphere_radius", R.string.projective_sphere_radius, resources)
         val canvasFactor = ParsedIntKeyOption("canvas_factor", R.string.canvas_factor, resources)
         val showStat = BooleanKeyOption("show_stat", R.bool.show_stat, resources)
+        val showMassEditorButton = BooleanKeyOption("show_mass_editor_button", R.bool.show_mass_editor_button, resources)
+        val showTraceButton = BooleanKeyOption("show_trace_button", R.bool.show_trace_button, resources)
+        val showClearButton = BooleanKeyOption("show_clear_button", R.bool.show_clear_button, resources)
+        val showAutocenterButton = BooleanKeyOption("show_autocenter_button", R.bool.show_autocenter_button, resources)
+        val showRestartButton = BooleanKeyOption("show_restart_button", R.bool.show_restart_button, resources)
         // buildPreview size in pixels, yet to be converted to dp
         val previewSize = ParsedIntKeyOption("preview_size", R.string.preview_size, resources)
         val autocenterPreview = BooleanKeyOption("autocenter_preview", R.bool.autocenter_preview, resources)
@@ -105,6 +110,11 @@ class OptionsManager(context: Context) {
             skipN,
             canvasFactor,
             showStat,
+            showMassEditorButton,
+            showTraceButton,
+            showClearButton,
+            showAutocenterButton,
+            showRestartButton,
             previewSize,
             autocenterPreview,
             nPreviewUpdates,

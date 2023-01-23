@@ -68,5 +68,17 @@
                 android:layout_height="match_parent"
                 android:contentDescription="@{@string/mass_editor_button_title}"
                 />
+        <ImageButton
+                android:id="@+id/settings_button"
+                android:src="@drawable/ic_settings"
+                app:backgroundTint="@color/editToolbarColor"
+                android:padding="8dp"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@{@string/settings_button_title}"
+
+                android:visibility="visible"
+                />
     </LinearLayout>
 </layout>

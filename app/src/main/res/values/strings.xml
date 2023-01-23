@@ -119,6 +119,13 @@
     <string name="restore_defaults_title">Restore default settings</string>
     <string name="settings_ddu_files_title">Revert defaults</string>
 
+    <string name="settings_toolbar_title">Customize toolbar</string>
+    <string name="show_mass_editor_button_title">Show \"circle editor\" button</string>
+    <string name="show_trace_button_title">Show \"trace\" button</string>
+    <string name="show_clear_button_title">Show \"clear\" button</string>
+    <string name="show_autocenter_button_title">Show \"autocenter\" button</string>
+    <string name="show_restart_button_title">Show \"restart\" button</string>
+
     <string name="settings_preview_title">Preview</string>
     <string name="discard_previews_title">Discard previews</string>
     <string name="preview_size_title">Preview size</string>

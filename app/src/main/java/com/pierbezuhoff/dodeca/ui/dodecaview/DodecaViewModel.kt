@@ -65,6 +65,12 @@ class DodecaViewModel(
     val dTime: LiveData<Float> = _dTime
     val statTimeDelta: Int = statUpdater.statTimeDelta
 
+    val showMassEditorButton: LiveData<Boolean> = optionsManager.options.showMassEditorButton.liveData
+    val showTraceButton: LiveData<Boolean> = optionsManager.options.showTraceButton.liveData
+    val showClearButton: LiveData<Boolean> = optionsManager.options.showClearButton.liveData
+    val showAutocenterButton: LiveData<Boolean> = optionsManager.options.showAutocenterButton.liveData
+    val showRestartButton: LiveData<Boolean> = optionsManager.options.showRestartButton.liveData
+
     val gestureDetector: DodecaGestureDetector = DodecaGestureDetector.get(context)
 
     init {
