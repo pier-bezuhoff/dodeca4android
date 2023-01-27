@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.Log
 import android.view.MotionEvent
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -42,6 +43,7 @@ class DodecaViewModel(
     private val _drawTrace: MutableLiveData<Boolean> = MutableLiveData()
     private val _nUpdates: MutableLiveData<Long> = MutableLiveData(0L)
     private val _dTime: MutableLiveData<Float> = MutableLiveData()
+    private val _fillCircles: MutableLiveData<Boolean> = MutableLiveData(DEFAULT_FILL_CIRCLES)
 
     private var oldUpdating: Boolean? = null // [updating] before [pause]
     private var dduLoaded = false // mark that MainActivity should not repeat [loadInitialDdu]
@@ -51,6 +53,7 @@ class DodecaViewModel(
     val updating: LiveData<Boolean> = _updating
     val drawTrace: LiveData<Boolean> = _drawTrace
     val shape: MutableLiveData<Shape> = MutableLiveData(DEFAULT_SHAPE) // [shape] may be changed from DodecaViewActivity
+    val fillCircles: LiveData<Boolean> = _fillCircles
 
     private val bottomBarHider: BottomBarHider = CoroutineBottomBarHider(viewModelScope)
     override val bottomBarShown: LiveData<Boolean> get() = bottomBarHider.bottomBarShown
@@ -70,6 +73,7 @@ class DodecaViewModel(
     val showClearButton: LiveData<Boolean> = optionsManager.options.showClearButton.liveData
     val showAutocenterButton: LiveData<Boolean> = optionsManager.options.showAutocenterButton.liveData
     val showRestartButton: LiveData<Boolean> = optionsManager.options.showRestartButton.liveData
+    val showFillButton: LiveData<Boolean> = optionsManager.options.showFillButton.liveData
 
     val gestureDetector: DodecaGestureDetector = DodecaGestureDetector.get(context)
 
@@ -155,17 +159,23 @@ class DodecaViewModel(
             }
             canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
             speed.observe { dduRepresentation.value?.onSpeed(it) }
-            angularSpeedFactor.observe { factor: Float ->
+            skipN.observe { skipN: Int ->
+                dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
+                    doSkipN(dduRepresentation, skipN)
+                }
+            }
+        }
+    }
+
+    // temporally restricts observers' lifespan
+    fun registerOptionsObserversIn(owner: LifecycleOwner) {
+        with (optionsManager.options) {
+            angularSpeedFactor.liveData.observe(owner) { factor: Float ->
                 dduRepresentation.value?.let { dduR: DduRepresentation ->
                     if (factor != 1f) {
                         dduR.circleGroup.changeAngularSpeed(factor)
                         optionsManager.set(angularSpeedFactor, 1f)
                     }
-                }
-            }
-            skipN.observe { skipN: Int ->
-                dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
-                    doSkipN(dduRepresentation, skipN)
                 }
             }
         }
@@ -349,6 +359,17 @@ class DodecaViewModel(
         dduRepresentation.value?.drawTrace = newDrawTrace
     }
 
+    fun toggleFillCircles() {
+        val newFillCircles: Boolean = !(fillCircles.value ?: DEFAULT_FILL_CIRCLES)
+        dduRepresentation.value?.let { dduR ->
+            if (newFillCircles)
+                dduR.fillCircles()
+            else
+                dduR.unfillCircles()
+        }
+        _fillCircles.value = newFillCircles
+    }
+
     fun onDraw(canvas: Canvas) =
         dduRepresentation.value?.draw(canvas)
 
@@ -359,6 +380,7 @@ class DodecaViewModel(
         _updating.postValue(dduRepresentation.updating)
         _drawTrace.postValue(dduRepresentation.drawTrace)
         shape.postValue(dduRepresentation.shape)
+        _fillCircles.postValue(dduRepresentation.allCirclesAreFilled())
     }
 
 
@@ -440,5 +462,6 @@ class DodecaViewModel(
         private const val DEFAULT_DRAW_TRACE = true
         private const val DEFAULT_UPDATING = true
         private val DEFAULT_SHAPE = Shape.CIRCLE
+        private const val DEFAULT_FILL_CIRCLES = false
     }
 }

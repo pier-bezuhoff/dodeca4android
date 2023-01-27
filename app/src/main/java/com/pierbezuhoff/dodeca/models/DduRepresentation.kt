@@ -17,8 +17,8 @@ import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.DduAttributesHolder
 import com.pierbezuhoff.dodeca.data.DduOptionsChangeListener
 import com.pierbezuhoff.dodeca.data.Shape
-import com.pierbezuhoff.dodeca.data.circlegroup.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.Trace
+import com.pierbezuhoff.dodeca.data.circlegroup.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.circlegroup.mkCircleGroup
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaGestureDetector
 import com.pierbezuhoff.dodeca.utils.Connection
@@ -441,6 +441,32 @@ class DduRepresentation(
     private fun _drawOverlay(canvas: Canvas) {
         1
         presenter?.redraw()
+    }
+
+    fun changeAngularSpeed(factor: Float) {
+        circleGroup.changeAngularSpeed(factor)
+        // TODO: also upd ddu
+    }
+
+    fun allCirclesAreFilled(): Boolean =
+        circleGroup.figures.filter { it.show }.all { it.fill }
+
+    fun fillCircles() {
+        val fs = circleGroup.figures
+        for (i in fs.indices) {
+            val f = fs[i]
+            if (f.show)
+                circleGroup[i] = f.copy(newFill = true)
+        }
+    }
+
+    fun unfillCircles() {
+        val fs = circleGroup.figures
+        for (i in fs.indices) {
+            val f = fs[i]
+            if (f.show)
+                circleGroup[i] = f.copy(newFill = false)
+        }
     }
 
     fun moveCircle(i: Int, v: Complex) {

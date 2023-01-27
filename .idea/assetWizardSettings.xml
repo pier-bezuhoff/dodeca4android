@@ -372,7 +372,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:$PROJECT_DIR$/../Sdk/icons/material/materialicons/expand/baseline_expand_24.xml" />
+                                      <entry key="url" value="file:$PROJECT_DIR$/../Sdk/icons/material/materialicons/format_color_fill/baseline_format_color_fill_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -383,7 +383,7 @@
                         <option name="values">
                           <map>
                             <entry key="autoMirrored" value="true" />
-                            <entry key="outputName" value="ic_move_vertically" />
+                            <entry key="outputName" value="ic_bucket_fill" />
                             <entry key="sourceFile" value="$USER_HOME$/Pictures/icons/move-icon.svg" />
                           </map>
                         </option>

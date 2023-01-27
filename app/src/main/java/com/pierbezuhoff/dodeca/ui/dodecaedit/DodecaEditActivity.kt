@@ -84,6 +84,7 @@ class DodecaEditActivity : AppCompatActivity()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel.registerOptionsObserversIn(this)
         setupWindow()
         val binding: ActivityDodecaEditBinding =
             DataBindingUtil.setContentView(this, R.layout.activity_dodeca_edit)

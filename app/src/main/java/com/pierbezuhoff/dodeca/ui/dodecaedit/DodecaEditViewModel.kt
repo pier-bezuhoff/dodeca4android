@@ -4,6 +4,7 @@ import android.app.Application
 import android.graphics.Canvas
 import android.util.Log
 import android.view.MotionEvent
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -134,17 +135,22 @@ class DodecaEditViewModel(
             }
             canvasFactor.observe { dduRepresentation.value?.onCanvasFactor(it) }
             speed.observe { dduRepresentation.value?.onSpeed(it) }
-            angularSpeedFactor.observe { factor: Float ->
+            skipN.observe { skipN: Int ->
+                dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
+                    doSkipN(dduRepresentation, skipN)
+                }
+            }
+        }
+    }
+
+    fun registerOptionsObserversIn(owner: LifecycleOwner) {
+        with (optionsManager.options) {
+            angularSpeedFactor.liveData.observe(owner) { factor: Float ->
                 dduRepresentation.value?.let { dduR: DduRepresentation ->
                     if (factor != 1f) {
                         dduR.circleGroup.changeAngularSpeed(factor)
                         optionsManager.set(angularSpeedFactor, 1f)
                     }
-                }
-            }
-            skipN.observe { skipN: Int ->
-                dduRepresentation.value?.let { dduRepresentation: DduRepresentation ->
-                    doSkipN(dduRepresentation, skipN)
                 }
             }
         }

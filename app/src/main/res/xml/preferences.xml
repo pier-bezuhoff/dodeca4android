@@ -15,7 +15,6 @@
         />
         <ListPreference
                 android:key="angular_speed_factor"
-                android:defaultValue="@string/speed"
                 android:entries="@array/angular_speed_factors"
                 android:entryValues="@array/angular_speed_factor_values"
                 android:title="@string/angular_speed_factor_title"
@@ -87,6 +86,12 @@
                 android:defaultValue="@bool/show_restart_button"
                 android:title="@string/show_restart_button_title"
                 android:icon="@drawable/ic_restore"
+                />
+        <SwitchPreference
+                android:key="show_fill_button"
+                android:defaultValue="@bool/show_fill_button"
+                android:title="@string/show_fill_button_title"
+                android:icon="@drawable/ic_bucket_fill"
                 />
     </PreferenceCategory>
 

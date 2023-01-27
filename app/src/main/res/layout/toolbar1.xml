@@ -100,5 +100,17 @@
                 android:contentDescription="@{@string/restart_button_title}"
                 app:showWhen="@{viewModel.showRestartButton}"
                 />
+        <ImageButton
+                android:id="@+id/fill_button"
+                android:src="@drawable/ic_bucket_fill"
+                app:backgroundTint="@color/toolbarColor"
+                android:padding="8dp"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@{@string/fill_button_title}"
+                app:tintEnabled="@{safeUnbox(viewModel.fillCircles)}"
+                app:showWhen="@{viewModel.showFillButton}"
+                />
     </LinearLayout>
 </layout>

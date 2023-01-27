@@ -87,6 +87,7 @@ class OptionsManager(context: Context) {
         val showClearButton = BooleanKeyOption("show_clear_button", R.bool.show_clear_button, resources)
         val showAutocenterButton = BooleanKeyOption("show_autocenter_button", R.bool.show_autocenter_button, resources)
         val showRestartButton = BooleanKeyOption("show_restart_button", R.bool.show_restart_button, resources)
+        val showFillButton = BooleanKeyOption("show_fill_button", R.bool.show_fill_button, resources)
         // buildPreview size in pixels, yet to be converted to dp
         val previewSize = ParsedIntKeyOption("preview_size", R.string.preview_size, resources)
         val autocenterPreview = BooleanKeyOption("autocenter_preview", R.bool.autocenter_preview, resources)
@@ -114,6 +115,7 @@ class OptionsManager(context: Context) {
             showClearButton,
             showAutocenterButton,
             showRestartButton,
+            showFillButton,
             previewSize,
             autocenterPreview,
             nPreviewUpdates,

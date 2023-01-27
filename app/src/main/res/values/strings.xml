@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
         <!ENTITY app_name "Dodeca Meditation">
-        <!ENTITY version_name "2.3">
+        <!ENTITY version_name "2.4">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
@@ -26,6 +26,7 @@
     <string name="settings_button_title">Settings</string>
     <string name="draw_circles_button_title">Circle drawing mode</string>
     <string name="screenshot_button_title">Take a screenshot</string>
+    <string name="fill_button_title">Toggle fill</string>
 
     <string name="edit_button_title">Edit</string>
     <string name="mass_editor_button_title">Mass edit circles</string>
@@ -125,6 +126,7 @@
     <string name="show_clear_button_title">Show \"clear\" button</string>
     <string name="show_autocenter_button_title">Show \"autocenter\" button</string>
     <string name="show_restart_button_title">Show \"restart\" button</string>
+    <string name="show_fill_button_title">Show \"fill\" button</string>
 
     <string name="settings_preview_title">Preview</string>
     <string name="discard_previews_title">Discard previews</string>

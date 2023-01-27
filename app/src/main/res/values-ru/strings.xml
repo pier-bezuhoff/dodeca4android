@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
         <!ENTITY app_name "Додека Медитация">
-        <!ENTITY version_name "2.3">
+        <!ENTITY version_name "2.4">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
@@ -182,4 +182,6 @@
     <string name="show_autocenter_button_title">Показать кнопку \"автоцентрировать\"</string>
     <string name="show_restart_button_title">Показать кнопку \"перезапустить с задержкой\"</string>
     <string name="show_trace_button_title">Показать кнопку \"след\"</string>
+    <string name="show_fill_button_title">Показать кнопку \"заливка\"</string>
+    <string name="fill_button_title">Залить окружности</string>
 </resources>

@@ -148,11 +148,13 @@ abstract class DoubleBackedCircleGroup(
                                     normalizedRule = normalizedRule.subList(1, normalizedRule.size-1)
                             }
                             normalizedRule.chunked(2).forEach {
-                                pairUp(it[0], it[1])
+                                if (it.size == 2)
+                                    pairUp(it[0], it[1])
                             }
                         } else
                             rule.chunked(2).forEach {
-                                pairUp(it[0], it[1])
+                                if (it.size == 2)
+                                    pairUp(it[0], it[1])
                             }
                     }
                 }
@@ -170,9 +172,7 @@ abstract class DoubleBackedCircleGroup(
             val a = figures[aIx]
             val b = figures[bIx]
             a.changeAngle(b, factor.toDouble())
-            xs[aIx] = a.x
-            ys[aIx] = a.y
-            rs[aIx] = a.radius
+            set(aIx, a)
         }
     }
 

@@ -23,7 +23,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.children
-import androidx.core.view.drawToBitmap
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -88,6 +87,7 @@ class DodecaViewActivity : AppCompatActivity()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel.registerOptionsObserversIn(this)
         setupWindow()
         val binding: ActivityDodecaViewBinding =
             DataBindingUtil.setContentView(this, R.layout.activity_dodeca_view)
@@ -180,6 +180,7 @@ class DodecaViewActivity : AppCompatActivity()
                 // start
                 viewModel.reloadDdu()
             }
+            R.id.fill_button -> viewModel.toggleFillCircles()
             R.id.settings_button -> goToActivity(SettingsActivity::class.java, settingsResultLauncher)
         }
     }
@@ -187,8 +188,7 @@ class DodecaViewActivity : AppCompatActivity()
     @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun saveScreenshot() {
         val screenshot: Bitmap? =
-            if (false) dodeca_view.drawToBitmap() // ??? idr
-            else viewModel.takeFullScreenshot()
+            viewModel.takeFullScreenshot()
         screenshot?.let {
             val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             val appName = getString(R.string.app_name)
@@ -306,6 +306,10 @@ class DodecaViewActivity : AppCompatActivity()
                 discardAllPreviews = received("discard_previews"),
                 updateCircleGroup = received("update_circlegroup")
             )
+            data?.getFloatExtra("angular_speed_factor", 1f)?.let { factor ->
+                if (factor != 1f)
+                    viewModel.dduRepresentation.value?.circleGroup?.changeAngularSpeed(factor)
+            }
         }
         optionsManager.fetchAll()
         viewModel.showBottomBar()

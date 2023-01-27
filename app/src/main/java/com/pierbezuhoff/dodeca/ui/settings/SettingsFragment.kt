@@ -49,7 +49,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         }
         setOf("preview_size", "n_preview_updates", "preview_smart_updates").forEach { key ->
-            hookChange(key) { addExtraResult("discard_previews") }
+            hookClick(key) { addExtraResult("discard_previews") }
         }
         hookClick("support") { sendFeedback() }
         setOf("circlegroup_implementation", "projective_sphere_radius").forEach { key ->

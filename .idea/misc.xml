@@ -19,11 +19,13 @@
         <entry key="app/src/main/res/drawable/ic_drag.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_edit.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_export.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_filled_circle.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_folder.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_move.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_move_icon.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_screenshot.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_trace.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_tricircle.xml" value="0.1" />
         <entry key="app/src/main/res/layout-w240dp/edit_circle.xml" value="0.146875" />
         <entry key="app/src/main/res/layout-w480dp/edit_circle.xml" value="0.23984608807182556" />
         <entry key="app/src/main/res/layout/activity_ddu_chooser.xml" value="0.1" />
