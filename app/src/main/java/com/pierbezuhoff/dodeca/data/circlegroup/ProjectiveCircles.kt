@@ -21,16 +21,16 @@ typealias Pole = Vector4
 
 // NOTE: Float matrices/arrays are indeed too inaccurate for proj operations
 // MAYBE: use nd4j (>200MB) or ejml (seems to be lighter and also optimized
-// TODO: time apply matrices vs update
-internal class ProjectiveCircles(
+// TODO: time apply matrices vs update (?)
+internal open class ProjectiveCircles(
     figures: List<CircleFigure>,
     paint: Paint,
     private val sphereRadius: Double
 ) : DoubleBackedCircleGroup(figures, paint) {
     // static
-    private val initialPoles: List<Pole> // poles of all initial circles
+    protected val initialPoles: List<Pole> // poles of all initial circles
     private val partsOfRules: List<Ixs> // (unique) rule index: int array of parts' indices
-    private val rulesForCircles: IxTable // circle index: (unique) rule index
+    protected val rulesForCircles: IxTable // circle index: (unique) rule index
     private val rulesForParts: IxTable // part index: (unique) rule index
     private val nRules: Int // only counting unique ones
     private val nParts: Int // nParts >= nRules
@@ -42,8 +42,8 @@ internal class ProjectiveCircles(
     // dynamic
     private val parts: Array<Matrix44> // unique parts of rules (can contain each other)
     private val rules: Array<Matrix44> // unique rules
-    private val cumulativeRules: Array<Matrix44> // each update: cum. rule = rule * cum. rule
-    private val poles: Array<Pole>
+    protected val cumulativeRules: Array<Matrix44> // each update: cum. rule = rule * cum. rule
+    protected val poles: Array<Pole>
     override val xs: DoubleArray = DoubleArray(size)
     override val ys: DoubleArray = DoubleArray(size)
     override val rs: DoubleArray = DoubleArray(size)
@@ -255,11 +255,6 @@ internal class ProjectiveCircles(
 
     override fun draw(canvas: Canvas, shape: Shape) =
         _draw(canvas, shape)
-
-    fun switchTo3D() {
-        // new Camera()
-    }
-    fun switchTo2D() {}
 
     companion object {
         private const val TAG = "ProjectiveCircles"

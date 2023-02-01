@@ -20,7 +20,9 @@ import kotlin.math.sqrt
 typealias Vector3 = MultiArray<Double, D1>
 typealias TransformationMatrix = MultiArray<Double, D2> // 4x4
 
+// important commands: right, up; Rx, Rz
 // Ox, Oy, Oz
+// NOTE: forward does nothing w/ ortho-proj. except filters visibility
 val RIGHT: Vector3 = mk.ndarray(mk[1.0, 0.0, 0.0])
 val FORWARD: Vector3 = mk.ndarray(mk[0.0, 1.0, 0.0])
 val UP: Vector3 = mk.ndarray(mk[0.0, 0.0, 1.0])
@@ -39,22 +41,19 @@ interface CoordinateSystem3D {
     val up: Vector3 get() = transform(UP).normalized()
 
     // intrinsic motions
-    fun moveRight(distance: Double)
-    fun moveForward(distance: Double)
-    fun moveUp(distance: Double)
-    fun rotatePitch(angle: Double) // elevation
-    fun rotateRoll(angle: Double) // bank
-    fun rotateYaw(angle: Double) // heading
+    fun moveRight(distance: Double) // = Tx
+    fun moveForward(distance: Double) // = Ty
+    fun moveUp(distance: Double) // = Tz
+    fun rotatePitch(angle: Double) // elevation = Rx
+    fun rotateRoll(angle: Double) // bank = Ry
+    fun rotateYaw(angle: Double) // heading = Rz
     fun zoom(scale: Double)
 }
 
 
-/* 3D */
-class Camera(
-    position: Vector3,
-    orientation: Vector3, // norm = angle, direction = rot. axis
-    scale: Double // ~ FoV
-) : CoordinateSystem3D {
+/** 3D, ortho-proj */ // MAYBE: add FoV and perspective vs orthogonal
+class Camera : CoordinateSystem3D {
+
     override var matrix: TransformationMatrix
         = mk.identity(4)
     // T * R * S
