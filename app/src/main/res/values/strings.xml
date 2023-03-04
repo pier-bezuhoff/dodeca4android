@@ -41,7 +41,7 @@
     <string name="show_everything_button_title">Show/hide invisible circles</string>
     <string name="edit_circles_button_title">Edit circles</string>
     <string name="angles_button_title">Change angular velocities</string>
-    <string name="ellipsis" translatable="false">something</string>
+    <string name="ellipsis" translatable="false">...</string>
 
     <!-- Toasts -->
     <string name="please_pick_color_toast">Double tap to pick a color</string>

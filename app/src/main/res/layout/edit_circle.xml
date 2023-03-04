@@ -6,6 +6,8 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
     >
         <Switch
                 android:id="@+id/circle_show"
@@ -70,5 +72,15 @@
 <!--                    android:layout_margin="8dp"-->
 <!--            />-->
         </LinearLayout>
+        <EditText
+                android:id="@+id/edit_circle_rule"
+                android:text="@string/ellipsis"
+                android:textSize="@dimen/small_text_size"
+                android:inputType="number"
+                android:digits="0123456789"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                />
     </LinearLayout>
 </layout>

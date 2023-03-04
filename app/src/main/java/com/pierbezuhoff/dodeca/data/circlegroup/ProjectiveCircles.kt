@@ -208,7 +208,7 @@ internal open class ProjectiveCircles(
             assert(abs(xs[i] - x) + abs(ys[i] - y) + abs(rs[i] - radius) < 1e-6) {
                 "cannot handle coordinate changes yet"
             }
-            assert(rule == attrs[i].rule) { "cannot handle rule change yet" }
+            assert(rule == attrs[i].rule) { "cannot handle rule changes yet" }
             attrs[i] = FigureAttributes(color, fill, rule, borderColor)
             paints[i] = Paint(defaultPaint).apply {
                 color = figure.color

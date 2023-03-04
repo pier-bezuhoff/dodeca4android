@@ -8,6 +8,7 @@ import android.graphics.drawable.LayerDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Switch
@@ -17,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
@@ -49,6 +51,7 @@ internal typealias OnApply = (
     color: Maybe<ColorInt>,
     fill: Maybe<Boolean>,
     borderColor: Maybe<ColorInt?>,
+    rule: Maybe<String>,
     texture: Maybe<Bitmap?>
 ) -> Unit
 
@@ -244,12 +247,18 @@ class CircleAdapter(
         color: ColorInt? = null,
         fill: Boolean? = null,
         borderColor: Maybe<ColorInt?> = None,
+        rule: String? = null,
         texture: Bitmap? = null
     ) {
+        val ruleWithN =
+            if (rule == null || rule.startsWith('n') || visible ?: figure.show)
+                rule
+            else "n$rule"
         figure = figure.copy(
             newShown = visible,
             newColor = color,
             newFill = fill,
+            newRule = ruleWithN,
             newBorderColor = borderColor
         )
         persist()
@@ -283,10 +292,7 @@ class CircleAdapter(
                 leftMargin = ROW_LEFT_MARGIN
             }
             circle_name.text = resources.getString(R.string.background_color)
-            if (HIDE_RULES)
-                circle_rule.visibility = View.GONE
-            else
-                circle_rule.text = ""
+            circle_rule.visibility = View.GONE
             val bgIcon = ContextCompat.getDrawable(context, R.drawable.background)
                 as LayerDrawable
             bgIcon.mutate()
@@ -327,8 +333,9 @@ class CircleAdapter(
             val rule = figure.rule?.trimStart('n')
             if (HIDE_RULES)
                 circle_rule.visibility = View.GONE
-            else
+            else {
                 circle_rule.text = rule?.ifBlank { "-" } ?: "-"
+            }
             circle_image.setImageDrawable(circleImageFor(figure.equivalence))
             circle_checkbox.apply {
                 visibility = View.VISIBLE
@@ -362,12 +369,11 @@ class CircleAdapter(
                 circle_rule.visibility = View.GONE
             else {
                 val firstRule = row.circles.first().figure.rule ?: ""
-                circle_rule.text =
-                    if (row.circles.all { (it.figure.rule ?: "") == firstRule }) {
-                        firstRule.trimStart('n').ifBlank { "-" }
-                    } else {
-                        "*"
-                    }
+                circle_rule.text = if (row.circles.all { (it.figure.rule ?: "") == firstRule }) {
+                    firstRule.trimStart('n').ifBlank { "-" }
+                } else {
+                    "*"
+                }
             }
             circle_image.setImageDrawable(circleImageFor(row.equivalence))
             circle_checkbox.apply {
@@ -376,8 +382,8 @@ class CircleAdapter(
                 isChecked = row.checked
             }
             circle_layout.setOnClickListener {
-                editCirclesDialog(row.circles) { (shown), (color), (fill), borderColor, _ ->
-                    row.circles.forEach { it.persistApply(shown, color, fill, borderColor) }
+                editCirclesDialog(row.circles) { (shown), (color), (fill), borderColor, (rule), _ ->
+                    row.circles.forEach { it.persistApply(shown, color, fill, borderColor, rule) }
                     row.equivalence = row.blueprint.equivalence
                     notifyDataSetChanged()
                 }.show()
@@ -421,7 +427,6 @@ class CircleAdapter(
     }
 
     private fun expandGroup(row: CircleGroupRow) {
-        // BUG: first expand pushes header underneath
         rows.addAll(1 + row.position!!, row.circles)
         row.expanded = true
         reassignPositions()
@@ -464,8 +469,8 @@ class CircleAdapter(
         editCircleDialog(
             row.figure,
             context.getString(R.string.edit_circle_dialog_message_single, row.id.toString())
-        ) { (shown), (color), (fill), borderColor, (texture) ->
-            row.persistApply(shown, color, fill, borderColor, texture)
+        ) { (shown), (color), (fill), borderColor, (rule), (texture) ->
+            row.persistApply(shown, color, fill, borderColor, rule, texture)
             notifyDataSetChanged()
         }.show()
     }
@@ -483,6 +488,10 @@ class CircleAdapter(
         var fill: Boolean by Delegates.observable(figure.fill) { _, _, _ -> fillChanged = true }
         var borderColorChanged = false
         var borderColor: ColorInt? by Delegates.observable(figure.borderColor) { _, _, _ -> borderColorChanged = true }
+        var ruleChanged = false
+        var rule: String by Delegates.observable(
+            figure.rule?.trimStart('n') ?: ""
+        ) { _, _, _ -> ruleChanged = true }
         var textureChanged = false
         // TODO: get texture from the CG instead
         var texture: Bitmap? by Delegates.observable(null) { _, _, _ -> textureChanged = true }
@@ -494,6 +503,7 @@ class CircleAdapter(
                     val fillSwitch: Switch = layout.circle_fill
                     val borderColorButton: ImageButton = layout.circle_border_color
                     val borderColorSwitch: Switch = layout.circle_has_border_color
+                    val ruleField: EditText = layout.edit_circle_rule
 //                    val textureButton: ImageButton = layout.circle_texture
 //                    val useTextureSwitch: Switch = layout.circle_use_texture
                     shownButton.apply {
@@ -554,6 +564,14 @@ class CircleAdapter(
                             }.show()
                         }
                     }
+                    ruleField.apply {
+                        setText(rule)
+                        doOnTextChanged { newRule, _, _, _ ->
+                            newRule?.let {
+                                rule = it.toString()
+                            }
+                        }
+                    }
 //                    useTextureSwitch.apply {
 //                        isEnabled = texture != null
 //                        isChecked = texture != null
@@ -580,6 +598,7 @@ class CircleAdapter(
                 color justIf colorChanged,
                 fill justIf fillChanged,
                 borderColor justIf borderColorChanged,
+                rule justIf ruleChanged,
                 texture justIf textureChanged
             ) }
             negativeButton(R.string.edit_circle_dialog_cancel) { }
@@ -604,8 +623,8 @@ class CircleAdapter(
     fun editCheckedCircles() {
         val circles = checkedRows.filterIsInstance<CircleRow>()
         if (circles.isNotEmpty())
-            editCirclesDialog(circles) { (shown), (color), (fill), borderColor, (texture) ->
-                circles.forEach { it.persistApply(shown, color, fill, borderColor, texture) }
+            editCirclesDialog(circles) { (shown), (color), (fill), borderColor, (rule), (texture) ->
+                circles.forEach { it.persistApply(shown, color, fill, borderColor, rule, texture) }
                 // group cannot shrink
                 checkedRows
                     .filterIsInstance<CircleGroupRow>()
