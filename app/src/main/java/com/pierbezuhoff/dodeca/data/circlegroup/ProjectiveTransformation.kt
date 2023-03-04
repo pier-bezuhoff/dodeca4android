@@ -3,6 +3,7 @@
 package com.pierbezuhoff.dodeca.data.circlegroup
 
 import com.pierbezuhoff.dodeca.data.Circle
+import com.pierbezuhoff.dodeca.data.Vector3
 import com.pierbezuhoff.dodeca.utils.component1
 import com.pierbezuhoff.dodeca.utils.component2
 import org.jetbrains.kotlinx.multik.api.identity
@@ -10,6 +11,7 @@ import org.jetbrains.kotlinx.multik.api.linalg.dot
 import org.jetbrains.kotlinx.multik.api.linalg.inv
 import org.jetbrains.kotlinx.multik.api.mk
 import org.jetbrains.kotlinx.multik.api.ndarray
+import org.jetbrains.kotlinx.multik.api.ndarrayOf
 import org.jetbrains.kotlinx.multik.ndarray.data.D1
 import org.jetbrains.kotlinx.multik.ndarray.data.D2
 import org.jetbrains.kotlinx.multik.ndarray.data.MultiArray
@@ -169,6 +171,14 @@ internal operator fun Vector4.component1(): Double = this[0]
 internal operator fun Vector4.component2(): Double = this[1]
 internal operator fun Vector4.component3(): Double = this[2]
 internal operator fun Vector4.component4(): Double = this[3]
+
+internal inline fun Vector4.v4ToV3(): Vector3 {
+    val w = this[3]
+    return mk.ndarrayOf(this[0]/w, this[1]/w, this[2]/w)
+}
+
+internal inline fun Vector3.v3ToV4(): Vector4 =
+    mk.ndarrayOf(this[0], this[1], this[2], 1.0)
 
 internal fun FloatArray.showAsList(): String =
     joinToString("\t", "(", ")") { "%.2f".format(it) }

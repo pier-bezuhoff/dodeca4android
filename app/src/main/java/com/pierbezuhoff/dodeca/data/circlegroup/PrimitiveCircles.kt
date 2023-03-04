@@ -59,6 +59,9 @@ internal class PrimitiveCircles(
                 shownIndices = shownIndices.toMutableSet().run { remove(i); toIntArray() }
             else if (!wasShown && show)
                 shownIndices = shownIndices.toMutableSet().run { add(i); toIntArray() }
+            if (rule != attrs[i].rule) {
+                // it should work anyway?
+            }
         }
     }
 

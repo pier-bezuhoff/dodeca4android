@@ -25,7 +25,7 @@ typealias Pole = Vector4
 internal open class ProjectiveCircles(
     figures: List<CircleFigure>,
     paint: Paint,
-    private val sphereRadius: Double
+    protected val sphereRadius: Double
 ) : DoubleBackedCircleGroup(figures, paint) {
     // static
     protected val initialPoles: List<Pole> // poles of all initial circles
@@ -101,7 +101,7 @@ internal open class ProjectiveCircles(
         parts = symbolicParts.map { it.map { i -> pivots[i]!! }.product() }.toTypedArray() // index out of bounds error
         rules = ruleBlueprints.map { it.map { i -> parts[i] }.product() }.toTypedArray()
         cumulativeRules = rules.map { I44() }.toTypedArray()
-        applyMatrices()
+//        applyMatrices()
     }
 
     private inline fun straightUpdate() {
@@ -153,7 +153,8 @@ internal open class ProjectiveCircles(
     }
 
     // most likely the bottleneck
-    private inline fun applyMatrices() {
+    protected open fun applyMatrices() {
+//        Log.i(TAG, "applyMatrices")
         shownIndices.forEach { cIx ->
             val rIx = rulesForCircles[cIx]
             poles[cIx] = vmult(cumulativeRules[rIx], initialPoles[cIx])
@@ -177,7 +178,7 @@ internal open class ProjectiveCircles(
 //        }
     }
 
-    private inline fun applyAllMatrices() {
+    protected open fun applyAllMatrices() {
         initialPoles.forEachIndexed { cIx, pole ->
             poles[cIx] = vmult(cumulativeRules[rulesForCircles[cIx]], pole)
         }

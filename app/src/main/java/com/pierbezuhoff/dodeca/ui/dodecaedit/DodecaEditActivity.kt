@@ -146,6 +146,8 @@ class DodecaEditActivity : AppCompatActivity()
             R.id.multiselect_mode_button -> viewModel.requestEditingMode(EditingMode.MULTISELECT)
             R.id.copy_mode_button -> viewModel.requestEditingMode(EditingMode.COPY)
             R.id.new_circle_button -> 5
+            R.id.navigate_3d_mode_button -> viewModel.requestEditingMode(EditingMode.NAVIGATE_3D)
+            R.id.rotate_3d_mode_button -> viewModel.requestEditingMode(EditingMode.ROTATE_3D)
             R.id.angles_button -> {
                 viewModel.getCircleGroup()?.let { cg ->
                     viewModel.pause()

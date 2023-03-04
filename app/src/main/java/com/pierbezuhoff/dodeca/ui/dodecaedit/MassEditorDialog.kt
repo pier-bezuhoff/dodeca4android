@@ -494,8 +494,8 @@ class CircleAdapter(
                     val fillSwitch: Switch = layout.circle_fill
                     val borderColorButton: ImageButton = layout.circle_border_color
                     val borderColorSwitch: Switch = layout.circle_has_border_color
-                    val textureButton: ImageButton = layout.circle_texture
-                    val useTextureSwitch: Switch = layout.circle_use_texture
+//                    val textureButton: ImageButton = layout.circle_texture
+//                    val useTextureSwitch: Switch = layout.circle_use_texture
                     shownButton.apply {
                         isChecked = shown
                         setOnCheckedChangeListener { _, checked -> shown = checked }
@@ -554,25 +554,25 @@ class CircleAdapter(
                             }.show()
                         }
                     }
-                    useTextureSwitch.apply {
-                        isEnabled = texture != null
-                        isChecked = texture != null
-                        setOnCheckedChangeListener { _, checked ->
-                            if (!checked) {
-                                isEnabled = false
-                                texture = null
-                            }
-                        }
-                    }
-                    textureButton.apply {
-                        setOnClickListener {
-                            TODO()
-                            // load texture
-                            // when loaded
-                            useTextureSwitch.isEnabled = true
-                            useTextureSwitch.isChecked = true
-                        }
-                    }
+//                    useTextureSwitch.apply {
+//                        isEnabled = texture != null
+//                        isChecked = texture != null
+//                        setOnCheckedChangeListener { _, checked ->
+//                            if (!checked) {
+//                                isEnabled = false
+//                                texture = null
+//                            }
+//                        }
+//                    }
+//                    textureButton.apply {
+//                        setOnClickListener {
+//                            TODO()
+//                            // load texture
+//                            // when loaded
+//                            useTextureSwitch.isEnabled = true
+//                            useTextureSwitch.isChecked = true
+//                        }
+//                    }
                 }
             }
             positiveButton(R.string.edit_circle_dialog_apply) { onApply(

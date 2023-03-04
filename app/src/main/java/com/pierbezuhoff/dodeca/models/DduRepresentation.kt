@@ -13,11 +13,13 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
+import com.pierbezuhoff.dodeca.data.CoordinateSystem3D
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.DduAttributesHolder
 import com.pierbezuhoff.dodeca.data.DduOptionsChangeListener
 import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.Trace
+import com.pierbezuhoff.dodeca.data.circlegroup.ProjectiveCircles3D
 import com.pierbezuhoff.dodeca.data.circlegroup.SuspendableCircleGroup
 import com.pierbezuhoff.dodeca.data.circlegroup.mkCircleGroup
 import com.pierbezuhoff.dodeca.ui.dodecaview.DodecaGestureDetector
@@ -44,7 +46,6 @@ import java.lang.ref.WeakReference
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-@Suppress("NOTHING_TO_INLINE")
 class DduRepresentation(
     override val ddu: Ddu,
     private val optionsManager: OptionsManager
@@ -98,6 +99,8 @@ class DduRepresentation(
     val traceBitmap: Bitmap?
         get() = trace?.bitmap
     private var currentCenter: Complex? = null // for screen rotations, visible current center (almost always == presenter?.getCenter())
+
+    private var mode: Mode = Mode.MODE_2D // whether to use ProjectiveCircles3D as a cg
 
     private var redrawTraceOnce: Boolean by Once()
     private var updateOnce: Boolean by Once()
@@ -174,11 +177,10 @@ class DduRepresentation(
 
     fun updateCircleGroup() {
         val figures = circleGroup.figures
-        val defaultPaint = circleGroup.defaultPaint
         circleGroup = mkCircleGroup(
             optionValues.circleGroupImplementation,
             optionValues.projR,
-            figures, defaultPaint
+            figures, paint
         )
     }
 
@@ -195,11 +197,25 @@ class DduRepresentation(
     }
 
     override fun onScroll(fromX: Float, fromY: Float, dx: Float, dy: Float) {
-        scroll(-dx, -dy)
+        when (mode) {
+            Mode.MODE_2D -> scroll(-dx, -dy)
+            Mode.MODE_3D_NAVIGATE -> (circleGroup as ProjectiveCircles3D).run {
+                doTransformation(CoordinateSystem3D.Transformation.Right(dx.toDouble()))
+                doTransformation(CoordinateSystem3D.Transformation.Up(dy.toDouble()))
+            }
+            Mode.MODE_3D_ROTATE -> (circleGroup as ProjectiveCircles3D).run {
+                doTransformation(CoordinateSystem3D.Transformation.Yaw(dx.toDouble() / DISTANCE_TO_ANGLE_DESCALE))
+                doTransformation(CoordinateSystem3D.Transformation.Pitch(dy.toDouble() / DISTANCE_TO_ANGLE_DESCALE))
+            }
+        }
     }
 
     override fun onScale(scale: Float, focusX: Float, focusY: Float) {
-        scale(scale, focusX, focusY)
+        when (mode) {
+            Mode.MODE_2D -> scale(scale, focusX, focusY)
+            else -> (circleGroup as ProjectiveCircles3D)
+                .doTransformation(CoordinateSystem3D.Transformation.Zoom(scale.toDouble()))
+        }
     }
 
     private fun scroll(dx: Float, dy: Float) =
@@ -312,7 +328,7 @@ class DduRepresentation(
             drawTrace -> canvas.drawTraceCanvas()
             else -> onCanvas(canvas) { drawVisible() }
         }
-        if (showEverything) {
+        if (showEverything && mode == Mode.MODE_2D) {
 //            _drawOverlay(canvas)
             onCanvas(canvas) { drawOverlay() }
         }
@@ -505,6 +521,20 @@ class DduRepresentation(
         }
     }
 
+    fun switchMode(newMode: Mode) {
+        when (newMode) {
+            Mode.MODE_2D -> if (mode !== Mode.MODE_2D) {
+                clearTrace()
+                updateCircleGroup()
+            }
+            else -> if (mode !in listOf(Mode.MODE_3D_NAVIGATE, Mode.MODE_3D_ROTATE)) {
+                clearTrace()
+                circleGroup = ProjectiveCircles3D(circleGroup.figures, paint, optionValues.projR.toDouble())
+            }
+        }
+        mode = newMode
+    }
+
     private class UpdateScheduler {
         private var lastUpdateTime: Long = 0
         private var ups: Int = DEFAULT_UPS // updates per second
@@ -542,6 +572,10 @@ class DduRepresentation(
         private fun disconnectPresenter() { dduRepresentation.get()?.presenter = null }
     }
 
+    enum class Mode {
+        MODE_2D, MODE_3D_NAVIGATE, MODE_3D_ROTATE
+    }
+
     companion object {
         private const val TAG: String = "DduRepresentation"
         private val DEFAULT_PAINT =
@@ -555,6 +589,8 @@ class DduRepresentation(
         /** Interval between presenter.redraw() calls */
         private const val DT_IN_MILLISECONDS: Long = (1000f / FPS).toLong()
         private const val INITIAL_DELAY_IN_MILLISECONDS: Long = 1
+
+        private const val DISTANCE_TO_ANGLE_DESCALE: Double = 100.0
     }
 }
 

@@ -296,9 +296,15 @@ class DodecaEditViewModel(
         }
         val modes3d = listOf(EditingMode.NAVIGATE_3D, EditingMode.ROTATE_3D)
         if (mode in modes3d && editingMode.value !in modes3d) {
-            // TODO: switch to the 3d view
+            when (mode) {
+                EditingMode.NAVIGATE_3D ->
+                    dduRepresentation.value?.switchMode(DduRepresentation.Mode.MODE_3D_NAVIGATE)
+                EditingMode.ROTATE_3D ->
+                    dduRepresentation.value?.switchMode(DduRepresentation.Mode.MODE_3D_ROTATE)
+                else -> Unit // never
+            }
         } else if (mode !in modes3d && editingMode.value in modes3d) {
-            // TODO: switch to the 2d view
+            dduRepresentation.value?.switchMode(DduRepresentation.Mode.MODE_2D)
         }
         _editingMode.value = mode
         showBottomBar()
