@@ -81,6 +81,8 @@ class DodecaViewActivity : AppCompatActivity()
     }
     private val dir: File get() = viewModel.dir
 
+    private lateinit var binding: ActivityDodecaViewBinding
+
     private val dduResultLauncher = registerForActivityResult(StartActivityForResult()) { onDduResult(it.resultCode, it.data) }
     private val settingsResultLauncher = registerForActivityResult(StartActivityForResult()) { onSettingsResult(it.resultCode, it.data) }
     private val helpResultLauncher = registerForActivityResult(StartActivityForResult()) { viewModel.showBottomBar() }
@@ -89,11 +91,10 @@ class DodecaViewActivity : AppCompatActivity()
         super.onCreate(savedInstanceState)
         viewModel.registerOptionsObserversIn(this)
         setupWindow()
-        val binding: ActivityDodecaViewBinding =
-            DataBindingUtil.setContentView(this, R.layout.activity_dodeca_view)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_dodeca_view)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
-        setSupportActionBar(bar)
+        setSupportActionBar(binding.bar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         setupToolbar()
         viewModel.showBottomBar()

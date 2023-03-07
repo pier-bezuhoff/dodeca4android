@@ -42,8 +42,8 @@ android {
             versionNameSuffix '-beta'
         }
     }
-    dataBinding {
-        enabled true
+    buildFeatures {
+        dataBinding true
     }
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()

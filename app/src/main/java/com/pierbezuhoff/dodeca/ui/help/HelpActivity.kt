@@ -1,9 +1,9 @@
 package com.pierbezuhoff.dodeca.ui.help
 
 import android.os.Bundle
+import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import com.pierbezuhoff.dodeca.R
-import kotlinx.android.synthetic.main.activity_help.*
 import java.util.Locale
 
 class HelpActivity : AppCompatActivity() {
@@ -18,7 +18,12 @@ class HelpActivity : AppCompatActivity() {
         )
         var htmlPath: String = htmls["en"]!!
         val locale = Locale.getDefault().toString()
-        htmls.keys.find { locale.contains(it, ignoreCase = true) }?.let { htmlPath = htmls[it]!! }
-        help.loadUrl(htmlPath)
+        htmls.keys.find {
+            locale.contains(it, ignoreCase = true)
+        }?.let {
+            htmlPath = htmls[it]!!
+        }
+        findViewById<WebView>(R.id.help)
+            .loadUrl(htmlPath)
     }
 }
