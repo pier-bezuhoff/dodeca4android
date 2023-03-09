@@ -37,6 +37,8 @@
         <entry key="app/src/main/res/layout/choose_angles_dialog.xml" value="0.2787516032492518" />
         <entry key="app/src/main/res/layout/choose_color_dialog.xml" value="0.27960666951688756" />
         <entry key="app/src/main/res/layout/choose_color_row.xml" value="0.27960666951688756" />
+        <entry key="app/src/main/res/layout/ddu_item.xml" value="0.2791791363830697" />
+        <entry key="app/src/main/res/layout/dir_row.xml" value="0.2791791363830697" />
         <entry key="app/src/main/res/layout/edit_circle.xml" value="0.1" />
         <entry key="app/src/main/res/layout/mass_editor_dialog.xml" value="0.27960666951688756" />
         <entry key="app/src/main/res/layout/mass_editor_row.xml" value="0.536" />

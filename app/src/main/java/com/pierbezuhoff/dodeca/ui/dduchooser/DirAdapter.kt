@@ -3,11 +3,11 @@ package com.pierbezuhoff.dodeca.ui.dduchooser
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.annotation.MenuRes
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.utils.Connection
-import kotlinx.android.synthetic.main.dir_row.view.*
 import java.io.File
 
 class DirAdapter(private val dirs: List<File>) : MetaRecyclerViewAdapter<DirAdapter.DirViewHolder>() {
@@ -30,7 +30,8 @@ class DirAdapter(private val dirs: List<File>) : MetaRecyclerViewAdapter<DirAdap
     override fun onBindViewHolder(holder: DirViewHolder, position: Int) {
         val dir = dirs[position]
         with(holder) {
-            view.dir_name.text = dir.name
+            view.findViewById<TextView>(R.id.dir_name)
+                .text = dir.name
             view.setOnClickListener {
                 dirChangeConnection.send { onDirChanged(dir) }
             }

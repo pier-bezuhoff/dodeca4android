@@ -39,9 +39,6 @@ import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.fileName
 import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
-import kotlinx.android.synthetic.main.activity_dodeca_edit.*
-import kotlinx.android.synthetic.main.toolbar_edit1.*
-import kotlinx.android.synthetic.main.toolbar_edit2.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -79,6 +76,8 @@ class DodecaEditActivity : AppCompatActivity()
     }
     private val dir: File get() = viewModel.dir
 
+    private lateinit var binding: ActivityDodecaEditBinding
+
     private val dduResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { onDduResult(it.resultCode, it.data) }
     private val settingsResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { onSettingsResult(it.resultCode, it.data) }
 
@@ -86,11 +85,10 @@ class DodecaEditActivity : AppCompatActivity()
         super.onCreate(savedInstanceState)
         viewModel.registerOptionsObserversIn(this)
         setupWindow()
-        val binding: ActivityDodecaEditBinding =
-            DataBindingUtil.setContentView(this, R.layout.activity_dodeca_edit)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_dodeca_edit)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
-        setSupportActionBar(edit_bar)
+        setSupportActionBar(binding.editBar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         setupToolbar()
         viewModel.showBottomBar()
@@ -98,8 +96,10 @@ class DodecaEditActivity : AppCompatActivity()
             intent.getParcelableExtra("ddu_uri", Uri::class.java)
         else intent.getParcelableExtra<Uri>("ddu_uri")
         uri?.let { readUriWithPermissionCheck(it) } ?: viewModel.loadInitialDdu()
-        dodeca_edit_view.inheritLifecycleOf(this)
-        dodeca_edit_view.setLayerType(View.LAYER_TYPE_SOFTWARE, null) // makes dashed lines visible, but maybe(?) slower
+        with (binding.dodecaEditView) {
+            inheritLifecycleOf(this)
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null) // makes dashed lines visible, but maybe(?) slower
+        }
         // viewModel.overwriteForceRedraw() // idk
     }
 
@@ -132,14 +132,17 @@ class DodecaEditActivity : AppCompatActivity()
     }
 
     private fun setupToolbar() {
-        setOf(toolbar_edit1, toolbar_edit2).forEach { toolbar ->
+        setOf(
+            binding.upperEditToolbar.toolbarEdit1,
+            binding.lowerEditToolbar.toolbarEdit2
+        ).forEach { toolbar ->
             toolbar.children.filterIsInstance(ImageButton::class.java).forEach { button ->
                 button.setOnClickListener { onToolbarItemClick(it.id) }
             }
         }
     }
 
-    // BUG: no tooltips!
+    // BUG: no tooltips! but the green toolbar has them (same mechanism of overriding contentDescription used)
     private fun onToolbarItemClick(id: Int) {
         when (id) {
             R.id.navigate_mode_button -> viewModel.requestEditingMode(EditingMode.NAVIGATE)

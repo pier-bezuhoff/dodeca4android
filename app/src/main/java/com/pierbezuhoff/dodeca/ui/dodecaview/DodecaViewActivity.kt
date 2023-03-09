@@ -43,9 +43,6 @@ import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.fileName
 import com.pierbezuhoff.dodeca.utils.filename
 import com.pierbezuhoff.dodeca.utils.withUniquePostfix
-import kotlinx.android.synthetic.main.activity_dodeca_view.*
-import kotlinx.android.synthetic.main.toolbar1.*
-import kotlinx.android.synthetic.main.toolbar2.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -103,7 +100,7 @@ class DodecaViewActivity : AppCompatActivity()
             intent.getParcelableExtra("ddu_uri", Uri::class.java)
         else intent.getParcelableExtra<Uri>("ddu_uri")
         uri?.let { readUriWithPermissionCheck(it) } ?: viewModel.loadInitialDdu()
-        dodeca_view.inheritLifecycleOf(this)
+        binding.dodecaView.inheritLifecycleOf(this)
     }
 
     private fun setupWindow() {
@@ -130,13 +127,16 @@ class DodecaViewActivity : AppCompatActivity()
     }
 
     private fun setupToolbar() {
-        setOf(toolbar1, toolbar2).forEach { toolbar ->
+        setOf(
+            binding.upperToolbar.toolbar1,
+            binding.lowerToolbar.toolbar2
+        ).forEach { toolbar ->
             toolbar.children.filterIsInstance(ImageButton::class.java).forEach { button ->
                 button.setOnClickListener { onToolbarItemClick(it.id) }
             }
         }
         // BUG: after BOTTOM_BAR_HIDE_DELAY selection does not work!
-        with(shape_spinner) {
+        with(binding.upperToolbar.shapeSpinner) {
             adapter = ShapeSpinnerAdapter(context)
         }
     }

@@ -138,7 +138,7 @@ class DduFileService(private val context: Context) {
         require(dir.isDirectory)
         require(targetDir.isDirectory)
         return withContext(Dispatchers.IO) {
-            val target = File(targetDir, dir.name)
+            val target = File(targetDir, dir.name ?: "Unnamed folder")
             context.contentResolver.copyDirectory(dir, target)
             return@withContext target
         }
@@ -183,7 +183,7 @@ class DduFileService(private val context: Context) {
         withContext(Dispatchers.IO) {
             when {
                 source.isDirectory -> targetDir.createDirectory(source.name)?.let { newDir ->
-                    source.listFiles().forEach { exportIntoDocumentFile(it, newDir) }
+                    source.listFiles()?.forEach { exportIntoDocumentFile(it, newDir) }
                 }
                 source.isDdu -> targetDir.createFile("*/*", source.name)?.let { newFile ->
                     context.contentResolver.openOutputStream(newFile.uri)?.let { outputStream ->
@@ -197,7 +197,7 @@ class DduFileService(private val context: Context) {
 
     suspend fun renameDduFile(file: File, newFilename: Filename): File? = withContext(Dispatchers.IO) {
         require(file.isFile && file.isDdu)
-        val newFile = file.parentFile/newFilename
+        val newFile = file.parentFile!!/newFilename
         val success = file.renameTo(newFile)
         if (success) {
             dduFileRepository.updateFilename(file.filename, newFilename = newFilename)

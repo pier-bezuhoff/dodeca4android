@@ -70,9 +70,17 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     >
-                <include layout="@layout/toolbar_edit1" bind:viewModel="@{viewModel}"/>
+                <include
+                        layout="@layout/toolbar_edit1"
+                        android:id="@+id/upperEditToolbar"
+                        bind:viewModel="@{viewModel}"
+                        />
                 <View style="@style/dividerHorizontal"/>
-                <include layout="@layout/toolbar_edit2" bind:viewModel="@{viewModel}"/>
+                <include
+                        layout="@layout/toolbar_edit2"
+                        android:id="@+id/lowerEditToolbar"
+                        bind:viewModel="@{viewModel}"
+                        />
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
 

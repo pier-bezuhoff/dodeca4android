@@ -9,12 +9,12 @@ import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.Ddu
+import com.pierbezuhoff.dodeca.databinding.DduItemBinding
 import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.utils.Connection
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritor
 import com.pierbezuhoff.dodeca.utils.fileName
-import kotlinx.android.synthetic.main.ddu_item.view.*
 import java.io.File
 
 class DduFileAdapter(
@@ -36,7 +36,7 @@ class DduFileAdapter(
 
     private val blankPreview: Bitmap = Ddu.createBlankPreview(optionsManager.values.previewSizePx)
 
-    class DduFileViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+    class DduFileViewHolder(val binding: DduItemBinding) : RecyclerView.ViewHolder(binding.root) {
         lateinit var file: File
     }
 
@@ -46,23 +46,24 @@ class DduFileAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DduFileViewHolder {
-        val view = LayoutInflater
-            .from(parent.context)
-            .inflate(R.layout.ddu_item, parent, false)
-        return DduFileViewHolder(view)
+        val binding = DduItemBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent, false
+        )
+        return DduFileViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: DduFileViewHolder, position: Int) {
         val file: File = files[position]
-        with(holder) {
+        with(holder.binding) {
             holder.file = file
-            view.ddu_entry.text = file.fileName.toString()
-            view.setOnClickListener {
+            dduEntry.text = file.fileName.toString()
+            dduPreview.setOnClickListener {
                 fileChooserConnection.send { chooseFile(file) }
             }
             contextMenuConnection.send {
                 registerForContextMenu(
-                    view,
+                    dduPreviewLayout,
                     menuRes = CONTEXT_MENU_RES,
                     contextMenuSource = ContextMenuSource.DduFile(file)
                 )
@@ -82,19 +83,19 @@ class DduFileAdapter(
     }
 
     private fun showProgressBar(holder: DduFileViewHolder) {
-        holder.view.ddu_preview.apply {
+        holder.binding.dduPreview.apply {
             visibility = View.VISIBLE
             setImageBitmap(blankPreview)
         }
-        holder.view.preview_progress.visibility = View.VISIBLE
+        holder.binding.previewProgress.visibility = View.VISIBLE
     }
 
     private fun setPreview(holder: DduFileViewHolder, bitmap: Bitmap) {
-        holder.view.ddu_preview.apply {
+        holder.binding.dduPreview.apply {
             visibility = View.VISIBLE
             setImageBitmap(bitmap)
         }
-        holder.view.preview_progress.visibility = View.GONE
+        holder.binding.previewProgress.visibility = View.GONE
     }
 
     override fun getItemCount(): Int =

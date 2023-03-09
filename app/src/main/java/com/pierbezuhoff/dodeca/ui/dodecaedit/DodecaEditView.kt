@@ -3,6 +3,7 @@ package com.pierbezuhoff.dodeca.ui.dodecaedit
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.utils.ComplexFF
@@ -44,6 +45,7 @@ class DodecaEditView @JvmOverloads constructor(
         require(lifecycleInherited)
         viewModel.dduRepresentation.observe(this) {
             it.connectPresenter(this)
+            Log.i(TAG, "presenter connected")
         }
     }
 

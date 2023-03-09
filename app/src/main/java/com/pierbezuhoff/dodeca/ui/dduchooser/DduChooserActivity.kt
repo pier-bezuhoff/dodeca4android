@@ -31,7 +31,6 @@ import com.pierbezuhoff.dodeca.utils.Filename
 import com.pierbezuhoff.dodeca.utils.div
 import com.pierbezuhoff.dodeca.utils.fileName
 import com.pierbezuhoff.dodeca.utils.filename
-import kotlinx.android.synthetic.main.activity_ddu_chooser.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -77,10 +76,11 @@ class DduChooserActivity : AppCompatActivity()
     private val exportDduForDodecaLookResultLauncher = registerForActivityResult(StartActivityForResult()) { onExportDduForDodecaLookResult(it.resultCode, it.data) }
     private val exportDirResultLauncher = registerForActivityResult(StartActivityForResult()) { onExportDirResult(it.resultCode, it.data) }
 
+    private lateinit var binding: ActivityDduChooserBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding: ActivityDduChooserBinding =
-            DataBindingUtil.setContentView(this, R.layout.activity_ddu_chooser)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_ddu_chooser)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
         setInitialDir()
@@ -101,9 +101,9 @@ class DduChooserActivity : AppCompatActivity()
     private fun initDirRecyclerView() {
         val adapter = DirAdapter(viewModel.dirs)
         dirDeltaList = DeltaList(viewModel.dirs, adapter)
-        dir_recycler_view.adapter = adapter
-        dir_recycler_view.layoutManager = LinearLayoutManager(applicationContext)
-        dir_recycler_view.itemAnimator = DefaultItemAnimator()
+        binding.dirRecyclerView.adapter = adapter
+        binding.dirRecyclerView.layoutManager = LinearLayoutManager(applicationContext)
+        binding.dirRecyclerView.itemAnimator = DefaultItemAnimator()
         adapter.dirChangeSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
     }
@@ -111,11 +111,11 @@ class DduChooserActivity : AppCompatActivity()
     private fun initDduRecyclerView() {
         val adapter = DduFileAdapter(viewModel.files, optionsManager)
         dduFileDeltaList = DeltaList(viewModel.files, adapter)
-        ddu_recycler_view.adapter = adapter
+        binding.dduRecyclerView.adapter = adapter
         // NOTE: colors and thickness of dividers are set from styles.xml
-        ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
-        ddu_recycler_view.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.HORIZONTAL))
-        ddu_recycler_view.itemAnimator = DefaultItemAnimator()
+        binding.dduRecyclerView.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.VERTICAL))
+        binding.dduRecyclerView.addItemDecoration(DividerItemDecoration(applicationContext, LinearLayoutManager.HORIZONTAL))
+        binding.dduRecyclerView.itemAnimator = DefaultItemAnimator()
         adapter.fileChooserSubscription.subscribeFrom(this)
         adapter.contextMenuSubscription.subscribeFrom(this)
         adapter.previewSupplierSubscription.subscribeFrom(viewModel)
@@ -124,7 +124,7 @@ class DduChooserActivity : AppCompatActivity()
         adapter.findPositionOf(lastFile)?.let { position: Int ->
             // NOTE: works bad when position is in the end of adapter
             //  also jumping slightly when scrolling upward
-            ddu_recycler_view.scrollToPosition(position)
+            binding.dduRecyclerView.scrollToPosition(position)
         }
     }
 

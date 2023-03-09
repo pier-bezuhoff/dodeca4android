@@ -25,14 +25,13 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.circlegroup.CircleGroup
+import com.pierbezuhoff.dodeca.databinding.MassEditorDialogBinding
+import com.pierbezuhoff.dodeca.databinding.MassEditorRowBinding
 import com.pierbezuhoff.dodeca.utils.Maybe
 import com.pierbezuhoff.dodeca.utils.None
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
 import com.pierbezuhoff.dodeca.utils.justIf
 import com.rarepebble.colorpicker.ColorPickerView
-import kotlinx.android.synthetic.main.edit_circle.view.*
-import kotlinx.android.synthetic.main.mass_editor_dialog.view.*
-import kotlinx.android.synthetic.main.mass_editor_row.view.*
 import org.jetbrains.anko.AlertBuilder
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.customView
@@ -74,30 +73,43 @@ class MassEditorDialog(
     fun build(): Dialog {
         val builder = AlertDialog.Builder(context)
         val inflater = context.layoutInflater
-        val layout = inflater.inflate(R.layout.mass_editor_dialog, null)
+//        val layout: View = inflater.inflate(R.layout.mass_editor_dialog, null)
+        val binding: MassEditorDialogBinding =
+            MassEditorDialogBinding.inflate(inflater)
+        val layout = binding.root
         builder.setView(layout)
         val manager = LinearLayoutManager(context)
         rowAdapter = CircleAdapter(context, ddu, circleGroup, massEditorListener)
         val height: Int = context.displayMetrics.heightPixels
-        layout.circle_rows.apply {
-            layoutManager = manager
-            adapter = rowAdapter
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                (height * 0.5).roundToInt()
-            )
-        }
-        layout.all_circles_checkbox.setOnCheckedChangeListener { _, checked -> rowAdapter.onCheckAll(checked) }
-        layout.sort_by_color.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByColor(checked) }
-        layout.sort_by_name.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByName(checked) }
-        if (CircleAdapter.HIDE_RULES)
-            layout.sort_by_rule.visibility = View.GONE
-        else
-            layout.sort_by_rule.setOnCheckedChangeListener { _, checked -> rowAdapter.onSortByRule(checked) }
-        setOf(
-            layout.all_circles_checkbox, layout.sort_by_color, layout.sort_by_name, layout.sort_by_rule
-        ).forEach {
-            TooltipCompat.setTooltipText(it, it.contentDescription)
+        with(binding) {
+            circleRows.apply {
+                layoutManager = manager
+                adapter = rowAdapter
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    (height * 0.5).roundToInt()
+                )
+            }
+            allCirclesCheckbox.setOnCheckedChangeListener { _, checked ->
+                rowAdapter.onCheckAll(checked)
+            }
+            sortByColor.setOnCheckedChangeListener { _, checked ->
+                rowAdapter.onSortByColor(checked)
+            }
+            sortByName.setOnCheckedChangeListener { _, checked ->
+                rowAdapter.onSortByName(checked)
+            }
+            if (CircleAdapter.HIDE_RULES)
+                sortByRule.visibility = View.GONE
+            else
+                binding.sortByRule.setOnCheckedChangeListener { _, checked ->
+                    rowAdapter.onSortByRule(checked)
+                }
+            setOf(
+                allCirclesCheckbox, sortByColor, sortByName, sortByRule
+            ).forEach {
+                TooltipCompat.setTooltipText(it, it.contentDescription)
+            }
         }
         val dialog = builder.apply {
             setMessage(R.string.mass_editor_dialog_message)
@@ -123,6 +135,7 @@ class MassEditorDialog(
                 val avHSL = averageHSL(targetIxs.map { circleGroup[it].color })
                 val av = ColorUtils.HSLToColor(avHSL)
                 colorPickerDialog(context, av) { newColor ->
+                    // HSL-shift all colors of the selected circles by (newColor - av)
                     val hsl = FloatArray(3)
                     ColorUtils.colorToHSL(newColor, hsl)
                     val dH = hsl[0] - avHSL[0]
@@ -160,7 +173,7 @@ class CircleAdapter(
     private val circleGroup: CircleGroup,
     private val massEditorListener: MassEditorDialog.MassEditorListener
 ) : RecyclerView.Adapter<CircleAdapter.ViewHolder>() {
-    class ViewHolder(val row: View) : RecyclerView.ViewHolder(row)
+    class ViewHolder(val binding: MassEditorRowBinding) : RecyclerView.ViewHolder(binding.root)
 
     private val bgRow = BackgroundRow(ddu.backgroundColor)
     private val circleRows: List<CircleRow> =
@@ -173,7 +186,7 @@ class CircleAdapter(
 
     // store rows with checked checkboxes, they might be collapsed though
     val checkedRows: MutableSet<Row> = mutableSetOf()
-    private var binding: Boolean = false
+    private var bindingInProgress: Boolean = false
 
     private inline fun CircleRow.persist() { circleGroup[id] = this.figure }
     private inline fun Row.remove() {
@@ -268,13 +281,15 @@ class CircleAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val row = LayoutInflater.from(parent.context)
-            .inflate(R.layout.mass_editor_row, parent, false)
-        return ViewHolder(row)
+        val binding = MassEditorRowBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent, false
+        )
+        return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        binding = true
+        bindingInProgress = true
         val row = rows[position]
         row.position = position
         when (row) {
@@ -282,17 +297,17 @@ class CircleAdapter(
             is CircleRow -> onBindCircleVH(holder, row)
             is CircleGroupRow -> onBindCircleGroupVH(holder, row)
         }
-        binding = false
+        bindingInProgress = false
     }
 
     private fun onBindBackgroundVH(holder: ViewHolder, row: BackgroundRow) {
-        with(holder.row) {
+        with(holder.binding) {
             // increase left margin
-            (circle_layout.layoutParams as ViewGroup.MarginLayoutParams).apply {
+            (circleLayout.layoutParams as ViewGroup.MarginLayoutParams).apply {
                 leftMargin = ROW_LEFT_MARGIN
             }
-            circle_name.text = resources.getString(R.string.background_color)
-            circle_rule.visibility = View.GONE
+            circleName.text = root.resources.getString(R.string.background_color)
+            circleRule.visibility = View.GONE
             val bgIcon = ContextCompat.getDrawable(context, R.drawable.background)
                 as LayerDrawable
             bgIcon.mutate()
@@ -301,20 +316,22 @@ class CircleAdapter(
                 row.color,
                 BlendModeCompat.SRC_ATOP
             )
-            circle_image.setImageDrawable(bgIcon)
-            circle_checkbox.visibility = View.INVISIBLE
-            circle_layout.setOnClickListener {
-                colorPickerDialog(context, row.color) { newColor ->
-                    if (row.color != newColor) {
-                        row.color = newColor
-                        ddu.backgroundColor = newColor
-                        notifyItemChanged(0)
-                        massEditorListener.onMassEditorBackgroundChanged()
-                    }
-                }.show()
+            circleImage.setImageDrawable(bgIcon)
+            circleCheckbox.visibility = View.INVISIBLE
+            listOf(circleImage, circleLayout).forEach {
+                it.setOnClickListener {
+                    colorPickerDialog(context, row.color) { newColor ->
+                        if (row.color != newColor) {
+                            row.color = newColor
+                            ddu.backgroundColor = newColor
+                            notifyItemChanged(0)
+                            massEditorListener.onMassEditorBackgroundChanged()
+                        }
+                    }.show()
+                }
             }
-            circle_visibility.visibility = View.INVISIBLE
-            expand_group.apply {
+            circleVisibility.visibility = View.INVISIBLE
+            expandGroup.apply {
                 visibility = View.GONE
                 setOnCheckedChangeListener { _, _ -> }
                 isChecked = false
@@ -324,26 +341,28 @@ class CircleAdapter(
 
     private fun onBindCircleVH(holder: ViewHolder, row: CircleRow) {
         val figure = row.figure
-        with(holder.row) {
+        with(holder.binding) {
             // increase left margin
-            (circle_layout.layoutParams as ViewGroup.MarginLayoutParams).apply {
+            (circleLayout.layoutParams as ViewGroup.MarginLayoutParams).apply {
                 leftMargin = ROW_LEFT_MARGIN
             }
-            circle_name.text = "${row.id}"
+            circleName.text = "${row.id}"
             val rule = figure.rule?.trimStart('n')
             if (HIDE_RULES)
-                circle_rule.visibility = View.GONE
+                circleRule.visibility = View.GONE
             else {
-                circle_rule.text = rule?.ifBlank { "-" } ?: "-"
+                circleRule.text = rule?.ifBlank { "-" } ?: "-"
             }
-            circle_image.setImageDrawable(circleImageFor(figure.equivalence))
-            circle_checkbox.apply {
+            circleImage.setImageDrawable(circleImageFor(figure.equivalence))
+            circleCheckbox.apply {
                 visibility = View.VISIBLE
                 setOnCheckedChangeListener { _, checked -> if (checked) row.check() else row.uncheck() }
                 isChecked = row.checked
             }
-            circle_layout.setOnClickListener { editCircle(row) }
-            circle_visibility.apply {
+            listOf(circleImage, circleLayout).forEach {
+                it.setOnClickListener { editCircle(row) }
+            }
+            circleVisibility.apply {
                 visibility = View.VISIBLE
                 setOnCheckedChangeListener { _, _ -> }
                 isChecked = row.visible
@@ -351,7 +370,7 @@ class CircleAdapter(
                     row.persistApply(visible = checked)
                 }
             }
-            expand_group.apply {
+            expandGroup.apply {
                 visibility = View.GONE
                 setOnCheckedChangeListener { _, _ -> }
                 isChecked = false
@@ -360,48 +379,50 @@ class CircleAdapter(
     }
 
     private fun onBindCircleGroupVH(holder: ViewHolder, row: CircleGroupRow) {
-        with(holder.row) {
-            (circle_layout.layoutParams as ViewGroup.MarginLayoutParams).apply {
+        with(holder.binding) {
+            (circleLayout.layoutParams as ViewGroup.MarginLayoutParams).apply {
                 leftMargin = ROW_LEFT_MARGIN
             }
-            circle_name.text = row.name // should change whenever .circles changes
+            circleName.text = row.name // should change whenever .circles changes
             if (HIDE_RULES)
-                circle_rule.visibility = View.GONE
+                circleRule.visibility = View.GONE
             else {
                 val firstRule = row.circles.first().figure.rule ?: ""
-                circle_rule.text = if (row.circles.all { (it.figure.rule ?: "") == firstRule }) {
+                circleRule.text = if (row.circles.all { (it.figure.rule ?: "") == firstRule }) {
                     firstRule.trimStart('n').ifBlank { "-" }
                 } else {
                     "*"
                 }
             }
-            circle_image.setImageDrawable(circleImageFor(row.equivalence))
-            circle_checkbox.apply {
+            circleImage.setImageDrawable(circleImageFor(row.equivalence))
+            circleCheckbox.apply {
                 visibility = View.VISIBLE
-                setOnCheckedChangeListener { _, checked -> if (!binding) checkGroup(row, checked) }
+                setOnCheckedChangeListener { _, checked -> if (!bindingInProgress) checkGroup(row, checked) }
                 isChecked = row.checked
             }
-            circle_layout.setOnClickListener {
-                editCirclesDialog(row.circles) { (shown), (color), (fill), borderColor, (rule), _ ->
-                    row.circles.forEach { it.persistApply(shown, color, fill, borderColor, rule) }
-                    row.equivalence = row.blueprint.equivalence
-                    notifyDataSetChanged()
-                }.show()
+            listOf(circleImage, circleLayout).forEach {
+                it.setOnClickListener {
+                    editCirclesDialog(row.circles) { (shown), (color), (fill), borderColor, (rule), _ ->
+                        row.circles.forEach { it.persistApply(shown, color, fill, borderColor, rule) }
+                        row.equivalence = row.blueprint.equivalence
+                        notifyDataSetChanged()
+                    }.show()
+                }
             }
-            circle_visibility.apply {
+            circleVisibility.apply {
                 visibility = View.VISIBLE
                 setOnCheckedChangeListener { _, _ -> }
                 isChecked = row.visible
                 setOnCheckedChangeListener { _, checked ->
                     row.equivalence = row.equivalence.copy(visible = checked)
                     row.circles.forEach { it.persistApply(visible = checked) }
-                    if (row.expanded && !binding)
+                    if (row.expanded && !bindingInProgress)
                         notifyDataSetChanged()
                 }
             }
-            expand_group.apply {
+            expandGroup.apply {
                 visibility = View.VISIBLE
-                setOnCheckedChangeListener { _, checked -> if (!binding) expandOrCollapseGroup(checked, row) }
+                setOnCheckedChangeListener { _, checked -> if (!bindingInProgress) expandOrCollapseGroup(checked, row) }
                 if (isChecked != row.expanded)
                     isChecked = row.expanded
             }
@@ -456,11 +477,17 @@ class CircleAdapter(
         val border = circleImage.getDrawable(0)
         val inner = circleImage.getDrawable(1)
         if (fill) {
-            inner.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(color, BlendModeCompat.SRC_ATOP)
-            border.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(borderColor ?: color, BlendModeCompat.SRC_ATOP)
+            inner.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+                color, BlendModeCompat.SRC_ATOP
+            )
+            border.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+                borderColor ?: color, BlendModeCompat.SRC_ATOP
+            )
         } else {
             inner.alpha = 0
-            border.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(color, BlendModeCompat.SRC_ATOP)
+            border.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+                color, BlendModeCompat.SRC_ATOP
+            )
         }
         return circleImage
     }
@@ -493,17 +520,17 @@ class CircleAdapter(
             figure.rule?.trimStart('n') ?: ""
         ) { _, _, _ -> ruleChanged = true }
         var textureChanged = false
-        // TODO: get texture from the CG instead
+        // TODO: get texture from the CircleGroup instead
         var texture: Bitmap? by Delegates.observable(null) { _, _, _ -> textureChanged = true }
         return context.alert(message) {
             customView {
                 include<LinearLayout>(R.layout.edit_circle).also { layout ->
-                    val shownButton: Switch = layout.circle_show
-                    val colorButton: ImageButton = layout.circle_color
-                    val fillSwitch: Switch = layout.circle_fill
-                    val borderColorButton: ImageButton = layout.circle_border_color
-                    val borderColorSwitch: Switch = layout.circle_has_border_color
-                    val ruleField: EditText = layout.edit_circle_rule
+                    val shownButton: Switch = layout.findViewById(R.id.circle_show)
+                    val colorButton: ImageButton = layout.findViewById(R.id.circle_color)
+                    val fillSwitch: Switch = layout.findViewById(R.id.circle_fill)
+                    val borderColorButton: ImageButton = layout.findViewById(R.id.circle_border_color)
+                    val borderColorSwitch: Switch = layout.findViewById(R.id.circle_has_border_color)
+                    val ruleField: EditText = layout.findViewById(R.id.edit_circle_rule)
 //                    val textureButton: ImageButton = layout.circle_texture
 //                    val useTextureSwitch: Switch = layout.circle_use_texture
                     shownButton.apply {
@@ -638,7 +665,7 @@ class CircleAdapter(
     override fun getItemCount(): Int = rows.size
 
     fun onCheckAll(checked: Boolean) {
-        if (!binding) {
+        if (!bindingInProgress) {
             val cRows = rows.drop(1)
             if (checked) {
                 checkedRows.addAll(circleRows)

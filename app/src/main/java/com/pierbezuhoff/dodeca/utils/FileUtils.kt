@@ -86,7 +86,7 @@ suspend fun ContentResolver.copyFile(source: DocumentFile, target: File) {
 suspend fun copyDirectory(source: File, target: File) {
     withContext(Dispatchers.IO) {
         target.mkdir()
-        source.listFiles().forEach {
+        source.listFiles()?.forEach {
             if (it.isFile)
                 copyFile(it, File(target, it.name))
             else if (it.isDirectory)
@@ -100,9 +100,9 @@ suspend fun ContentResolver.copyDirectory(source: DocumentFile, target: File) {
         target.mkdir()
         source.listFiles().forEach {
             if (it.isFile)
-                this@copyDirectory.copyFile(it, File(target, it.name))
+                this@copyDirectory.copyFile(it, File(target, it.name ?: "Unnamed file"))
             else if (it.isDirectory)
-                this@copyDirectory.copyDirectory(source = it, target = File(target, it.name))
+                this@copyDirectory.copyDirectory(source = it, target = File(target, it.name ?: "Unnamed file"))
         }
     }
 }
@@ -140,7 +140,7 @@ suspend fun withUniquePostfix(file: File, extension: String = "ddu"): File = wit
 }
 
 suspend fun File.siblings(): List<File> = withContext(Dispatchers.IO) {
-    parentFile.listFiles().toList()
+    parentFile?.listFiles()?.toList() ?: emptyList()
 }
 
 // source: https://developer.android.com/guide/topics/providers/document-provider.html#metadata
