@@ -80,8 +80,4 @@ dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation "org.jetbrains.kotlinx:multik-core:$multik_version"
     implementation "org.jetbrains.kotlinx:multik-default:$multik_version"
-    // no tests for now vvv
-//    testImplementation 'junit:junit:4.13-beta-3'
-//    androidTestImplementation 'androidx.test:runner:1.3.0-alpha01'
-//    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0-alpha01'
 }

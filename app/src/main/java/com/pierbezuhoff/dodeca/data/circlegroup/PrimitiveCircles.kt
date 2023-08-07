@@ -109,7 +109,7 @@ internal class PrimitiveCircles(
         if (hasCircularDependencies)
             simpleReversedUpdate()
         else
-            for (i in ranked!!)
+            for (i in ranked)
                 for (j in reversedRules[i])
                     invertNow(i, j) // uses the new #j-th circle instead of the old one
     }
