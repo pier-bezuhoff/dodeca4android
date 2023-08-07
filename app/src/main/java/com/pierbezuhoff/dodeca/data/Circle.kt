@@ -154,65 +154,57 @@ open class Circle(var center: Complex, var radius: Double) {
     }
 }
 
+
+typealias Rule = List<Int>
+
 class CircleFigure(center: Complex, radius: Double,
     val color: Int = DEFAULT_COLOR,
     val fill: Boolean = DEFAULT_FILL,
-    val rule: String? = DEFAULT_RULE,
+    val visible: Boolean = DEFAULT_VISIBLE,
+    // sequence of numbers of figures with respect to which this circle should be inverted
+    val rule: Rule = DEFAULT_RULE,
     val borderColor: Int? = DEFAULT_BORDER_COLOR // used only when [fill], otherwise [color] is used
 ) : Circle(center, radius) {
-    val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
-    val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
-    val show: Boolean get() = dynamic && !dynamicHidden
-    // sequence of numbers of figures with respect to which this circle should be inverted
-    val sequence: IntArray = rule?.let {
-            (if (it.startsWith("n")) it.drop(1) else it)
-                .map(Character::getNumericValue)
-                .toIntArray()
-        } ?: intArrayOf()
 
     val right: Complex get() = center + radius
     val topLeft: Complex get() = center + radius * (I * (3 * PI/4)).exp()
 
     fun copy(
         newCenter: Complex? = null, newRadius: Double? = null,
-        newShown: Boolean? = null,
         newColor: Int? = null, newFill: Boolean? = null,
-        newRule: String? = null, newBorderColor: Maybe<Int?> = None
+        newVisible: Boolean? = null,
+        newRule: Rule? = null, newBorderColor: Maybe<Int?> = None
     ): CircleFigure = CircleFigure(
         newCenter ?: center, newRadius ?: radius,
         newColor ?: color, newFill ?: fill,
-        (newRule ?: rule)?.let { r ->
-            // rule-less circles cannot be visible yet
-            newShown?.let { shown ->
-                if (shown && r.startsWith('n'))
-                    r.drop(1)
-                else if (!shown && r.isNotBlank() && !r.startsWith('n'))
-                    "n$r"
-                else r
-            } ?: r
-        },
+        newVisible ?: visible,
+        newRule ?: rule,
         newBorderColor.orElse(borderColor)
     )
 
     constructor(
         circle: Circle,
         color: Int = DEFAULT_COLOR, fill: Boolean = DEFAULT_FILL,
-        rule: String? = DEFAULT_RULE, borderColor: Int? = DEFAULT_BORDER_COLOR
-    ) : this(circle.center, circle.radius, color, fill, rule, borderColor)
+        visible: Boolean = DEFAULT_VISIBLE,
+        rule: Rule = DEFAULT_RULE, borderColor: Int? = DEFAULT_BORDER_COLOR
+    ) : this(circle.center, circle.radius, color, fill, visible, rule, borderColor)
 
     constructor(
         x: Double, y: Double, radius: Double,
         color: Int = DEFAULT_COLOR, fill: Boolean = DEFAULT_FILL,
-        rule: String? = DEFAULT_RULE, borderColor: Int? = DEFAULT_BORDER_COLOR
-    ) : this(Circle(x, y, radius), color, fill, rule, borderColor)
+        visible: Boolean = DEFAULT_VISIBLE,
+        rule: Rule = DEFAULT_RULE, borderColor: Int? = DEFAULT_BORDER_COLOR
+    ) : this(Circle(x, y, radius), color, fill, visible, rule, borderColor)
 
     constructor(
         x: Double, y: Double, radius: Double,
         color: Int? = null, fill: Boolean? = null,
-        rule: String? = null, borderColor: Int? = null
+        visible: Boolean? = null,
+        rule: Rule? = null, borderColor: Int? = null
     ) : this(
         Circle(x, y, radius),
         color ?: DEFAULT_COLOR, fill ?: DEFAULT_FILL,
+        visible ?: DEFAULT_VISIBLE,
         rule ?: DEFAULT_RULE, borderColor ?: DEFAULT_BORDER_COLOR
     )
 
@@ -221,21 +213,22 @@ class CircleFigure(center: Complex, radius: Double,
         |  center = ($x, $y)
         |  radius = $radius
         |  color = ${color.fromColor()}
-        |  fill = $fill${
-        rule?.let { "\n  rule = $it" } ?: ""
-        }${
+        |  fill = $fill
+        |  visible = $visible
+        |  rule = ${rule.joinToString()}${
         borderColor?.let { "\n  borderColor = $it" } ?: ""
         }
         |)
     """.trimMargin()
 
     override fun inverted(circle: Circle): CircleFigure =
-        CircleFigure(super.inverted(circle), color, fill, rule)
+        CircleFigure(super.inverted(circle), color, fill, visible, rule)
 
     companion object {
         const val DEFAULT_COLOR: Int = Color.BLACK
-        const val DEFAULT_FILL = false
-        val DEFAULT_RULE: String? = null
+        const val DEFAULT_FILL: Boolean = false
+        const val DEFAULT_VISIBLE: Boolean = false
+        val DEFAULT_RULE: Rule = emptyList()
         val DEFAULT_BORDER_COLOR: Int? = null
     }
 }
@@ -243,10 +236,7 @@ class CircleFigure(center: Complex, radius: Double,
 data class FigureAttributes(
     val color: Int = CircleFigure.DEFAULT_COLOR,
     val fill: Boolean = CircleFigure.DEFAULT_FILL,
-    val rule: String? = CircleFigure.DEFAULT_RULE,
+    val visible: Boolean = CircleFigure.DEFAULT_VISIBLE,
+    val rule: Rule = CircleFigure.DEFAULT_RULE, // MAYBE: use int array instead
     val borderColor: Int? = CircleFigure.DEFAULT_BORDER_COLOR
-) {
-    private val dynamic: Boolean get() = rule?.isNotBlank() ?: false // is changing over time
-    private val dynamicHidden: Boolean get() = rule?.startsWith("n") ?: false
-    val show: Boolean get() = dynamic && !dynamicHidden
-}
+)

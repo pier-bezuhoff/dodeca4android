@@ -22,7 +22,7 @@ internal class PrimitiveCircles(
     override var xs: DoubleArray = _xs // old_s are used for draw and as oldCircles in redraw
     override var ys: DoubleArray = _ys
     override var rs: DoubleArray = _rs
-    private val rules: Array<IntArray> = Array(size) { figures[it].sequence }
+    private val rules: Array<IntArray> = Array(size) { figures[it].rule.toIntArray() }
     private val reversedRules by lazy { rules.map { it.reversedArray() }.toTypedArray() }
     override val figures: List<CircleFigure>
         get() = (0 until size).map { i ->
@@ -36,7 +36,7 @@ internal class PrimitiveCircles(
     }
 
     override fun set(i: Ix, figure: CircleFigure) {
-        val wasShown = attrs[i].show
+        val wasShown = attrs[i].visible
         with(figure) {
             _xs[i] = x
             _ys[i] = y
@@ -44,20 +44,20 @@ internal class PrimitiveCircles(
             xs[i] = x
             ys[i] = y
             rs[i] = radius
-            attrs[i] = FigureAttributes(color, fill, rule, borderColor)
-            rules[i] = sequence
-            reversedRules[i] = sequence.reversedArray()
+            attrs[i] = FigureAttributes(color, fill, wasShown, rule, borderColor)
+            rules[i] = rule.toIntArray()
+            reversedRules[i] = rule.reversed().toIntArray()
             paints[i] = Paint(defaultPaint).apply {
                 color = figure.color
                 style = if (fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
             }
-            if (show && borderColor != null && fill)
+            if (visible && borderColor != null && fill)
                 borderPaints.append(i, Paint(defaultBorderPaint).apply { color = borderColor })
             else
                 borderPaints.delete(i)
-            if (wasShown && !show)
+            if (wasShown && !visible)
                 shownIndices = shownIndices.toMutableSet().run { remove(i); toIntArray() }
-            else if (!wasShown && show)
+            else if (!wasShown && visible)
                 shownIndices = shownIndices.toMutableSet().run { add(i); toIntArray() }
         }
     }

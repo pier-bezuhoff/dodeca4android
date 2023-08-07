@@ -20,7 +20,7 @@ typealias Part = List<Ix>
 typealias Pole = Vector4
 
 // NOTE: Float matrices/arrays are indeed too inaccurate for proj operations
-// MAYBE: use nd4j (>200MB) or ejml (seems to be lighter and also optimized
+// MAYBE: use nd4j (>200MB) or ejml (seems to be lighter and also optimized)
 // TODO: time apply matrices vs update (?)
 internal open class ProjectiveCircles(
     figures: List<CircleFigure>,
@@ -58,8 +58,7 @@ internal open class ProjectiveCircles(
 
     init {
         val allSymbolicRules = figures.map {
-            val r = it.rule?.trimStart('n') ?: ""
-            r.reversed().map { c -> c.digitToInt() }
+            it.rule.reversed()
         }
         symbolicRules = allSymbolicRules.distinct()
         nRules = symbolicRules.size
@@ -203,27 +202,27 @@ internal open class ProjectiveCircles(
     }
 
     override fun set(i: Ix, figure: CircleFigure) {
-        val wasShown = attrs[i].show
+        val wasShown = attrs[i].visible
         with(figure) {
             assert(abs(xs[i] - x) + abs(ys[i] - y) + abs(rs[i] - radius) < 1e-6) {
                 "cannot handle coordinate changes yet"
             }
             assert(rule == attrs[i].rule) { "cannot handle rule changes yet" }
-            attrs[i] = FigureAttributes(color, fill, rule, borderColor)
+            attrs[i] = FigureAttributes(color, fill, wasShown, rule, borderColor)
             paints[i] = Paint(defaultPaint).apply {
                 color = figure.color
                 style = if (fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
             }
-            if (show && borderColor != null && fill)
+            if (visible && borderColor != null && fill)
                 borderPaints.append(i, Paint(defaultBorderPaint).apply { color = borderColor })
             else
                 borderPaints.delete(i)
-            if (wasShown && !show)
+            if (wasShown && !visible)
                 shownIndices = shownIndices.toMutableSet().run {
                     remove(i)
                     toIntArray()
                 }
-            else if (!wasShown && show) {
+            else if (!wasShown && visible) {
                 shownIndices = shownIndices.toMutableSet().run {
                     add(i)
                     toIntArray() // removed .sort()

@@ -25,8 +25,10 @@ import com.pierbezuhoff.dodeca.R
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.Ddu
 import com.pierbezuhoff.dodeca.data.circlegroup.CircleGroup
+import com.pierbezuhoff.dodeca.data.circlegroup.Rule
 import com.pierbezuhoff.dodeca.databinding.MassEditorDialogBinding
 import com.pierbezuhoff.dodeca.databinding.MassEditorRowBinding
+import com.pierbezuhoff.dodeca.utils.LexicographicComparator
 import com.pierbezuhoff.dodeca.utils.Maybe
 import com.pierbezuhoff.dodeca.utils.None
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
@@ -130,8 +132,8 @@ class MassEditorDialog(
                 val selectedIxs = rowAdapter.getCheckedCircleIndices()
                 val targetIxs =
                     if (selectedIxs.isEmpty())
-                        (0 until circleGroup.figures.size).filter { circleGroup[it].show }
-                    else selectedIxs.filter { circleGroup[it].show }
+                        (0 until circleGroup.figures.size).filter { circleGroup[it].visible }
+                    else selectedIxs.filter { circleGroup[it].visible }
                 val avHSL = averageHSL(targetIxs.map { circleGroup[it].color })
                 val av = ColorUtils.HSLToColor(avHSL)
                 colorPickerDialog(context, av) { newColor ->
@@ -238,7 +240,7 @@ class CircleAdapter(
 
     private inline fun factorByRule(circles: List<CircleRow>): List<Row> =
         circles
-            .consecutiveGroupBy { it.figure.rule ?: "" } // enough since it's already sorted by rule
+            .consecutiveGroupBy { it.figure.rule } // enough since it's already sorted by rule
             .mapIndexed { i, kAndList ->
                 val (_, list) = kAndList
                 if (list.size == 1)
@@ -263,15 +265,18 @@ class CircleAdapter(
         rule: String? = null,
         texture: Bitmap? = null
     ) {
-        val ruleWithN =
-            if (rule == null || rule.startsWith('n') || visible ?: figure.show)
-                rule
-            else "n$rule"
+        val parsedRule: Rule? = rule?.let {
+            try {
+                it.split(',').map { s -> s.trim().toInt() }
+            } catch (e: NumberFormatException) {
+                null
+            }
+        }
         figure = figure.copy(
-            newShown = visible,
+            newVisible = visible,
             newColor = color,
             newFill = fill,
-            newRule = ruleWithN,
+            newRule = parsedRule,
             newBorderColor = borderColor
         )
         persist()
@@ -347,11 +352,11 @@ class CircleAdapter(
                 leftMargin = ROW_LEFT_MARGIN
             }
             circleName.text = "${row.id}"
-            val rule = figure.rule?.trimStart('n')
+            val rule = figure.rule.joinToString(separator = ",")
             if (HIDE_RULES)
                 circleRule.visibility = View.GONE
             else {
-                circleRule.text = rule?.ifBlank { "-" } ?: "-"
+                circleRule.text = rule.ifBlank { "-" }
             }
             circleImage.setImageDrawable(circleImageFor(figure.equivalence))
             circleCheckbox.apply {
@@ -387,9 +392,9 @@ class CircleAdapter(
             if (HIDE_RULES)
                 circleRule.visibility = View.GONE
             else {
-                val firstRule = row.circles.first().figure.rule ?: ""
-                circleRule.text = if (row.circles.all { (it.figure.rule ?: "") == firstRule }) {
-                    firstRule.trimStart('n').ifBlank { "-" }
+                val firstRule = row.circles.first().figure.rule
+                circleRule.text = if (row.circles.all { it.figure.rule == firstRule }) {
+                    firstRule.joinToString(separator = ",").ifBlank { "-" }
                 } else {
                     "*"
                 }
@@ -508,7 +513,7 @@ class CircleAdapter(
         crossinline onApply: OnApply
     ): AlertBuilder<*> {
         var shownChanged = false
-        var shown: Boolean by Delegates.observable(figure.show) { _, _, _ -> shownChanged = true }
+        var shown: Boolean by Delegates.observable(figure.visible) { _, _, _ -> shownChanged = true }
         var colorChanged = false
         var color: ColorInt by Delegates.observable(figure.color) { _, _, _ -> colorChanged = true }
         var fillChanged = false
@@ -517,7 +522,7 @@ class CircleAdapter(
         var borderColor: ColorInt? by Delegates.observable(figure.borderColor) { _, _, _ -> borderColorChanged = true }
         var ruleChanged = false
         var rule: String by Delegates.observable(
-            figure.rule?.trimStart('n') ?: ""
+            figure.rule.joinToString(separator = ",")
         ) { _, _, _ -> ruleChanged = true }
         var textureChanged = false
         // TODO: get texture from the CircleGroup instead
@@ -725,11 +730,22 @@ class CircleAdapter(
         // deliberately not lazy stream: collapseGroup mutates rows
         unexpandedGroupRows.forEach { expandGroup(it) }
         val _rows: MutableList<CircleRow> = rows.filterIsInstance<CircleRow>().toMutableList()
-        _rows.sortBy { it.figure.rule ?: "" }
+//        val risingSequence = generateSequence(0) { x -> x + 1 }
+//        _rows.sortBy {
+//            risingSequence
+//                .zip(it.figure.rule.reversed().asSequence())
+//                .sumOf { (d, p) -> d * 10.0.pow(p) }
+//        } // lexicographic sort
+        _rows.sortWith { r1, r2 ->
+            LexicographicComparator<Int>().compare(
+                r1.figure.rule,
+                r2.figure.rule
+            )
+        }
         if (ascending)
-            _rows.sortBy { it.figure.rule?.length ?: 0 }
+            _rows.sortBy { it.figure.rule.size }
         else
-            _rows.sortByDescending { it.figure.rule?.length ?: 0 }
+            _rows.sortByDescending { it.figure.rule.size }
         rows = (listOf(bgRow) + factorByRule(_rows)).toMutableList()
         reassignPositions()
         notifyDataSetChanged()
@@ -765,7 +781,7 @@ private fun colorPickerDialog(
 internal data class Equivalence(val visible: Boolean, val color: ColorInt, val fill: Boolean, val borderColor: ColorInt?)
 
 internal val CircleFigure.equivalence get() = Equivalence(
-    show,
+    visible,
     color,
     fill,
     borderColor,

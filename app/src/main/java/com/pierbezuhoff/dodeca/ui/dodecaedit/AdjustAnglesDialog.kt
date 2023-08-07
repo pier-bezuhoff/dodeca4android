@@ -34,7 +34,7 @@ class AdjustAnglesDialog(
             val figures = circleGroup.figures
             showAngle3 =
                 figures.size >= 5 &&
-                !figures[4].show && !figures[5].show
+                !figures[4].visible && !figures[5].visible
         }
         val layout = binding.root
         builder.setView(layout)
@@ -61,7 +61,7 @@ class AdjustAnglesDialog(
                     if (
                         f.numerator != f.denominator &&
                         ix1 < figures.size && ix2 < figures.size &&
-                        !figures[ix1].show && !figures[ix2].show
+                        !figures[ix1].visible && !figures[ix2].visible
                     ) {
                         val c1 = figures[ix1]
                         val c2 = figures[ix2]

@@ -32,11 +32,11 @@ internal class RoughPrimitiveCircles(
     private var oldRs: FloatArray = rs
     private val attrs: Array<FigureAttributes> = Array(size) {
         figures[it].run {
-            FigureAttributes(color, fill, rule, borderColor)
+            FigureAttributes(color, fill, visible, rule, borderColor)
         }
     }
-    private val rules: Array<IntArray> = Array(size) { figures[it].sequence }
-    private var shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.show }.map { it.first }.toIntArray()
+    private val rules: Array<IntArray> = Array(size) { figures[it].rule.toIntArray() }
+    private var shownIndices: IntArray = attrs.mapIndexed { i, attr -> i to attr }.filter { it.second.visible }.map { it.first }.toIntArray()
     private val paints: Array<Paint> = attrs.map {
         Paint(paint).apply {
             color = it.color
@@ -50,7 +50,7 @@ internal class RoughPrimitiveCircles(
     private val borderPaints: SparseArray<Paint> = SparseArray<Paint>()
         .apply {
             attrs.forEachIndexed { i, attr ->
-                if (attr.borderColor != null && attr.fill && attr.show)
+                if (attr.borderColor != null && attr.fill && attr.visible)
                     append(i, Paint(defaultBorderPaint).apply { color = attr.borderColor })
             }
         }
@@ -67,7 +67,7 @@ internal class RoughPrimitiveCircles(
     }
 
     override fun set(i: Int, figure: CircleFigure) {
-        val wasShown = attrs[i].show
+        val wasShown = attrs[i].visible
         with(figure) {
             xs[i] = x.toFloat()
             ys[i] = y.toFloat()
@@ -75,19 +75,19 @@ internal class RoughPrimitiveCircles(
             oldXs[i] = x.toFloat()
             oldYs[i] = y.toFloat()
             oldRs[i] = radius.toFloat()
-            attrs[i] = FigureAttributes(color, fill, rule, borderColor)
-            rules[i] = sequence
+            attrs[i] = FigureAttributes(color, fill, wasShown, rule, borderColor)
+            rules[i] = rule.toIntArray()
             paints[i] = Paint(paint).apply {
                 color = figure.color
                 style = if (fill) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
             }
-            if (show && borderColor != null && fill)
+            if (visible && borderColor != null && fill)
                 borderPaints.append(i, Paint(defaultBorderPaint).apply { color = borderColor })
             else
                 borderPaints.delete(i)
-            if (wasShown && !show)
+            if (wasShown && !visible)
                 shownIndices = shownIndices.toMutableSet().run { remove(i); toIntArray() }
-            else if (!wasShown && show)
+            else if (!wasShown && visible)
                 shownIndices = shownIndices.toMutableSet().run { add(i); toIntArray() }
         }
     }
@@ -332,7 +332,7 @@ internal class RoughPrimitiveCircles(
         val c = attr.borderColor ?: attr.color
         val paint = Paint(paints[i])
         paint.style = Paint.Style.STROKE
-        if (!attr.show) {
+        if (!attr.visible) {
             // NOTE: quite slow w/ hardware acceleration
             val dashEffect = DashPathEffect(floatArrayOf(15f, 5f), 0f)
             paint.pathEffect = dashEffect

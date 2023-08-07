@@ -29,13 +29,13 @@ abstract class DoubleBackedCircleGroup(
     protected abstract val rs: DoubleArray
     protected val attrs: Array<FigureAttributes> = Array(size) { i ->
         figures[i].run {
-            FigureAttributes(color, fill, rule, borderColor)
+            FigureAttributes(color, fill, visible, rule, borderColor)
         }
     }
     protected val textures: MutableMap<Ix, Bitmap> = mutableMapOf() // MAYBE: use SparseArray instead
     protected var shownIndices: Ixs = attrs
         .mapIndexed { i, attr -> i to attr }
-        .filter { it.second.show }
+        .filter { it.second.visible }
         .map { it.first }
         .toIntArray()
     protected val _ranks by lazy { computeRanks() }
@@ -60,7 +60,7 @@ abstract class DoubleBackedCircleGroup(
     protected val borderPaints: SparseArray<Paint> = SparseArray<Paint>()
         .apply {
             attrs.forEachIndexed { i, attr ->
-                if (attr.borderColor != null && attr.fill && attr.show)
+                if (attr.borderColor != null && attr.fill && attr.visible)
                     append(i, Paint(defaultBorderPaint).apply { color = attr.borderColor })
                 // Q: ^^^ is it correct?
             }
@@ -84,18 +84,17 @@ abstract class DoubleBackedCircleGroup(
     /* -> if ddu has a circular or worse rank structure, rank#: list of circles' indices */
     protected fun computeRanks(): Pair<Boolean, List<List<Ix>>> {
         // factor by rules
-        val allRules = attrs.map { it.rule?.trim('n') ?: "" } // ix => rule
+        val allRules = attrs.map { it.rule } // ix => rule
         val r2ixs = allRules // rule => ixs owning it
             .withIndex()
             .groupBy { (_, r) -> r }
             .mapValues { (_, v) -> v.map { (rIx, _) -> rIx } }
         val rules = allRules // ix => rule = ixs it consists of
-            .map { r -> r.map { c -> c.digitToInt() } }
             .withIndex()
             .associate { (i, r) -> i to r }
             .toMutableMap()
         val ranks = mutableListOf<List<Ix>>()
-        val rank0 = r2ixs[""]!!
+        val rank0 = r2ixs[emptyList()]!!
         fun addRank(rank: Set<Ix>) {
             ranks.add(rank.toList().sorted())
             rank.forEach { rules.remove(it) }
@@ -129,7 +128,7 @@ abstract class DoubleBackedCircleGroup(
 
     protected fun computePairs(): Set<Pair<Ix, Ix>> {
         val allRules: List<List<Ix>> = // ix => rule
-            attrs.map { it.rule?.trim('n')?.map { c -> c.digitToInt() } ?: listOf() }
+            attrs.map { it.rule }
         val pairs = mutableMapOf<Ix, Ix>()
         fun pairUp(a: Ix, b: Ix) {
             pairs[a] = b
@@ -321,7 +320,7 @@ abstract class DoubleBackedCircleGroup(
         val c = attr.borderColor ?: attr.color
         val paint = Paint(paints[i])
         paint.style = Paint.Style.STROKE
-        if (!attr.show) {
+        if (!attr.visible) {
             // NOTE: quite slow w/ hardware acceleration
             val dashEffect = DashPathEffect(floatArrayOf(15f, 5f), 0f)
             paint.pathEffect = dashEffect

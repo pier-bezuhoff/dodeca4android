@@ -167,8 +167,8 @@ class DduRepresentation(
             }
         } else { // BUG: ?sometimes it skips to else
             presenter?.getCenter()?.let { center ->
-                val shownCircles: List<CircleFigure> = circleGroup.figures.filter(CircleFigure::show)
-                val visibleCenter = shownCircles.map { visible(it.center) }.mean()
+                val visibleCircles: List<CircleFigure> = circleGroup.figures.filter(CircleFigure::visible)
+                val visibleCenter = visibleCircles.map { visible(it.center) }.mean()
                 val (dx, dy) = (center - visibleCenter).asFF()
                 scroll(dx, dy)
             }
@@ -465,13 +465,13 @@ class DduRepresentation(
     }
 
     fun allCirclesAreFilled(): Boolean =
-        circleGroup.figures.filter { it.show }.all { it.fill }
+        circleGroup.figures.filter { it.visible }.all { it.fill }
 
     fun fillCircles() {
         val fs = circleGroup.figures
         for (i in fs.indices) {
             val f = fs[i]
-            if (f.show)
+            if (f.visible)
                 circleGroup[i] = f.copy(newFill = true)
         }
     }
@@ -480,7 +480,7 @@ class DduRepresentation(
         val fs = circleGroup.figures
         for (i in fs.indices) {
             val f = fs[i]
-            if (f.show)
+            if (f.visible)
                 circleGroup[i] = f.copy(newFill = false)
         }
     }
@@ -506,7 +506,7 @@ class DduRepresentation(
         threshold: Double = 10.0, amongHidden: Boolean = true
     ): List<Int> {
         val indexedCircles = circleGroup.figures.withIndex().reversed()
-        val targets = if (amongHidden) indexedCircles else indexedCircles.filter { (_, c) -> c.show }
+        val targets = if (amongHidden) indexedCircles else indexedCircles.filter { (_, c) -> c.visible }
         val result = targets.filter { (_, c) ->
             val d = (p - visible(c.center)).abs()
 //            useCenters && d <= threshold ||

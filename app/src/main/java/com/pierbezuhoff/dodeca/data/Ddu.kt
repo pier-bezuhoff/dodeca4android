@@ -37,8 +37,8 @@ class Ddu(
     var file: File? = null
 ) {
 
-    val autoCenter get() = circles.filter { it.show }.map { it.center }.mean()
-    val complexity: Int get() = circles.sumOf { it.rule?.length ?: 0 }
+    val autoCenter get() = circles.filter { it.visible }.map { it.center }.mean()
+    val complexity: Int get() = circles.sumOf { it.rule.size }
     private fun getNSmartUpdates(nPreviewUpdates: Int): Int =
         (MIN_PREVIEW_UPDATES + nPreviewUpdates * 20 / sqrt(1.0 + complexity)).roundToInt()
     private fun getNUpdates(nPreviewUpdates: Int, previewSmartUpdates: Boolean): Int =
@@ -127,7 +127,7 @@ class Ddu(
 
         val BLANK_DDU: Ddu = Ddu()
         val EXAMPLE_DDU: Ddu = run {
-            val circle = CircleFigure(300.0, 400.0, 200.0, Color.BLUE, rule = "12")
+            val circle = CircleFigure(300.0, 400.0, 200.0, Color.BLUE, visible = true, rule = listOf(1, 2))
             val circle1 = CircleFigure(450.0, 850.0, 300.0, Color.LTGRAY)
             val circle2 = CircleFigure(460.0, 850.0, 300.0, Color.DKGRAY)
             val circle0 = CircleFigure(0.0, 0.0, 100.0, Color.GREEN)
@@ -172,7 +172,15 @@ private class CircleBuilder {
     fun build(): CircleFigure {
         if (x == null || y == null || radius == null)
             throw NotEnoughBuildParametersException()
-        return CircleFigure(x!!, y!!, radius!!, color, fill, rule, borderColor)
+        val symRule = rule?.let {
+            it.trim('n').map { c -> c.digitToInt() }
+        }
+        return CircleFigure(
+            x!!, y!!, radius!!, color, fill,
+            visible = rule?.let { !it.startsWith('n') && it.isNotBlank() } ?: false,
+            rule = symRule,
+            borderColor = borderColor
+        )
     }
 }
 
@@ -391,7 +399,10 @@ private class DduWriter(private val ddu: Ddu) {
             listOf(radius, x, y, color.fromColor(), fillInt).forEach {
                 writeLine(it.toString())
             }
-            rule?.let { writeLine(it) }
+            if (rule.isNotEmpty()) {
+                val prefix = if (!visible) "n" else ""
+                writeLine(prefix + rule.joinToString(separator = ""))
+            }
             borderColor?.fromColor()?.let {
                 writeLine("borderColor: $it")
             }
@@ -405,7 +416,10 @@ private class DduWriter(private val ddu: Ddu) {
             listOf(radius, x, y, color.fromColor(), fillInt).forEach {
                 writeLine(it.toString())
             }
-            writeLine(rule ?: "")
+            if (rule.isNotEmpty()) {
+                val prefix = if (!visible) "n" else ""
+                writeLine(prefix + rule.joinToString(separator = ""))
+            }
         }
     }
 
