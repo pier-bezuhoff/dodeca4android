@@ -51,6 +51,7 @@ android {
         sourceCompatibility = '1.8'
         targetCompatibility = '1.8'
     }
+    namespace 'com.pierbezuhoff.dodeca'
 }
 
 dependencies {
@@ -79,5 +80,5 @@ dependencies {
     implementation 'com.rarepebble:colorpicker:2.4.2'
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation "org.jetbrains.kotlinx:multik-core:$multik_version"
-    implementation "org.jetbrains.kotlinx:multik-default:$multik_version"
+    implementation "org.jetbrains.kotlinx:multik-kotlin:$multik_version" // cannot use -openblas: build fails
 }
