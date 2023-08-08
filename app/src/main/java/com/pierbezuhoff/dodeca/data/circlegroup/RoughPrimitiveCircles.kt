@@ -57,13 +57,13 @@ internal class RoughPrimitiveCircles(
     override val defaultPaint: Paint = paint
     override val figures: List<CircleFigure>
         get() = (0 until size).map { i ->
-            val (color, fill, rule, borderColor) = attrs[i]
-            CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), color, fill, rule, borderColor)
+            val (color, fill, visible, rule, borderColor) = attrs[i]
+            CircleFigure(xs[i].toDouble(), ys[i].toDouble(), rs[i].toDouble(), color, fill, visible, rule, borderColor)
         }
 
     override fun get(i: Int): CircleFigure {
-        val (color, fill, rule, borderColor) = attrs[i]
-        return CircleFigure(oldXs[i].toDouble(), oldYs[i].toDouble(), oldRs[i].toDouble(), color, fill, rule, borderColor)
+        val (color, fill, visible, rule, borderColor) = attrs[i]
+        return CircleFigure(oldXs[i].toDouble(), oldYs[i].toDouble(), oldRs[i].toDouble(), color, fill, visible, rule, borderColor)
     }
 
     override fun set(i: Int, figure: CircleFigure) {

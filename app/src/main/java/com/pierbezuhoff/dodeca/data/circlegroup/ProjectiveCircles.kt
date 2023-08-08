@@ -51,8 +51,8 @@ internal open class ProjectiveCircles(
         get() {
             applyAllMatrices()
             return (0 until size).map { i ->
-                val (color, fill, rule, borderColor) = attrs[i]
-                CircleFigure(xs[i], ys[i], rs[i], color, fill, rule, borderColor)
+                val (color, fill, visible, rule, borderColor) = attrs[i]
+                CircleFigure(xs[i], ys[i], rs[i], color, fill, visible, rule, borderColor)
             }
         }
 
@@ -197,8 +197,8 @@ internal open class ProjectiveCircles(
 
     override fun get(i: Ix): CircleFigure {
         applyAllMatrices()
-        val (color, fill, rule, borderColor) = attrs[i]
-        return CircleFigure(xs[i], ys[i], rs[i], color, fill, rule, borderColor)
+        val (color, fill, visible, rule, borderColor) = attrs[i]
+        return CircleFigure(xs[i], ys[i], rs[i], color, fill, visible, rule, borderColor)
     }
 
     override fun set(i: Ix, figure: CircleFigure) {

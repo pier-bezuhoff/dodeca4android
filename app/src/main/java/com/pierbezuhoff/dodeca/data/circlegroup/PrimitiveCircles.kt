@@ -26,13 +26,13 @@ internal class PrimitiveCircles(
     private val reversedRules by lazy { rules.map { it.reversedArray() }.toTypedArray() }
     override val figures: List<CircleFigure>
         get() = (0 until size).map { i ->
-            val (color, fill, rule, borderColor) = attrs[i]
-            CircleFigure(_xs[i], _ys[i], _rs[i], color, fill, rule, borderColor)
+            val (color, fill, visible, rule, borderColor) = attrs[i]
+            CircleFigure(_xs[i], _ys[i], _rs[i], color, fill, visible, rule, borderColor)
         }
 
     override fun get(i: Ix): CircleFigure {
-        val (color, fill, rule, borderColor) = attrs[i]
-        return CircleFigure(xs[i], ys[i], rs[i], color, fill, rule, borderColor)
+        val (color, fill, visible, rule, borderColor) = attrs[i]
+        return CircleFigure(xs[i], ys[i], rs[i], color, fill, visible, rule, borderColor)
     }
 
     override fun set(i: Ix, figure: CircleFigure) {
@@ -109,7 +109,7 @@ internal class PrimitiveCircles(
         if (hasCircularDependencies)
             simpleReversedUpdate()
         else
-            for (i in ranked!!)
+            for (i in ranked)
                 for (j in reversedRules[i])
                     invertNow(i, j) // uses the new #j-th circle instead of the old one
     }
