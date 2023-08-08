@@ -132,11 +132,13 @@ class DodecaViewModel(
             }
         ddu.file?.let { file: File ->
             setSharedPreference(optionsManager.options.recentDdu, dduFileService.dduPathOf(file))
+            Log.i(TAG, "ddu from '${file.name}' loaded")
         }
     }
 
     suspend fun loadDduFrom(file: File) {
         try {
+            Log.i(TAG, "loading ddu from '${file.name}'")
             stop()
             _dduLoading.postValue(true)
             val ddu: Ddu = Ddu.fromFile(file)
@@ -430,7 +432,9 @@ class DodecaViewModel(
         private var lastTimedUpdate: Long = 0
         private var lastTimedUpdateTime: Long = System.currentTimeMillis()
         private var dTime: Float? by Delegates.observable(null) { _, _, newDTime: Float? ->
-            _dTime.postValue(newDTime)
+            newDTime?.let {
+                _dTime.postValue(it)
+            }
         }
 
         override fun updateStat(delta: Int) {

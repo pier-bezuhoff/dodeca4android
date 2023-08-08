@@ -75,6 +75,7 @@ class Ddu(
     suspend fun saveToStreamForDodecaLook(outputStream: OutputStream) =
         DduWriter(this).writeForDodecaLook(outputStream)
 
+    // BUG: indefinite loading
     suspend fun buildPreview(width: Int, height: Int, values: OptionsManager.Values): Bitmap =
         withContext(Dispatchers.Default) {
             // used RGB_565 instead of ARGB_8888 for performance (visually indistinguishable)
