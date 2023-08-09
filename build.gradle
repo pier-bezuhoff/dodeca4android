@@ -3,13 +3,13 @@
 buildscript {
     ext {
         gradle_version = '7.4.2'
-        kotlin_version = '1.7.10'
+        kotlin_version = '1.8.20'
         lifecycle_version = '2.5.1'
         room_version = '2.4.3'
         anko_version = '0.10.7'
         permission_dispatcher_version = '4.9.2'
-        kotlin_coroutines_version = '1.6.1'
-        multik_version = '0.2.0'
+        kotlin_coroutines_version = '1.7.3'
+        multik_version = '0.2.2'
     }
     repositories {
         google()

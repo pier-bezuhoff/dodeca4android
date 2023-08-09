@@ -27,8 +27,7 @@ class LifecycleInheritance : LifecycleInheritor {
     private var _lifecycle: Lifecycle = LifecycleRegistry(this)
 
 //    override val lifecycle: Lifecycle = _lifecycle
-    override fun getLifecycle(): Lifecycle =
-        _lifecycle
+    override fun getLifecycle(): Lifecycle = _lifecycle
 
     override fun inheritLifecycleOf(lifecycleOwner: LifecycleOwner) {
         require(!inherited)
