@@ -82,5 +82,4 @@ dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation "org.jetbrains.kotlinx:multik-core:$multik_version"
     implementation "org.jetbrains.kotlinx:multik-default:$multik_version"
-
 }

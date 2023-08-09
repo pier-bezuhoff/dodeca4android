@@ -2,10 +2,10 @@
 
 buildscript {
     ext {
-        gradle_version = '7.4.2'
-        kotlin_version = '1.8.20'
-        lifecycle_version = '2.5.1'
-        room_version = '2.4.3'
+        gradle_version = '7.4.2' // upgrading breaks: cries about java version
+        kotlin_version = '1.8.21'
+        lifecycle_version = '2.5.1' // upgrading breaks ddu playing
+        room_version = '2.4.3' // upgrading breaks: requires ksp
         anko_version = '0.10.7'
         permission_dispatcher_version = '4.9.2'
         kotlin_coroutines_version = '1.7.3'
