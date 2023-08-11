@@ -332,6 +332,7 @@ class DduRepresentation(
 //            _drawOverlay(canvas)
             onCanvas(canvas) { drawOverlay() }
         }
+//        Log.i(TAG, "draw") // TMP
     }
 
     /** Reset trace and invalidate */
@@ -388,6 +389,7 @@ class DduRepresentation(
             drawTimes(times)
             statHolderConnection.send { updateStat(times) }
             updateScheduler.doUpdate()
+//            Log.i(TAG, "update") // TMP
         }
         drawUpdatedCanvas(canvas)
     }

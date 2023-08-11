@@ -43,9 +43,10 @@ class DodecaEditView @JvmOverloads constructor(
 
     private fun setupObservers() {
         require(lifecycleInherited)
-        viewModel.dduRepresentation.observe(this) {
+        // FIX: only forever works (bad), maybe wait until appropriate lifecycle state?
+        viewModel.dduRepresentation.observeForever { //observe(this) {
             it.connectPresenter(this)
-            Log.i(TAG, "presenter connected")
+            Log.i(TAG, "presenter connected") // not reached unless observeForever
         }
     }
 

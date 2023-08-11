@@ -219,6 +219,7 @@ class DduChooserActivity : AppCompatActivity()
     }
 
     private fun requestImportDdus() {
+        // MAYBE: wrap into Intent.createChooser
         val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"

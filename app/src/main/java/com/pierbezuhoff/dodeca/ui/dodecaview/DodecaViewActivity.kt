@@ -98,7 +98,8 @@ class DodecaViewActivity : AppCompatActivity()
         // if launched from implicit intent (uri passed from [MainActivity]):
         val uri = if (Build.VERSION.SDK_INT >= 33)
             intent.getParcelableExtra("ddu_uri", Uri::class.java)
-        else intent.getParcelableExtra<Uri>("ddu_uri")
+        else
+            @Suppress("DEPRECATION") intent.getParcelableExtra<Uri>("ddu_uri")
         uri?.let { readUriWithPermissionCheck(it) } ?: viewModel.loadInitialDdu()
         binding.dodecaView.inheritLifecycleOf(this)
     }

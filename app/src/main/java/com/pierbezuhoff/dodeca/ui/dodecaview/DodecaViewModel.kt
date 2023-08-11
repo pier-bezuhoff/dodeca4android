@@ -430,7 +430,9 @@ class DodecaViewModel(
         private var lastTimedUpdate: Long = 0
         private var lastTimedUpdateTime: Long = System.currentTimeMillis()
         private var dTime: Float? by Delegates.observable(null) { _, _, newDTime: Float? ->
-            _dTime.postValue(newDTime)
+            newDTime?.let {
+                _dTime.postValue(it)
+            }
         }
 
         override fun updateStat(delta: Int) {

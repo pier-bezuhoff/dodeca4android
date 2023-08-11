@@ -80,6 +80,8 @@ class DodecaEditViewModel(
         gestureDetector.onSingleTapSubscription.subscribeFrom(this)
         gestureDetector.onScrollSubscription.subscribeFrom(this)
         gestureDetector.onScaleSubscription.subscribeFrom(this)
+        dduRepresentation.observeForever {
+        }
     }
 
 
@@ -101,14 +103,15 @@ class DodecaEditViewModel(
                 dduRepresentation.toastEmitterSubscription.subscribeFrom(this)
                 updateDduAttributesFrom(dduRepresentation)
                 _dduRepresentation.value = dduRepresentation // invoke DodecaView observer
+                // BUG: DEV doesnt react apparently
                 _editingMode.value = DEFAULT_EDITING_MODE
                 _showEverything.value = DEFAULT_SHOW_EVERYTHING
                 _selection.value = emptySet()
-
             }
         ddu.file?.let { file: File ->
             setSharedPreference(optionsManager.options.recentDdu, dduFileService.dduPathOf(file))
         }
+        Log.i(TAG, "ddu loaded from '${ddu.file?.name}'")
     }
 
     suspend fun loadDduFrom(file: File) {

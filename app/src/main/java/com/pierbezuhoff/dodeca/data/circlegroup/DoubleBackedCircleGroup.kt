@@ -17,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.ceil
 
-// NOTE: remove texture code for now
+// TODO: remove/comment texture code for now
 // my attempt to detach the draw logic from updates & other structures
 @Suppress("NOTHING_TO_INLINE", "MemberVisibilityCanBePrivate", "FunctionName")
 abstract class DoubleBackedCircleGroup(

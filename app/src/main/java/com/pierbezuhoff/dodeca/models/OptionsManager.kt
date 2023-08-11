@@ -95,7 +95,8 @@ class OptionsManager(context: Context) {
         val previewSmartUpdates = BooleanKeyOption("preview_smart_updates", R.bool.preview_smart_updates, resources)
         val showFolders = BooleanKeyOption("show_folders", R.bool.show_folders, resources)
         /** Absolute path of the most recent ddu-file */
-        val recentDdu = ParsedKeyOption("recent_ddu", R.string.first_ddu, resources) { Filename(this) }
+        val recentDdu: ParsedKeyOption<Filename> =
+            ParsedKeyOption("recent_ddu", R.string.first_ddu, resources) { Filename(this) }
         val versionCode = KeyOption("version_code", resources.getInteger(R.integer.version_code))
 
         internal val allOptions: Set<Option<*>> = setOf(
