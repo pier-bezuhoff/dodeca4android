@@ -106,6 +106,7 @@
                 android:text="@string/ellipsis"
                 android:textSize="@dimen/tiny_text_size"
                 android:ellipsize="end"
+                android:maxLines="1"
                 />
 
         <ToggleButton

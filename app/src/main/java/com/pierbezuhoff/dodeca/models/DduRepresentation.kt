@@ -36,6 +36,7 @@ import com.pierbezuhoff.dodeca.utils.minus
 import com.pierbezuhoff.dodeca.utils.move
 import com.pierbezuhoff.dodeca.utils.plus
 import com.pierbezuhoff.dodeca.utils.sx
+import com.pierbezuhoff.dodeca.utils.times
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -44,6 +45,7 @@ import kotlinx.coroutines.withContext
 import org.apache.commons.math3.complex.Complex
 import java.lang.ref.WeakReference
 import kotlin.math.abs
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class DduRepresentation(
@@ -520,6 +522,40 @@ class DduRepresentation(
                 val visibleRadius = c.radius * motion.sx
                 c.fill && d < visibleRadius + threshold
             }.map { (i, _) -> i }
+        }
+    }
+
+    fun inlineDdu(ddu: Ddu, targetCircles: List<Int>) {
+        presenter?.getSize()?.let { (w, h) ->
+            val minSize = min(w, h)
+            val currentCircles = circleGroup.figures
+            val newCircles = mutableListOf<CircleFigure>()
+            require(targetCircles.all { it in currentCircles.indices })
+            var n = currentCircles.size
+            val k = ddu.circles.size
+            val sourceCenter = ddu.bestCenter ?: Complex(w/2.0, h/2.0)
+            targetCircles.forEach { i ->
+                val target = currentCircles[i]
+                val scale = target.radius/minSize
+                newCircles += ddu.circles
+                    .map { c ->
+                        val newCenter = scale * (c.center - sourceCenter) + target.center
+                        val newR = scale * c.radius
+                        val newRule = c.rule.map { it + n } + target.rule
+                        return@map c.copy(newCenter = newCenter, newRadius = newR, newRule = newRule)
+                    }
+                n += k
+            }
+            val result = currentCircles.mapIndexed { i, c ->
+                if (i in targetCircles)
+                    c.copy(newFill = false) // MAYBE: hide instead
+                else c
+            } + newCircles
+            circleGroup = mkCircleGroup(
+                optionValues.circleGroupImplementation,
+                optionValues.projR,
+                result, paint
+            )
         }
     }
 

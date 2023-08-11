@@ -348,12 +348,16 @@ private class DduReader(private val reader: InputStreamReader) {
 
 
 private class DduWriter(private val ddu: Ddu) {
+
+    class IncompatibleFormatException(message: String) : Exception(message)
+
     private lateinit var outputStream: OutputStream
     private val legacyGlobals: List<String> = listOf(
         ddu.backgroundColor.fromColor(),
         *ddu.restGlobals.toTypedArray()
     ).map { it.toString() }
 
+    @Throws(IncompatibleFormatException::class)
     suspend fun write(output: OutputStream) {
         withContext(Dispatchers.IO) {
             outputStream = output
@@ -361,7 +365,13 @@ private class DduWriter(private val ddu: Ddu) {
                 writeLine(HEADER)
                 legacyGlobals.forEach { writeLegacyGlobal(it) }
                 writeModernGlobals()
-                ddu.circles.forEach { writeCircle(it) }
+                ddu.circles.forEach {
+                    try {
+                        writeCircle(it)
+                    } catch (e: IncompatibleFormatException) {
+                        Log.w(TAG, "skipping a circle because it caused: '${e.message}'")
+                    }
+                }
             }
         }
     }
@@ -373,7 +383,13 @@ private class DduWriter(private val ddu: Ddu) {
             output.use {
                 writeLine(DODECA_LOOK_HEADER)
                 legacyGlobals.forEach { writeLegacyGlobal(it) }
-                ddu.circles.forEach { writeCircleForDodecaLook(it) }
+                ddu.circles.forEach {
+                    try {
+                        writeCircleForDodecaLook(it)
+                    } catch (e: IncompatibleFormatException) {
+                        Log.w(TAG, "skipping a circle because it caused: '${e.message}'")
+                    }
+                }
             }
         }
     }
@@ -392,7 +408,10 @@ private class DduWriter(private val ddu: Ddu) {
         writeShape()
     }
 
+    @Throws(IncompatibleFormatException::class)
     private fun writeCircle(circleFigure: CircleFigure) {
+        if (circleFigure.rule.any { it > 9 })
+            throw IncompatibleFormatException("Rules with indices that are >9 are incompatible with .ddu format")
         writeLine("\ncircle:")
         with(circleFigure) {
             val fillInt = if (fill) 1 else 0
@@ -409,7 +428,10 @@ private class DduWriter(private val ddu: Ddu) {
         }
     }
 
+    @Throws(IncompatibleFormatException::class)
     private fun writeCircleForDodecaLook(circleFigure: CircleFigure) {
+        if (circleFigure.rule.any { it > 9 })
+            throw IncompatibleFormatException("Rules with indices that are >9 are incompatible with .ddu format")
         writeLine("circle:")
         with(circleFigure) {
             val fillInt = if (fill) 1 else 0
@@ -441,6 +463,7 @@ private class DduWriter(private val ddu: Ddu) {
     companion object {
         private const val HEADER: String = "Dodeca Meditation ${BuildConfig.VERSION_NAME} for Android"
         private const val DODECA_LOOK_HEADER: String = "DUDU C++v.1" // NOTE: important! without it DodecaLook fails
+        private const val TAG = "DduWriter"
     }
 }
 
