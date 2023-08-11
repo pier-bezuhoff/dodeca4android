@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.View
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.utils.ComplexFF
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
@@ -14,7 +15,7 @@ class DodecaView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet)
-    , LifecycleInheritor by LifecycleInheritance() // inherited from MainActivity
+    , LifecycleInheritor by LifecycleInheritance() // inherited from DodecaViewActivity
     , DduRepresentation.Presenter
 {
     lateinit var viewModel: DodecaViewModel // injected via DataBinding
@@ -26,6 +27,17 @@ class DodecaView @JvmOverloads constructor(
 
     private val knownSize: Boolean get() = width > 0 || height > 0
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        val parentLifecycleOwner = findViewTreeLifecycleOwner()!!
+        viewModel.dduRepresentation.observe(parentLifecycleOwner) { dduR ->
+            dduR.connectPresenter(this)
+        }
+        viewModel.bottomBarShown.observe(parentLifecycleOwner) {
+            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
+        }
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (!initialized) {
@@ -36,17 +48,6 @@ class DodecaView @JvmOverloads constructor(
     private fun onFirstRun() {
         initialized = true
         viewModel.gestureDetector.registerAsOnTouchListenerFor(this)
-        setupObservers()
-    }
-
-    private fun setupObservers() {
-        require(lifecycleInherited)
-        viewModel.bottomBarShown.observe(this) {
-            systemUiVisibility = IMMERSIVE_UI_VISIBILITY
-        }
-        viewModel.dduRepresentation.observe(this) {
-            it.connectPresenter(this)
-        }
     }
 
     override fun getCenter(): Complex? =

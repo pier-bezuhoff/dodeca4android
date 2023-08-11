@@ -96,11 +96,11 @@ class DodecaEditActivity : AppCompatActivity()
             intent.getParcelableExtra("ddu_uri", Uri::class.java)
         else
             @Suppress("DEPRECATION") intent.getParcelableExtra<Uri>("ddu_uri")
-        uri?.let { readUriWithPermissionCheck(it) } ?: viewModel.loadInitialDdu()
         with (binding.dodecaEditView) {
             inheritLifecycleOf(this)
             setLayerType(View.LAYER_TYPE_SOFTWARE, null) // makes dashed lines visible, but maybe(?) slower
         }
+        uri?.let { readUriWithPermissionCheck(it) } ?: viewModel.loadInitialDdu()
         // viewModel.overwriteForceRedraw() // idk
     }
 

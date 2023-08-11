@@ -3,8 +3,8 @@ package com.pierbezuhoff.dodeca.ui.dodecaedit
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.pierbezuhoff.dodeca.models.DduRepresentation
 import com.pierbezuhoff.dodeca.utils.ComplexFF
 import com.pierbezuhoff.dodeca.utils.LifecycleInheritance
@@ -16,7 +16,7 @@ class DodecaEditView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null
 ) : View(context, attributeSet)
-    , LifecycleInheritor by LifecycleInheritance() // inherited from MainActivity
+    , LifecycleInheritor by LifecycleInheritance() // inherited from DodecaEditActivity
     , DduRepresentation.Presenter
 {
     lateinit var viewModel: DodecaEditViewModel // injected via DataBinding
@@ -28,6 +28,13 @@ class DodecaEditView @JvmOverloads constructor(
 
     private val knownSize: Boolean get() = width > 0 || height > 0
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        viewModel.dduRepresentation.observe(findViewTreeLifecycleOwner()!!) { dduR ->
+            dduR.connectPresenter(this)
+        }
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (!initialized) {
@@ -38,16 +45,6 @@ class DodecaEditView @JvmOverloads constructor(
     private fun onFirstRun() {
         initialized = true
         viewModel.gestureDetector.registerAsOnTouchListenerFor(this)
-        setupObservers()
-    }
-
-    private fun setupObservers() {
-        require(lifecycleInherited)
-        // FIX: only forever works (bad), maybe wait until appropriate lifecycle state?
-        viewModel.dduRepresentation.observeForever { //observe(this) {
-            it.connectPresenter(this)
-            Log.i(TAG, "presenter connected") // not reached unless observeForever
-        }
     }
 
     override fun getCenter(): Complex? =
