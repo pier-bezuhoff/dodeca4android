@@ -80,6 +80,10 @@ class DodecaEditActivity : AppCompatActivity()
 
     private val dduResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { onDduResult(it.resultCode, it.data) }
     private val settingsResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { onSettingsResult(it.resultCode, it.data) }
+    private val dduToInlineResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { onDduToInlineResult(it.resultCode, it.data) }
+
+    private var inlineTargets: List<Int> = emptyList() // MAYBE: keep in vM for persistence
+    private var adjustDdu: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -250,9 +254,19 @@ class DodecaEditActivity : AppCompatActivity()
 
     override fun onMassEditorCirclesSelected(circleIndices: List<Int>) {
         onDialogClosed()
-        // go into multiselect mode + select ixs
-        viewModel.requestEditingMode(EditingMode.MULTISELECT)
-        TODO()
+//        // go into multiselect mode + select ixs
+//        viewModel.requestEditingMode(EditingMode.MULTISELECT)
+//        TODO()
+    }
+
+    override fun onMassEditorChooseDduToInline(targets: List<Int>, adjustDdu: Boolean) {
+        inlineTargets = targets
+        this.adjustDdu = adjustDdu
+        goToActivity(
+            DduChooserActivity::class.java,
+            dduToInlineResultLauncher,
+            "dir_path" to dir.absolutePath
+        )
     }
 
     override fun onAdjustAnglesClosed() =
@@ -274,6 +288,18 @@ class DodecaEditActivity : AppCompatActivity()
                 readFile(File(path))
             }
         }
+    }
+
+    @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+    fun onDduToInlineResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK) {
+            data?.getStringExtra("ddu_path")?.let { path ->
+                viewModel.viewModelScope.launch {
+                    viewModel.loadAndInlineDduFrom(File(path), inlineTargets, adjustDdu)
+                }
+            }
+        }
+        viewModel.showBottomBar()
     }
 
     private fun onSettingsResult(resultCode: Int, data: Intent?) {

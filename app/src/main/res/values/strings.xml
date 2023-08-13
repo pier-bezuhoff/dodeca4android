@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
         <!ENTITY app_name "Dodeca Meditation">
-        <!ENTITY version_name "2.4">
+        <!ENTITY version_name "2.4.1">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
@@ -68,6 +68,7 @@
     <string name="ddu_exported_toast">ddu-picture \"%s\" exported</string>
     <string name="ddu_exported_for_dodecalook_toast">"ddu-picture \"%s\" exported as DodecaLook-compatible\n    "</string>
     <string name="screenshot_saved_toast">Screenshot saved as \"%s\" to \"%s\" folder</string>
+    <string name="switch_to_multiselect_toast">Select &amp; drag circles</string>
 
     <!-- Status strings -->
     <string name="extracting_assets_status">Extracting ddu-pictures into \"%s\"…</string>
@@ -216,6 +217,9 @@
     <string name="choose_color_button_title">Edit circles</string>
     <string name="circle_visibility_description">Show/hide circle</string>
     <string name="circle_show_description">Visible</string>
+    <string name="edit_circle_rule_hint">Rule</string>
+    <string name="inline_ddu_button_description">Inline ddu</string>
+    <string name="scale_and_centerize_inlined_ddu_checkbox_description">Adjust the center and scale of the inlined</string>
     <string name="background_color">Background color</string>
 
     <!-- Adjust angles dialog -->

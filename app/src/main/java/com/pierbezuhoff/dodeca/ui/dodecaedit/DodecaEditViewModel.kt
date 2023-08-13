@@ -127,6 +127,23 @@ class DodecaEditViewModel(
         }
     }
 
+    suspend fun loadAndInlineDduFrom(file: File, targets: List<Int>, adjustDdu: Boolean) {
+        try {
+            stop()
+            _dduLoading.postValue(true)
+            val ddu: Ddu = Ddu.fromFile(file)
+            withContext(Dispatchers.Main) {
+                dduRepresentation.value?.inlineDdu(ddu, targets, adjustDdu)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            formatToast(R.string.bad_ddu_format_toast, file.path)
+        } finally {
+            _dduLoading.postValue(false)
+//            resume()
+        }
+    }
+
     private fun registerOptionsObservers() {
         with (optionsManager.options) {
             autocenterAlways.observe {
@@ -291,7 +308,7 @@ class DodecaEditViewModel(
         if (mode == EditingMode.MULTISELECT) {
             _showEverything.value = true
             _pause()
-            toast("select & drag circles")
+            toast(context.getString(R.string.switch_to_multiselect_toast))
         }
         val modes3d = listOf(EditingMode.NAVIGATE_3D, EditingMode.ROTATE_3D)
         if (mode in modes3d && editingMode.value !in modes3d) {

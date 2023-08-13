@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
         <!ENTITY app_name "Додека Медитация">
-        <!ENTITY version_name "2.4">
+        <!ENTITY version_name "2.4.1">
         <!ENTITY feedback_email "pierbezuhoff2016@gmail.com">
         ]>
 <resources>
@@ -170,6 +170,9 @@
     <string name="angle3_title">Угол двигателя ранга 2 будет умножен на %d/%d</string>
     <string name="mass_editor_dialog_select">Выбрать</string>
     <string name="sort_by_rule_description">Сортировать по правилу</string>
+    <string name="edit_circle_rule_hint">Правило</string>
+    <string name="inline_ddu_button_description">Вставить ddu</string>
+    <string name="scale_and_centerize_inlined_ddu_checkbox_description">Подогнать центр и размер вставленного ddu</string>
     <string name="background_color">Цвет фона</string>
     <string name="mass_editor_button_title">Редактор окружностей</string>
     <string name="mass_editor_dialog_recolor_everything">Сдвинуть цветовую гамму</string>
@@ -184,4 +187,5 @@
     <string name="show_trace_button_title">Показать кнопку \"след\"</string>
     <string name="show_fill_button_title">Показать кнопку \"заливка\"</string>
     <string name="fill_button_title">Залить окружности</string>
+    <string name="switch_to_multiselect_toast">Выбирайте и перетаскивайте окружности</string>
 </resources>

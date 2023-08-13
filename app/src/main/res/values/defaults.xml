@@ -28,4 +28,5 @@
     <bool name="show_folders">false</bool>
     <integer name="version_code">0</integer>
     <integer name="stat_time_delta">20</integer>
+    <bool name="adjust_inlined_ddu">false</bool>
 </resources>

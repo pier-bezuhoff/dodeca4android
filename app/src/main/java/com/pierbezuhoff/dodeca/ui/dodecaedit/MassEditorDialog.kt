@@ -1,5 +1,6 @@
 package com.pierbezuhoff.dodeca.ui.dodecaedit
 
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
@@ -8,6 +9,8 @@ import android.graphics.drawable.LayerDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -70,6 +73,7 @@ class MassEditorDialog(
         /* NOT a terminal operation, the dialog is still open */
         fun onMassEditorBackgroundChanged()
         fun onMassEditorCirclesSelected(circleIndices: List<Int>)
+        fun onMassEditorChooseDduToInline(targets: List<Int>, adjustDdu: Boolean)
     }
 
     fun build(): Dialog {
@@ -383,6 +387,7 @@ class CircleAdapter(
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun onBindCircleGroupVH(holder: ViewHolder, row: CircleGroupRow) {
         with(holder.binding) {
             (circleLayout.layoutParams as ViewGroup.MarginLayoutParams).apply {
@@ -500,6 +505,7 @@ class CircleAdapter(
     private fun editCircle(row: CircleRow) {
         editCircleDialog(
             row.figure,
+            listOf(row.id),
             context.getString(R.string.edit_circle_dialog_message_single, row.id.toString())
         ) { (shown), (color), (fill), borderColor, (rule), (texture) ->
             row.persistApply(shown, color, fill, borderColor, rule, texture)
@@ -509,6 +515,7 @@ class CircleAdapter(
 
     private inline fun editCircleDialog(
         figure: CircleFigure,
+        selection: List<Int>, // numbers of circles to be modified
         message: String,
         crossinline onApply: OnApply
     ): AlertBuilder<*> {
@@ -536,6 +543,8 @@ class CircleAdapter(
                     val borderColorButton: ImageButton = layout.findViewById(R.id.circle_border_color)
                     val borderColorSwitch: Switch = layout.findViewById(R.id.circle_has_border_color)
                     val ruleField: EditText = layout.findViewById(R.id.edit_circle_rule)
+                    val inlineDduButton: Button = layout.findViewById(R.id.inline_ddu_button)
+                    val adjustInlinedDduCheckbox: CheckBox = layout.findViewById(R.id.scale_and_centerize_inlined_ddu_checkbox)
 //                    val textureButton: ImageButton = layout.circle_texture
 //                    val useTextureSwitch: Switch = layout.circle_use_texture
                     shownButton.apply {
@@ -604,6 +613,11 @@ class CircleAdapter(
                             }
                         }
                     }
+                    inlineDduButton.setOnClickListener {
+                        val adjust = adjustInlinedDduCheckbox.isChecked
+                        massEditorListener.onMassEditorChooseDduToInline(selection, adjust)
+                        // dismiss
+                    }
 //                    useTextureSwitch.apply {
 //                        isEnabled = texture != null
 //                        isChecked = texture != null
@@ -649,7 +663,7 @@ class CircleAdapter(
                 circlesNumbers(circles)
             )
         }
-        return editCircleDialog(blueprint.figure, message, onApply)
+        return editCircleDialog(blueprint.figure, circles.map { it.id }, message, onApply)
     }
 
     fun editCheckedCircles() {
@@ -769,9 +783,14 @@ private fun colorPickerDialog(
         colorPicker.showAlpha(false)
         colorPicker.showHex(false) // focusing => pops up keyboard
         customView {
-            addView(colorPicker, ViewGroup.LayoutParams.MATCH_PARENT.let { ViewGroup.LayoutParams(it, it) })
+            addView(
+                colorPicker,
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ))
         }
-        // BUG: in landscape: ok/cancel are off screen
+        // BUG: in landscape: ok/cancel are off screen (clicking off layout counts as ok tho)
         positiveButton(R.string.color_picker_dialog_ok) { onChosen(colorPicker.color) }
         negativeButton(R.string.color_picker_dialog_cancel) { }
         onCancelled { onChosen(colorPicker.color) }

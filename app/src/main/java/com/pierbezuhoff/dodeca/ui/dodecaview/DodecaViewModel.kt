@@ -152,6 +152,23 @@ class DodecaViewModel(
         }
     }
 
+    suspend fun loadAndInlineDduFrom(file: File, targets: List<Int>, adjustDdu: Boolean) {
+        try {
+            stop()
+            _dduLoading.postValue(true)
+            val ddu: Ddu = Ddu.fromFile(file)
+            withContext(Dispatchers.Main) {
+                dduRepresentation.value?.inlineDdu(ddu, targets, adjustDdu)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            formatToast(R.string.bad_ddu_format_toast, file.path)
+        } finally {
+            _dduLoading.postValue(false)
+//            resume()
+        }
+    }
+
     private fun registerOptionsObservers() {
         with (optionsManager.options) {
             autocenterAlways.observe {

@@ -525,7 +525,8 @@ class DduRepresentation(
         }
     }
 
-    fun inlineDdu(ddu: Ddu, targetCircles: List<Int>) {
+    fun inlineDdu(ddu: Ddu, targetCircles: List<Int>, scaleAndCenterize: Boolean = false) {
+        Log.i(TAG, "inlining ddu '${ddu.file?.name}' into " + targetCircles.joinToString())
         presenter?.getSize()?.let { (w, h) ->
             val minSize = min(w, h)
             val currentCircles = circleGroup.figures
@@ -534,21 +535,33 @@ class DduRepresentation(
             var n = currentCircles.size
             val k = ddu.circles.size
             val sourceCenter = ddu.bestCenter ?: Complex(w/2.0, h/2.0)
-            targetCircles.forEach { i ->
-                val target = currentCircles[i]
-                val scale = target.radius/minSize
-                newCircles += ddu.circles
-                    .map { c ->
-                        val newCenter = scale * (c.center - sourceCenter) + target.center
-                        val newR = scale * c.radius
-                        val newRule = c.rule.map { it + n } + target.rule
-                        return@map c.copy(newCenter = newCenter, newRadius = newR, newRule = newRule)
-                    }
-                n += k
+            if (scaleAndCenterize) {
+                targetCircles.forEach { i ->
+                    val target = currentCircles[i]
+                    val scale = target.radius/minSize
+                    newCircles += ddu.circles
+                        .map { c ->
+                            val newCenter = scale * (c.center - sourceCenter) + target.center
+                            val newR = scale * c.radius
+                            val newRule = c.rule.map { it + n } + target.rule
+                            return@map c.copy(newCenter = newCenter, newRadius = newR, newRule = newRule)
+                        }
+                    n += k
+                }
+            } else {
+                targetCircles.distinctBy { currentCircles[it].rule }.forEach { i ->
+                    val target = currentCircles[i]
+                    newCircles += ddu.circles
+                        .map { c ->
+                            val newRule = c.rule.map { it + n } + target.rule
+                            return@map c.copy(newRule = newRule)
+                        }
+                    n += k
+                }
             }
             val result = currentCircles.mapIndexed { i, c ->
                 if (i in targetCircles)
-                    c.copy(newFill = false) // MAYBE: hide instead
+                    c.copy(newVisible = false)
                 else c
             } + newCircles
             circleGroup = mkCircleGroup(

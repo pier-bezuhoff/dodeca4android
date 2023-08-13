@@ -83,6 +83,10 @@ class DodecaViewActivity : AppCompatActivity()
     private val dduResultLauncher = registerForActivityResult(StartActivityForResult()) { onDduResult(it.resultCode, it.data) }
     private val settingsResultLauncher = registerForActivityResult(StartActivityForResult()) { onSettingsResult(it.resultCode, it.data) }
     private val helpResultLauncher = registerForActivityResult(StartActivityForResult()) { viewModel.showBottomBar() }
+    private val dduToInlineResultLauncher = registerForActivityResult(StartActivityForResult()) { onDduToInlineResult(it.resultCode, it.data) }
+
+    private var inlineTargets: List<Int> = emptyList() // MAYBE: keep in vM for persistence
+    private var adjustDdu: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -279,6 +283,16 @@ class DodecaViewActivity : AppCompatActivity()
         onMassEditorClosed()
     }
 
+    override fun onMassEditorChooseDduToInline(targets: List<Int>, adjustDdu: Boolean) {
+        inlineTargets = targets
+        this.adjustDdu = adjustDdu
+        goToActivity(
+            DduChooserActivity::class.java,
+            dduToInlineResultLauncher,
+            "dir_path" to dir.absolutePath
+        )
+    }
+
     override fun onResume() {
         super.onResume()
         viewModel.resume()
@@ -293,6 +307,18 @@ class DodecaViewActivity : AppCompatActivity()
         if (resultCode == Activity.RESULT_OK) {
             data?.getStringExtra("ddu_path")?.let { path ->
                 readFile(File(path))
+            }
+        }
+        viewModel.showBottomBar()
+    }
+
+    @NeedsPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+    fun onDduToInlineResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK) {
+            data?.getStringExtra("ddu_path")?.let { path ->
+                viewModel.viewModelScope.launch {
+                    viewModel.loadAndInlineDduFrom(File(path), inlineTargets, adjustDdu)
+                }
             }
         }
         viewModel.showBottomBar()

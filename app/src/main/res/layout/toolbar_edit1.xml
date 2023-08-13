@@ -88,6 +88,8 @@
                 app:tintEnabled="@{viewModel.editingMode == EditingMode.NAVIGATE_3D}"
                 app:defaultTint="@{@color/editToolbarColor}"
                 app:darkerTint="@{@color/darkerEditToolbarColor}"
+
+                android:visibility="gone"
                 />
         <ImageButton
                 android:id="@+id/rotate_3d_mode_button"
@@ -101,6 +103,8 @@
                 app:tintEnabled="@{viewModel.editingMode == EditingMode.ROTATE_3D}"
                 app:defaultTint="@{@color/editToolbarColor}"
                 app:darkerTint="@{@color/darkerEditToolbarColor}"
+
+                android:visibility="gone"
                 />
 
     <ImageButton

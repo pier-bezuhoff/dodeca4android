@@ -4,118 +4,120 @@
         xmlns:tools="http://schemas.android.com/tools">
     <data>
     </data>
+
     <androidx.constraintlayout.widget.ConstraintLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-    >
+            android:orientation="horizontal">
+
         <CheckBox
                 android:id="@+id/circle_checkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
                 android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
                 app:layout_constraintBottom_toBottomOf="parent"
-        />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
         <ToggleButton
                 android:id="@+id/circle_visibility"
+                android:layout_width="24dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:background="@color/lightGray"
                 android:button="@drawable/circle_visibility"
                 android:checked="true"
-                android:layout_width="24dp"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
-                android:textOn=""
-                android:textOff=""
                 android:contentDescription="@{@string/circle_visibility_description}"
-                app:layout_constraintStart_toEndOf="@id/circle_checkbox"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="8dp"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginBottom="8dp"
+                android:paddingStart="24dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="8dp"
+                android:textOff=""
+                android:textOn=""
                 app:layout_constraintBottom_toBottomOf="parent"
-        />
+                app:layout_constraintStart_toEndOf="@id/circle_checkbox"
+                app:layout_constraintTop_toTopOf="parent" />
+
         <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/circle_layout"
-                android:orientation="horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:contentDescription="@{@string/circle_layout_description}"
-                tools:layout_editor_absoluteY="0dp"
-                app:layout_constraintStart_toEndOf="@id/circle_visibility"
                 android:layout_marginStart="16dp"
-        >
+                android:contentDescription="@{@string/circle_layout_description}"
+                android:orientation="horizontal"
+                app:layout_constraintStart_toEndOf="@id/circle_visibility"
+                tools:layout_editor_absoluteY="0dp">
+
             <ImageView
                     android:id="@+id/circle_image"
-                    android:src="@drawable/circle_image"
-                    android:contentDescription="@{@string/circle_image_description}"
-                    android:padding="8dp"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
-                    android:layout_weight="1"
-                    android:layout_marginTop="8dp"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_marginBottom="8dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_weight="1"
+                    android:contentDescription="@{@string/circle_image_description}"
+                    android:padding="8dp"
+                    android:src="@drawable/circle_image"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-            />
+                    app:layout_constraintTop_toTopOf="parent" />
             <!-- ISSUE: on small phones overlapping between circle_name and expand_group -->
             <TextView
                     android:id="@+id/circle_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_marginBottom="8dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/circle_image"
                     android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:ellipsize="end"
                     android:text="@string/circle_name_initial_text"
                     android:textSize="@dimen/small_text_size"
-                    android:ellipsize="end"
-            />
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/circle_image"
+                    app:layout_constraintTop_toTopOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
+
         <android.widget.Space
                 android:id="@+id/mass_editor_space"
                 android:layout_width="0px"
                 android:layout_height="wrap_content"
-                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@id/circle_layout"
                 app:layout_constraintEnd_toStartOf="@id/circle_rule"
-        />
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintStart_toEndOf="@id/circle_layout"
+                app:layout_constraintTop_toTopOf="parent" />
+
         <TextView
                 android:id="@+id/circle_rule"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginBottom="8dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@id/mass_editor_space"
-                app:layout_constraintEnd_toStartOf="@id/expand_group"
                 android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
                 android:layout_marginEnd="24dp"
-                android:text="@string/ellipsis"
-                android:textSize="@dimen/tiny_text_size"
+                android:layout_marginBottom="8dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                />
+                android:text="@string/ellipsis"
+                android:textSize="@dimen/tiny_text_size"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/expand_group"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toEndOf="@id/mass_editor_space"
+                app:layout_constraintTop_toTopOf="parent" />
 
         <ToggleButton
                 android:id="@+id/expand_group"
                 android:layout_width="24dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
                 android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
                 android:background="@color/lightGray"
                 android:button="@drawable/expand_group"
                 android:checked="false"
@@ -128,6 +130,7 @@
                 android:textOn=""
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toEndOf="@id/circle_rule"
                 app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>

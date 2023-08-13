@@ -65,11 +65,28 @@
             android:text="@string/ellipsis"
             android:textSize="@dimen/small_text_size"
             android:inputType="number"
-            android:digits="0123456789"
+            android:digits="0123456789,"
             android:hint="rule"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
+            />
+    <Button
+            android:id="@+id/inline_ddu_button"
+            android:text="@string/inline_ddu_button_description"
+            android:textSize="@dimen/small_text_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            />
+
+    <CheckBox
+            android:id="@+id/scale_and_centerize_inlined_ddu_checkbox"
+            android:text="@string/scale_and_centerize_inlined_ddu_checkbox_description"
+            android:textSize="@dimen/small_text_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="@bool/adjust_inlined_ddu"
             />
 <!--    <LinearLayout-->
 <!--            android:orientation="horizontal"-->
