@@ -20,3 +20,5 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 -dontshrink # otherwise mainactivity vmfactory cant find mainvm init for some reason
+-keepattributes LineNumberTable,SourceFile
+-renamesourcefileattribute SourceFile
