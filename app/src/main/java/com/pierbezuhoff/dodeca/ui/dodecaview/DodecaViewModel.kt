@@ -132,11 +132,13 @@ class DodecaViewModel(
             }
         ddu.file?.let { file: File ->
             setSharedPreference(optionsManager.options.recentDdu, dduFileService.dduPathOf(file))
+            Log.i(TAG, "ddu from '${file.name}' loaded")
         }
     }
 
     suspend fun loadDduFrom(file: File) {
         try {
+            Log.i(TAG, "loading ddu from '${file.name}'")
             stop()
             _dduLoading.postValue(true)
             val ddu: Ddu = Ddu.fromFile(file)
