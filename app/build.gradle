@@ -18,8 +18,8 @@ android {
         compileSdk 33
         targetSdk 33
         multiDexEnabled true
-        versionCode 48
-        versionName "2.4.1" // <-> (values, values-ru)/strings.xml/version_name
+        versionCode 51
+        versionName "2.4.4" // <-> (values, values-ru)/strings.xml/version_name
         kapt {
             arguments {
                 arg("room.schemaLocation", "$projectDir/schemas".toString())

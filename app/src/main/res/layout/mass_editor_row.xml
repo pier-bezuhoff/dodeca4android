@@ -79,7 +79,9 @@
                     android:textSize="@dimen/small_text_size"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toEndOf="@id/circle_image"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:text="1, 12, ..123 [42]"
+                    />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <android.widget.Space
@@ -95,7 +97,7 @@
 
         <TextView
                 android:id="@+id/circle_rule"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
@@ -109,7 +111,9 @@
                 app:layout_constraintEnd_toStartOf="@id/expand_group"
                 app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toEndOf="@id/mass_editor_space"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="4,5,4,5,2,3,0,1"
+                />
 
         <ToggleButton
                 android:id="@+id/expand_group"
