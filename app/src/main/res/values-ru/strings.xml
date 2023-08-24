@@ -188,4 +188,5 @@
     <string name="show_fill_button_title">Показать кнопку \"заливка\"</string>
     <string name="fill_button_title">Залить окружности</string>
     <string name="switch_to_multiselect_toast">Выбирайте и перетаскивайте окружности</string>
+    <string name="draw_screen_filling_circles_title">Отрисовывать окружности больше экрана</string>
 </resources>

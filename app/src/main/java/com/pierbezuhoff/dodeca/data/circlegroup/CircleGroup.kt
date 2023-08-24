@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.Shape
+import com.pierbezuhoff.dodeca.models.OptionsManager
 
 typealias Ix = Int // short for "Index"
 typealias Ixs = IntArray // indices
@@ -44,12 +45,13 @@ interface SuspendableCircleGroup : CircleGroup {
 }
 
 fun mkCircleGroup(
-    implName: String, projR: Float?,
+    optionValues: OptionsManager.Values,
     circleFigures: List<CircleFigure>, defaultPaint: Paint
 ): SuspendableCircleGroup =
-    when(implName) {
+    when(optionValues.circleGroupImplementation) {
         "planar-sequential" -> PrimitiveCircles(circleFigures, defaultPaint)
         "planar-sequential-rough" -> RoughPrimitiveCircles(circleFigures, defaultPaint)
-        "projective" -> ProjectiveCircles(circleFigures, defaultPaint, projR!!.toDouble())
-        else -> throw IllegalArgumentException("Illegal implementation name: $implName")
+        "projective" -> ProjectiveCircles(circleFigures, defaultPaint, optionValues.projR.toDouble())
+        else -> throw IllegalArgumentException("Illegal implementation name: ${optionValues.circleGroupImplementation}")
+        // TODO: pass optValues in the constructors or just pass draw-screen-filling
     }

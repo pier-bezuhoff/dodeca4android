@@ -10,6 +10,7 @@ import android.util.SparseArray
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.FigureAttributes
 import com.pierbezuhoff.dodeca.data.Shape
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
@@ -21,6 +22,7 @@ import kotlin.math.abs
 @Suppress("NOTHING_TO_INLINE")
 internal class RoughPrimitiveCircles(
     figures: List<CircleFigure>,
+    private val optionValues: OptionsManager.Values,
     private val paint: Paint
 ) : SuspendableCircleGroup {
     private val size: Int = figures.size
@@ -175,8 +177,15 @@ internal class RoughPrimitiveCircles(
     }
 
     private inline fun drawHelper(crossinline draw: (Int) -> Unit) {
-        for (i in shownIndices)
-            draw(i)
+        if (optionValues.drawScreenFillingCircles) {
+            for (i in shownIndices)
+                draw(i)
+        } else {
+            val maxR = optionValues.screenMinSize
+            for (i in shownIndices)
+                if (rs[i] <= maxR)
+                    draw(i)
+        }
     }
 
     override fun drawTimes(

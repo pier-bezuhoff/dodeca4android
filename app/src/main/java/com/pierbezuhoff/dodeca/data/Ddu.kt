@@ -82,7 +82,7 @@ class Ddu(
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
             val canvas = Canvas(bitmap)
             val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-            val circleGroup = mkCircleGroup(values.circleGroupImplementation, values.projR, circles, paint)
+            val circleGroup = mkCircleGroup(values, circles, paint)
             val center = Complex((width / 2).toDouble(), (height / 2).toDouble())
             val bestCenter = bestCenter ?: if (values.autocenterPreview) autoCenter else center
             val (dx, dy) = (center - bestCenter).asFF()

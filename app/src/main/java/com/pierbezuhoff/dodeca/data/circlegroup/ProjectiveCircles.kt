@@ -8,6 +8,7 @@ import android.util.Log
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.FigureAttributes
 import com.pierbezuhoff.dodeca.data.Shape
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import com.pierbezuhoff.dodeca.utils.consecutiveGroupBy
 import com.pierbezuhoff.dodeca.utils.filteredIndices
 import kotlin.collections.set
@@ -24,9 +25,10 @@ typealias Pole = Vector4
 // TODO: time apply matrices vs update (?)
 internal open class ProjectiveCircles(
     figures: List<CircleFigure>,
+    optionValues: OptionsManager.Values,
     paint: Paint,
-    protected val sphereRadius: Double
-) : DoubleBackedCircleGroup(figures, paint) {
+) : DoubleBackedCircleGroup(figures, optionValues, paint) {
+    protected val sphereRadius: Double = optionValues.projR.toDouble()
     // static
     protected val initialPoles: List<Pole> // poles of all initial circles
     private val partsOfRules: List<Ixs> // (unique) rule index: int array of parts' indices

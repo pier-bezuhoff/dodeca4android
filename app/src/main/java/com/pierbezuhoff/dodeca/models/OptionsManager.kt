@@ -46,6 +46,8 @@ class OptionsManager(context: Context) {
         val projR: Float by options.projR
         val canvasFactor: Int by options.canvasFactor
         val showStat: Boolean by options.showStat
+        val drawScreenFillingCircles: Boolean by options.drawScreenFillingCircles
+        val screenMinSize: Int by options.screenMinSize
         val previewSize: Int by options.previewSize
         val autocenterPreview: Boolean by options.autocenterPreview
         private val densityDpi = resources.displayMetrics.densityDpi
@@ -82,6 +84,8 @@ class OptionsManager(context: Context) {
         val projR = ParsedFloatKeyOption("projective_sphere_radius", R.string.projective_sphere_radius, resources)
         val canvasFactor = ParsedIntKeyOption("canvas_factor", R.string.canvas_factor, resources)
         val showStat = BooleanKeyOption("show_stat", R.bool.show_stat, resources)
+        val drawScreenFillingCircles = BooleanKeyOption("draw_screen_filling_circles", R.bool.draw_screen_filling_circles, resources)
+        val screenMinSize = ParsedIntKeyOption("screen_min_size", 0)
         val showMassEditorButton = BooleanKeyOption("show_mass_editor_button", R.bool.show_mass_editor_button, resources)
         val showTraceButton = BooleanKeyOption("show_trace_button", R.bool.show_trace_button, resources)
         val showClearButton = BooleanKeyOption("show_clear_button", R.bool.show_clear_button, resources)
@@ -111,6 +115,7 @@ class OptionsManager(context: Context) {
             skipN,
             canvasFactor,
             showStat,
+            drawScreenFillingCircles,
             showMassEditorButton,
             showTraceButton,
             showClearButton,

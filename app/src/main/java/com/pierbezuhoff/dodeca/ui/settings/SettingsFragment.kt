@@ -56,7 +56,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
             hookClick(key) { addExtraResult("update_circlegroup") }
         }
         // NOTE: skipN and alike are observed on change by viewModels and handled there
-        @Suppress("ConstantConditionIf")
         if (MainActivity.LIMITED_VERSION) {
             ADVANCED_PREFERENCES.forEach { key ->
                 val removed = findPreference<Preference>(key)?.let {
@@ -112,7 +111,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             /*"rotate_shapes",*/
 //            "skip_n",
             "skip_n_timeout",
-//            "show_stat",
+//            "show_stat", "draw_screen_filling_circles",
             "autocenter_preview",
             "preview_smart_updates"
         )

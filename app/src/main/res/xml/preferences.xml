@@ -140,6 +140,11 @@
                 android:defaultValue="@bool/show_stat"
                 android:title="@string/show_stat_title"
         />
+        <SwitchPreference
+                android:key="draw_screen_filling_circles"
+                android:defaultValue="@bool/draw_screen_filling_circles"
+                android:title="@string/draw_screen_filling_circles_title"
+                />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_saves_title">

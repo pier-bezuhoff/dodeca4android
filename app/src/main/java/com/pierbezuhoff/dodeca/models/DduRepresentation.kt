@@ -84,7 +84,7 @@ class DduRepresentation(
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
     var circleGroup: SuspendableCircleGroup =
-        mkCircleGroup(optionValues.circleGroupImplementation, optionValues.projR, ddu.circles, paint)
+        mkCircleGroup(optionValues, ddu.circles, paint)
     override var updating: Boolean = DEFAULT_UPDATING
         set(value) { field = value; changeUpdating(value) }
     override var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
@@ -120,6 +120,9 @@ class DduRepresentation(
         centerizeToBestCenter()
         if (trace == null) // do not clearTrace on screen rotation and other config. changes
             clearTrace()
+        val (w, h) = presenter.getSize() ?: (0 to 0)
+        val minSize = min(w, h)
+        optionsManager.set(optionsManager.options.screenMinSize, minSize)
         presenter.mainLoop()
     }
 
@@ -179,11 +182,7 @@ class DduRepresentation(
 
     fun updateCircleGroup() {
         val figures = circleGroup.figures
-        circleGroup = mkCircleGroup(
-            optionValues.circleGroupImplementation,
-            optionValues.projR,
-            figures, paint
-        )
+        circleGroup = mkCircleGroup(optionValues, figures, paint)
     }
 
     fun oneStep() {
@@ -564,11 +563,7 @@ class DduRepresentation(
                     c.copy(newVisible = false)
                 else c
             } + newCircles
-            circleGroup = mkCircleGroup(
-                optionValues.circleGroupImplementation,
-                optionValues.projR,
-                result, paint
-            )
+            circleGroup = mkCircleGroup(optionValues, result, paint)
         }
     }
 
@@ -580,7 +575,7 @@ class DduRepresentation(
             }
             else -> if (mode !in listOf(Mode.MODE_3D_NAVIGATE, Mode.MODE_3D_ROTATE)) {
                 clearTrace()
-                circleGroup = ProjectiveCircles3D(circleGroup.figures, paint, optionValues.projR.toDouble())
+                circleGroup = ProjectiveCircles3D(circleGroup.figures, optionValues, paint)
             }
         }
         mode = newMode

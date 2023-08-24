@@ -14,6 +14,7 @@
     <string name="projective_sphere_radius" translatable="false">2000</string>
     <string name="canvas_factor" translatable="false">2</string>
     <bool name="show_stat">false</bool>
+    <bool name="draw_screen_filling_circles">true</bool>
     <bool name="prefer_recent_ddu">true</bool>
     <bool name="show_mass_editor_button">true</bool>
     <bool name="show_trace_button">true</bool>

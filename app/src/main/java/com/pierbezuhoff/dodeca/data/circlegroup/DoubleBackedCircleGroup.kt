@@ -13,6 +13,7 @@ import android.util.SparseArray
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.FigureAttributes
 import com.pierbezuhoff.dodeca.data.Shape
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.ceil
@@ -22,6 +23,7 @@ import kotlin.math.ceil
 @Suppress("NOTHING_TO_INLINE", "MemberVisibilityCanBePrivate", "FunctionName")
 abstract class DoubleBackedCircleGroup(
     figures: List<CircleFigure>,
+    protected val optionValues: OptionsManager.Values,
     paint: Paint,
 ) : SuspendableCircleGroup {
     protected val size: Int = figures.size
@@ -191,8 +193,15 @@ abstract class DoubleBackedCircleGroup(
     }
 
     protected inline fun drawHelper(crossinline draw: (Ix) -> Unit) {
-        for (i in shownIndices)
-            draw(i)
+        if (optionValues.drawScreenFillingCircles) {
+            for (i in shownIndices)
+                draw(i)
+        } else {
+            val maxR = optionValues.screenMinSize
+            for (i in shownIndices)
+                if (rs[i] <= maxR)
+                    draw(i)
+        }
     }
 
     override fun drawTimes(times: Int, reverse: Boolean, canvas: Canvas, shape: Shape) {
@@ -244,6 +253,7 @@ abstract class DoubleBackedCircleGroup(
     }
 
     protected inline fun drawCircle(i: Ix, canvas: Canvas) {
+        // test R > screen.size
         val x = xs[i].toFloat()
         val y = ys[i].toFloat()
         val r = rs[i].toFloat()

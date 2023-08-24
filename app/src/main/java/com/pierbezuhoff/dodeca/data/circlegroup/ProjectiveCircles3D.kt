@@ -9,6 +9,7 @@ import com.pierbezuhoff.dodeca.data.CoordinateSystem3D
 import com.pierbezuhoff.dodeca.data.PerspectiveCamera3D
 import com.pierbezuhoff.dodeca.data.Shape
 import com.pierbezuhoff.dodeca.data.Vector3
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlinx.multik.api.mk
@@ -18,10 +19,10 @@ import org.jetbrains.kotlinx.multik.api.ndarrayOf
 // MAYBE: small 100K-point lru cache to preserve for transformations
 internal class ProjectiveCircles3D(
     figures: List<CircleFigure>,
+    optionValues: OptionsManager.Values,
     paint: Paint,
-    sphereRadius: Double
-) : ProjectiveCircles(figures, paint, sphereRadius)
-    , CoordinateSystem3D by PerspectiveCamera3D(sphereRadius)
+) : ProjectiveCircles(figures, optionValues, paint)
+    , CoordinateSystem3D by PerspectiveCamera3D(optionValues.projR.toDouble())
 {
     private val cubePaint = Paint(paint).apply { color = Color.RED }
     private val cube: MutableList<Vector3> = mutableListOf()

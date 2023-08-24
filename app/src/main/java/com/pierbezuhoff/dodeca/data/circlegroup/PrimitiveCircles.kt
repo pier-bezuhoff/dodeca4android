@@ -5,6 +5,7 @@ import android.graphics.Paint
 import com.pierbezuhoff.dodeca.data.CircleFigure
 import com.pierbezuhoff.dodeca.data.FigureAttributes
 import com.pierbezuhoff.dodeca.data.Shape
+import com.pierbezuhoff.dodeca.models.OptionsManager
 import kotlin.math.abs
 
 // NOTE: if FloatArray instead of DoubleArray then Triada.ddu diverges, though it's ~2 times faster
@@ -13,8 +14,9 @@ import kotlin.math.abs
 @Suppress("NOTHING_TO_INLINE")
 internal class PrimitiveCircles(
     figures: List<CircleFigure>,
+    optionValues: OptionsManager.Values,
     paint: Paint
-) : DoubleBackedCircleGroup(figures, paint) {
+) : DoubleBackedCircleGroup(figures, optionValues, paint) {
     // new _*s <-- old *s
     private val _xs: DoubleArray = DoubleArray(size) { figures[it].x }
     private val _ys: DoubleArray = DoubleArray(size) { figures[it].y }
