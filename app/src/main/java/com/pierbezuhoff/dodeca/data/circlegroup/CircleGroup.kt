@@ -45,13 +45,13 @@ interface SuspendableCircleGroup : CircleGroup {
 }
 
 fun mkCircleGroup(
+    circleFigures: List<CircleFigure>,
     optionValues: OptionsManager.Values,
-    circleFigures: List<CircleFigure>, defaultPaint: Paint
+    defaultPaint: Paint
 ): SuspendableCircleGroup =
     when(optionValues.circleGroupImplementation) {
-        "planar-sequential" -> PrimitiveCircles(circleFigures, defaultPaint)
-        "planar-sequential-rough" -> RoughPrimitiveCircles(circleFigures, defaultPaint)
-        "projective" -> ProjectiveCircles(circleFigures, defaultPaint, optionValues.projR.toDouble())
+        "planar-sequential" -> PrimitiveCircles(circleFigures, optionValues, defaultPaint)
+        "planar-sequential-rough" -> RoughPrimitiveCircles(circleFigures, optionValues, defaultPaint)
+        "projective" -> ProjectiveCircles(circleFigures, optionValues, defaultPaint)
         else -> throw IllegalArgumentException("Illegal implementation name: ${optionValues.circleGroupImplementation}")
-        // TODO: pass optValues in the constructors or just pass draw-screen-filling
     }

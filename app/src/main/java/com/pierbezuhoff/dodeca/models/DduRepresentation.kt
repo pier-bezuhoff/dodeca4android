@@ -84,7 +84,7 @@ class DduRepresentation(
     private val paint: Paint = Paint(DEFAULT_PAINT)
 
     var circleGroup: SuspendableCircleGroup =
-        mkCircleGroup(optionValues, ddu.circles, paint)
+        mkCircleGroup(ddu.circles, optionValues, paint)
     override var updating: Boolean = DEFAULT_UPDATING
         set(value) { field = value; changeUpdating(value) }
     override var drawTrace: Boolean = ddu.drawTrace ?: DEFAULT_DRAW_TRACE
@@ -182,7 +182,7 @@ class DduRepresentation(
 
     fun updateCircleGroup() {
         val figures = circleGroup.figures
-        circleGroup = mkCircleGroup(optionValues, figures, paint)
+        circleGroup = mkCircleGroup(figures, optionValues, paint)
     }
 
     fun oneStep() {
@@ -563,7 +563,7 @@ class DduRepresentation(
                     c.copy(newVisible = false)
                 else c
             } + newCircles
-            circleGroup = mkCircleGroup(optionValues, result, paint)
+            circleGroup = mkCircleGroup(result, optionValues, paint)
         }
     }
 
