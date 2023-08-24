@@ -199,7 +199,7 @@ abstract class DoubleBackedCircleGroup(
         } else {
             val maxR = optionValues.screenMinSize
             for (i in shownIndices)
-                if (rs[i] <= maxR)
+                if (rs[i] <= maxR || !attrs[i].fill)
                     draw(i)
         }
     }
