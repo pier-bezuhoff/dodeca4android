@@ -149,6 +149,7 @@ class DodecaEditActivity : AppCompatActivity()
 
     // BUG: no tooltips! but the green toolbar has them (same mechanism of overriding contentDescription used)
     private fun onToolbarItemClick(id: Int) {
+        viewModel.showBottomBar() // refresh toolbar hiding cooldown
         when (id) {
             R.id.navigate_mode_button -> viewModel.requestEditingMode(EditingMode.NAVIGATE)
             R.id.multiselect_mode_button -> viewModel.requestEditingMode(EditingMode.MULTISELECT)

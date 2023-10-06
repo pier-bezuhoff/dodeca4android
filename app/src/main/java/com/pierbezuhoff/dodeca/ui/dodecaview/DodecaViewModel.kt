@@ -160,7 +160,7 @@ class DodecaViewModel(
             _dduLoading.postValue(true)
             val ddu: Ddu = Ddu.fromFile(file)
             withContext(Dispatchers.Main) {
-                dduRepresentation.value?.inlineDdu(ddu, targets, adjustDdu)
+                dduRepresentation.value?.inlineDdu(ddu, targets, hideOriginal = adjustDdu)
             }
         } catch (e: Exception) {
             e.printStackTrace()

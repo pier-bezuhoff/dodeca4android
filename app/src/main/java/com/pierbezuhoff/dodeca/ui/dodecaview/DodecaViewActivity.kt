@@ -77,6 +77,7 @@ class DodecaViewActivity : AppCompatActivity()
         DduFileService(applicationContext)
     }
     private val dir: File get() = viewModel.dir
+    // TODO: inlineDduDir = dir + upd on choose inlined
 
     private lateinit var binding: ActivityDodecaViewBinding
 
@@ -147,7 +148,7 @@ class DodecaViewActivity : AppCompatActivity()
     }
 
     private fun onToolbarItemClick(id: Int) {
-        viewModel.showBottomBar()
+        viewModel.showBottomBar() // refresh toolbar hiding cooldown
         when (id) {
             R.id.help_button -> goToActivity(HelpActivity::class.java, helpResultLauncher)
             R.id.load_button -> goToActivity(

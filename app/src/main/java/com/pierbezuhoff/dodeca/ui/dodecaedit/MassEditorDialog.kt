@@ -616,6 +616,7 @@ class CircleAdapter(
                     inlineDduButton.setOnClickListener {
                         val adjust = adjustInlinedDduCheckbox.isChecked
                         massEditorListener.onMassEditorChooseDduToInline(selection, adjust)
+                        // TODO: change to hide-original instead
                         // dismiss
                     }
 //                    useTextureSwitch.apply {

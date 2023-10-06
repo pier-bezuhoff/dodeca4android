@@ -172,10 +172,10 @@
     <string name="sort_by_rule_description">Сортировать по правилу</string>
     <string name="edit_circle_rule_hint">Правило</string>
     <string name="inline_ddu_button_description">Вставить ddu</string>
-    <string name="scale_and_centerize_inlined_ddu_checkbox_description">Подогнать центр и размер вставленного ddu</string>
+    <string name="scale_and_centerize_inlined_ddu_checkbox_description">Спрятать исходное ddu</string>
     <string name="background_color">Цвет фона</string>
     <string name="mass_editor_button_title">Редактор окружностей</string>
-    <string name="mass_editor_dialog_recolor_everything">Сдвинуть цветовую гамму</string>
+    <string name="mass_editor_dialog_recolor_everything">Сдвинуть цвета</string>
     <string name="angles_button_title">Изменить угловые скорости</string>
     <string name="angular_speed_factor_title">Изменить угловую скорость</string>
     <string name="angular_speed_factor_summary">Изменить угол двигателей в x раз</string>

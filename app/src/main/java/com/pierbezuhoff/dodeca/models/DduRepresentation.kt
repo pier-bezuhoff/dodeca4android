@@ -524,7 +524,11 @@ class DduRepresentation(
         }
     }
 
-    fun inlineDdu(ddu: Ddu, targetCircles: List<Int>, scaleAndCenterize: Boolean = false) {
+    fun inlineDdu(
+        ddu: Ddu, targetCircles: List<Int>,
+        hideOriginal: Boolean = false,
+        scaleAndCenterize: Boolean = false // deprecated/unused
+    ) {
         Log.i(TAG, "inlining ddu '${ddu.file?.name}' into " + targetCircles.joinToString())
         presenter?.getSize()?.let { (w, h) ->
             val minSize = min(w, h)
@@ -559,7 +563,7 @@ class DduRepresentation(
                 }
             }
             val result = currentCircles.mapIndexed { i, c ->
-                if (i in targetCircles)
+                if (hideOriginal) // i in targetCircles <- previous behavior, deemed unnecessary
                     c.copy(newVisible = false)
                 else c
             } + newCircles
