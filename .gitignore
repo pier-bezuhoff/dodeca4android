@@ -1,6 +1,9 @@
 **~
 **#*#
+.directory
+**.directory
 .emacs.desktop
+**.emacs.desktop
 .emacs.desktop.lock
 **.emacs.desktop.lock
 *.iml
