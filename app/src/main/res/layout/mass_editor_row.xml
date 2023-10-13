@@ -113,6 +113,8 @@
                 app:layout_constraintStart_toEndOf="@id/mass_editor_space"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="4,5,4,5,2,3,0,1"
+
+                android:visibility="gone"
                 />
 
         <ToggleButton

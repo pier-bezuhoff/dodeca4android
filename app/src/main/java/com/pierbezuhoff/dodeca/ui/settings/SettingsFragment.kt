@@ -103,7 +103,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         private const val TAG: String = "SettingsFragment"
         // hidden in limited version
         private val ADVANCED_PREFERENCES = setOf(
-            "angular_speed_factor",
+//            "angular_speed_factor",
             "circlegroup_implementation",
             "projective_sphere_radius",
 //            "show_all_circles",
@@ -111,7 +111,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
             /*"rotate_shapes",*/
 //            "skip_n",
             "skip_n_timeout",
-//            "show_stat", "draw_screen_filling_circles",
+//            "show_stat",
+//            "draw_screen_filling_circles",
             "autocenter_preview",
             "preview_smart_updates"
         )

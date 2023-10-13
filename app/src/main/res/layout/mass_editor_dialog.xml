@@ -60,6 +60,8 @@
                     android:textOn=""
                     android:textOff=""
                     android:contentDescription="@{@string/sort_by_rule_description}"
+
+                    android:visibility="gone"
                     />
         </LinearLayout>
         <View style="@style/dividerHorizontal"/>

@@ -547,6 +547,7 @@ class CircleAdapter(
                     val adjustInlinedDduCheckbox: CheckBox = layout.findViewById(R.id.scale_and_centerize_inlined_ddu_checkbox)
 //                    val textureButton: ImageButton = layout.circle_texture
 //                    val useTextureSwitch: Switch = layout.circle_use_texture
+                    ruleField.visibility = View.GONE
                     shownButton.apply {
                         isChecked = shown
                         setOnCheckedChangeListener { _, checked -> shown = checked }
