@@ -18,8 +18,8 @@ android {
         compileSdk 33
         targetSdk 33
         multiDexEnabled true
-        versionCode 52
-        versionName "2.0" // <-> (values, values-ru)/strings.xml/version_name
+        versionCode 54
+        versionName "2.0.1" // <-> (values, values-ru)/strings.xml/version_name
         kapt {
             arguments {
                 arg("room.schemaLocation", "$projectDir/schemas".toString())
@@ -82,4 +82,5 @@ dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation "org.jetbrains.kotlinx:multik-core:$multik_version"
     implementation "org.jetbrains.kotlinx:multik-default:$multik_version"
+    // use multik-kotlin if you want .aab instead of .apk, see: https://github.com/Kotlin/multik/issues/152
 }
