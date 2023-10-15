@@ -1,7 +1,9 @@
 package com.pierbezuhoff.dodeca.ui.dodecaview
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -11,6 +13,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.PersistableBundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.EditText
@@ -177,7 +180,12 @@ class DodecaViewActivity : AppCompatActivity()
                         .show()
                 }
             }
-            R.id.screenshot_button -> saveScreenshotWithPermissionCheck()
+            R.id.screenshot_button -> {
+                if (Build.VERSION.SDK_INT >= 29) // Android 10+
+                    saveScreenshotAPI29()
+                else
+                    saveScreenshotWithPermissionCheck()
+            }
             R.id.autocenter_button -> viewModel.requestAutocenter()
             R.id.restart_button -> {
                 // reload ddu
@@ -188,6 +196,43 @@ class DodecaViewActivity : AppCompatActivity()
             }
             R.id.fill_button -> viewModel.toggleFillCircles()
             R.id.settings_button -> goToActivity(SettingsActivity::class.java, settingsResultLauncher)
+        }
+    }
+
+    @SuppressLint("InlinedApi")
+    private fun saveScreenshotAPI29() {
+        val screenshot: Bitmap? =
+            viewModel.takeFullScreenshot()
+        screenshot?.let {
+            val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val name = viewModel.dduRepresentation.value?.ddu?.file?.nameWithoutExtension ?: "untitled-ddu"
+            viewModel.viewModelScope.launch(Dispatchers.IO) {
+                val imageName = "$name.png"
+                val imageCollection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                val newImageDetails = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, imageName)
+                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
+                val resolver = applicationContext.contentResolver
+                val fileUri = resolver.insert(imageCollection, newImageDetails)
+                if (fileUri != null) {
+                    resolver.openOutputStream(fileUri).use {
+                        screenshot.compress(Bitmap.CompressFormat.PNG, 100, it)
+                    }
+                    newImageDetails.clear()
+                    newImageDetails.put(MediaStore.Audio.Media.IS_PENDING, 0)
+                    resolver.update(fileUri, newImageDetails, null, null)
+                } else {
+                    val file = mkScreenshotFile(picturesDir, name)
+                    file.outputStream().use {
+                        screenshot.compress(Bitmap.CompressFormat.PNG, 100, it)
+                    }
+                    MediaScannerConnection.scanFile(applicationContext, arrayOf(file.toString()), null, null)
+                }
+                withContext(Dispatchers.Main) {
+                    toast(getString(R.string.screenshot_saved_toast, imageName, picturesDir.name))
+                }
+            }
         }
     }
 
@@ -207,8 +252,8 @@ class DodecaViewActivity : AppCompatActivity()
                 file.outputStream().use {
                     screenshot.compress(Bitmap.CompressFormat.PNG, 100, it)
                 }
-                // add img to gallery, TODO: test it
-//                sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).apply { data = Uri.fromFile(file) })
+//                 add img to gallery, TODO: test it
+                sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).apply { data = Uri.fromFile(file) })
                 MediaScannerConnection.scanFile(applicationContext, arrayOf(file.toString()), null, null)
                 withContext(Dispatchers.Main) {
                     toast(getString(R.string.screenshot_saved_toast, file.name, "${picturesDir.name}/$appName"))
