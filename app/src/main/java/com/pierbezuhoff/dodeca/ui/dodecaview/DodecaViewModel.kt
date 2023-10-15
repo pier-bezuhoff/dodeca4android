@@ -420,6 +420,7 @@ class DodecaViewModel(
             getDduFile()?.let { file: File ->
                 loadDduFrom(file)
             }
+            dduFileRepository.dropAllPreviews()
         }
         suspend fun discardAllPreviews() =
             dduFileRepository.dropAllPreviews()
