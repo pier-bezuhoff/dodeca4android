@@ -4,11 +4,13 @@
 
     <uses-permission
             android:name="android.permission.READ_EXTERNAL_STORAGE"
-    />
+            android:maxSdkVersion="32"
+            />
     <uses-permission
             android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-            android:maxSdkVersion="29"
-    />
+            android:maxSdkVersion="28"
+            />
+
     <supports-screens
             android:smallScreens="true"
             android:normalScreens="true"
@@ -16,6 +18,7 @@
             android:xlargeScreens="true"
             android:anyDensity="true"
     />
+
     <application
             android:name="androidx.multidex.MultiDexApplication"
             android:allowBackup="true"
