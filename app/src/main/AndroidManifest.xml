@@ -4,11 +4,9 @@
 
     <uses-permission
             android:name="android.permission.READ_EXTERNAL_STORAGE"
-            android:maxSdkVersion="32"
             />
     <uses-permission
             android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-            android:maxSdkVersion="28"
             />
 
     <supports-screens
@@ -42,28 +40,6 @@
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-            <intent-filter android:priority="100">
-
-                <!-- v possibly useless -->
-                <data android:host="*"/>
-                <data android:mimeType="*/*"/>
-                <data android:mimeType="application/ddu"/>
-                <data android:mimeType="application/vnd.ddu"/>
-                <data android:mimeType="application/octet-stream"/>
-                <!-- ^ -->
-                <data android:pathPattern=".*\\.ddu"/>
-                <data android:pathPattern=".*\\.DDU"/>
-                <!-- SEE: https://stackoverflow.com/questions/1733195/android-intent-filter-for-a-particular-file-extension -->
-                <data android:scheme="content"/>
-                <data android:scheme="file"/>
-                <data android:scheme="http"/>
-
-                <action android:name="android.intent.action.VIEW"/>
-                <action android:name="android.intent.action.EDIT"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
             </intent-filter>
         </activity>
         <activity
