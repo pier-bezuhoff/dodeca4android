@@ -13,6 +13,9 @@ local.properties
 .idea/libraries
 .idea/modules.xml
 .idea/workspace.xml
+.idea/gradle.xml
+.idea/deploymentTargetDropDown.xml
+.idea/migrations.xml
 .DS_Store
 build
 captures

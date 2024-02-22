@@ -3,20 +3,26 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
     signingConfigs {
         release {
-            keyAlias '<REDACTED>'
-            keyPassword '<REDACTED>'
-            storeFile file('<REDACTED>')
-            storePassword '<REDACTED>'
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
         }
     }
+    compileSdkVersion 33
     defaultConfig {
         applicationId "com.pierbezuhoff.dodeca"
         minSdkVersion 19
-        compileSdk 33
-        targetSdk 33
+//        compileSdk 33
+        targetSdkVersion 33
+//        targetSdk 33
         multiDexEnabled true
         versionCode 60
         versionName "2.0.4" // <-> (values, values-ru)/strings.xml/version_name
@@ -30,11 +36,12 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    flavorDimensions = ["version"]
+    flavorDimensions "version"
+//    flavorDimensions = ["version"]
     productFlavors {
         standard {
         }
@@ -42,9 +49,12 @@ android {
             versionNameSuffix '-beta'
         }
     }
-    buildFeatures {
-        dataBinding true
+    dataBinding {
+        enabled true
     }
+//    buildFeatures {
+//        dataBinding true
+//    }
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
@@ -52,7 +62,7 @@ android {
         sourceCompatibility = '1.8'
         targetCompatibility = '1.8'
     }
-    namespace 'com.pierbezuhoff.dodeca'
+//    namespace 'com.pierbezuhoff.dodeca'
 }
 
 dependencies {
@@ -81,6 +91,7 @@ dependencies {
     implementation 'com.rarepebble:colorpicker:2.4.2'
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation "org.jetbrains.kotlinx:multik-core:$multik_version"
-    implementation "org.jetbrains.kotlinx:multik-default:$multik_version"
+//    implementation "org.jetbrains.kotlinx:multik-default:$multik_version"
+    implementation "org.jetbrains.kotlinx:multik-kotlin:$multik_version"
     // use multik-kotlin if you want .aab instead of .apk, see: https://github.com/Kotlin/multik/issues/152
 }
