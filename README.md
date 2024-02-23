@@ -7,7 +7,7 @@ Dodeca Meditation presents you dynamic, infinite, never-repeating video art buil
 <img src="https://github.com/pier-bezuhoff/dodeca4android/assets/30413024/12cf94c5-4947-49d5-9b5e-378315fbe540" alt="Hell fire" width="400"/>
 \
 \
-More aesthetic geometry art, math lectures and Dodeca products can be found on [our website](eng.aestheticgeometry.ru).  
+More aesthetic geometry art, math lectures and Dodeca products can be found on [our website](https://www.eng.aestheticgeometry.ru/).  
 [Dodeca Meditation @ Google Play](https://play.google.com/store/apps/details?id=com.pierbezuhoff.dodeca)  
 
 ## Android requirements
